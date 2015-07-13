@@ -7,15 +7,15 @@ dnl require at least autoconf v 2.00
 dnl AC_COPYRIGHT (COPYRIGHT-NOTICE)
 
 AC_MSG_NOTICE([eXosip2                 The Extended Open SIP library.])
-AC_MSG_NOTICE([Copyright (C) 2002-2014 Aymeric MOIZARD - <amoizard@antisip.com>])
+AC_MSG_NOTICE([Copyright (C) 2002-2015 Aymeric MOIZARD - <amoizard@antisip.com>])
 
 dnl *********************************************************************
 dnl Source packaging numbers
-EXOSIP_MAJOR_VERSION=4
-EXOSIP_MINOR_VERSION=1
+EXOSIP_MAJOR_VERSION=5
+EXOSIP_MINOR_VERSION=0
 EXOSIP_MICRO_VERSION=0
 
-SONAME_MAJOR_VERSION=11
+SONAME_MAJOR_VERSION=12
 SONAME_MINOR_VERSION=0
 SONAME_MICRO_VERSION=0
 
@@ -215,7 +215,7 @@ AC_CHECK_LIB([cares], [ares_init],
      [AC_MSG_WARN([c-ares library is not installed])]
 )
 
-PKG_CHECK_MODULES(OSIP, libosip2 >= 3.5, [], [
+PKG_CHECK_MODULES(OSIP, libosip2 >= 4.1, [], [
 AC_MSG_WARN([assuming osip can be found in -I$includedir and -L$libdir])
 OSIP_CFLAGS='-I$(includedir) -I$(prefix)/include'
 OSIP_LIBS='-L$(libdir) -L$(prefix)/lib -losip2 -losipparser2'

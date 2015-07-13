@@ -47,7 +47,7 @@ eXosip_message_build_request (struct eXosip_t *excontext, osip_message_t ** mess
   if (route != NULL && *route == '\0')
     route = NULL;
 
-  i = _eXosip_generating_request_out_of_dialog (excontext, message, method, to, "UDP", from, route);
+  i = _eXosip_generating_request_out_of_dialog (excontext, message, method, to, from, route);
   if (i != 0)
     return i;
 
@@ -100,13 +100,23 @@ eXosip_message_build_answer (struct eXosip_t *excontext, int tid, int status, os
   }
 
   i = -1;
-  if (status < 300)             /* 2xx answer */
+  if (status < 300) {             /* 2xx answer */
     i = _eXosip_build_response_default (excontext, answer, NULL, status, tr->orig_request);
+
+  }
   else if (status > 300)        /* 3456xx answer */
     i = _eXosip_build_response_default (excontext, answer, NULL, status, tr->orig_request);
 
   if (i != 0)
     return i;
+
+  if (status < 300) {             /* 2xx answer */
+    osip_header_t *refer_sub;
+    osip_message_header_get_byname (tr->orig_request, "Refer-Sub", 0, &refer_sub);
+    if (refer_sub!=NULL && refer_sub->hvalue!=NULL && osip_strncasecmp(refer_sub->hvalue, "false", 5)==0) {
+      osip_message_set_header (*answer, "Refer-Sub", "false");
+    }
+  }
   return OSIP_SUCCESS;
 }
 
@@ -148,6 +158,14 @@ eXosip_message_send_answer (struct eXosip_t *excontext, int tid, int status, osi
       i = _eXosip_build_response_default (excontext, &answer, NULL, status, tr->orig_request);
     if (i != 0)
       return i;
+
+    if (status < 300) {             /* 2xx answer */
+      osip_header_t *refer_sub;
+      osip_message_header_get_byname (tr->orig_request, "Refer-Sub", 0, &refer_sub);
+      if (refer_sub!=NULL && refer_sub->hvalue!=NULL && osip_strncasecmp(refer_sub->hvalue, "false", 5)==0) {
+        osip_message_set_header (answer, "Refer-Sub", "false");
+      }
+    }
   }
 
   evt_answer = osip_new_outgoing_sipmessage (answer);

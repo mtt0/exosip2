@@ -47,6 +47,8 @@ _eXosip_find_last_out_subscribe (eXosip_subscribe_t * js, eXosip_dialog_t * jd)
       out_tr = osip_list_get (jd->d_out_trs, pos);
       if (0 == strcmp (out_tr->cseq->method, "SUBSCRIBE"))
         break;
+      else if (0 == strcmp (out_tr->cseq->method, "REFER"))
+        break;
       else
         out_tr = NULL;
       pos++;
@@ -83,7 +85,7 @@ _eXosip_find_last_inc_notify (eXosip_subscribe_t * js, eXosip_dialog_t * jd)
 
 
 int
-_eXosip_subscribe_init (eXosip_subscribe_t ** js)
+_eXosip_subscription_init (eXosip_subscribe_t ** js)
 {
   *js = (eXosip_subscribe_t *) osip_malloc (sizeof (eXosip_subscribe_t));
   if (*js == NULL)
@@ -93,7 +95,7 @@ _eXosip_subscribe_init (eXosip_subscribe_t ** js)
 }
 
 void
-_eXosip_subscribe_free (struct eXosip_t *excontext, eXosip_subscribe_t * js)
+_eXosip_subscription_free (struct eXosip_t *excontext, eXosip_subscribe_t * js)
 {
   /* ... */
 
@@ -120,7 +122,7 @@ _eXosip_subscribe_free (struct eXosip_t *excontext, eXosip_subscribe_t * js)
 }
 
 int
-_eXosip_subscribe_set_refresh_interval (eXosip_subscribe_t * js, osip_message_t * out_subscribe)
+_eXosip_subscription_set_refresh_interval (eXosip_subscribe_t * js, osip_message_t * out_subscribe)
 {
   osip_header_t *exp;
 
@@ -138,21 +140,6 @@ _eXosip_subscribe_set_refresh_interval (eXosip_subscribe_t * js, osip_message_t 
   }
 
   return OSIP_SUCCESS;
-}
-
-int
-_eXosip_subscribe_need_refresh (eXosip_subscribe_t * js, eXosip_dialog_t * jd, int now)
-{
-  osip_transaction_t *out_tr = NULL;
-
-  if (jd != NULL)
-    out_tr = osip_list_get (jd->d_out_trs, 0);
-  if (out_tr == NULL)
-    out_tr = js->s_out_tr;
-
-  if (now - out_tr->birth_time > js->s_reg_period - 15)
-    return OSIP_SUCCESS;
-  return OSIP_UNDEFINED_ERROR;
 }
 
 #endif

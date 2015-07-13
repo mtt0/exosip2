@@ -194,7 +194,7 @@ _eXosip_dialog_add_contact (struct eXosip_t *excontext, osip_message_t * request
 }
 
 int
-_eXosip_request_add_via (struct eXosip_t *excontext, osip_message_t * request, const char *transport, const char *locip)
+_eXosip_request_add_via (struct eXosip_t *excontext, osip_message_t * request, const char *locip)
 {
   char tmp[200];
   const char *ip = NULL;
@@ -256,7 +256,7 @@ _eXosip_request_add_via (struct eXosip_t *excontext, osip_message_t * request, c
    transport is either "TCP" or "UDP" (by now, only UDP is implemented!)
 */
 int
-_eXosip_generating_request_out_of_dialog (struct eXosip_t *excontext, osip_message_t ** dest, const char *method, const char *to, const char *transport, const char *from, const char *proxy)
+_eXosip_generating_request_out_of_dialog (struct eXosip_t *excontext, osip_message_t ** dest, const char *method, const char *to, const char *from, const char *proxy)
 {
   /* Section 8.1:
      A valid request contains at a minimum "To, From, Call-iD, Cseq,
@@ -610,7 +610,7 @@ _eXosip_generating_request_out_of_dialog (struct eXosip_t *excontext, osip_messa
     }
   }
 
-  i = _eXosip_request_add_via (excontext, request, transport, locip);
+  i = _eXosip_request_add_via (excontext, request, locip);
   if (i != 0) {
     osip_message_free (request);
     return i;
@@ -646,7 +646,7 @@ _eXosip_generating_publish (struct eXosip_t *excontext, osip_message_t ** messag
   if (route != NULL && *route == '\0')
     route = NULL;
 
-  i = _eXosip_generating_request_out_of_dialog (excontext, message, "PUBLISH", to, "UDP", from, route);
+  i = _eXosip_generating_request_out_of_dialog (excontext, message, "PUBLISH", to, from, route);
   if (i != 0)
     return i;
 
@@ -737,7 +737,7 @@ dialog_fill_route_set (osip_dialog_t * dialog, osip_message_t * request)
 }
 
 int
-_eXosip_build_request_within_dialog (struct eXosip_t *excontext, osip_message_t ** dest, const char *method, osip_dialog_t * dialog, const char *transport)
+_eXosip_build_request_within_dialog (struct eXosip_t *excontext, osip_message_t ** dest, const char *method, osip_dialog_t * dialog)
 {
   int i;
   osip_message_t *request;
@@ -871,7 +871,7 @@ _eXosip_build_request_within_dialog (struct eXosip_t *excontext, osip_message_t 
   osip_message_set_max_forwards (request, "70");        /* a UA should start a request with 70 */
 
 
-  i = _eXosip_request_add_via (excontext, request, transport, locip);
+  i = _eXosip_request_add_via (excontext, request, locip);
   if (i != 0) {
     osip_message_free (request);
     return i;
@@ -904,11 +904,11 @@ _eXosip_build_request_within_dialog (struct eXosip_t *excontext, osip_message_t 
 
 /* this request is only build within a dialog!! */
 int
-_eXosip_generating_bye (struct eXosip_t *excontext, osip_message_t ** bye, osip_dialog_t * dialog, char *transport)
+_eXosip_generating_bye (struct eXosip_t *excontext, osip_message_t ** bye, osip_dialog_t * dialog)
 {
   int i;
 
-  i = _eXosip_build_request_within_dialog (excontext, bye, "BYE", dialog, transport);
+  i = _eXosip_build_request_within_dialog (excontext, bye, "BYE", dialog);
   if (i != 0)
     return i;
 

@@ -152,7 +152,7 @@
 
 #include "jpipe.h"
 
-#define EXOSIP_VERSION	"4.1.0"
+#define EXOSIP_VERSION	"5.0.0"
 
 #ifdef __cplusplus
 extern "C" {
@@ -362,7 +362,7 @@ extern "C" {
   eXosip_event_t *_eXosip_event_init_for_call (int type, eXosip_call_t * jc, eXosip_dialog_t * jd, osip_transaction_t * tr);
 
 #ifndef MINISIZE
-  eXosip_event_t *_eXosip_event_init_for_subscribe (int type, eXosip_subscribe_t * js, eXosip_dialog_t * jd, osip_transaction_t * tr);
+  eXosip_event_t *_eXosip_event_init_for_subscription (int type, eXosip_subscribe_t * js, eXosip_dialog_t * jd, osip_transaction_t * tr);
   eXosip_event_t *_eXosip_event_init_for_notify (int type, eXosip_notify_t * jn, eXosip_dialog_t * jd, osip_transaction_t * tr);
 #endif
 
@@ -495,13 +495,13 @@ extern "C" {
   int _eXosip_dialog_init_as_uas (eXosip_dialog_t ** jd, osip_message_t * _invite, osip_message_t * _200Ok);
   void _eXosip_dialog_free (struct eXosip_t *excontext, eXosip_dialog_t * jd);
 
-  int _eXosip_generating_request_out_of_dialog (struct eXosip_t *excontext, osip_message_t ** dest, const char *method, const char *to, const char *transport, const char *from, const char *proxy);
+  int _eXosip_generating_request_out_of_dialog (struct eXosip_t *excontext, osip_message_t ** dest, const char *method, const char *to, const char *from, const char *proxy);
   int _eXosip_generating_publish (struct eXosip_t *excontext, osip_message_t ** message, const char *to, const char *from, const char *route);
   int _eXosip_generating_cancel (struct eXosip_t *excontext, osip_message_t ** dest, osip_message_t * request_cancelled);
-  int _eXosip_generating_bye (struct eXosip_t *excontext, osip_message_t ** bye, osip_dialog_t * dialog, char *transport);
+  int _eXosip_generating_bye (struct eXosip_t *excontext, osip_message_t ** bye, osip_dialog_t * dialog);
 
   int _eXosip_update_top_via (struct eXosip_t *excontext, osip_message_t * sip);
-  int _eXosip_request_add_via (struct eXosip_t *excontext, osip_message_t * request, const char *transport, const char *locip);
+  int _eXosip_request_add_via (struct eXosip_t *excontext, osip_message_t * request, const char *locip);
 
   void _eXosip_mark_all_registrations_expired (struct eXosip_t *excontext);
   int _eXosip_check_allow_header (eXosip_dialog_t * jd, osip_message_t * message);
@@ -523,7 +523,7 @@ extern "C" {
 
   int _eXosip_build_response_default (struct eXosip_t *excontext, osip_message_t ** dest, osip_dialog_t * dialog, int status, osip_message_t * request);
   int _eXosip_complete_answer_that_establish_a_dialog (struct eXosip_t *excontext, osip_message_t * response, osip_message_t * request);
-  int _eXosip_build_request_within_dialog (struct eXosip_t *excontext, osip_message_t ** dest, const char *method, osip_dialog_t * dialog, const char *transport);
+  int _eXosip_build_request_within_dialog (struct eXosip_t *excontext, osip_message_t ** dest, const char *method, osip_dialog_t * dialog);
   void _eXosip_kill_transaction (osip_list_t * transactions);
   int _eXosip_remove_transaction_from_call (osip_transaction_t * tr, eXosip_call_t * jc);
 
@@ -548,23 +548,22 @@ extern "C" {
 #ifndef MINISIZE
   int _eXosip_insubscription_transaction_find (struct eXosip_t *excontext, int tid, eXosip_notify_t ** jn, eXosip_dialog_t ** jd, osip_transaction_t ** tr);
   int _eXosip_notify_dialog_find (struct eXosip_t *excontext, int nid, eXosip_notify_t ** jn, eXosip_dialog_t ** jd);
-  int _eXosip_subscribe_transaction_find (struct eXosip_t *excontext, int tid, eXosip_subscribe_t ** js, eXosip_dialog_t ** jd, osip_transaction_t ** tr);
-  int _eXosip_subscribe_dialog_find (struct eXosip_t *excontext, int nid, eXosip_subscribe_t ** js, eXosip_dialog_t ** jd);
+  int _eXosip_subscription_transaction_find (struct eXosip_t *excontext, int tid, eXosip_subscribe_t ** js, eXosip_dialog_t ** jd, osip_transaction_t ** tr);
+  int _eXosip_subscription_dialog_find (struct eXosip_t *excontext, int nid, eXosip_subscribe_t ** js, eXosip_dialog_t ** jd);
   int _eXosip_insubscription_answer_1xx (struct eXosip_t *excontext, eXosip_notify_t * jc, eXosip_dialog_t * jd, int code);
   int _eXosip_insubscription_answer_2xx (eXosip_notify_t * jn, eXosip_dialog_t * jd, int code);
   int _eXosip_insubscription_answer_3456xx (struct eXosip_t *excontext, eXosip_notify_t * jn, eXosip_dialog_t * jd, int code);
-  osip_transaction_t *_eXosip_find_last_inc_notify (eXosip_subscribe_t * jn, eXosip_dialog_t * jd);
+  osip_transaction_t *_eXosip_find_last_inc_notify (eXosip_subscribe_t * js, eXosip_dialog_t * jd);
   osip_transaction_t *_eXosip_find_last_out_notify (eXosip_notify_t * jn, eXosip_dialog_t * jd);
   osip_transaction_t *_eXosip_find_last_inc_subscribe (eXosip_notify_t * jn, eXosip_dialog_t * jd);
   osip_transaction_t *_eXosip_find_last_out_subscribe (eXosip_subscribe_t * js, eXosip_dialog_t * jd);
   void _eXosip_release_terminated_subscriptions (struct eXosip_t *excontext);
   void _eXosip_release_terminated_in_subscriptions (struct eXosip_t *excontext);
-  int _eXosip_subscribe_init (eXosip_subscribe_t ** js);
-  void _eXosip_subscribe_free (struct eXosip_t *excontext, eXosip_subscribe_t * js);
-  int _eXosip_subscribe_set_refresh_interval (eXosip_subscribe_t * js, osip_message_t * inc_subscribe);
-  int _eXosip_subscribe_need_refresh (eXosip_subscribe_t * js, eXosip_dialog_t * jd, int now);
-  int _eXosip_subscribe_send_request_with_credential (struct eXosip_t *excontext, eXosip_subscribe_t * js, eXosip_dialog_t * jd, osip_transaction_t * out_tr);
-  int _eXosip_subscribe_automatic_refresh (struct eXosip_t *excontext, eXosip_subscribe_t * js, eXosip_dialog_t * jd, osip_transaction_t * out_tr);
+  int _eXosip_subscription_init (eXosip_subscribe_t ** js);
+  void _eXosip_subscription_free (struct eXosip_t *excontext, eXosip_subscribe_t * js);
+  int _eXosip_subscription_set_refresh_interval (eXosip_subscribe_t * js, osip_message_t * inc_subscribe);
+  int _eXosip_subscription_send_request_with_credential (struct eXosip_t *excontext, eXosip_subscribe_t * js, eXosip_dialog_t * jd, osip_transaction_t * out_tr);
+  int _eXosip_subscription_automatic_refresh (struct eXosip_t *excontext, eXosip_subscribe_t * js, eXosip_dialog_t * jd, osip_transaction_t * out_tr);
   int _eXosip_notify_init (eXosip_notify_t ** jn, osip_message_t * inc_subscribe);
   void _eXosip_notify_free (struct eXosip_t *excontext, eXosip_notify_t * jn);
   int _eXosip_notify_set_contact_info (eXosip_notify_t * jn, char *uri);

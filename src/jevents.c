@@ -88,7 +88,7 @@ _eXosip_event_init_for_call (int type, eXosip_call_t * jc, eXosip_dialog_t * jd,
 #ifndef MINISIZE
 
 eXosip_event_t *
-_eXosip_event_init_for_subscribe (int type, eXosip_subscribe_t * js, eXosip_dialog_t * jd, osip_transaction_t * tr)
+_eXosip_event_init_for_subscription (int type, eXosip_subscribe_t * js, eXosip_dialog_t * jd, osip_transaction_t * tr)
 {
   eXosip_event_t *je;
 

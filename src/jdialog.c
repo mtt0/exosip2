@@ -68,7 +68,7 @@ _eXosip_notify_dialog_find (struct eXosip_t *excontext, int nid, eXosip_notify_t
 }
 
 int
-_eXosip_subscribe_dialog_find (struct eXosip_t *excontext, int sid, eXosip_subscribe_t ** js, eXosip_dialog_t ** jd)
+_eXosip_subscription_dialog_find (struct eXosip_t *excontext, int sid, eXosip_subscribe_t ** js, eXosip_dialog_t ** jd)
 {
   if (sid <= 0)
     return OSIP_BADPARAMETER;

@@ -48,7 +48,7 @@ eXosip_options_build_request (struct eXosip_t *excontext, osip_message_t ** opti
   if (route != NULL && *route == '\0')
     route = NULL;
 
-  i = _eXosip_generating_request_out_of_dialog (excontext, options, "OPTIONS", to, "UDP", from, route);
+  i = _eXosip_generating_request_out_of_dialog (excontext, options, "OPTIONS", to, from, route);
   if (i != 0)
     return i;
 
@@ -77,7 +77,7 @@ eXosip_options_send_request (struct eXosip_t *excontext, osip_message_t * option
   osip_transaction_add_event (transaction, sipevent);
 
   _eXosip_wakeup (excontext);
-  return OSIP_SUCCESS;
+  return transaction->transactionid;
 }
 
 int

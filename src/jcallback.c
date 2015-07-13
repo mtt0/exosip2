@@ -341,7 +341,7 @@ cb_xixt_kill_transaction (int type, osip_transaction_t * tr)
     }
 
     /* no answer to a NOTIFY request! */
-    if (MSG_IS_NOTIFY (tr->orig_request) && tr->last_response == NULL) {
+    if (jn!=NULL && MSG_IS_NOTIFY (tr->orig_request) && tr->last_response == NULL) {
       /* delete the dialog! */
       eXosip_event_t *je;
 
@@ -374,21 +374,21 @@ cb_xixt_kill_transaction (int type, osip_transaction_t * tr)
     }
 
     /* no answer to a SUBSCRIBE request! */
-    if (js != NULL && MSG_IS_SUBSCRIBE (tr->orig_request)
+    if (js != NULL && (MSG_IS_SUBSCRIBE (tr->orig_request) || MSG_IS_REFER (tr->orig_request))
         && (tr->last_response == NULL || tr->last_response->status_code <= 199)) {
       eXosip_event_t *je;
 
-      je = _eXosip_event_init_for_subscribe (EXOSIP_SUBSCRIPTION_REQUESTFAILURE, js, jd, tr);
+      je = _eXosip_event_init_for_subscription (EXOSIP_SUBSCRIPTION_REQUESTFAILURE, js, jd, tr);
       _eXosip_report_event (excontext, je, NULL);
 
       /* delete the dialog! */
       REMOVE_ELEMENT (excontext->j_subscribes, js);
-      _eXosip_subscribe_free (excontext, js);
+      _eXosip_subscription_free (excontext, js);
       return;
     }
 
     /* detect SUBSCRIBE request that close the dialogs! */
-    if (MSG_IS_SUBSCRIBE (tr->orig_request)
+    if (js != NULL && (MSG_IS_SUBSCRIBE (tr->orig_request) || MSG_IS_REFER (tr->orig_request))
         && tr->last_response != NULL && (tr->last_response->status_code == 401 || tr->last_response->status_code == 407)) {
       /* delete the dialog later because we need to authenticate */
     }
@@ -400,7 +400,7 @@ cb_xixt_kill_transaction (int type, osip_transaction_t * tr)
       }
       else if (0 == strcmp (expires->hvalue, "0")) {
         REMOVE_ELEMENT (excontext->j_subscribes, js);
-        _eXosip_subscribe_free (excontext, js);
+        _eXosip_subscription_free (excontext, js);
         return;
       }
     }
@@ -488,7 +488,7 @@ cb_rcvrequest (int type, osip_transaction_t * tr, osip_message_t * sip)
   }
 #ifndef MINISIZE
   else if (jn != NULL) {
-    if (MSG_IS_SUBSCRIBE (sip)) {
+    if (MSG_IS_SUBSCRIBE (sip)||MSG_IS_REFER (sip)) {
       eXosip_event_t *je;
 
       je = _eXosip_event_init_for_notify (EXOSIP_IN_SUBSCRIPTION_NEW, jn, jd, tr);
@@ -501,7 +501,7 @@ cb_rcvrequest (int type, osip_transaction_t * tr, osip_message_t * sip)
     if (MSG_IS_NOTIFY (sip)) {
       eXosip_event_t *je;
 
-      je = _eXosip_event_init_for_subscribe (EXOSIP_SUBSCRIPTION_NOTIFY, js, jd, tr);
+      je = _eXosip_event_init_for_subscription (EXOSIP_SUBSCRIPTION_NOTIFY, js, jd, tr);
       _eXosip_report_event (excontext, je, NULL);
       return;
     }
@@ -627,13 +627,18 @@ cb_rcv1xx (int type, osip_transaction_t * tr, osip_message_t * sip)
   if (MSG_IS_RESPONSE_FOR (sip, "SUBSCRIBE") && MSG_TEST_CODE (sip, 100)) {
     eXosip_event_t *je;
 
-    je = _eXosip_event_init_for_subscribe (EXOSIP_SUBSCRIPTION_PROCEEDING, js, jd, tr);
+    je = _eXosip_event_init_for_subscription (EXOSIP_SUBSCRIPTION_PROCEEDING, js, jd, tr);
     _eXosip_report_event (excontext, je, sip);
+    return;
+  }
+  if (MSG_IS_RESPONSE_FOR (sip, "REFER") && MSG_TEST_CODE (sip, 100)) {
+    /* not easy to differentiate now (EXOSIP_SUBSCRIPTION_PROCEEDING or EXOSIP_CALL_MESSAGE_PROCEEDING) */
     return;
   }
 
   if (MSG_IS_RESPONSE_FOR (sip, "INVITE")
 #ifndef MINISIZE
+      || MSG_IS_RESPONSE_FOR (sip, "REFER")
       || MSG_IS_RESPONSE_FOR (sip, "SUBSCRIBE")
 #endif
     ) {
@@ -642,7 +647,7 @@ cb_rcv1xx (int type, osip_transaction_t * tr, osip_message_t * sip)
 #ifndef MINISIZE
     /* for SUBSCRIBE, test if the dialog has been already created
        with a previous NOTIFY */
-    if (jd == NULL && js != NULL && js->s_dialogs != NULL && MSG_IS_RESPONSE_FOR (sip, "SUBSCRIBE")) {
+    if (jd == NULL && js != NULL && js->s_dialogs != NULL && (MSG_IS_RESPONSE_FOR (sip, "SUBSCRIBE")||MSG_IS_RESPONSE_FOR (sip, "REFER"))) {
       /* find if existing dialog match the to tag */
       osip_generic_param_t *tag;
       int i;
@@ -651,7 +656,7 @@ cb_rcv1xx (int type, osip_transaction_t * tr, osip_message_t * sip)
       if (i == 0 && tag != NULL && tag->gvalue != NULL) {
         for (jd = js->s_dialogs; jd != NULL; jd = jd->next) {
           if (0 == strcmp (jd->d_dialog->remote_tag, tag->gvalue)) {
-            OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO1, NULL, "eXosip: found established early dialog for this subscribe\n"));
+            OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO1, NULL, "eXosip: found established early dialog for this subscription\n"));
             osip_transaction_set_reserved3 (tr, jd);
             break;
           }
@@ -733,10 +738,10 @@ cb_rcv1xx (int type, osip_transaction_t * tr, osip_message_t * sip)
       _eXosip_report_call_event (excontext, EXOSIP_CALL_RINGING, jc, jd, tr);
     }
 #ifndef MINISIZE
-    else if (jd != NULL && MSG_IS_RESPONSE_FOR (sip, "SUBSCRIBE")) {
+    else if (jd != NULL && (MSG_IS_RESPONSE_FOR (sip, "SUBSCRIBE")||MSG_IS_RESPONSE_FOR (sip, "REFER"))) {
       eXosip_event_t *je;
 
-      je = _eXosip_event_init_for_subscribe (EXOSIP_SUBSCRIPTION_PROCEEDING, js, jd, tr);
+      je = _eXosip_event_init_for_subscription (EXOSIP_SUBSCRIPTION_PROCEEDING, js, jd, tr);
       _eXosip_report_event (excontext, je, sip);
     }
 #endif
@@ -893,12 +898,26 @@ cb_rcv2xx_4subscribe (osip_transaction_t * tr, osip_message_t * sip)
   eXosip_dialog_t *jd = (eXosip_dialog_t *) osip_transaction_get_reserved3 (tr);
   eXosip_subscribe_t *js = (eXosip_subscribe_t *) osip_transaction_get_reserved5 (tr);
 
-  _eXosip_subscribe_set_refresh_interval (js, sip);
+  if (MSG_IS_RESPONSE_FOR (sip, "REFER")) {
+    osip_header_t *refer_sub;
+    osip_message_header_get_byname (sip, "Refer-Sub", 0, &refer_sub);
+    if (refer_sub!=NULL && refer_sub->hvalue!=NULL && osip_strncasecmp(refer_sub->hvalue, "false", 5)==0)
+    {
+      /* do not create JD, deletion will be immediate */
+      eXosip_event_t *je;
+
+      je = _eXosip_event_init_for_subscription (EXOSIP_SUBSCRIPTION_ANSWERED, js, jd, tr);
+      _eXosip_report_event (excontext, je, sip);
+      return;
+    }
+  }
+
+  _eXosip_subscription_set_refresh_interval (js, sip);
 
 
   /* for SUBSCRIBE, test if the dialog has been already created
      with a previous NOTIFY */
-  if (jd == NULL && js != NULL && js->s_dialogs != NULL && MSG_IS_RESPONSE_FOR (sip, "SUBSCRIBE")) {
+  if (jd == NULL && js != NULL && js->s_dialogs != NULL && (MSG_IS_RESPONSE_FOR (sip, "SUBSCRIBE")||MSG_IS_RESPONSE_FOR (sip, "REFER"))) {
     /* find if existing dialog match the to tag */
     osip_generic_param_t *tag;
     int i;
@@ -907,7 +926,7 @@ cb_rcv2xx_4subscribe (osip_transaction_t * tr, osip_message_t * sip)
     if (i == 0 && tag != NULL && tag->gvalue != NULL) {
       for (jd = js->s_dialogs; jd != NULL; jd = jd->next) {
         if (0 == strcmp (jd->d_dialog->remote_tag, tag->gvalue)) {
-          OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO1, NULL, "eXosip: found established early dialog for this subscribe\n"));
+          OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO1, NULL, "eXosip: found established early dialog for this subscription\n"));
           osip_transaction_set_reserved3 (tr, jd);
           break;
         }
@@ -939,7 +958,7 @@ cb_rcv2xx_4subscribe (osip_transaction_t * tr, osip_message_t * sip)
   {
     eXosip_event_t *je;
 
-    je = _eXosip_event_init_for_subscribe (EXOSIP_SUBSCRIPTION_ANSWERED, js, jd, tr);
+    je = _eXosip_event_init_for_subscription (EXOSIP_SUBSCRIPTION_ANSWERED, js, jd, tr);
     _eXosip_report_event (excontext, je, sip);
   }
 
@@ -1177,7 +1196,7 @@ cb_rcv2xx (int type, osip_transaction_t * tr, osip_message_t * sip)
 
 #ifndef MINISIZE
   if (js != NULL) {
-    if (MSG_IS_RESPONSE_FOR (sip, "SUBSCRIBE")) {
+    if (MSG_IS_RESPONSE_FOR (sip, "SUBSCRIBE")||MSG_IS_RESPONSE_FOR (sip, "REFER")) {
       cb_rcv2xx_4subscribe (tr, sip);
       return;
     }
@@ -1294,10 +1313,10 @@ cb_rcv3xx (int type, osip_transaction_t * tr, osip_message_t * sip)
     je = _eXosip_event_init_for_notify (EXOSIP_NOTIFICATION_REDIRECTED, jn, jd, tr);
     _eXosip_report_event (excontext, je, sip);
   }
-  else if (MSG_IS_RESPONSE_FOR (sip, "SUBSCRIBE")) {
+  else if (js!=NULL && (MSG_IS_RESPONSE_FOR (sip, "SUBSCRIBE")||MSG_IS_RESPONSE_FOR (sip, "REFER"))) {
     eXosip_event_t *je;
 
-    je = _eXosip_event_init_for_subscribe (EXOSIP_SUBSCRIPTION_REDIRECTED, js, jd, tr);
+    je = _eXosip_event_init_for_subscription (EXOSIP_SUBSCRIPTION_REDIRECTED, js, jd, tr);
     _eXosip_report_event (excontext, je, sip);
   }
   else if (jc != NULL) {
@@ -1316,6 +1335,7 @@ cb_rcv3xx (int type, osip_transaction_t * tr, osip_message_t * sip)
   if (jd == NULL)
     return;
   if (MSG_IS_RESPONSE_FOR (sip, "INVITE")
+      || MSG_IS_RESPONSE_FOR (sip, "REFER")
       || MSG_IS_RESPONSE_FOR (sip, "SUBSCRIBE")) {
     _eXosip_delete_early_dialog (excontext, jd);
   }
@@ -1347,7 +1367,8 @@ cb_rcv4xx (int type, osip_transaction_t * tr, osip_message_t * sip)
     _eXosip_report_event (excontext, je, sip);
     return;
   }
-  else if (MSG_IS_RESPONSE_FOR (sip, "REGISTER")) {
+  
+  if (MSG_IS_RESPONSE_FOR (sip, "REGISTER")) {
     rcvregister_failure (tr, sip);
     return;
   }
@@ -1361,10 +1382,10 @@ cb_rcv4xx (int type, osip_transaction_t * tr, osip_message_t * sip)
     je = _eXosip_event_init_for_notify (EXOSIP_NOTIFICATION_REQUESTFAILURE, jn, jd, tr);
     _eXosip_report_event (excontext, je, sip);
   }
-  else if (MSG_IS_RESPONSE_FOR (sip, "SUBSCRIBE")) {
+  else if (js!=NULL && (MSG_IS_RESPONSE_FOR (sip, "SUBSCRIBE")||MSG_IS_RESPONSE_FOR (sip, "REFER"))) {
     eXosip_event_t *je;
 
-    je = _eXosip_event_init_for_subscribe (EXOSIP_SUBSCRIPTION_REQUESTFAILURE, js, jd, tr);
+    je = _eXosip_event_init_for_subscription (EXOSIP_SUBSCRIPTION_REQUESTFAILURE, js, jd, tr);
     _eXosip_report_event (excontext, je, sip);
   }
   else if (jc != NULL) {
@@ -1383,6 +1404,7 @@ cb_rcv4xx (int type, osip_transaction_t * tr, osip_message_t * sip)
   if (jd == NULL)
     return;
   if (MSG_IS_RESPONSE_FOR (sip, "INVITE")
+      || MSG_IS_RESPONSE_FOR (sip, "REFER")
       || MSG_IS_RESPONSE_FOR (sip, "SUBSCRIBE")) {
     _eXosip_delete_early_dialog (excontext, jd);
   }
@@ -1413,7 +1435,8 @@ cb_rcv5xx (int type, osip_transaction_t * tr, osip_message_t * sip)
     _eXosip_report_event (excontext, je, sip);
     return;
   }
-  else if (MSG_IS_RESPONSE_FOR (sip, "REGISTER")) {
+  
+  if (MSG_IS_RESPONSE_FOR (sip, "REGISTER")) {
     rcvregister_failure (tr, sip);
     return;
   }
@@ -1427,10 +1450,10 @@ cb_rcv5xx (int type, osip_transaction_t * tr, osip_message_t * sip)
     je = _eXosip_event_init_for_notify (EXOSIP_NOTIFICATION_SERVERFAILURE, jn, jd, tr);
     _eXosip_report_event (excontext, je, sip);
   }
-  else if (MSG_IS_RESPONSE_FOR (sip, "SUBSCRIBE")) {
+  else if (js!=NULL && (MSG_IS_RESPONSE_FOR (sip, "SUBSCRIBE")||MSG_IS_RESPONSE_FOR (sip, "REFER"))) {
     eXosip_event_t *je;
 
-    je = _eXosip_event_init_for_subscribe (EXOSIP_SUBSCRIPTION_SERVERFAILURE, js, jd, tr);
+    je = _eXosip_event_init_for_subscription (EXOSIP_SUBSCRIPTION_SERVERFAILURE, js, jd, tr);
     _eXosip_report_event (excontext, je, sip);
   }
   else if (jc != NULL) {
@@ -1449,6 +1472,7 @@ cb_rcv5xx (int type, osip_transaction_t * tr, osip_message_t * sip)
   if (jd == NULL)
     return;
   if (MSG_IS_RESPONSE_FOR (sip, "INVITE")
+      || MSG_IS_RESPONSE_FOR (sip, "REFER")
       || MSG_IS_RESPONSE_FOR (sip, "SUBSCRIBE")) {
     _eXosip_delete_early_dialog (excontext, jd);
   }
@@ -1479,7 +1503,8 @@ cb_rcv6xx (int type, osip_transaction_t * tr, osip_message_t * sip)
     _eXosip_report_event (excontext, je, sip);
     return;
   }
-  else if (MSG_IS_RESPONSE_FOR (sip, "REGISTER")) {
+  
+  if (MSG_IS_RESPONSE_FOR (sip, "REGISTER")) {
     rcvregister_failure (tr, sip);
     return;
   }
@@ -1493,10 +1518,10 @@ cb_rcv6xx (int type, osip_transaction_t * tr, osip_message_t * sip)
     je = _eXosip_event_init_for_notify (EXOSIP_NOTIFICATION_GLOBALFAILURE, jn, jd, tr);
     _eXosip_report_event (excontext, je, sip);
   }
-  else if (MSG_IS_RESPONSE_FOR (sip, "SUBSCRIBE")) {
+  else if (js!=NULL && (MSG_IS_RESPONSE_FOR (sip, "SUBSCRIBE")||MSG_IS_RESPONSE_FOR (sip, "REFER"))) {
     eXosip_event_t *je;
 
-    je = _eXosip_event_init_for_subscribe (EXOSIP_SUBSCRIPTION_GLOBALFAILURE, js, jd, tr);
+    je = _eXosip_event_init_for_subscription (EXOSIP_SUBSCRIPTION_GLOBALFAILURE, js, jd, tr);
     _eXosip_report_event (excontext, je, sip);
   }
   else if (jc != NULL) {
@@ -1515,6 +1540,7 @@ cb_rcv6xx (int type, osip_transaction_t * tr, osip_message_t * sip)
   if (jd == NULL)
     return;
   if (MSG_IS_RESPONSE_FOR (sip, "INVITE")
+      || MSG_IS_RESPONSE_FOR (sip, "REFER")
       || MSG_IS_RESPONSE_FOR (sip, "SUBSCRIBE")) {
     _eXosip_delete_early_dialog (excontext, jd);
   }
@@ -1608,6 +1634,7 @@ cb_snd123456xx (int type, osip_transaction_t * tr, osip_message_t * sip)
 
   if (MSG_IS_RESPONSE_FOR (sip, "INVITE")
 #ifndef MINISIZE
+      || MSG_IS_RESPONSE_FOR (sip, "REFER")
       || MSG_IS_RESPONSE_FOR (sip, "SUBSCRIBE")
 #endif
     ) {
@@ -1673,11 +1700,11 @@ cb_transport_error (int type, osip_transaction_t * tr, int error)
     _eXosip_notify_free (excontext, jn);
   }
 
-  if (js != NULL && MSG_IS_SUBSCRIBE (tr->orig_request)
+  if (js != NULL && (MSG_IS_SUBSCRIBE (tr->orig_request) || MSG_IS_REFER (tr->orig_request))
       && type == OSIP_NICT_TRANSPORT_ERROR) {
     /* delete the dialog! */
     REMOVE_ELEMENT (excontext->j_subscribes, js);
-    _eXosip_subscribe_free (excontext, js);
+    _eXosip_subscription_free (excontext, js);
   }
 #endif
 

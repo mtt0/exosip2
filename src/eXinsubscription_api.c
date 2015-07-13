@@ -162,9 +162,9 @@ eXosip_insubscription_send_answer (struct eXosip_t *excontext, int tid, int stat
   }
 
   if (answer == NULL) {
-    if (0 == osip_strcasecmp (tr->orig_request->sip_method, "SUBSCRIBE")) {
+    if (0 == osip_strcasecmp (tr->orig_request->sip_method, "SUBSCRIBE") || 0 == osip_strcasecmp (tr->orig_request->sip_method, "REFER")) {
       if (status >= 200 && status <= 299) {
-        OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "eXosip: Wrong parameter?\n"));
+        OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "eXosip: provide a prepared answer\n"));
         return OSIP_BADPARAMETER;
       }
     }
@@ -178,7 +178,7 @@ eXosip_insubscription_send_answer (struct eXosip_t *excontext, int tid, int stat
   }
 
   if (answer == NULL) {
-    if (0 == osip_strcasecmp (tr->orig_request->sip_method, "SUBSCRIBE")) {
+    if (0 == osip_strcasecmp (tr->orig_request->sip_method, "SUBSCRIBE") || 0 == osip_strcasecmp (tr->orig_request->sip_method, "REFER")) {
       if (status < 200)
         i = _eXosip_insubscription_answer_1xx (excontext, jn, jd, status);
       else
@@ -199,7 +199,7 @@ eXosip_insubscription_send_answer (struct eXosip_t *excontext, int tid, int stat
     i = 0;
   }
 
-  if (0 == osip_strcasecmp (tr->orig_request->sip_method, "SUBSCRIBE")) {
+  if (0 == osip_strcasecmp (tr->orig_request->sip_method, "SUBSCRIBE") || 0 == osip_strcasecmp (tr->orig_request->sip_method, "REFER")) {
     if (MSG_IS_STATUS_1XX (answer)) {
     }
     else if (MSG_IS_STATUS_2XX (answer)) {
@@ -294,7 +294,6 @@ eXosip_insubscription_build_request (struct eXosip_t *excontext, int did, const 
   eXosip_notify_t *jn = NULL;
 
   osip_transaction_t *transaction;
-  char *transport;
   int i;
 
   *request = NULL;
@@ -304,9 +303,8 @@ eXosip_insubscription_build_request (struct eXosip_t *excontext, int did, const 
   if (did <= 0)
     return OSIP_BADPARAMETER;
 
-  if (did > 0) {
-    _eXosip_notify_dialog_find (excontext, did, &jn, &jd);
-  }
+  _eXosip_notify_dialog_find (excontext, did, &jn, &jd);
+
   if (jd == NULL || jn == NULL) {
     OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "eXosip: No incoming subscription here?\n"));
     return OSIP_NOTFOUND;
@@ -319,19 +317,7 @@ eXosip_insubscription_build_request (struct eXosip_t *excontext, int did, const 
       return OSIP_WRONG_STATE;
   }
 
-  transport = NULL;
-  if (transaction == NULL)
-    transaction = jn->n_inc_tr;
-
-  if (transaction != NULL && transaction->orig_request != NULL)
-    transport = _eXosip_transport_protocol (transaction->orig_request);
-
-  transaction = NULL;
-
-  if (transport == NULL)
-    i = _eXosip_build_request_within_dialog (excontext, request, method, jd->d_dialog, "UDP");
-  else
-    i = _eXosip_build_request_within_dialog (excontext, request, method, jd->d_dialog, transport);
+  i = _eXosip_build_request_within_dialog (excontext, request, method, jd->d_dialog);
   if (i != 0)
     return i;
 

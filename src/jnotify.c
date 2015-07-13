@@ -47,6 +47,8 @@ _eXosip_find_last_inc_subscribe (eXosip_notify_t * jn, eXosip_dialog_t * jd)
       inc_tr = osip_list_get (jd->d_inc_trs, pos);
       if (0 == strcmp (inc_tr->cseq->method, "SUBSCRIBE"))
         break;
+      else if (0 == strcmp (inc_tr->cseq->method, "REFER"))
+        break;
       else
         inc_tr = NULL;
       pos++;
@@ -131,20 +133,22 @@ _eXosip_notify_set_refresh_interval (eXosip_notify_t * jn, osip_message_t * inc_
 {
   osip_header_t *exp;
   time_t now;
+  int default_expires=600;
 
   now = osip_getsystemtime (NULL);
   if (jn == NULL || inc_subscribe == NULL)
     return -1;
-
+  if (MSG_IS_REFER(inc_subscribe))
+    default_expires=120;
   osip_message_get_expires (inc_subscribe, 0, &exp);
   if (exp == NULL || exp->hvalue == NULL)
-    jn->n_ss_expires = now + 600;
+    jn->n_ss_expires = now + default_expires;
   else {
     jn->n_ss_expires = osip_atoi (exp->hvalue);
     if (jn->n_ss_expires != -1)
       jn->n_ss_expires = now + jn->n_ss_expires;
     else                        /* on error, set it to default */
-      jn->n_ss_expires = now + 600;
+      jn->n_ss_expires = now + default_expires;
   }
 
   return OSIP_SUCCESS;

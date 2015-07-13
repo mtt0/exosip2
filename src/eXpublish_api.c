@@ -169,7 +169,7 @@ eXosip_publish (struct eXosip_t *excontext, osip_message_t * message, const char
 
   osip_transaction_add_event (transaction, sipevent);
   _eXosip_wakeup (excontext);
-  return OSIP_SUCCESS;
+  return transaction->transactionid;
 }
 
 #endif

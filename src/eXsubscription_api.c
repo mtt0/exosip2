@@ -35,7 +35,7 @@
 #ifndef MINISIZE
 
 int
-_eXosip_subscribe_transaction_find (struct eXosip_t *excontext, int tid, eXosip_subscribe_t ** js, eXosip_dialog_t ** jd, osip_transaction_t ** tr)
+_eXosip_subscription_transaction_find (struct eXosip_t *excontext, int tid, eXosip_subscribe_t ** js, eXosip_dialog_t ** jd, osip_transaction_t ** tr)
 {
   for (*js = excontext->j_subscribes; *js != NULL; *js = (*js)->next) {
     if ((*js)->s_inc_tr != NULL && (*js)->s_inc_tr->transactionid == tid) {
@@ -78,7 +78,7 @@ _eXosip_subscribe_transaction_find (struct eXosip_t *excontext, int tid, eXosip_
 }
 
 int
-eXosip_subscribe_remove (struct eXosip_t *excontext, int did)
+eXosip_subscription_remove (struct eXosip_t *excontext, int did)
 {
   eXosip_dialog_t *jd = NULL;
   eXosip_subscribe_t *js = NULL;
@@ -87,19 +87,19 @@ eXosip_subscribe_remove (struct eXosip_t *excontext, int did)
     return OSIP_BADPARAMETER;
 
   if (did > 0) {
-    _eXosip_subscribe_dialog_find (excontext, did, &js, &jd);
+    _eXosip_subscription_dialog_find (excontext, did, &js, &jd);
   }
   if (js == NULL) {
     OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "eXosip: No outgoing subscription here?\n"));
     return OSIP_NOTFOUND;
   }
   REMOVE_ELEMENT (excontext->j_subscribes, js);
-  _eXosip_subscribe_free (excontext, js);
+  _eXosip_subscription_free (excontext, js);
   return OSIP_SUCCESS;
 }
 
 int
-eXosip_subscribe_build_initial_request (struct eXosip_t *excontext, osip_message_t ** sub, const char *to, const char *from, const char *route, const char *event, int expires)
+eXosip_subscription_build_initial_subscribe (struct eXosip_t *excontext, osip_message_t ** sub, const char *to, const char *from, const char *route, const char *_event, int expires)
 {
   char tmp[10];
   int i;
@@ -110,7 +110,7 @@ eXosip_subscribe_build_initial_request (struct eXosip_t *excontext, osip_message
     return OSIP_BADPARAMETER;
   if (from == NULL || *from == '\0')
     return OSIP_BADPARAMETER;
-  if (event == NULL || *event == '\0')
+  if (_event == NULL || *_event == '\0')
     return OSIP_BADPARAMETER;
   if (route == NULL || *route == '\0')
     route = NULL;
@@ -125,7 +125,7 @@ eXosip_subscribe_build_initial_request (struct eXosip_t *excontext, osip_message
     return i;
   }
 
-  i = _eXosip_generating_request_out_of_dialog (excontext, sub, "SUBSCRIBE", to, excontext->transport, from, route);
+  i = _eXosip_generating_request_out_of_dialog (excontext, sub, "SUBSCRIBE", to, from, route);
   osip_to_free (_to);
   if (i != 0)
     return i;
@@ -134,20 +134,56 @@ eXosip_subscribe_build_initial_request (struct eXosip_t *excontext, osip_message
   snprintf (tmp, 10, "%i", expires);
   osip_message_set_expires (*sub, tmp);
 
-  osip_message_set_header (*sub, "Event", event);
+  osip_message_set_header (*sub, "Event", _event);
+
+  return OSIP_SUCCESS;
+}
+
+int eXosip_subscription_build_initial_refer (struct eXosip_t *excontext, osip_message_t ** refer, const char *to, const char *from, const char *route, const char *refer_to)
+{
+  int i;
+  osip_to_t *_to = NULL;
+
+  *refer = NULL;
+  if (to == NULL || *to == '\0')
+    return OSIP_BADPARAMETER;
+  if (from == NULL || *from == '\0')
+    return OSIP_BADPARAMETER;
+  if (refer_to == NULL || *refer_to == '\0')
+    return OSIP_BADPARAMETER;
+  if (route == NULL || *route == '\0')
+    route = NULL;
+
+  i = osip_to_init (&_to);
+  if (i != 0)
+    return i;
+
+  i = osip_to_parse (_to, to);
+  if (i != 0) {
+    osip_to_free (_to);
+    return i;
+  }
+
+  i = _eXosip_generating_request_out_of_dialog (excontext, refer, "REFER", to, from, route);
+  osip_to_free (_to);
+  if (i != 0)
+    return i;
+  _eXosip_dialog_add_contact (excontext, *refer);
+
+  osip_message_set_header (*refer, "Refer-to", refer_to);
 
   return OSIP_SUCCESS;
 }
 
 int
-eXosip_subscribe_send_initial_request (struct eXosip_t *excontext, osip_message_t * subscribe)
+eXosip_subscription_send_initial_request (struct eXosip_t *excontext, osip_message_t * subscribe)
 {
   eXosip_subscribe_t *js = NULL;
   osip_transaction_t *transaction;
   osip_event_t *sipevent;
   int i;
 
-  i = _eXosip_subscribe_init (&js);
+  i = _eXosip_subscription_init (&js);
   if (i != 0) {
     OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "eXosip: cannot subscribe."));
     osip_message_free (subscribe);
@@ -156,13 +192,13 @@ eXosip_subscribe_send_initial_request (struct eXosip_t *excontext, osip_message_
 
   i = _eXosip_transaction_init (excontext, &transaction, NICT, excontext->j_osip, subscribe);
   if (i != 0) {
-    _eXosip_subscribe_free (excontext, js);
+    _eXosip_subscription_free (excontext, js);
     osip_message_free (subscribe);
     return i;
   }
 
   js->s_reg_period = 3600;
-  _eXosip_subscribe_set_refresh_interval (js, subscribe);
+  _eXosip_subscription_set_refresh_interval (js, subscribe);
   js->s_out_tr = transaction;
 
   sipevent = osip_new_outgoing_sipmessage (subscribe);
@@ -178,13 +214,12 @@ eXosip_subscribe_send_initial_request (struct eXosip_t *excontext, osip_message_
 }
 
 int
-eXosip_subscribe_build_refresh_request (struct eXosip_t *excontext, int did, osip_message_t ** sub)
+eXosip_subscription_build_refresh_request (struct eXosip_t *excontext, int did, osip_message_t ** sub)
 {
   eXosip_dialog_t *jd = NULL;
   eXosip_subscribe_t *js = NULL;
 
   osip_transaction_t *transaction;
-  char *transport;
   int i;
 
   *sub = NULL;
@@ -192,35 +227,31 @@ eXosip_subscribe_build_refresh_request (struct eXosip_t *excontext, int did, osi
   if (did <= 0)
     return OSIP_BADPARAMETER;
 
-  if (did > 0) {
-    _eXosip_subscribe_dialog_find (excontext, did, &js, &jd);
-  }
+  _eXosip_subscription_dialog_find (excontext, did, &js, &jd);
+
   if (jd == NULL) {
-    OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "eXosip: No subscribe here?\n"));
+    OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "eXosip: No subscribe/refer here?\n"));
     return OSIP_NOTFOUND;
   }
 
-  transaction = NULL;
   transaction = _eXosip_find_last_out_subscribe (js, jd);
 
   if (transaction != NULL) {
-    if (transaction->state != NICT_TERMINATED && transaction->state != NIST_TERMINATED && transaction->state != NICT_COMPLETED && transaction->state != NIST_COMPLETED)
+    if (transaction->state != NICT_TERMINATED && transaction->state != NIST_TERMINATED && transaction->state != NICT_COMPLETED && transaction->state != NIST_COMPLETED) {
       return OSIP_WRONG_STATE;
+    }
+  }
+  if (transaction == NULL || transaction->orig_request == NULL || transaction->orig_request->cseq == NULL || transaction->orig_request->cseq->method == NULL) {
+    OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_BUG, NULL, "eXosip: is this a SUBSCRIBE or REFER?\n"));
+    return OSIP_UNDEFINED_ERROR;
   }
 
-  transport = NULL;
-  if (transaction != NULL && transaction->orig_request != NULL)
-    transport = _eXosip_transport_protocol (transaction->orig_request);
-
-  if (transport == NULL)
-    i = _eXosip_build_request_within_dialog (excontext, sub, "SUBSCRIBE", jd->d_dialog, "UDP");
-  else
-    i = _eXosip_build_request_within_dialog (excontext, sub, "SUBSCRIBE", jd->d_dialog, transport);
+  i = _eXosip_build_request_within_dialog (excontext, sub, transaction->orig_request->cseq->method, jd->d_dialog);
 
   if (i != 0)
     return i;
 
-  if (transaction != NULL && transaction->orig_request != NULL) {
+  {
     int pos = 0;
     osip_header_t *_header = NULL;
     osip_call_info_t *_call_info_header = NULL;
@@ -263,7 +294,7 @@ eXosip_subscribe_build_refresh_request (struct eXosip_t *excontext, int did, osi
 }
 
 int
-eXosip_subscribe_send_refresh_request (struct eXosip_t *excontext, int did, osip_message_t * sub)
+eXosip_subscription_send_refresh_request (struct eXosip_t *excontext, int did, osip_message_t * sub)
 {
   eXosip_dialog_t *jd = NULL;
   eXosip_subscribe_t *js = NULL;
@@ -276,7 +307,7 @@ eXosip_subscribe_send_refresh_request (struct eXosip_t *excontext, int did, osip
     return OSIP_BADPARAMETER;
 
   if (did > 0) {
-    _eXosip_subscribe_dialog_find (excontext, did, &js, &jd);
+    _eXosip_subscription_dialog_find (excontext, did, &js, &jd);
   }
   if (jd == NULL) {
     OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "eXosip: No subscribe here?\n"));
@@ -304,7 +335,7 @@ eXosip_subscribe_send_refresh_request (struct eXosip_t *excontext, int did, osip
   }
 
   js->s_reg_period = 3600;
-  _eXosip_subscribe_set_refresh_interval (js, sub);
+  _eXosip_subscription_set_refresh_interval (js, sub);
   osip_list_add (jd->d_out_trs, transaction, 0);
 
   sipevent = osip_new_outgoing_sipmessage (sub);
@@ -319,7 +350,7 @@ eXosip_subscribe_send_refresh_request (struct eXosip_t *excontext, int did, osip
 }
 
 int
-_eXosip_subscribe_automatic_refresh (struct eXosip_t *excontext, eXosip_subscribe_t * js, eXosip_dialog_t * jd, osip_transaction_t * out_tr)
+_eXosip_subscription_automatic_refresh (struct eXosip_t *excontext, eXosip_subscribe_t * js, eXosip_dialog_t * jd, osip_transaction_t * out_tr)
 {
   osip_message_t *sub = NULL;
   osip_header_t *expires;
@@ -328,7 +359,7 @@ _eXosip_subscribe_automatic_refresh (struct eXosip_t *excontext, eXosip_subscrib
   if (js == NULL || jd == NULL || out_tr == NULL || out_tr->orig_request == NULL)
     return OSIP_BADPARAMETER;
 
-  i = eXosip_subscribe_build_refresh_request (excontext, jd->d_id, &sub);
+  i = eXosip_subscription_build_refresh_request (excontext, jd->d_id, &sub);
   if (i != 0)
     return i;
 
@@ -377,12 +408,12 @@ _eXosip_subscribe_automatic_refresh (struct eXosip_t *excontext, eXosip_subscrib
     }
   }
 
-  i = eXosip_subscribe_send_refresh_request (excontext, jd->d_id, sub);
+  i = eXosip_subscription_send_refresh_request (excontext, jd->d_id, sub);
   return i;
 }
 
 int
-_eXosip_subscribe_send_request_with_credential (struct eXosip_t *excontext, eXosip_subscribe_t * js, eXosip_dialog_t * jd, osip_transaction_t * out_tr)
+_eXosip_subscription_send_request_with_credential (struct eXosip_t *excontext, eXosip_subscribe_t * js, eXosip_dialog_t * jd, osip_transaction_t * out_tr)
 {
   osip_transaction_t *tr = NULL;
   osip_message_t *msg = NULL;

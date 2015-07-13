@@ -213,7 +213,7 @@ eXosip_quit (struct eXosip_t *excontext)
 #ifndef MINISIZE
   for (js = excontext->j_subscribes; js != NULL; js = excontext->j_subscribes) {
     REMOVE_ELEMENT (excontext->j_subscribes, js);
-    _eXosip_subscribe_free (excontext, js);
+    _eXosip_subscription_free (excontext, js);
   }
 
   for (jn = excontext->j_notifies; jn != NULL; jn = excontext->j_notifies) {

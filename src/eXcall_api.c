@@ -223,7 +223,7 @@ eXosip_call_build_initial_invite (struct eXosip_t *excontext, osip_message_t ** 
     return i;
   }
 
-  i = _eXosip_generating_request_out_of_dialog (excontext, invite, "INVITE", to, excontext->transport, from, route);
+  i = _eXosip_generating_request_out_of_dialog (excontext, invite, "INVITE", to, from, route);
   osip_to_free (_to);
   if (i != 0)
     return i;
@@ -286,7 +286,6 @@ eXosip_call_build_ack (struct eXosip_t *excontext, int did, osip_message_t ** _a
   osip_transaction_t *tr = NULL;
 
   osip_message_t *ack;
-  char *transport;
   int i;
 
   *_ack = NULL;
@@ -313,12 +312,7 @@ eXosip_call_build_ack (struct eXosip_t *excontext, int did, osip_message_t ** _a
     return OSIP_BADPARAMETER;
   }
 
-  transport = NULL;
-  transport = _eXosip_transport_protocol (tr->orig_request);
-  if (transport == NULL)
-    i = _eXosip_build_request_within_dialog (excontext, &ack, "ACK", jd->d_dialog, "UDP");
-  else
-    i = _eXosip_build_request_within_dialog (excontext, &ack, "ACK", jd->d_dialog, transport);
+  i = _eXosip_build_request_within_dialog (excontext, &ack, "ACK", jd->d_dialog);
 
   if (i != 0) {
     return i;
@@ -484,7 +478,7 @@ eXosip_call_build_request (struct eXosip_t *excontext, int jid, const char *meth
     }
   }
 
-  i = _eXosip_build_request_within_dialog (excontext, request, method, jd->d_dialog, excontext->transport);
+  i = _eXosip_build_request_within_dialog (excontext, request, method, jd->d_dialog);
   if (i != 0)
     return i;
 
@@ -1010,7 +1004,7 @@ eXosip_call_terminate_with_reason (struct eXosip_t *excontext, int cid, int did,
     return OSIP_WRONG_STATE;
   }
 
-  i = _eXosip_generating_bye (excontext, &request, jd->d_dialog, excontext->transport);
+  i = _eXosip_generating_bye (excontext, &request, jd->d_dialog);
 
   if (i != 0) {
     OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "eXosip: cannot terminate this call!\n"));
@@ -1047,7 +1041,6 @@ eXosip_call_build_prack (struct eXosip_t *excontext, int tid, osip_message_t ** 
   char tmp[128];
 
   osip_header_t *rseq;
-  char *transport;
   int i;
   int pos;
 
@@ -1098,14 +1091,7 @@ eXosip_call_build_prack (struct eXosip_t *excontext, int tid, osip_message_t ** 
     pos++;
   }
 
-  transport = NULL;
-  if (tr != NULL && tr->orig_request != NULL)
-    transport = _eXosip_transport_protocol (tr->orig_request);
-
-  if (transport == NULL)
-    i = _eXosip_build_request_within_dialog (excontext, prack, "PRACK", jd->d_dialog, "UDP");
-  else
-    i = _eXosip_build_request_within_dialog (excontext, prack, "PRACK", jd->d_dialog, transport);
+  i = _eXosip_build_request_within_dialog (excontext, prack, "PRACK", jd->d_dialog);
 
   if (i != 0)
     return i;

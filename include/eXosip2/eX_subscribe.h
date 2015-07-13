@@ -120,33 +120,45 @@ extern "C" {
  * @param event     Event header for SUBSCRIBE.
  * @param expires   Expires header for SUBSCRIBE.
  */
-  int eXosip_subscribe_build_initial_request (struct eXosip_t *excontext, osip_message_t ** subscribe, const char *to, const char *from, const char *route, const char *event, int expires);
+  int eXosip_subscription_build_initial_subscribe (struct eXosip_t *excontext, osip_message_t ** subscribe, const char *to, const char *from, const char *route, const char *event, int expires);
 
 /**
- * Send an initial SUBSCRIBE request.
+ * Build a default initial REFER request.
+ * 
+ * @param excontext    eXosip_t instance.
+ * @param refer Pointer for the SIP request to build.
+ * @param to        SIP url for callee.
+ * @param from      SIP url for caller.
+ * @param route     Route header for REFER. (optional)
+ * @param refer_to  SIP url for transfer.
+ */
+  int eXosip_subscription_build_initial_refer (struct eXosip_t *excontext, osip_message_t ** refer, const char *to, const char *from, const char *route, const char *refer_to);
+
+/**
+ * Send an initial SUBSCRIBE/REFER request.
  * 
  * @param excontext    eXosip_t instance.
  * @param subscribe          SIP SUBSCRIBE message to send.
  */
-  int eXosip_subscribe_send_initial_request (struct eXosip_t *excontext, osip_message_t * subscribe);
+  int eXosip_subscription_send_initial_request (struct eXosip_t *excontext, osip_message_t * subscribe);
 
 /**
- * Build a default new SUBSCRIBE message.
+ * Build a default new SUBSCRIBE/REFER refresh message.
  * 
  * @param excontext    eXosip_t instance.
  * @param did      identifier of the subscription.
  * @param sub      Pointer for the SIP request to build.
  */
-  int eXosip_subscribe_build_refresh_request (struct eXosip_t *excontext, int did, osip_message_t ** sub);
+  int eXosip_subscription_build_refresh_request (struct eXosip_t *excontext, int did, osip_message_t ** sub);
 
 /**
- * Send a new SUBSCRIBE request.
+ * Send a new SUBSCRIBE/REFER refresh request.
  * 
  * @param excontext    eXosip_t instance.
  * @param did          identifier of the subscription.
  * @param sub          SIP SUBSCRIBE message to send.
  */
-  int eXosip_subscribe_send_refresh_request (struct eXosip_t *excontext, int did, osip_message_t * sub);
+  int eXosip_subscription_send_refresh_request (struct eXosip_t *excontext, int did, osip_message_t * sub);
 
 /**
  * Remove outgoing subscription context.
@@ -154,7 +166,7 @@ extern "C" {
  * @param excontext    eXosip_t instance.
  * @param did          identifier of the subscription.
  */
-  int eXosip_subscribe_remove (struct eXosip_t *excontext, int did);
+  int eXosip_subscription_remove (struct eXosip_t *excontext, int did);
 
 /** @} */
 

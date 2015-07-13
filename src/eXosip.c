@@ -466,7 +466,7 @@ _eXosip_retry_subscribe_with_auth (struct eXosip_t *excontext, eXosip_event_t * 
   osip_transaction_t *tr = NULL;
   int i;
 
-  i = _eXosip_subscribe_transaction_find (excontext, je->tid, &js, &jd, &tr);
+  i = _eXosip_subscription_transaction_find (excontext, je->tid, &js, &jd, &tr);
   if (i != 0) {
     OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "eXosip: subscribe dialog not found\n"));
     return i;
@@ -479,7 +479,7 @@ _eXosip_retry_subscribe_with_auth (struct eXosip_t *excontext, eXosip_event_t * 
 
   if (*retry < 3) {
     (*retry)++;
-    return _eXosip_subscribe_send_request_with_credential (excontext, js, jd, tr);
+    return _eXosip_subscription_send_request_with_credential (excontext, js, jd, tr);
   }
   return OSIP_UNDEFINED_ERROR;
 }
@@ -597,65 +597,6 @@ eXosip_default_action (struct eXosip_t *excontext, eXosip_event_t * je)
     return 1;
 }
 
-void
-eXosip_automatic_refresh (struct eXosip_t *excontext)
-{
-  eXosip_subscribe_t *js;
-  eXosip_dialog_t *jd;
-
-  eXosip_reg_t *jr;
-  time_t now;
-
-  now = osip_getsystemtime (NULL);
-
-  for (js = excontext->j_subscribes; js != NULL; js = js->next) {
-    for (jd = js->s_dialogs; jd != NULL; jd = jd->next) {
-      if (jd->d_dialog != NULL && (jd->d_id >= 1)) {    /* finished call */
-        osip_transaction_t *out_tr = NULL;
-
-        out_tr = osip_list_get (jd->d_out_trs, 0);
-        if (out_tr == NULL)
-          out_tr = js->s_out_tr;
-
-        if (js->s_reg_period == 0 || out_tr == NULL) {
-        }
-        else if (now - out_tr->birth_time > js->s_reg_period - (js->s_reg_period / 10)) {       /* will expires in js->s_reg_period/10: send refresh! */
-          int i;
-
-          i = _eXosip_subscribe_automatic_refresh (excontext, js, jd, out_tr);
-          if (i != 0) {
-            OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "eXosip: could not send subscribe for refresh\n"));
-          }
-        }
-      }
-    }
-  }
-
-  for (jr = excontext->j_reg; jr != NULL; jr = jr->next) {
-    if (jr->r_id >= 1 && jr->r_last_tr != NULL) {
-      if (jr->r_reg_period == 0) {
-        /* skip refresh! */
-      }
-      else if (now - jr->r_last_tr->birth_time > 900) {
-        /* automatic refresh */
-        eXosip_register_send_register (excontext, jr->r_id, NULL);
-#if TARGET_OS_IPHONE
-      }
-      else if (now - jr->r_last_tr->birth_time > jr->r_reg_period - 630) {
-        eXosip_register_send_register (excontext, jr->r_id, NULL);
-#endif
-      }
-      else if (now - jr->r_last_tr->birth_time > jr->r_reg_period - (jr->r_reg_period / 10)) {
-        /* automatic refresh at "timeout - 10%" */
-        eXosip_register_send_register (excontext, jr->r_id, NULL);
-      }
-      else if (now - jr->r_last_tr->birth_time > 120 && (jr->r_last_tr->last_response == NULL || (!MSG_IS_STATUS_2XX (jr->r_last_tr->last_response)))) {
-        /* automatic refresh */
-        eXosip_register_send_register (excontext, jr->r_id, NULL);
-      }
-    }
-  }
-}
 #endif
 
 void
@@ -908,7 +849,7 @@ eXosip_automatic_action (struct eXosip_t *excontext)
         if (js->s_retry < 3) {
           int i;
 
-          i = _eXosip_subscribe_send_request_with_credential (excontext, js, NULL, out_tr);
+          i = _eXosip_subscription_send_request_with_credential (excontext, js, NULL, out_tr);
           if (i != 0) {
             OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "eXosip: could not clone msg for authentication\n"));
           }
@@ -933,7 +874,7 @@ eXosip_automatic_action (struct eXosip_t *excontext)
             if (jd->d_retry < 3) {
               int i;
 
-              i = _eXosip_subscribe_send_request_with_credential (excontext, js, jd, out_tr);
+              i = _eXosip_subscription_send_request_with_credential (excontext, js, jd, out_tr);
               if (i != 0) {
                 OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "eXosip: could not clone suscbribe for authentication\n"));
               }
@@ -947,10 +888,13 @@ eXosip_automatic_action (struct eXosip_t *excontext)
           }
           else if ((out_tr->state == NICT_TERMINATED || out_tr->state == NICT_COMPLETED) && (now - out_tr->birth_time > js->s_reg_period - (js->s_reg_period / 10) || now - out_tr->birth_time > js->s_reg_period - 6)) {       /* will expires in js->s_reg_period/10 sec OR 6 seconds: send refresh! */
             int i;
-
-            i = _eXosip_subscribe_automatic_refresh (excontext, js, jd, out_tr);
-            if (i != 0) {
-              OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "eXosip: could not clone subscribe for refresh\n"));
+            if (out_tr->orig_request != NULL && MSG_IS_REFER(out_tr->orig_request)) {
+                OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "eXosip: subscription for REFER is expired\n"));
+            } else {
+              i = _eXosip_subscription_automatic_refresh (excontext, js, jd, out_tr);
+              if (i != 0) {
+                OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "eXosip: could not clone subscribe for refresh\n"));
+              }
             }
           }
         }
@@ -1330,7 +1274,7 @@ _eXosip_add_authentication_information (struct eXosip_t *excontext, osip_message
 #if defined(AVOID_REFRESH_WITHOUT_CREDENTIAL)
     if (wwwauth->qop_options != NULL) {
 #endif
-      if (osip_strcasecmp (req->sip_method, "REGISTER") == 0 || osip_strcasecmp (req->sip_method, "INVITE") == 0 || osip_strcasecmp (req->sip_method, "SUBSCRIBE") == 0)
+      if (osip_strcasecmp (req->sip_method, "REGISTER") == 0 || osip_strcasecmp (req->sip_method, "INVITE") == 0 || osip_strcasecmp (req->sip_method, "SUBSCRIBE") == 0|| osip_strcasecmp (req->sip_method, "REFER") == 0)
         _eXosip_store_nonce (excontext, req->call_id->number, wwwauth, 401);
       else {
         osip_generic_param_t *to_tag = NULL;
@@ -1376,7 +1320,7 @@ _eXosip_add_authentication_information (struct eXosip_t *excontext, osip_message
 #if defined(AVOID_REFRESH_WITHOUT_CREDENTIAL)
     if (proxyauth->qop_options != NULL) {
 #endif
-      if (osip_strcasecmp (req->sip_method, "REGISTER") == 0 || osip_strcasecmp (req->sip_method, "INVITE") == 0 || osip_strcasecmp (req->sip_method, "SUBSCRIBE") == 0)
+      if (osip_strcasecmp (req->sip_method, "REGISTER") == 0 || osip_strcasecmp (req->sip_method, "INVITE") == 0 || osip_strcasecmp (req->sip_method, "SUBSCRIBE") == 0|| osip_strcasecmp (req->sip_method, "REFER") == 0)
         _eXosip_store_nonce (excontext, req->call_id->number, proxyauth, 407);
       else {
         osip_generic_param_t *to_tag = NULL;

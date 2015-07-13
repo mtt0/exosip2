@@ -203,7 +203,7 @@ _eXosip_generating_register (struct eXosip_t *excontext, eXosip_reg_t * jreg, os
   if (excontext->eXtl_transport.enabled <= 0)
     return OSIP_NO_NETWORK;
 
-  i = _eXosip_generating_request_out_of_dialog (excontext, reg, "REGISTER", NULL, transport, from, proxy);
+  i = _eXosip_generating_request_out_of_dialog (excontext, reg, "REGISTER", NULL, from, proxy);
   if (i != 0)
     return i;
 
