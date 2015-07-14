@@ -172,7 +172,7 @@ _eXosip_register_add_contact(struct eXosip_t *excontext, eXosip_reg_t * jreg, os
     new_contact_url->port = osip_strdup (firewall_port);
   }
 
-  if (excontext->transport != NULL && osip_strcasecmp (excontext->transport, "UDP") != 0) {
+  if (osip_strcasecmp (excontext->transport, "UDP") != 0) {
     osip_uri_uparam_add (new_contact_url, osip_strdup ("transport"), osip_strdup (excontext->transport));
   }
 

@@ -1337,19 +1337,6 @@ save_NAPTR (osip_naptr_t * output_record, const unsigned char *aptr, const unsig
   return aptr + dlen;
 }
 
-static const char *opcodes[] = {
-  "QUERY", "IQUERY", "STATUS", "(reserved)", "NOTIFY",
-  "(unknown)", "(unknown)", "(unknown)", "(unknown)",
-  "UPDATEA", "UPDATED", "UPDATEDA", "UPDATEM", "UPDATEMA",
-  "ZONEINIT", "ZONEREF"
-};
-
-static const char *rcodes[] = {
-  "NOERROR", "FORMERR", "SERVFAIL", "NXDOMAIN", "NOTIMP", "REFUSED",
-  "(unknown)", "(unknown)", "(unknown)", "(unknown)", "(unknown)",
-  "(unknown)", "(unknown)", "(unknown)", "(unknown)", "NOCHANGE"
-};
-
 static void
 _store_A (void *arg, int status, int timeouts, unsigned char *abuf, int alen, int verbose)
 {

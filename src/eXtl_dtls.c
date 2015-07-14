@@ -1193,10 +1193,10 @@ dtls_tl_get_masquerade_contact (struct eXosip_t *excontext, char *ip, int ip_siz
     return OSIP_WRONG_STATE;
   }
 
-  if (excontext->dtls_firewall_ip != '\0')
+  if (excontext->dtls_firewall_ip[0] != '\0')
     snprintf (ip, ip_size, "%s", excontext->dtls_firewall_ip);
 
-  if (excontext->dtls_firewall_port != '\0')
+  if (excontext->dtls_firewall_port[0] != '\0')
     snprintf (port, port_size, "%s", excontext->dtls_firewall_port);
   return OSIP_SUCCESS;
 }

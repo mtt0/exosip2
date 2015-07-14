@@ -122,7 +122,7 @@ eXosip_publish (struct eXosip_t *excontext, osip_message_t * message, const char
     }
   }
   else {
-    if (pub->p_sip_etag != NULL && pub->p_sip_etag[0] != '\0') {
+    if (pub->p_sip_etag[0] != '\0') {
       /* increase cseq */
       osip_message_set_header (message, "SIP-If-Match", pub->p_sip_etag);
     }

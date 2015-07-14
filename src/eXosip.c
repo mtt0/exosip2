@@ -1083,10 +1083,10 @@ eXosip_find_authentication_info (struct eXosip_t *excontext, const char *usernam
   jauthinfo_t *authinfo;
 
   for (authinfo = excontext->authinfos; authinfo != NULL; authinfo = authinfo->next) {
-    if (realm != NULL && authinfo->realm != NULL)
+    if (realm != NULL)
       OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO3, NULL, "INFO: authinfo: %s %s\n", realm, authinfo->realm));
     if (0 == osip_strcasecmp (authinfo->username, username)) {
-      if (authinfo->realm == NULL || authinfo->realm[0] == '\0') {
+      if (authinfo->realm[0] == '\0') {
         fallback = authinfo;
       }
       else if (realm == NULL || osip_strcasecmp (realm, authinfo->realm) == 0 || 0 == osip_strncasecmp (realm + 1, authinfo->realm, strlen (realm) - 2)) {
@@ -1098,9 +1098,9 @@ eXosip_find_authentication_info (struct eXosip_t *excontext, const char *usernam
   /* no matching username has been found for this realm,
      try with another username... */
   for (authinfo = excontext->authinfos; authinfo != NULL; authinfo = authinfo->next) {
-    if (realm != NULL && authinfo->realm != NULL)
+    if (realm != NULL)
       OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO3, NULL, "INFO: authinfo: %s %s\n", realm, authinfo->realm));
-    if ((authinfo->realm == NULL || authinfo->realm[0] == '\0')
+    if (authinfo->realm[0] == '\0'
         && fallback == NULL) {
       fallback = authinfo;
     }
