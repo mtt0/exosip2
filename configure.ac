@@ -1,54 +1,26 @@
-dnl Process this file with autoconf to produce a configure script.
-AC_REVISION($Revision: 1.62 $)dnl
 AC_PREREQ(2.50)
-AC_INIT(include/eXosip2/eXosip.h)
+AC_INIT([libeXosip2], [5.0.0])
+AC_CONFIG_SRCDIR([include/eXosip2/eXosip.h])
 
-dnl require at least autoconf v 2.00
-dnl AC_COPYRIGHT (COPYRIGHT-NOTICE)
-
-AC_MSG_NOTICE([eXosip2                 The Extended Open SIP library.])
+AC_MSG_NOTICE([libeXosip2              The Extended Open SIP library.])
 AC_MSG_NOTICE([Copyright (C) 2002-2015 Aymeric MOIZARD - <amoizard@antisip.com>])
 
-dnl *********************************************************************
-dnl Source packaging numbers
-EXOSIP_MAJOR_VERSION=5
-EXOSIP_MINOR_VERSION=0
-EXOSIP_MICRO_VERSION=0
+AC_SUBST(LIBEXOSIP_SO_VERSION, 12:0:0)
+AC_SUBST(EXOSIP_VERSION, $VERSION)
 
-SONAME_MAJOR_VERSION=12
-SONAME_MINOR_VERSION=0
-SONAME_MICRO_VERSION=0
-
-dnl program extension
-EXOSIP_VERSION=$EXOSIP_MAJOR_VERSION.$EXOSIP_MINOR_VERSION.$EXOSIP_MICRO_VERSION
-
-LIBEXOSIP_SO_VERSION=$SONAME_MAJOR_VERSION:$SONAME_MINOR_VERSION:$SONAME_MICRO_VERSION
-
-AC_SUBST(LIBEXOSIP_SO_VERSION, $LIBEXOSIP_SO_VERSION)
-AC_SUBST(EXOSIP_VERSION)
-
-if test "x$PRERELEASE" = "x"; then
- VERSION=$EXOSIP_VERSION
-else
- VERSION="$EXOSIP_VERSION-$PRERELEASE"
-fi
-
-PACKAGE=libeXosip2
-
-AC_MSG_RESULT([Configuring ${PACKAGE} ${VERSION}])
+AC_MSG_RESULT([Configuring ${PACKAGE} ${EXOSIP_VERSION}])
 OS=`uname|sed -e 'y/ABCDEFGHIJKLMNOPQRSTUVWXYZ/abcdefghijklmnopqrstuvwxyz/'`
 AC_MSG_RESULT([Building Package on ${OS}])
+
 
 dnl *********************************************************************
 dnl Initialize automake stuff
 AC_CONFIG_AUX_DIR(scripts)
 AC_CONFIG_HEADERS(exosip-config.h)
-AM_INIT_AUTOMAKE($PACKAGE, $VERSION)
+AM_INIT_AUTOMAKE
 AC_CONFIG_MACRO_DIR([scripts])
 
 AC_CANONICAL_HOST
-
-AC_SUBST(ac_aux_dir)
 
 dnl Checks for programs.
 

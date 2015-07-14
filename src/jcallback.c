@@ -142,12 +142,6 @@ _eXosip_register_contact_is_modified(struct eXosip_t *excontext, eXosip_reg_t *j
   if (br!=NULL && br->gvalue!=NULL)
     received_viahost = br->gvalue;
 
-  //if (received_viahost==NULL)
-  //  received_viahost = via->host;
-
-  //if (received_viahost==NULL)
-  //  return;
-
   osip_via_param_get_byname(via, "rport", &br);
   if (br!=NULL && br->gvalue==NULL)
     return; /* the feature doesn't work if no rport is provided back */

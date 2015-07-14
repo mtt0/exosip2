@@ -42,11 +42,10 @@ eXinsubscription_api.c  eXpublish_api.c    \
 jnotify.c               jsubscribe.c       \
 inet_ntop.c             inet_ntop.h        \
 jpipe.c                 jpipe.h            \
-eXrefer_api.c           jpublish.c         \
-sdp_offans.c
+jpublish.c              sdp_offans.c
 endif
 
 libeXosip2_la_LDFLAGS = -version-info $(LIBEXOSIP_SO_VERSION) -no-undefined
 libeXosip2_la_LIBADD = @EXOSIP_LIB@ @PTHREAD_LIBS@ $(OSIP_LIBS)
 
-INCLUDES = -I$(top_srcdir) -I$(top_srcdir)/include $(OSIP_CFLAGS)
+AM_CPPFLAGS = -I$(top_srcdir) -I$(top_srcdir)/include $(OSIP_CFLAGS)
