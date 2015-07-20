@@ -476,6 +476,7 @@ extern "C" {
     int auto_masquerade_contact;
     int reuse_tcp_port;
     int use_ephemeral_port;
+    int enable_outbound;
 
     CbSipWakeLock cbsipWakeLock;
     int outgoing_wake_lock_state;

@@ -236,6 +236,8 @@ _eXosip_snd_message (struct eXosip_t *excontext, osip_transaction_t * tr, osip_m
       else {
         /* search for maddr parameter */
         osip_uri_param_t *maddr_param = NULL;
+        osip_uri_param_t *obr_param = NULL;
+        osip_uri_param_t *obp_param = NULL;
 
         osip_uri_uparam_get_byname (sip->req_uri, "maddr", &maddr_param);
         host = NULL;
@@ -245,6 +247,17 @@ _eXosip_snd_message (struct eXosip_t *excontext, osip_transaction_t * tr, osip_m
         port = 5060;
         if (sip->req_uri->port != NULL)
           port = osip_atoi (sip->req_uri->port);
+
+        if (host == NULL) {
+          /* if ob was used in Contact, then exosip adds "x-obr" and "x-obp", thus, when
+          processing request, the ip/port destination are re-used here */
+          osip_uri_uparam_get_byname(sip->req_uri, "x-obr", &obr_param);
+          osip_uri_uparam_get_byname(sip->req_uri, "x-obp", &obp_param);
+          if (obr_param != NULL && obr_param->gvalue != NULL && obp_param != NULL && obp_param->gvalue != NULL) {
+            host = obr_param->gvalue;
+            port = atoi(obp_param->gvalue);
+          }
+        }
 
         if (host == NULL)
           host = sip->req_uri->host;

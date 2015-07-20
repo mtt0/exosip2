@@ -285,6 +285,11 @@ _eXosip_complete_answer_that_establish_a_dialog (struct eXosip_t *excontext, osi
     via = (osip_via_t *) osip_list_get (&response->vias, 0);
     if (via == NULL || via->protocol == NULL)
       return OSIP_SYNTAXERROR;
+    if (excontext->enable_outbound==1) {
+      contact[strlen (contact) - 1] = '\0';
+      strcat (contact, ";ob");
+      strcat (contact, ">");
+    }
     if (strlen (contact) + strlen (via->protocol) + strlen (";transport=>") < 1024 && 0 != osip_strcasecmp (via->protocol, "UDP")) {
       contact[strlen (contact) - 1] = '\0';
       strcat (contact, ";transport=");

@@ -117,9 +117,9 @@ _eXosip_dialog_add_contact (struct eXosip_t *excontext, osip_message_t * request
   memset (locip, '\0', sizeof (locip));
 
   if (a_from->url->username != NULL)
-    len = (int) (2 + 4 + (strlen (a_from->url->username) * 3) + 1 + 100 + 6 + 10 + strlen (excontext->transport));
+    len = (int) (2 + 4 + (strlen (a_from->url->username) * 3) + 1 + 100 + 6 + 10 + 3 + strlen (excontext->transport));
   else
-    len = (int) (2 + 4 + 100 + 6 + 10 + strlen (excontext->transport));
+    len = (int) (2 + 4 + 100 + 6 + 10 + 3 + strlen (excontext->transport));
 
   len++; /* if using sips instead of sip */
 
@@ -178,6 +178,11 @@ _eXosip_dialog_add_contact (struct eXosip_t *excontext, osip_message_t * request
     }
     else
       snprintf (contact, len - strlen (excontext->transport) - 10, "<%s:%s:%s>", scheme, locip, firewall_port);
+  }
+  if (excontext->enable_outbound==1) {
+    contact[strlen (contact) - 1] = '\0';
+    strcat (contact, ";ob");
+    strcat (contact, ">");
   }
   if (osip_strcasecmp (excontext->transport, "UDP") != 0) {
     contact[strlen (contact) - 1] = '\0';

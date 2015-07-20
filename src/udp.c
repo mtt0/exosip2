@@ -1335,6 +1335,44 @@ _eXosip_process_response_out_of_transaction (struct eXosip_t *excontext, osip_ev
   /* ...code not reachable... */
 }
 
+
+static int
+_eXosip_handle_rfc5626_ob (osip_message_t * message, char *remote_host, int remote_port)
+{
+  osip_contact_t *co;
+  osip_uri_param_t *u_param = NULL;
+  char _remote_port[10];
+
+  if (message == NULL)
+    return OSIP_BADPARAMETER;
+  if (message->cseq == NULL)
+    return OSIP_SYNTAXERROR;
+  if (message->cseq->method == NULL)
+    return OSIP_SYNTAXERROR;
+
+  if (0==strcmp(message->cseq->method,"REGISTER"))
+    return OSIP_SUCCESS;
+
+  if (osip_list_size(&message->record_routes) > 0)
+    return OSIP_SYNTAXERROR;
+
+  snprintf(_remote_port, sizeof(_remote_port), "%i", remote_port);
+
+  co = (osip_contact_t *) osip_list_get (&message->contacts, 0);
+
+  if (co == NULL || co->url == NULL)
+    return OSIP_SUCCESS;
+
+  osip_uri_uparam_get_byname (co->url, "ob", &u_param);
+  if (u_param == NULL || u_param->gname == NULL)
+    return OSIP_SUCCESS;
+
+  /* add internal x-ob parameters with connection info */
+  osip_uri_uparam_add (co->url, osip_strdup ("x-obr"), osip_strdup (remote_host));
+  osip_uri_uparam_add (co->url, osip_strdup ("x-obp"), osip_strdup (_remote_port));
+  return OSIP_SUCCESS;
+}
+
 static int
 _eXosip_handle_received_rport (osip_message_t * response, char *received_host, int *rport_port)
 {
@@ -1500,6 +1538,7 @@ _eXosip_handle_incoming_message (struct eXosip_t *excontext, char *buf, size_t l
   }
 
   osip_message_fix_last_via_header (se->sip, host, port);
+  _eXosip_handle_rfc5626_ob (se->sip, host, port);
 
   if (MSG_IS_RESPONSE (se->sip)) {
     _eXosip_handle_received_rport (se->sip, received_host, rport_port);

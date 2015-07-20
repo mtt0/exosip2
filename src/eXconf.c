@@ -1100,6 +1100,10 @@ eXosip_set_option (struct eXosip_t *excontext, int opt, const void *value)
     val = *((int *) value);
     excontext->use_ephemeral_port = val;
     break;
+  case EXOSIP_OPT_ENABLE_OUTBOUND:
+    val = *((int *) value);
+    excontext->enable_outbound = val;
+    break;
   case EXOSIP_OPT_SET_CALLBACK_WAKELOCK:
     excontext->cbsipWakeLock = (CbSipWakeLock) value;
     break;
