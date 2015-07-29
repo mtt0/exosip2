@@ -477,6 +477,9 @@ extern "C" {
     int reuse_tcp_port;
     int use_ephemeral_port;
     int enable_outbound;
+    char oc_local_address[64];
+    int oc_local_port_range[2];
+    int oc_local_port_current;
 
     CbSipWakeLock cbsipWakeLock;
     int outgoing_wake_lock_state;

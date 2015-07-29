@@ -1100,13 +1100,27 @@ eXosip_set_option (struct eXosip_t *excontext, int opt, const void *value)
     val = *((int *) value);
     excontext->use_ephemeral_port = val;
     break;
+  case EXOSIP_OPT_SET_CALLBACK_WAKELOCK:
+    excontext->cbsipWakeLock = (CbSipWakeLock) value;
+    break;
   case EXOSIP_OPT_ENABLE_OUTBOUND:
     val = *((int *) value);
     excontext->enable_outbound = val;
     break;
-  case EXOSIP_OPT_SET_CALLBACK_WAKELOCK:
-    excontext->cbsipWakeLock = (CbSipWakeLock) value;
+  case EXOSIP_OPT_SET_OC_LOCAL_ADDRESS:
+    tmp = (char *) value;
+    memset (excontext->oc_local_address, '\0', sizeof (excontext->oc_local_address));
+    if (tmp != NULL && tmp[0] != '\0')
+      osip_strncpy (excontext->oc_local_address, tmp, sizeof (excontext->oc_local_address) - 1);
+    OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO1, NULL, "eXosip option set: oc_local_address:%s!\n", excontext->oc_local_address));
     break;
+  case EXOSIP_OPT_SET_OC_PORT_RANGE:
+    {
+      int *range = ((int *) value);
+      excontext->oc_local_port_range[0] = range[0];
+      excontext->oc_local_port_range[1] = range[1];
+      break;
+    }
   default:
     return OSIP_BADPARAMETER;
   }

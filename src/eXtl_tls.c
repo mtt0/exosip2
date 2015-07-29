@@ -185,6 +185,7 @@ struct eXtltls {
 
   int tls_socket;
   struct sockaddr_storage ai_addr;
+  int ai_addr_len;
 
   SSL_CTX *server_ctx;
   SSL_CTX *client_ctx;
@@ -203,6 +204,7 @@ tls_tl_init (struct eXosip_t *excontext)
   reserved->server_ctx = NULL;
   reserved->client_ctx = NULL;
   memset (&reserved->ai_addr, 0, sizeof (struct sockaddr_storage));
+  reserved->ai_addr_len=0;
   memset (&reserved->socket_tab, 0, sizeof (struct _tls_stream) * EXOSIP_MAX_SOCKETS);
 
   excontext->eXtltls_reserved = reserved;
@@ -265,6 +267,7 @@ tls_tl_free (struct eXosip_t *excontext)
   memset (&reserved->socket_tab, 0, sizeof (struct _tls_stream) * EXOSIP_MAX_SOCKETS);
 
   memset (&reserved->ai_addr, 0, sizeof (struct sockaddr_storage));
+  reserved->ai_addr_len=0;
   if (reserved->tls_socket > 0)
     close (reserved->tls_socket);
   reserved->tls_socket = 0;
@@ -1528,6 +1531,7 @@ tls_tl_open (struct eXosip_t *excontext)
       OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "eXosip: Cannot get socket name (%s)\n", strerror (ex_errno)));
       memcpy (&reserved->ai_addr, curinfo->ai_addr, curinfo->ai_addrlen);
     }
+    reserved->ai_addr_len=len;
 
     if (excontext->eXtl_transport.proto_num == IPPROTO_TCP) {
       res = listen (sock, SOMAXCONN);
@@ -2480,6 +2484,93 @@ _tls_tl_connect_socket (struct eXosip_t *excontext, char *host, int port, int re
       }
 #endif /* IPV6_V6ONLY */
     }
+
+    if (reserved->ai_addr_len>0)
+    {
+      if (excontext->reuse_tcp_port>0) {
+        struct sockaddr_storage ai_addr;
+        int valopt = 1;
+
+        setsockopt (sock, SOL_SOCKET, SO_REUSEADDR, (void *) &valopt, sizeof (valopt));
+
+        memcpy(&ai_addr, &reserved->ai_addr, reserved->ai_addr_len);
+        if (ai_addr.ss_family == AF_INET)
+          ((struct sockaddr_in *) &ai_addr)->sin_port = htons(excontext->eXtl_transport.proto_port);
+        else
+          ((struct sockaddr_in6 *) &ai_addr)->sin6_port = htons(excontext->eXtl_transport.proto_port);
+        res = bind (sock, (const struct sockaddr *)&ai_addr, reserved->ai_addr_len);
+        if (res < 0) {
+          OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_WARNING, NULL, "Cannot bind socket node:%s family:%d %s\n", excontext->eXtl_transport.proto_ifs, ai_addr.ss_family, strerror (ex_errno)));
+        }
+      } else if (excontext->oc_local_address[0]=='\0') {
+        struct sockaddr_storage ai_addr;
+        int proto_port=0;
+        int count=0;
+        memcpy(&ai_addr, &reserved->ai_addr, reserved->ai_addr_len);
+        while (count<100) {
+          if (excontext->oc_local_port_range[0]<1024) {
+            if (ai_addr.ss_family == AF_INET)
+              ((struct sockaddr_in *) &ai_addr)->sin_port = htons(0);
+            else
+              ((struct sockaddr_in6 *) &ai_addr)->sin6_port = htons(0);
+          } else {
+            if (excontext->oc_local_port_current==0)
+              excontext->oc_local_port_current = excontext->oc_local_port_range[0];
+            /* reset value */
+            if (excontext->oc_local_port_current>=excontext->oc_local_port_range[1])
+              excontext->oc_local_port_current = excontext->oc_local_port_range[0];
+
+            if (ai_addr.ss_family == AF_INET)
+              ((struct sockaddr_in *) &ai_addr)->sin_port = htons(excontext->oc_local_port_current);
+            else
+              ((struct sockaddr_in6 *) &ai_addr)->sin6_port = htons(excontext->oc_local_port_current);
+
+          }
+          res = bind (sock, (const struct sockaddr *)&ai_addr, reserved->ai_addr_len);
+          if (res < 0) {
+            OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_WARNING, NULL, "Cannot bind socket node:%s family:%d (port=%i) %s\n", excontext->eXtl_transport.proto_ifs, ai_addr.ss_family, excontext->oc_local_port_current, strerror (ex_errno)));
+            count++;
+            if (excontext->oc_local_port_range[0]>=1024)
+              excontext->oc_local_port_current++;
+            continue;
+          }
+          if (excontext->oc_local_port_range[0]>=1024)
+            excontext->oc_local_port_current++;
+          break;
+        }
+      } else {
+        struct addrinfo *addrinfo = NULL;
+        int proto_port=0;
+        int count=0;
+        while (count<100) {
+          if (excontext->oc_local_port_range[0]<1024) {
+            excontext->oc_local_port_current=0;
+            _eXosip_get_addrinfo(excontext, &addrinfo, excontext->oc_local_address, 0, IPPROTO_TCP);
+          } else {
+            if (excontext->oc_local_port_current==0)
+              excontext->oc_local_port_current = excontext->oc_local_port_range[0];
+            if (excontext->oc_local_port_current>=excontext->oc_local_port_range[1])
+              excontext->oc_local_port_current = excontext->oc_local_port_range[0];
+
+            _eXosip_get_addrinfo(excontext, &addrinfo, excontext->oc_local_address, excontext->oc_local_port_current, IPPROTO_TCP);
+
+          }
+          res = bind (sock, (const struct sockaddr *)&curinfo->ai_addr, curinfo->ai_addrlen);
+          if (res < 0) {
+            OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_WARNING, NULL, "Cannot bind socket node:%s family:%d (port=%i) %s\n", excontext->oc_local_address, curinfo->ai_addr->sa_family, excontext->oc_local_port_current, strerror (ex_errno)));
+            count++;
+            if (excontext->oc_local_port_range[0]>=1024)
+              excontext->oc_local_port_current++;
+            continue;
+          }
+          if (excontext->oc_local_port_range[0]>=1024)
+            excontext->oc_local_port_current++;
+          break;
+        }
+      }
+    }
+
+
 #if defined(_WIN32_WCE) || defined(WIN32)
     {
       unsigned long nonBlock = 1;

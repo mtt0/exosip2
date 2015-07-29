@@ -129,6 +129,8 @@ extern "C" {
 #define EXOSIP_OPT_ENABLE_USE_EPHEMERAL_PORT (EXOSIP_OPT_BASE_OPTION+22) /**< int *: 0 to disable, 1 to enable usage of emphemeral tcp port in Contact headers instead of local listening port for TCP/TLS */
 #define EXOSIP_OPT_SET_CALLBACK_WAKELOCK (EXOSIP_OPT_BASE_OPTION+23) /**< CbSipWakeLock *: set a callback to be called upon start/end of transaction */
 #define EXOSIP_OPT_ENABLE_OUTBOUND (EXOSIP_OPT_BASE_OPTION+24) /**< int *: 0 to disable, 1 to enable usage of ob parmeter (rfc 5626) in dialog's contact headers */
+#define EXOSIP_OPT_SET_OC_LOCAL_ADDRESS (EXOSIP_OPT_BASE_OPTION+25) /**< char *: set the ip address to bind for outbound connection */
+#define EXOSIP_OPT_SET_OC_PORT_RANGE (EXOSIP_OPT_BASE_OPTION+26) /**< int[2] *: set the port range (min, max) to bind for outbound connection */
 
 #define EXOSIP_OPT_SET_TLS_VERIFY_CERTIFICATE (EXOSIP_OPT_BASE_OPTION+500) /**< int *: enable verification of certificate for TLS connection */
 #define EXOSIP_OPT_SET_TLS_CERTIFICATES_INFO (EXOSIP_OPT_BASE_OPTION+501) /**< eXosip_tls_ctx_t *: client and/or server certificate/ca-root/key info */
