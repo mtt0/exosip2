@@ -874,7 +874,6 @@ _tcp_tl_connect_socket (struct eXosip_t *excontext, char *host, int port)
         }
       } else if (excontext->oc_local_address[0]=='\0') {
         struct sockaddr_storage ai_addr;
-        int proto_port=0;
         int count=0;
         memcpy(&ai_addr, &reserved->ai_addr, reserved->ai_addr_len);
         while (count<100) {
@@ -910,7 +909,6 @@ _tcp_tl_connect_socket (struct eXosip_t *excontext, char *host, int port)
         }
       } else {
         struct addrinfo *addrinfo = NULL;
-        int proto_port=0;
         int count=0;
         while (count<100) {
           if (excontext->oc_local_port_range[0]<1024) {
