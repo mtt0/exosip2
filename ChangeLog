@@ -1,4 +1,6 @@
 eXosip2 (5.0.0)
+	* major API update: add a new parameter to eXosip_call_build_prack in order to create the PRACK
+	for this specific response and not for the latest.
 	* major API update: removal of eX_refer.h API. REFER are now handled with subscriptions APIs.
 	eXosip_refer_build_request removed
 	eXosip_refer_send_request removed
