@@ -1405,6 +1405,8 @@ _eXosip_handle_received_rport (osip_message_t * response, char *received_host, i
     if (received->gvalue != NULL && strlen (received->gvalue) > 0) {
       snprintf (received_host, 65, "%s", received->gvalue);
     }
+  } else { /* fix 11/09/2015: if no received, the local IP may still have changed. */
+      snprintf (received_host, 65, "%s", via->host);
   }
   return 0;
 }
