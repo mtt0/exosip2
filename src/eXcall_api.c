@@ -1032,7 +1032,7 @@ eXosip_call_terminate_with_reason (struct eXosip_t *excontext, int cid, int did,
 #ifndef MINISIZE
 
 int
-eXosip_call_build_prack (struct eXosip_t *excontext, int tid, osip_message_t ** prack)
+eXosip_call_build_prack (struct eXosip_t *excontext, int tid, osip_message_t *response1xx, osip_message_t ** prack)
 {
   eXosip_dialog_t *jd = NULL;
   eXosip_call_t *jc = NULL;
@@ -1067,7 +1067,7 @@ eXosip_call_build_prack (struct eXosip_t *excontext, int tid, osip_message_t ** 
   if (tr->orig_request->cseq == NULL || tr->orig_request->cseq->number == NULL || tr->orig_request->cseq->method == NULL)
     return OSIP_SYNTAXERROR;
 
-  osip_message_header_get_byname (tr->last_response, "RSeq", 0, &rseq);
+  osip_message_header_get_byname (response1xx, "RSeq", 0, &rseq);
   if (rseq == NULL || rseq->hvalue == NULL) {
     return OSIP_WRONG_FORMAT;
   }
@@ -1084,17 +1084,28 @@ eXosip_call_build_prack (struct eXosip_t *excontext, int tid, osip_message_t ** 
 
       osip_message_header_get_byname (old_prack_tr->orig_request, "RAck", 0, &rack_header);
       if (rack_header != NULL && rack_header->hvalue != NULL && 0 == osip_strcasecmp (rack_header->hvalue, tmp)) {
-        OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO2, NULL, "eXosip: PRACK already active for last answer answer.\n"));
+        OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO2, NULL, "eXosip: PRACK already active for last answer.\n"));
         return OSIP_WRONG_STATE;
       }
     }
     pos++;
   }
 
-  i = _eXosip_build_request_within_dialog (excontext, prack, "PRACK", jd->d_dialog);
+  {
+    osip_dialog_t *_1xxok_dialog = NULL;
+    i = osip_dialog_init_as_uac (&_1xxok_dialog, response1xx);
+    if (i != 0) {
+      OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "eXosip: cannot build a dialog for this 1xx answer.\n"));
+      return OSIP_WRONG_STATE;
+    }
 
-  if (i != 0)
-    return i;
+    i = _eXosip_build_request_within_dialog (excontext, prack, "PRACK", _1xxok_dialog);
+
+    osip_dialog_free(_1xxok_dialog);
+
+    if (i != 0)
+      return i;
+  }
 
   osip_message_set_header (*prack, "RAck", tmp);
 

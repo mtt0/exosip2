@@ -242,9 +242,10 @@ extern "C" {
  * 
  * @param excontext    eXosip_t instance.
  * @param tid          id of the invite transaction.
+ * @param response1xx  The sip response for which we build a PRACK.
  * @param prack        The sip prack to build.
  */
-  int eXosip_call_build_prack (struct eXosip_t *excontext, int tid, osip_message_t ** prack);
+  int eXosip_call_build_prack (struct eXosip_t *excontext, int tid, osip_message_t *response1xx, osip_message_t ** prack);
 
 /**
  * Send a PRACK for invite.
