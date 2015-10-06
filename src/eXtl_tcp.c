@@ -627,7 +627,7 @@ tcp_tl_read_message (struct eXosip_t *excontext, fd_set * osip_fdset, fd_set * o
     if (reserved->socket_tab[pos].socket > 0) {
       if (FD_ISSET (reserved->socket_tab[pos].socket, osip_wrset))
         _tcp_tl_send_sockinfo (&reserved->socket_tab[pos], NULL, 0);
-      if (FD_ISSET (reserved->socket_tab[pos].socket, osip_fdset))
+      if (reserved->socket_tab[pos].tcp_inprogress_max_timeout==0 && FD_ISSET (reserved->socket_tab[pos].socket, osip_fdset))
         _tcp_tl_recv (excontext, &reserved->socket_tab[pos]);
     }
   }
@@ -686,6 +686,18 @@ _tcp_tl_is_connected (int sock)
     if (getsockopt (sock, SOL_SOCKET, SO_ERROR, (void *) (&valopt), &sock_len)
         == 0) {
       if (valopt) {
+#if defined(_WIN32_WCE) || defined(WIN32)
+        if (ex_errno == WSAEWOULDBLOCK) {
+#else
+        if (ex_errno == EINPROGRESS) {
+#endif
+          OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO2, NULL, "Cannot connect socket node(%i) / %s[%d]\n", valopt, strerror (ex_errno), ex_errno));
+          return 1;
+        }
+        if (is_wouldblock_error(ex_errno)) {
+          OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO2, NULL, "Cannot connect socket node(%i) would block / %s[%d]\n", valopt, strerror (ex_errno), ex_errno));
+          return 1;
+        }
         OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO2, NULL, "Cannot connect socket node / %s[%d]\n", strerror (ex_errno), ex_errno));
         return -1;
       }
@@ -751,6 +763,7 @@ _tcp_tl_check_connected (struct eXosip_t *excontext)
                      reserved->socket_tab[pos].remote_ip, reserved->socket_tab[pos].remote_port, reserved->socket_tab[pos].socket, pos, reserved->socket_tab[pos].ai_addr.sa_family));
         /* stop calling "connect()" */
         reserved->socket_tab[pos].ai_addrlen = 0;
+        reserved->socket_tab[pos].tcp_inprogress_max_timeout=0;
         continue;
       }
       else {
@@ -1024,6 +1037,7 @@ _tcp_tl_connect_socket (struct eXosip_t *excontext, char *host, int port)
     OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO2, NULL, "socket node:%s , socket %d, family:%d set to non blocking mode\n", host, sock, curinfo->ai_family));
     res = connect (sock, curinfo->ai_addr, curinfo->ai_addrlen);
     if (res < 0) {
+        OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO2, NULL, "connecting socket node:%s, socket %d [pos=%d], family:%d, %s[%d]\n", host, sock, pos, curinfo->ai_family, strerror (ex_errno), ex_errno));
 #if defined(_WIN32_WCE) || defined(WIN32)
       if (ex_errno != WSAEWOULDBLOCK) {
 #else
@@ -1060,6 +1074,7 @@ _tcp_tl_connect_socket (struct eXosip_t *excontext, char *host, int port)
           OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO1, NULL, "socket node:%s , socket %d [pos=%d], family:%d, connected\n", host, sock, pos, curinfo->ai_family));
           selected_ai_addrlen = 0;
           memcpy (&selected_ai_addr, curinfo->ai_addr, sizeof (struct sockaddr));
+          reserved->socket_tab[pos].tcp_inprogress_max_timeout=0;
           break;
         }
         else {
@@ -1455,6 +1470,7 @@ tcp_tl_send_message (struct eXosip_t *excontext, osip_transaction_t * tr, osip_m
   }
   else if (i == 0) {
     OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO2, NULL, "socket node:%s , socket %d [pos=%d], connected\n", host, out_socket, pos));
+    reserved->socket_tab[pos].tcp_inprogress_max_timeout=0;
   }
   else {
     OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "socket node:%s, socket %d [pos=%d], socket error\n", host, out_socket, pos));
@@ -1588,6 +1604,7 @@ tcp_tl_keepalive (struct eXosip_t *excontext)
       else if (i == 0) {
         OSIP_TRACE (osip_trace
                     (__FILE__, __LINE__, OSIP_INFO2, NULL, "tcp_tl_keepalive socket node:%s:%i , socket %d [pos=%d], connected\n", reserved->socket_tab[pos].remote_ip, reserved->socket_tab[pos].remote_port, reserved->socket_tab[pos].socket, pos));
+        reserved->socket_tab[pos].tcp_inprogress_max_timeout=0;
       }
       else {
         OSIP_TRACE (osip_trace
