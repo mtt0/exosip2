@@ -1,3 +1,7 @@
+Oct 2015    : 5.0.0
+  This file is not maintained. eXosip2 is stil under dev. Keep looking
+  at the git on http://savannah.gnu.org/git/?group=exosip and ChangeLog.
+
 Oct 2006    : 3.0.1
   eXosip2 is now ported to macosx, linux, windows, windows Mobile (pocket PC
   and smartphone). It's stable and mostly complete. Right now, it seems only
