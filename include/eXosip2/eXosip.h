@@ -320,7 +320,7 @@ extern "C" {
     /* for both UAS & UAC events */
     EXOSIP_CALL_RELEASED,             /**< call context is cleared.            */
 
-    /* response received for request outside calls */
+    /* events received for request outside calls */
     EXOSIP_MESSAGE_NEW,              /**< announce new incoming request. */
     EXOSIP_MESSAGE_PROCEEDING,       /**< announce a 1xx for request. */
     EXOSIP_MESSAGE_ANSWERED,         /**< announce a 200ok  */
