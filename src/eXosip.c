@@ -50,6 +50,9 @@
 #include <unistd.h>
 #endif
 
+/* this value should remain 120, at least, don't use very low values */
+#define TRANSACTION_TIMEOUT_RETRY 120
+
 /* Private functions */
 static jauthinfo_t *eXosip_find_authentication_info (struct eXosip_t *excontext, const char *username, const char *realm);
 
@@ -679,7 +682,7 @@ eXosip_automatic_action (struct eXosip_t *excontext)
           && (out_tr->state == ICT_TERMINATED
               || out_tr->state == NICT_TERMINATED
               || out_tr->state == ICT_COMPLETED
-              || out_tr->state == NICT_COMPLETED) && now - out_tr->birth_time < 120 && out_tr->orig_request != NULL && out_tr->last_response != NULL && (out_tr->last_response->status_code == 401 || out_tr->last_response->status_code == 407)) {
+              || out_tr->state == NICT_COMPLETED) && now - out_tr->birth_time < TRANSACTION_TIMEOUT_RETRY && out_tr->orig_request != NULL && out_tr->last_response != NULL && (out_tr->last_response->status_code == 401 || out_tr->last_response->status_code == 407)) {
         /* retry with credential */
         if (jc->c_retry < 3) {
           int i;
@@ -694,7 +697,7 @@ eXosip_automatic_action (struct eXosip_t *excontext)
       else if (out_tr != NULL
                && (out_tr->state == ICT_TERMINATED
                    || out_tr->state == NICT_TERMINATED
-                   || out_tr->state == ICT_COMPLETED || out_tr->state == NICT_COMPLETED) && now - out_tr->birth_time < 120 && out_tr->orig_request != NULL && out_tr->last_response != NULL && out_tr->last_response->status_code == 422) {
+                   || out_tr->state == ICT_COMPLETED || out_tr->state == NICT_COMPLETED) && now - out_tr->birth_time < TRANSACTION_TIMEOUT_RETRY && out_tr->orig_request != NULL && out_tr->last_response != NULL && out_tr->last_response->status_code == 422) {
         /* retry with higher Session-Expires / Min-SE */
         if (jc->c_retry < 3) {
           int i;
@@ -710,7 +713,7 @@ eXosip_automatic_action (struct eXosip_t *excontext)
                && (out_tr->state == ICT_TERMINATED
                    || out_tr->state == NICT_TERMINATED
                    || out_tr->state == ICT_COMPLETED
-                   || out_tr->state == NICT_COMPLETED) && now - out_tr->birth_time < 120 && out_tr->orig_request != NULL && out_tr->last_response != NULL && (out_tr->last_response->status_code >= 300 && out_tr->last_response->status_code <= 399)) {
+                   || out_tr->state == NICT_COMPLETED) && now - out_tr->birth_time < TRANSACTION_TIMEOUT_RETRY && out_tr->orig_request != NULL && out_tr->last_response != NULL && (out_tr->last_response->status_code >= 300 && out_tr->last_response->status_code <= 399)) {
         /* retry with credential */
         int i;
 
@@ -735,7 +738,7 @@ eXosip_automatic_action (struct eXosip_t *excontext)
             && (out_tr->state == ICT_TERMINATED
                 || out_tr->state == NICT_TERMINATED
                 || out_tr->state == ICT_COMPLETED
-                || out_tr->state == NICT_COMPLETED) && now - out_tr->birth_time < 120 && out_tr->orig_request != NULL && out_tr->last_response != NULL && (out_tr->last_response->status_code == 401 || out_tr->last_response->status_code == 407)) {
+                || out_tr->state == NICT_COMPLETED) && now - out_tr->birth_time < TRANSACTION_TIMEOUT_RETRY && out_tr->orig_request != NULL && out_tr->last_response != NULL && (out_tr->last_response->status_code == 401 || out_tr->last_response->status_code == 407)) {
           /* retry with credential */
           if (jd->d_retry < 3) {
             int i;
@@ -750,7 +753,7 @@ eXosip_automatic_action (struct eXosip_t *excontext)
         else if (out_tr != NULL
                  && (out_tr->state == ICT_TERMINATED
                      || out_tr->state == NICT_TERMINATED
-                     || out_tr->state == ICT_COMPLETED || out_tr->state == NICT_COMPLETED) && now - out_tr->birth_time < 120 && out_tr->orig_request != NULL && out_tr->last_response != NULL && out_tr->last_response->status_code == 422) {
+                     || out_tr->state == ICT_COMPLETED || out_tr->state == NICT_COMPLETED) && now - out_tr->birth_time < TRANSACTION_TIMEOUT_RETRY && out_tr->orig_request != NULL && out_tr->last_response != NULL && out_tr->last_response->status_code == 422) {
           /* retry with higher Session-Expires / Min-SE */
           if (jd->d_retry < 3) {
             int i;
@@ -766,7 +769,7 @@ eXosip_automatic_action (struct eXosip_t *excontext)
                  && (out_tr->state == ICT_TERMINATED
                      || out_tr->state == NICT_TERMINATED
                      || out_tr->state == ICT_COMPLETED
-                     || out_tr->state == NICT_COMPLETED) && now - out_tr->birth_time < 120 && out_tr->orig_request != NULL && out_tr->last_response != NULL && (out_tr->last_response->status_code >= 300 && out_tr->last_response->status_code <= 399)) {
+                     || out_tr->state == NICT_COMPLETED) && now - out_tr->birth_time < TRANSACTION_TIMEOUT_RETRY && out_tr->orig_request != NULL && out_tr->last_response != NULL && (out_tr->last_response->status_code >= 300 && out_tr->last_response->status_code <= 399)) {
           /* retry with credential */
           int i;
 
@@ -844,7 +847,7 @@ eXosip_automatic_action (struct eXosip_t *excontext)
       if (out_tr != NULL
           && (out_tr->state == NICT_TERMINATED
               || out_tr->state == NICT_COMPLETED) &&
-          now - out_tr->birth_time < 120 && out_tr->orig_request != NULL && out_tr->last_response != NULL && (out_tr->last_response->status_code == 401 || out_tr->last_response->status_code == 407 || out_tr->last_response->status_code == 423)) {
+          now - out_tr->birth_time < TRANSACTION_TIMEOUT_RETRY && out_tr->orig_request != NULL && out_tr->last_response != NULL && (out_tr->last_response->status_code == 401 || out_tr->last_response->status_code == 407 || out_tr->last_response->status_code == 423)) {
         /* retry with credential */
         if (js->s_retry < 3) {
           int i;
@@ -869,7 +872,7 @@ eXosip_automatic_action (struct eXosip_t *excontext)
 
           if (out_tr != NULL
               && (out_tr->state == NICT_TERMINATED
-                  || out_tr->state == NICT_COMPLETED) && now - out_tr->birth_time < 120 && out_tr->orig_request != NULL && out_tr->last_response != NULL && (out_tr->last_response->status_code == 401 || out_tr->last_response->status_code == 407)) {
+                  || out_tr->state == NICT_COMPLETED) && now - out_tr->birth_time < TRANSACTION_TIMEOUT_RETRY && out_tr->orig_request != NULL && out_tr->last_response != NULL && (out_tr->last_response->status_code == 401 || out_tr->last_response->status_code == 407)) {
             /* retry with credential */
             if (jd->d_retry < 3) {
               int i;
@@ -913,7 +916,7 @@ eXosip_automatic_action (struct eXosip_t *excontext)
 
           if (out_tr != NULL
               && (out_tr->state == NICT_TERMINATED
-                  || out_tr->state == NICT_COMPLETED) && now - out_tr->birth_time < 120 && out_tr->orig_request != NULL && out_tr->last_response != NULL && (out_tr->last_response->status_code == 401 || out_tr->last_response->status_code == 407)) {
+                  || out_tr->state == NICT_COMPLETED) && now - out_tr->birth_time < TRANSACTION_TIMEOUT_RETRY && out_tr->orig_request != NULL && out_tr->last_response != NULL && (out_tr->last_response->status_code == 401 || out_tr->last_response->status_code == 407)) {
             /* retry with credential */
             if (jd->d_retry < 3) {
               int i;
@@ -942,7 +945,7 @@ eXosip_automatic_action (struct eXosip_t *excontext)
         /* automatic refresh */
         eXosip_register_send_register (excontext, jr->r_id, NULL);
       }
-      else if (jr->r_reg_period != 0 && now - jr->r_last_tr->birth_time > 120 && (jr->r_last_tr->last_response == NULL || (!MSG_IS_STATUS_2XX (jr->r_last_tr->last_response)))) {
+      else if (jr->r_reg_period != 0 && now - jr->r_last_tr->birth_time > TRANSACTION_TIMEOUT_RETRY && (jr->r_last_tr->last_response == NULL || (!MSG_IS_STATUS_2XX (jr->r_last_tr->last_response)))) {
         /* automatic refresh */
         eXosip_register_send_register (excontext, jr->r_id, NULL);
       }
@@ -1395,6 +1398,35 @@ _eXosip_mark_all_registrations_expired (struct eXosip_t *excontext)
   for (jr = excontext->j_reg; jr != NULL; jr = jr->next) {
     if (jr->r_id >= 1 && jr->r_last_tr != NULL) {
       jr->r_last_tr->birth_time -= jr->r_reg_period;
+      wakeup = 1;
+    }
+  }
+  if (wakeup) {
+    _eXosip_wakeup (excontext);
+  }
+}
+
+void
+_eXosip_mark_registration_expired (struct eXosip_t *excontext, const char *call_id)
+{
+  eXosip_reg_t *jr;
+  int wakeup = 0;
+
+  for (jr = excontext->j_reg; jr != NULL; jr = jr->next) {
+    if (jr->r_id < 1 || jr->r_last_tr == NULL)
+      continue;
+    if (jr->r_last_tr->orig_request==NULL || jr->r_last_tr->orig_request->call_id==NULL || jr->r_last_tr->orig_request->call_id->number==NULL)
+      continue;
+    if (osip_strcasecmp(jr->r_last_tr->orig_request->call_id->number, call_id)==0) {
+      time_t now;
+      now = osip_getsystemtime (NULL);
+      if (jr->r_reg_period - (jr->r_reg_period / 10)>TRANSACTION_TIMEOUT_RETRY)
+        jr->r_last_tr->birth_time = now-120;
+      else
+        jr->r_last_tr->birth_time = jr->r_reg_period - (jr->r_reg_period / 10);
+      if (jr->r_retryfailover<60)
+        jr->r_retryfailover++;
+      jr->r_last_tr->birth_time+=+jr->r_retryfailover; /* wait "RETRY" (counter) seconds before retrying: avoid flooding */
       wakeup = 1;
     }
   }

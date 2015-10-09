@@ -1618,18 +1618,6 @@ _naptr_callback (void *arg, int status, int timeouts, unsigned char *abuf, int a
   _store_srv (arg, status, timeouts, abuf, alen, 0);
   _store_A (arg, status, timeouts, abuf, alen, 0);
   output_record->naptr_state = OSIP_NAPTR_STATE_NAPTRDONE;
-
-  /* verify if we already have OSIP_NAPTR_STATE_SRVDONE automatically! */
-  if (output_record->sipudp_record.srv_state == OSIP_SRV_STATE_COMPLETED)
-    output_record->naptr_state = OSIP_NAPTR_STATE_SRVDONE;
-  else if (output_record->siptcp_record.srv_state == OSIP_SRV_STATE_COMPLETED)
-    output_record->naptr_state = OSIP_NAPTR_STATE_SRVDONE;
-  else if (output_record->siptls_record.srv_state == OSIP_SRV_STATE_COMPLETED)
-    output_record->naptr_state = OSIP_NAPTR_STATE_SRVDONE;
-  else if (output_record->sipdtls_record.srv_state == OSIP_SRV_STATE_COMPLETED)
-    output_record->naptr_state = OSIP_NAPTR_STATE_SRVDONE;
-  else if (output_record->sipsctp_record.srv_state == OSIP_SRV_STATE_COMPLETED)
-    output_record->naptr_state = OSIP_NAPTR_STATE_SRVDONE;
 }
 
 static int
@@ -1674,7 +1662,7 @@ eXosip_dnsutils_srv_lookup (struct osip_naptr *output_record)
       }
 
       if (nfds == 0) {
-        /* SRVs finished: we assume that one is enough */
+        /* SRVs finished */
         if (output_record->sipudp_record.srv_state == OSIP_SRV_STATE_COMPLETED)
           output_record->naptr_state = OSIP_NAPTR_STATE_SRVDONE;
         else if (output_record->siptcp_record.srv_state == OSIP_SRV_STATE_COMPLETED)
@@ -1731,22 +1719,22 @@ eXosip_dnsutils_srv_lookup (struct osip_naptr *output_record)
 
   output_record->naptr_state = OSIP_NAPTR_STATE_SRVINPROGRESS;
 
-  if (output_record->sipudp_record.name[0] != '\0') {
+  if (output_record->sipudp_record.name[0] != '\0' && output_record->sipudp_record.srv_state != OSIP_SRV_STATE_COMPLETED) {
     ares_query (channel, output_record->sipudp_record.name, C_IN, T_SRV, _srv_callback, (void *) output_record);
     OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO2, NULL, "eXosip_dnsutils_srv_lookup: About to ask for '%s SRV'\n", output_record->sipudp_record.name));
   }
 
-  if (output_record->siptcp_record.name[0] != '\0') {
+  if (output_record->siptcp_record.name[0] != '\0' && output_record->siptcp_record.srv_state != OSIP_SRV_STATE_COMPLETED) {
     ares_query (channel, output_record->siptcp_record.name, C_IN, T_SRV, _srv_callback, (void *) output_record);
     OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO2, NULL, "eXosip_dnsutils_srv_lookup: About to ask for '%s SRV'\n", output_record->siptcp_record.name));
   }
 
-  if (output_record->siptls_record.name[0] != '\0') {
+  if (output_record->siptls_record.name[0] != '\0' && output_record->siptls_record.srv_state != OSIP_SRV_STATE_COMPLETED) {
     ares_query (channel, output_record->siptls_record.name, C_IN, T_SRV, _srv_callback, (void *) output_record);
     OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO2, NULL, "eXosip_dnsutils_srv_lookup: About to ask for '%s SRV'\n", output_record->siptls_record.name));
   }
 
-  if (output_record->sipdtls_record.name[0] != '\0') {
+  if (output_record->sipdtls_record.name[0] != '\0' && output_record->sipdtls_record.srv_state != OSIP_SRV_STATE_COMPLETED) {
     ares_query (channel, output_record->sipdtls_record.name, C_IN, T_SRV, _srv_callback, (void *) output_record);
     OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO2, NULL, "eXosip_dnsutils_srv_lookup: About to ask for '%s SRV'\n", output_record->sipdtls_record.name));
   }

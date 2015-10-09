@@ -104,6 +104,7 @@ struct _tcp_stream {
   int is_server;
   time_t tcp_max_timeout;
   time_t tcp_inprogress_max_timeout;
+  char reg_call_id[64];
 };
 
 #ifndef SOCKET_TIMEOUT
@@ -472,8 +473,8 @@ _tcp_tl_recv (struct eXosip_t *excontext, struct _tcp_stream *sockinfo)
   r = (int) recv (sockinfo->socket, sockinfo->buf + sockinfo->buflen, sockinfo->bufsize - sockinfo->buflen, 0);
   if (r == 0) {
     OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO1, NULL, "socket %s:%i: eof\n", sockinfo->remote_ip, sockinfo->remote_port));
+    _eXosip_mark_registration_expired (excontext, sockinfo->reg_call_id);
     _tcp_tl_close_sockinfo (sockinfo);
-    _eXosip_mark_all_registrations_expired (excontext);
     return OSIP_UNDEFINED_ERROR;
   }
   else if (r < 0) {
@@ -483,7 +484,7 @@ _tcp_tl_recv (struct eXosip_t *excontext, struct _tcp_stream *sockinfo)
       return OSIP_SUCCESS;
     /* Do we need next line ? */
     /* else if (is_connreset_error(status)) */
-    _eXosip_mark_all_registrations_expired (excontext);
+    _eXosip_mark_registration_expired (excontext, sockinfo->reg_call_id);
     OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO1, NULL, "socket %s:%i: error %d\n", sockinfo->remote_ip, sockinfo->remote_port, status));
     _tcp_tl_close_sockinfo (sockinfo);
     return OSIP_UNDEFINED_ERROR;
@@ -1354,6 +1355,17 @@ tcp_tl_send_message (struct eXosip_t *excontext, osip_transaction_t * tr, osip_m
          */
         osip_srv_entry_t *srv;
 
+        if (MSG_IS_REGISTER (sip) || MSG_IS_OPTIONS (sip)) {
+          /* activate the failover capability: for no answer OR 503 */
+          if (naptr_record->siptcp_record.srventry[naptr_record->siptcp_record.index].srv_is_broken.tv_sec>0) {
+            naptr_record->siptcp_record.srventry[naptr_record->siptcp_record.index].srv_is_broken.tv_sec=0;
+            naptr_record->siptcp_record.srventry[naptr_record->siptcp_record.index].srv_is_broken.tv_usec=0;
+            if (eXosip_dnsutils_rotate_srv (&naptr_record->siptcp_record) > 0) {
+              OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO1, NULL,
+                                      "Doing TCP failover: %s:%i->%s:%i\n", host, port, naptr_record->siptcp_record.srventry[naptr_record->siptcp_record.index].srv, naptr_record->siptcp_record.srventry[naptr_record->siptcp_record.index].port));
+            }
+          }
+        }
         srv = &naptr_record->siptcp_record.srventry[naptr_record->siptcp_record.index];
         if (srv->ipaddress[0]) {
           host = srv->ipaddress;
@@ -1443,26 +1455,27 @@ tcp_tl_send_message (struct eXosip_t *excontext, osip_transaction_t * tr, osip_m
   if (out_socket <= 0) {
     return -1;
   }
+
+  if (MSG_IS_REGISTER (sip)) {
+    /* this value is saved: when a connection breaks, we will ask to retry the registration */
+    snprintf(reserved->socket_tab[pos].reg_call_id, sizeof(reserved->socket_tab[pos].reg_call_id), "%s", sip->call_id->number);
+  }
+
   i = _tcp_tl_is_connected (out_socket);
   if (i > 0) {
     time_t now;
     if (tr!=NULL) {
-      int val6 = (int) tr->reserved6;
-
       now = osip_getsystemtime (NULL);
       OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO2, NULL, "socket node:%s, socket %d [pos=%d], in progress\n", host, out_socket, pos));
-      if (tr != NULL && now - tr->birth_time > 10 && (val6 & 0x1) == 0) {
-        /* avoid doing this twice... */
-        tr->reserved6 = (val6 | 0x1);
+      if (tr != NULL && now - tr->birth_time > 10) {
         if (naptr_record != NULL && (MSG_IS_REGISTER (sip) || MSG_IS_OPTIONS (sip))) {
-          if (pos >= 0) _tcp_tl_close_sockinfo (&reserved->socket_tab[pos]);
-          if (eXosip_dnsutils_rotate_srv (&naptr_record->siptcp_record) > 0) {
+          if (eXosip_dnsutils_rotate_srv (&naptr_record->sipudp_record) > 0) {
+            _eXosip_mark_registration_expired (excontext, reserved->socket_tab[pos].reg_call_id);
+            if (pos >= 0) _tcp_tl_close_sockinfo (&reserved->socket_tab[pos]);
             OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO1, NULL,
                                     "Doing TCP failover: %s:%i->%s:%i\n", host, port, naptr_record->siptcp_record.srventry[naptr_record->siptcp_record.index].srv, naptr_record->siptcp_record.srventry[naptr_record->siptcp_record.index].port));
-            return OSIP_SUCCESS + 1;      /* retry for next retransmission! */
           }
         }
-
         return -1;
       }
     }
@@ -1473,6 +1486,11 @@ tcp_tl_send_message (struct eXosip_t *excontext, osip_transaction_t * tr, osip_m
     reserved->socket_tab[pos].tcp_inprogress_max_timeout=0;
   }
   else {
+    if (naptr_record != NULL && (MSG_IS_REGISTER (sip) || MSG_IS_OPTIONS (sip))) {
+      if (eXosip_dnsutils_rotate_srv (&naptr_record->sipudp_record) > 0) {
+        _eXosip_mark_registration_expired (excontext, reserved->socket_tab[pos].reg_call_id);
+      }
+    }
     OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "socket node:%s, socket %d [pos=%d], socket error\n", host, out_socket, pos));
     _tcp_tl_close_sockinfo (&reserved->socket_tab[pos]);
     return -1;
@@ -1609,10 +1627,10 @@ tcp_tl_keepalive (struct eXosip_t *excontext)
       else {
         OSIP_TRACE (osip_trace
                     (__FILE__, __LINE__, OSIP_ERROR, NULL, "tcp_tl_keepalive socket node:%s:%i, socket %d [pos=%d], socket error\n", reserved->socket_tab[pos].remote_ip, reserved->socket_tab[pos].remote_port, reserved->socket_tab[pos].socket, pos));
-        _tcp_tl_close_sockinfo (&reserved->socket_tab[pos]);
 #if TARGET_OS_IPHONE
-        _eXosip_mark_all_registrations_expired (excontext);
+        _eXosip_mark_registration_expired (excontext, reserved->socket_tab[pos].reg_call_id);
 #endif
+        _tcp_tl_close_sockinfo (&reserved->socket_tab[pos]);
         continue;
       }
       if (excontext->ka_interval > 0) {
@@ -1758,8 +1776,8 @@ tcp_tl_check_connection (struct eXosip_t *excontext)
             OSIP_TRACE (osip_trace
                         (__FILE__, __LINE__, OSIP_INFO2, NULL, "tcp_tl_check_connection socket is in progress since 32 seconds / close socket\n"));
             reserved->socket_tab[pos].tcp_inprogress_max_timeout=0;
+            _eXosip_mark_registration_expired (excontext, reserved->socket_tab[pos].reg_call_id);
             _tcp_tl_close_sockinfo (&reserved->socket_tab[pos]);
-            _eXosip_mark_all_registrations_expired (excontext);
             continue;
           }
         }
@@ -1778,8 +1796,8 @@ tcp_tl_check_connection (struct eXosip_t *excontext)
             OSIP_TRACE (osip_trace
                         (__FILE__, __LINE__, OSIP_INFO2, NULL, "tcp_tl_check_connection we excepted a reply on established sockets / close socket\n"));
             reserved->socket_tab[pos].tcp_max_timeout=0;
+            _eXosip_mark_registration_expired (excontext, reserved->socket_tab[pos].reg_call_id);
             _tcp_tl_close_sockinfo (&reserved->socket_tab[pos]);
-            _eXosip_mark_all_registrations_expired (excontext);
             continue;
           }
         }
@@ -1787,10 +1805,10 @@ tcp_tl_check_connection (struct eXosip_t *excontext)
       else {
         OSIP_TRACE (osip_trace
                     (__FILE__, __LINE__, OSIP_ERROR, NULL, "tcp_tl_check_connection socket node:%s:%i, socket %d [pos=%d], socket error\n", reserved->socket_tab[pos].remote_ip, reserved->socket_tab[pos].remote_port, reserved->socket_tab[pos].socket, pos));
-        _tcp_tl_close_sockinfo (&reserved->socket_tab[pos]);
 #if TARGET_OS_IPHONE
-        _eXosip_mark_all_registrations_expired (excontext);
+        _eXosip_mark_registration_expired (excontext, reserved->socket_tab[pos].reg_call_id);
 #endif
+        _tcp_tl_close_sockinfo (&reserved->socket_tab[pos]);
         continue;
       }
     }

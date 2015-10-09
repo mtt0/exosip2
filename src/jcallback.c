@@ -1126,6 +1126,7 @@ cb_rcv2xx (int type, osip_transaction_t * tr, osip_message_t * sip)
       je = _eXosip_event_init_for_reg (EXOSIP_REGISTRATION_SUCCESS, jreg, tr);
       _eXosip_report_event (excontext, je, sip);
       jreg->r_retry = 0;        /* reset value */
+      jreg->r_retryfailover = 0;
     }
 
     return;
@@ -1276,6 +1277,16 @@ rcvregister_failure (osip_transaction_t * tr, osip_message_t * sip)
 
     je = _eXosip_event_init_for_reg (EXOSIP_REGISTRATION_FAILURE, jreg, tr);
     _eXosip_report_event (excontext, je, sip);
+
+    if (tr->naptr_record!=NULL && sip!=NULL && sip->status_code == 503) {
+      /* no matter which one, we'll move them all */
+      osip_gettimeofday(&tr->naptr_record->sipudp_record.srventry[tr->naptr_record->sipudp_record.index].srv_is_broken, NULL);
+      osip_gettimeofday(&tr->naptr_record->siptcp_record.srventry[tr->naptr_record->siptcp_record.index].srv_is_broken, NULL);
+      osip_gettimeofday(&tr->naptr_record->siptls_record.srventry[tr->naptr_record->siptls_record.index].srv_is_broken, NULL);
+      osip_gettimeofday(&tr->naptr_record->sipdtls_record.srventry[tr->naptr_record->sipdtls_record.index].srv_is_broken, NULL);
+      osip_gettimeofday(&tr->naptr_record->sipsctp_record.srventry[tr->naptr_record->sipsctp_record.index].srv_is_broken, NULL);
+      _eXosip_mark_registration_expired(excontext, sip->call_id->number);
+    }
   }
 }
 

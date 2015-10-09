@@ -863,6 +863,18 @@ udp_tl_send_message (struct eXosip_t *excontext, osip_transaction_t * tr, osip_m
         osip_srv_entry_t *srv;
         int n = 0;
 
+        if (MSG_IS_REGISTER (sip) || MSG_IS_OPTIONS (sip)) {
+          /* activate the failover capability: for no answer OR 503 */
+          if (naptr_record->sipudp_record.srventry[tr->naptr_record->sipudp_record.index].srv_is_broken.tv_sec>0) {
+            naptr_record->sipudp_record.srventry[naptr_record->sipudp_record.index].srv_is_broken.tv_sec=0;
+            naptr_record->sipudp_record.srventry[naptr_record->sipudp_record.index].srv_is_broken.tv_usec=0;
+            if (eXosip_dnsutils_rotate_srv (&naptr_record->sipudp_record) > 0) {
+              OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO1, NULL,
+                                      "Doing UDP failover: ->%s:%i\n", naptr_record->sipudp_record.srventry[naptr_record->sipudp_record.index].srv, naptr_record->sipudp_record.srventry[naptr_record->sipudp_record.index].port));
+            }
+          }
+        }
+        
         for (srv = &naptr_record->sipudp_record.srventry[naptr_record->sipudp_record.index];
              n < 10 && naptr_record->sipudp_record.srventry[naptr_record->sipudp_record.index].srv[0]; srv = &naptr_record->sipudp_record.srventry[naptr_record->sipudp_record.index]) {
           if (srv->ipaddress[0])
@@ -885,6 +897,8 @@ udp_tl_send_message (struct eXosip_t *excontext, osip_transaction_t * tr, osip_m
           i = -1;
           /* copy next element */
           n++;
+          OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO1, NULL,
+                                  "Doing UDP failover: ->%s:%i\n", naptr_record->sipudp_record.srventry[naptr_record->sipudp_record.index].srv, naptr_record->sipudp_record.srventry[naptr_record->sipudp_record.index].port));
         }
       }
     }
@@ -984,9 +998,12 @@ udp_tl_send_message (struct eXosip_t *excontext, osip_transaction_t * tr, osip_m
 #ifndef MINISIZE
     if (naptr_record != NULL) {
       /* rotate on failure! */
-      if (eXosip_dnsutils_rotate_srv (&naptr_record->sipudp_record) > 0) {
-        osip_free (message);
-        return OSIP_SUCCESS + 1;        /* retry for next retransmission! */
+      if (MSG_IS_REGISTER (sip)) {
+        if (eXosip_dnsutils_rotate_srv (&naptr_record->sipudp_record) > 0) {
+          OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO1, NULL,
+                                  "Doing UDP failover: %s:%i->%s:%i\n", host, port, naptr_record->sipudp_record.srventry[naptr_record->sipudp_record.index].srv, naptr_record->sipudp_record.srventry[naptr_record->sipudp_record.index].port));
+          _eXosip_mark_registration_expired(excontext, sip->call_id->number);
+        }
       }
     }
 #endif
@@ -1008,18 +1025,19 @@ udp_tl_send_message (struct eXosip_t *excontext, osip_transaction_t * tr, osip_m
 
 #ifndef MINISIZE
   if (naptr_record != NULL) {
-    if (tr != NULL && (MSG_IS_REGISTER (sip) || MSG_IS_OPTIONS (sip)) && tr->last_response == NULL) {
+    if (tr != NULL && MSG_IS_REGISTER (sip) && tr->last_response == NULL) {
       /* failover for outgoing transaction */
       time_t now;
 
       now = osip_getsystemtime (NULL);
-      if (tr != NULL && now - tr->birth_time > 10 && now - tr->birth_time < 13) {
+      if (tr != NULL && now - tr->birth_time > 10) {
         /* avoid doing this twice... */
         if (eXosip_dnsutils_rotate_srv (&naptr_record->sipudp_record) > 0) {
           OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO1, NULL,
-                                  "Doing failover: %s:%i->%s:%i\n", host, port, naptr_record->sipudp_record.srventry[naptr_record->sipudp_record.index].srv, naptr_record->sipudp_record.srventry[naptr_record->sipudp_record.index].port));
+                                  "Doing UDP failover: %s:%i->%s:%i\n", host, port, naptr_record->sipudp_record.srventry[naptr_record->sipudp_record.index].srv, naptr_record->sipudp_record.srventry[naptr_record->sipudp_record.index].port));
           osip_free (message);
-          return OSIP_SUCCESS + 1;      /* retry for next retransmission! */
+          _eXosip_mark_registration_expired(excontext, sip->call_id->number);
+          return -1;
         }
       }
     }

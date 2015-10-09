@@ -266,6 +266,7 @@ extern "C" {
 
     osip_transaction_t *r_last_tr;
     int r_retry;                /* avoid too many unsuccessful retry */
+    int r_retryfailover;        /* avoid too many unsuccessful retry */
 #define RS_DELETIONREQUIRED 2
 #define RS_DELETIONPROCEEDING 3
 #define RS_MASQUERADINGREQUIRED 4
@@ -508,6 +509,7 @@ extern "C" {
   int _eXosip_request_add_via (struct eXosip_t *excontext, osip_message_t * request, const char *locip);
 
   void _eXosip_mark_all_registrations_expired (struct eXosip_t *excontext);
+  void _eXosip_mark_registration_expired (struct eXosip_t *excontext, const char *call_id);
   int _eXosip_check_allow_header (eXosip_dialog_t * jd, osip_message_t * message);
 
   int _eXosip_add_authentication_information (struct eXosip_t *excontext, osip_message_t * req, osip_message_t * last_response);
