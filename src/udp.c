@@ -1420,7 +1420,7 @@ udp_tl_learn_port_from_via (struct eXosip_t *excontext, osip_message_t * sip)
     return;
   }
 
-  /* EXOSIP_OPT_UDP_AUTO_MASQUERADE option set */
+  /* EXOSIP_OPT_AUTO_MASQUERADE_CONTACT option set */
   if (excontext->auto_masquerade_contact > 0) {
     osip_via_t *via = NULL;
     osip_generic_param_t *br_rport;
@@ -1449,7 +1449,7 @@ udp_tl_learn_port_from_via (struct eXosip_t *excontext, osip_message_t * sip)
         else
           ainfo.nat_port = 5060;
       }
-      /* snprintf (excontext->udp_firewall_port, sizeof (excontext->udp_firewall_port), "%s", br->gvalue); */
+
       OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO1, NULL, "SIP port modified from rport in SIP answer\r\n"));
 
       if (br_received != NULL && br_received->gvalue != NULL) {
