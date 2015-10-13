@@ -488,6 +488,7 @@ extern "C" {
   };
 
   int _eXosip_guess_ip_for_via (struct eXosip_t *excontext, int family, char *address, int size);
+  int _eXosip_guess_ip_for_destination (struct eXosip_t *excontext, int family, char *destination, char *address, int size);
 
   int _eXosip_get_addrinfo (struct eXosip_t *excontext, struct addrinfo **addrinfo, const char *hostname, int service, int protocol);
 
@@ -504,9 +505,11 @@ extern "C" {
   int _eXosip_generating_publish (struct eXosip_t *excontext, osip_message_t ** message, const char *to, const char *from, const char *route);
   int _eXosip_generating_cancel (struct eXosip_t *excontext, osip_message_t ** dest, osip_message_t * request_cancelled);
   int _eXosip_generating_bye (struct eXosip_t *excontext, osip_message_t ** bye, osip_dialog_t * dialog);
-
+  int _eXosip_request_viamanager(struct eXosip_t *excontext, osip_transaction_t * tr, osip_message_t * sip, char *host);
+  int _eXosip_message_contactmanager(struct eXosip_t *excontext, osip_transaction_t * tr, osip_message_t * sip, char *host);
+  
   int _eXosip_update_top_via (struct eXosip_t *excontext, osip_message_t * sip);
-  int _eXosip_request_add_via (struct eXosip_t *excontext, osip_message_t * request, const char *locip);
+  int _eXosip_request_add_via (struct eXosip_t *excontext, osip_message_t * request);
 
   void _eXosip_mark_all_registrations_expired (struct eXosip_t *excontext);
   void _eXosip_mark_registration_expired (struct eXosip_t *excontext, const char *call_id);

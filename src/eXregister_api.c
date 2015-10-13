@@ -93,9 +93,6 @@ _eXosip_register_set_date (osip_message_t * msg)
 static int
 _eXosip_register_add_contact(struct eXosip_t *excontext, eXosip_reg_t * jreg, osip_message_t *reg)
 {
-  char locip[65];
-  char firewall_ip[65];
-  char firewall_port[10];
   int i;
 
   osip_contact_t *new_contact;
@@ -104,24 +101,6 @@ _eXosip_register_add_contact(struct eXosip_t *excontext, eXosip_reg_t * jreg, os
   osip_message_get_contact(reg, 0, &new_contact);
   if (new_contact!=NULL)
     return OSIP_SUCCESS; /* already a contact header */
-
-  if (excontext->eXtl_transport.enabled <= 0)
-    return OSIP_NO_NETWORK;
-
-  /* firewall ip & firewall port configured by APPLICATION layer */
-  firewall_ip[0] = '\0';
-  firewall_port[0] = '\0';
-  if (excontext->eXtl_transport.tl_get_masquerade_contact != NULL) {
-    excontext->eXtl_transport.tl_get_masquerade_contact (excontext, firewall_ip, sizeof (firewall_ip), firewall_port, sizeof (firewall_port));
-  }
-
-  memset (locip, '\0', sizeof (locip));
-  _eXosip_guess_ip_for_via (excontext, excontext->eXtl_transport.proto_family, locip, 49);
-
-  if (locip[0] == '\0') {
-    OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "eXosip: no default interface defined\n"));
-    return OSIP_NO_NETWORK;
-  }
 
   i = osip_contact_init (&new_contact);
   if (i == 0)
@@ -138,39 +117,9 @@ _eXosip_register_add_contact(struct eXosip_t *excontext, eXosip_reg_t * jreg, os
     return OSIP_SYNTAXERROR;
   }
 
-  /* search for correct ip */
-  if (firewall_ip[0] != '\0' && reg->req_uri->host != NULL) {
-#ifdef USE_LOCALIP_WITH_LOCALPROXY      /* disable this code for local testing because it adds an extra DNS */
-    char *c_address = reg->req_uri->host;
-
-    struct addrinfo *addrinfo;
-    struct __eXosip_sockaddr addr;
-
-    i = _eXosip_get_addrinfo (excontext, &addrinfo, reg->req_uri->host, 5060, IPPROTO_UDP);
-    if (i == 0) {
-      memcpy (&addr, addrinfo->ai_addr, addrinfo->ai_addrlen);
-      _eXosip_freeaddrinfo (addrinfo);
-      c_address = inet_ntoa (((struct sockaddr_in *) &addr)->sin_addr);
-      OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO1, NULL, "eXosip: here is the resolved destination host=%s\n", c_address));
-    }
-
-    if (_eXosip_is_public_address (c_address)) {
-      new_contact_url->host = osip_strdup (firewall_ip);
-      new_contact_url->port = osip_strdup (firewall_port);
-    }
-    else {
-      new_contact_url->host = osip_strdup (locip);
-      new_contact_url->port = osip_strdup (firewall_port);
-    }
-#else
-    new_contact_url->host = osip_strdup (firewall_ip);
-    new_contact_url->port = osip_strdup (firewall_port);
-#endif
-  }
-  else {
-    new_contact_url->host = osip_strdup (locip);
-    new_contact_url->port = osip_strdup (firewall_port);
-  }
+  /* special values to be replaced in transport layer (eXtl_*.c files) */
+  new_contact_url->host = osip_strdup("999.999.999.999");
+  new_contact_url->port = osip_strdup("99999");
 
   if (osip_strcasecmp (excontext->transport, "UDP") != 0) {
     osip_uri_uparam_add (new_contact_url, osip_strdup ("transport"), osip_strdup (excontext->transport));
@@ -361,12 +310,12 @@ _eXosip_register_build_register (struct eXosip_t *excontext, eXosip_reg_t * jr, 
           pos++;
         }
       }
-      if (excontext->eXtl_transport.tl_update_local_target!=NULL)
-        excontext->eXtl_transport.tl_update_local_target(excontext, reg);
+      if (excontext->eXtl_transport._tl_update_contact!=NULL)
+        excontext->eXtl_transport._tl_update_contact(excontext, reg);
       jr->registration_step=RS_MASQUERADINGPROCEEDING+1; /* do only once: keep previous one after */
     } else if (jr->registration_step==0) {
-      if (excontext->eXtl_transport.tl_update_local_target!=NULL)
-        excontext->eXtl_transport.tl_update_local_target(excontext, reg);
+      if (excontext->eXtl_transport._tl_update_contact!=NULL)
+        excontext->eXtl_transport._tl_update_contact(excontext, reg);
     }
 
     if (last_response != NULL) {

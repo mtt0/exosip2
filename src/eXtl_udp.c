@@ -612,7 +612,14 @@ udp_tl_read_message (struct eXosip_t *excontext, fd_set * osip_fdset, fd_set * o
 }
 
 static int
-udp_tl_update_local_target (struct eXosip_t *excontext, osip_message_t * req)
+udp_tl_update_contact (struct eXosip_t *excontext, osip_message_t * req)
+{
+  req->application_data = (void*) 0x1; /* request for masquerading */
+  return OSIP_SUCCESS;
+}
+
+static int
+_udp_tl_update_contact (struct eXosip_t *excontext, osip_message_t * req)
 {
   int pos = 0;
 
@@ -620,6 +627,10 @@ udp_tl_update_local_target (struct eXosip_t *excontext, osip_message_t * req)
   char *proxy = NULL;
   int i;
   osip_via_t *via=NULL;
+
+  if (req->application_data != (void*) 0x1)
+    return OSIP_SUCCESS;
+  req->application_data = (void*) 0x0; /* avoid doing twice */
 
   if (MSG_IS_REQUEST (req)) {
     if (req->from != NULL && req->from->url != NULL && req->from->url->host != NULL)
@@ -927,6 +938,10 @@ udp_tl_send_message (struct eXosip_t *excontext, osip_transaction_t * tr, osip_m
 
   _eXosip_freeaddrinfo (addrinfo);
 
+  _eXosip_request_viamanager(excontext, tr, sip, host);
+  _eXosip_message_contactmanager(excontext, tr, sip, host);
+  _udp_tl_update_contact(excontext, sip);
+
   /* remove preloaded route if there is no tag in the To header
    */
   {
@@ -939,6 +954,7 @@ udp_tl_send_message (struct eXosip_t *excontext, osip_transaction_t * tr, osip_m
     if (tag == NULL && route != NULL && route->url != NULL) {
       osip_list_remove (&sip->routes, 0);
     }
+
     i = osip_message_to_str (sip, &message, &length);
     if (tag == NULL && route != NULL && route->url != NULL) {
       osip_list_add (&sip->routes, route, 0);
@@ -1149,7 +1165,7 @@ static struct eXtl_protocol eXtl_udp = {
   &udp_tl_set_socket,
   &udp_tl_masquerade_contact,
   &udp_tl_get_masquerade_contact,
-  &udp_tl_update_local_target,
+  &udp_tl_update_contact,
   NULL,
   NULL
 };

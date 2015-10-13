@@ -2753,7 +2753,7 @@ _tls_tl_connect_socket (struct eXosip_t *excontext, char *host, int port, int re
 }
 
 static int
-_tls_tl_update_local_target_use_ephemeral_port (struct eXosip_t *excontext, osip_message_t * req, int ephemeral_port)
+_tls_tl_update_contact_use_ephemeral_port (struct eXosip_t *excontext, osip_message_t * req, int ephemeral_port)
 {
   int pos = 0;
 
@@ -2777,7 +2777,7 @@ _tls_tl_update_local_target_use_ephemeral_port (struct eXosip_t *excontext, osip
 }
 
 static int
-_tls_tl_update_local_target (struct eXosip_t *excontext, osip_message_t * req, char *natted_ip, int natted_port)
+_tls_tl_update_contact (struct eXosip_t *excontext, osip_message_t * req, char *natted_ip, int natted_port)
 {
   int pos = 0;
 
@@ -2961,13 +2961,6 @@ tls_tl_send_message (struct eXosip_t *excontext, osip_transaction_t * tr, osip_m
           out_socket = reserved->socket_tab[pos].socket;
           ssl = reserved->socket_tab[pos].ssl_conn;
           OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO1, NULL, "reusing REQUEST connection (to dest=%s:%i)\n", reserved->socket_tab[pos].remote_ip, reserved->socket_tab[pos].remote_port));
-          if (MSG_IS_REGISTER (sip) && atoi(sip->cseq->number)!=1) {
-          } else {
-            if (excontext->use_ephemeral_port==1)
-              _tls_tl_update_local_target_use_ephemeral_port (excontext, sip, reserved->socket_tab[pos].ephemeral_port);
-          }
-          if (excontext->tls_firewall_ip[0] != '\0' || excontext->auto_masquerade_contact > 0)
-            _tls_tl_update_local_target (excontext, sip, reserved->socket_tab[pos].natted_ip, reserved->socket_tab[pos].natted_port);
           break;
         }
       }
@@ -3031,13 +3024,6 @@ tls_tl_send_message (struct eXosip_t *excontext, osip_transaction_t * tr, osip_m
       }
       out_socket = reserved->socket_tab[pos].socket;
       ssl = reserved->socket_tab[pos].ssl_conn;
-      if (MSG_IS_REGISTER (sip) && atoi(sip->cseq->number)!=1) {
-      } else {
-        if (excontext->use_ephemeral_port==1)
-          _tls_tl_update_local_target_use_ephemeral_port (excontext, sip, reserved->socket_tab[pos].ephemeral_port);
-      }
-      if (excontext->tls_firewall_ip[0] != '\0' || excontext->auto_masquerade_contact > 0)
-        _tls_tl_update_local_target (excontext, sip, reserved->socket_tab[pos].natted_ip, reserved->socket_tab[pos].natted_port);
     }
   }
 
@@ -3112,6 +3098,16 @@ tls_tl_send_message (struct eXosip_t *excontext, osip_transaction_t * tr, osip_m
     CFWriteStreamOpen (reserved->socket_tab[pos].writeStream);
   }
 #endif
+
+  _eXosip_request_viamanager(excontext, tr, sip, host);
+  _eXosip_message_contactmanager(excontext, tr, sip, host);
+  if (MSG_IS_REGISTER (sip) && atoi(sip->cseq->number)!=1) {
+  } else {
+    if (excontext->use_ephemeral_port==1)
+      _tls_tl_update_contact_use_ephemeral_port (excontext, sip, reserved->socket_tab[pos].ephemeral_port);
+  }
+  if (excontext->tls_firewall_ip[0] != '\0' || excontext->auto_masquerade_contact > 0)
+    _tls_tl_update_contact (excontext, sip, reserved->socket_tab[pos].natted_ip, reserved->socket_tab[pos].natted_port);
 
   /* remove preloaded route if there is no tag in the To header
    */
@@ -3278,7 +3274,7 @@ tls_tl_get_masquerade_contact (struct eXosip_t *excontext, char *ip, int ip_size
 
 
 static int
-tls_tl_update_local_target (struct eXosip_t *excontext, osip_message_t * req)
+tls_tl_update_contact (struct eXosip_t *excontext, osip_message_t * req)
 {
   req->application_data = (void*) 0x1; /* request for masquerading */
   return OSIP_SUCCESS;
@@ -3353,7 +3349,7 @@ static struct eXtl_protocol eXtl_tls = {
   &tls_tl_set_socket,
   &tls_tl_masquerade_contact,
   &tls_tl_get_masquerade_contact,
-  &tls_tl_update_local_target,
+  &tls_tl_update_contact,
   &tls_tl_reset,
   &tls_tl_check_connection
 };

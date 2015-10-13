@@ -177,9 +177,6 @@ _eXosip_complete_answer_that_establish_a_dialog (struct eXosip_t *excontext, osi
   int i;
   int pos = 0;
   char contact[1024];
-  char locip[65];
-  char firewall_ip[65];
-  char firewall_port[10];
   char scheme[10];
 
   snprintf(scheme, sizeof(scheme), "sip");
@@ -219,64 +216,14 @@ _eXosip_complete_answer_that_establish_a_dialog (struct eXosip_t *excontext, osi
   if (request->req_uri->scheme!=NULL && osip_strcasecmp(request->req_uri->scheme, "sips")==0)
     snprintf(scheme, sizeof(scheme), "sips");
 
-  firewall_ip[0] = '\0';
-  firewall_port[0] = '\0';
-  if (excontext->eXtl_transport.tl_get_masquerade_contact != NULL) {
-    excontext->eXtl_transport.tl_get_masquerade_contact (excontext, firewall_ip, sizeof (firewall_ip), firewall_port, sizeof (firewall_port));
-  }
-
-  memset (locip, '\0', sizeof (locip));
-  _eXosip_guess_ip_for_via (excontext, excontext->eXtl_transport.proto_family, locip, 49);
-
+  /* special values to be replaced in transport layer (eXtl_*.c files) */
   if (request->to->url->username == NULL)
-    snprintf (contact, 1000, "<%s:%s:%s>", scheme, locip, firewall_port);
+    snprintf (contact, 1000, "<%s:999.999.999.999:99999>", scheme);
   else {
     char *tmp2 = __osip_uri_escape_userinfo (request->to->url->username);
 
-    snprintf (contact, 1000, "<%s:%s@%s:%s>", scheme, tmp2, locip, firewall_port);
+    snprintf (contact, 1000, "<%s:%s@999.999.999.999:99999>", scheme, tmp2);
     osip_free (tmp2);
-  }
-  if (firewall_ip[0] != '\0') {
-#ifdef USE_LOCALIP_WITH_LOCALPROXY      /* disable this code for local testing because it adds an extra DNS */
-    osip_contact_t *con = (osip_contact_t *) osip_list_get (&request->contacts, 0);
-
-    if (con != NULL && con->url != NULL && con->url->host != NULL) {
-      char *c_address = con->url->host;
-
-      struct addrinfo *addrinfo;
-      struct __eXosip_sockaddr addr;
-
-      i = _eXosip_get_addrinfo (excontext, &addrinfo, con->url->host, 5060, IPPROTO_UDP);
-      if (i == 0) {
-        memcpy (&addr, addrinfo->ai_addr, addrinfo->ai_addrlen);
-        _eXosip_freeaddrinfo (addrinfo);
-        c_address = inet_ntoa (((struct sockaddr_in *) &addr)->sin_addr);
-        OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO1, NULL, "eXosip: here is the resolved destination host=%s\n", c_address));
-      }
-
-      /* If c_address is a PUBLIC address, the request was
-         coming from the PUBLIC network. */
-      if (_eXosip_is_public_address (c_address)) {
-        if (request->to->url->username == NULL)
-          snprintf (contact, 1000, "<%s:%s:%s>", scheme, firewall_ip, firewall_port);
-        else {
-          char *tmp2 = __osip_uri_escape_userinfo (request->to->url->username);
-
-          snprintf (contact, 1000, "<%s:%s@%s:%s>", scheme, tmp2, firewall_ip, firewall_port);
-          osip_free (tmp2);
-        }
-      }
-    }
-#else
-    if (request->to->url->username == NULL)
-      snprintf (contact, 1000, "<%s:%s:%s>", scheme, firewall_ip, firewall_port);
-    else {
-      char *tmp2 = __osip_uri_escape_userinfo (request->to->url->username);
-
-      snprintf (contact, 1000, "<%s:%s@%s:%s>", scheme, tmp2, firewall_ip, firewall_port);
-      osip_free (tmp2);
-    }
-#endif
   }
 
   {
@@ -300,8 +247,8 @@ _eXosip_complete_answer_that_establish_a_dialog (struct eXosip_t *excontext, osi
 
   osip_message_set_contact (response, contact);
 
-  if (excontext->eXtl_transport.tl_update_local_target!=NULL)
-    excontext->eXtl_transport.tl_update_local_target(excontext, response);
+  if (excontext->eXtl_transport._tl_update_contact!=NULL)
+    excontext->eXtl_transport._tl_update_contact(excontext, response);
   return OSIP_SUCCESS;
 }
 

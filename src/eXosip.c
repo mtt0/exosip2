@@ -1358,19 +1358,11 @@ _eXosip_update_top_via (struct eXosip_t *excontext, osip_message_t * sip)
     return OSIP_SYNTAXERROR;
   }
 
-  if (excontext->auto_masquerade_contact > 0) {
-    /* with auto masquerading enabled, it's easier to update Via host */
-    char localip[128];
-    memset (localip, '\0', sizeof (localip));
-    eXosip_guess_localip(excontext, AF_INET, localip, 128);
-    if (localip[0]!='\0' && osip_strcasecmp(via->host, localip)!=0) {
-      osip_free(via->host);
-      via->host = osip_strdup(localip);
-      if (via->host==NULL)
-        return OSIP_NOMEM;
-    }
-  }
-
+  osip_free(via->host);
+  /* special values to be replaced in transport layer (eXtl_*.c files) */
+  via->host = osip_strdup("999.999.999.999");
+  if (via->host==NULL)
+    return OSIP_NOMEM;
 
   /* browse parameter and replace "branch" */
   osip_via_param_get_byname (via, "branch", &br);

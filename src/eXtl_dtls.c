@@ -635,7 +635,14 @@ dtls_tl_read_message (struct eXosip_t *excontext, fd_set * osip_fdset, fd_set * 
 }
 
 static int
-dtls_tl_update_local_target (struct eXosip_t *excontext, osip_message_t * req)
+dtls_tl_update_contact (struct eXosip_t *excontext, osip_message_t * req)
+{
+  req->application_data = (void*) 0x1; /* request for masquerading */
+  return OSIP_SUCCESS;
+}
+
+static int
+_dtls_tl_update_contact (struct eXosip_t *excontext, osip_message_t * req)
 {
   int pos = 0;
 
@@ -643,6 +650,10 @@ dtls_tl_update_local_target (struct eXosip_t *excontext, osip_message_t * req)
   char *proxy = NULL;
   int i;
   osip_via_t *via=NULL;
+
+  if (req->application_data != (void*) 0x1)
+    return OSIP_SUCCESS;
+  req->application_data = (void*) 0x0; /* avoid doing twice */
 
   if (MSG_IS_REQUEST (req)) {
     if (req->from != NULL && req->from->url != NULL && req->from->url->host != NULL)
@@ -943,6 +954,10 @@ dtls_tl_send_message (struct eXosip_t *excontext, osip_transaction_t * tr, osip_
 
   _eXosip_freeaddrinfo (addrinfo);
 
+  _eXosip_request_viamanager(excontext, tr, sip, host);
+  _eXosip_message_contactmanager(excontext, tr, sip, host);
+  _dtls_tl_update_contact(excontext, sip);
+
   /* remove preloaded route if there is no tag in the To header
    */
   {
@@ -1221,7 +1236,7 @@ static struct eXtl_protocol eXtl_dtls = {
   &dtls_tl_set_socket,
   &dtls_tl_masquerade_contact,
   &dtls_tl_get_masquerade_contact,
-  &dtls_tl_update_local_target,
+  &dtls_tl_update_contact,
   NULL,
   NULL
 };

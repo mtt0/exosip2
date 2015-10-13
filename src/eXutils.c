@@ -426,10 +426,19 @@ _eXosip_get_addrinfo (struct eXosip_t *excontext, struct addrinfo **addrinfo, co
 
 #endif
 
+int
+_eXosip_guess_ip_for_via (struct eXosip_t *excontext, int family, char *address, int size)
+{
+  if (family == AF_INET)
+    return _eXosip_guess_ip_for_destination (excontext, family, excontext->ipv4_for_gateway, address, size);
+
+  return _eXosip_guess_ip_for_destination (excontext, family, excontext->ipv6_for_gateway, address, size);
+}
+
 #if defined(WIN32) || defined(_WIN32_WCE)
 
 int
-_eXosip_guess_ip_for_via (struct eXosip_t *excontext, int family, char *address, int size)
+_eXosip_guess_ip_for_destination (struct eXosip_t *excontext, int family, char *destination, char *address, int size)
 {
   SOCKET sock;
 
@@ -440,6 +449,11 @@ _eXosip_guess_ip_for_via (struct eXosip_t *excontext, int family, char *address,
   struct addrinfo *addrf = NULL;
 
   address[0] = '\0';
+
+  if (destination==NULL && family == AF_INET)
+    destination = excontext->ipv4_for_gateway;
+  if (destination==NULL && family == AF_INET6)
+    destination = excontext->ipv6_for_gateway;
 
 #ifdef TSC_SUPPORT
   if (excontext->tunnel_handle) {
@@ -454,10 +468,10 @@ _eXosip_guess_ip_for_via (struct eXosip_t *excontext, int family, char *address,
   sock = socket (family, SOCK_DGRAM, 0);
 
   if (family == AF_INET) {
-    _eXosip_get_addrinfo (excontext, &addrf, excontext->ipv4_for_gateway, 0, IPPROTO_UDP);
+    _eXosip_get_addrinfo (excontext, &addrf, destination, 0, IPPROTO_UDP);
   }
   else if (family == AF_INET6) {
-    _eXosip_get_addrinfo (excontext, &addrf, excontext->ipv6_for_gateway, 0, IPPROTO_UDP);
+    _eXosip_get_addrinfo (excontext, &addrf, destination, 0, IPPROTO_UDP);
   }
 
   if (addrf == NULL) {
@@ -509,9 +523,9 @@ _eXosip_guess_ip_for_via (struct eXosip_t *excontext, int family, char *address,
 
 #include <stdio.h>
 
-static int _eXosip_default_gateway_ipv4 (struct eXosip_t *excontext, char *address, int size);
+static int _eXosip_default_gateway_ipv4 (struct eXosip_t *excontext, char *destination, char *address, int size);
 
-static int _eXosip_default_gateway_ipv6 (struct eXosip_t *excontext, char *address, int size);
+static int _eXosip_default_gateway_ipv6 (struct eXosip_t *excontext, char *destination, char *address, int size);
 
 #ifdef HAVE_GETIFADDRS
 
@@ -545,15 +559,15 @@ _eXosip_default_gateway_with_getifaddrs (int type, char *address, int size)
 #endif
 
 int
-_eXosip_guess_ip_for_via (struct eXosip_t *excontext, int family, char *address, int size)
+_eXosip_guess_ip_for_destination (struct eXosip_t *excontext, int family, char *destination, char *address, int size)
 {
   int err;
 
   if (family == AF_INET6) {
-    err = _eXosip_default_gateway_ipv6 (excontext, address, size);
+    err = _eXosip_default_gateway_ipv6 (excontext, destination, address, size);
   }
   else {
-    err = _eXosip_default_gateway_ipv4 (excontext, address, size);
+    err = _eXosip_default_gateway_ipv4 (excontext, destination, address, size);
   }
 #ifdef HAVE_GETIFADDRS
   if (err < 0)
@@ -578,7 +592,7 @@ _eXosip_default_gateway_ipv4 (struct eXosip_t *excontext, char *address, int siz
   memset (&remote, 0, sizeof (struct sockaddr_in));
 
   remote.sin_family = AF_INET;
-  remote.sin_addr.s_addr = inet_addr (excontext->ipv4_for_gateway);
+  remote.sin_addr.s_addr = inet_addr (destination);
   remote.sin_port = htons (11111);
 
   memset (&iface_out, 0, sizeof (iface_out));
@@ -620,7 +634,7 @@ _eXosip_default_gateway_ipv4 (struct eXosip_t *excontext, char *address, int siz
  * The ip of the default interface is returned.
  */
 static int
-_eXosip_default_gateway_ipv6 (struct eXosip_t *excontext, char *address, int size)
+_eXosip_default_gateway_ipv6 (struct eXosip_t *excontext, char *destination, char *address, int size)
 {
   socklen_t len;
   int sock_rt, on = 1;
@@ -632,7 +646,7 @@ _eXosip_default_gateway_ipv6 (struct eXosip_t *excontext, char *address, int siz
   memset (&remote, 0, sizeof (struct sockaddr_in6));
 
   remote.sin6_family = AF_INET6;
-  inet_pton (AF_INET6, excontext->ipv6_for_gateway, &remote.sin6_addr);
+  inet_pton (AF_INET6, destination, &remote.sin6_addr);
   remote.sin6_port = htons (11111);
 
   memset (&iface_out, 0, sizeof (iface_out));

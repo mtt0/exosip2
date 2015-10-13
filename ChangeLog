@@ -24,6 +24,11 @@ eXosip2 (5.0.0)
 	EXOSIP_OPT_AUTO_MASQUERADE_CONTACT: option to enable automatic masquerading for Contact headers.
 	EXOSIP_OPT_UDP_LEARN_PORT: obsolete and will be removed in the future.
 
+	* rewrite Via and Contact management: both will now contains the IP of the real network interface
+	  instead of the default one.
+	* improve NAPTR failover, more reliable // add failover for 503 answer
+	* improve interval to force REGISTER refresh upon network error and failover.
+	* improve TCP socket management
 	* add a callback to simplify/optimize/accelerate usage of wakelocks in android application using exosip2.
 	* improve TLS, add TLSv1.1, TLSv1.2, disable weak cipher (FREAK) and enable ECDHE cipher.
 	* add support for SNI tls extension (openssl 1.0.2)
