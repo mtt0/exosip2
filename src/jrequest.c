@@ -149,7 +149,6 @@ int
 _eXosip_request_add_via (struct eXosip_t *excontext, osip_message_t * request)
 {
   char tmp[200];
-  const char *ip = NULL;
 
   if (excontext->eXtl_transport.enabled <= 0)
     return OSIP_NO_NETWORK;
@@ -918,7 +917,7 @@ _eXosip_request_viamanager(struct eXosip_t *excontext, osip_transaction_t * tr, 
 {
   /* step1: put local-ip in VIA->host or udp_firewall_ip set by eXosip_masquerade_contact (tl_get_masquerade_contact) */
   /* step2: put local-port in VIA->port or udp_firewall_port set by eXosip_masquerade_contact (tl_get_masquerade_contact) */
-  /* step3: #ifdef MASQUERADE_VIA
+  /* step3: #ifdef MASQUERADE_VIA */
   /* step4: put firewall-port in VIA->port, excontext->masquerade_via (udp_tl_update_contact)*/
   /* step5: put firewall ip in VIA->host , excontext->masquerade_via (udp_tl_update_contact)*/
   
