@@ -580,7 +580,7 @@ _eXosip_guess_ip_for_destination (struct eXosip_t *excontext, int family, char *
  * The ip of the default interface is returned.
  */
 static int
-_eXosip_default_gateway_ipv4 (struct eXosip_t *excontext, char *address, int size)
+  _eXosip_default_gateway_ipv4 (struct eXosip_t *excontext, char *destination, char *address, int size)
 {
   socklen_t len;
   int sock_rt, on = 1;
