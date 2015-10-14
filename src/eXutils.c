@@ -1356,7 +1356,9 @@ _store_A (void *arg, int status, int timeouts, unsigned char *abuf, int alen, in
 {
   osip_naptr_t *output_record = (osip_naptr_t *) arg;
 
+#if 0
   int qr, aa, tc, rd, ra, opcode, rcode;        /* , id; */
+#endif
   unsigned int qdcount, ancount, nscount, arcount, i;
   const unsigned char *aptr;
 
@@ -1373,6 +1375,7 @@ _store_A (void *arg, int status, int timeouts, unsigned char *abuf, int alen, in
   if (alen < HFIXEDSZ)
     return;
 
+#if 0
   /* id = DNS_HEADER_QID(abuf); */
   qr = DNS_HEADER_QR (abuf);
   opcode = DNS_HEADER_OPCODE (abuf);
@@ -1381,6 +1384,7 @@ _store_A (void *arg, int status, int timeouts, unsigned char *abuf, int alen, in
   rd = DNS_HEADER_RD (abuf);
   ra = DNS_HEADER_RA (abuf);
   rcode = DNS_HEADER_RCODE (abuf);
+#endif
   qdcount = DNS_HEADER_QDCOUNT (abuf);
   ancount = DNS_HEADER_ANCOUNT (abuf);
   nscount = DNS_HEADER_NSCOUNT (abuf);
@@ -1421,7 +1425,9 @@ _store_srv (void *arg, int status, int timeouts, unsigned char *abuf, int alen, 
 {
   osip_naptr_t *output_record = (osip_naptr_t *) arg;
 
+#if 0
   int qr, aa, tc, rd, ra, opcode, rcode;        /* , id; */
+#endif  
   unsigned int qdcount, ancount, nscount, arcount, i;
   const unsigned char *aptr;
 
@@ -1438,6 +1444,7 @@ _store_srv (void *arg, int status, int timeouts, unsigned char *abuf, int alen, 
   if (alen < HFIXEDSZ)
     return;
 
+#if 0
   /* id = DNS_HEADER_QID(abuf); */
   qr = DNS_HEADER_QR (abuf);
   opcode = DNS_HEADER_OPCODE (abuf);
@@ -1446,6 +1453,7 @@ _store_srv (void *arg, int status, int timeouts, unsigned char *abuf, int alen, 
   rd = DNS_HEADER_RD (abuf);
   ra = DNS_HEADER_RA (abuf);
   rcode = DNS_HEADER_RCODE (abuf);
+#endif
   qdcount = DNS_HEADER_QDCOUNT (abuf);
   ancount = DNS_HEADER_ANCOUNT (abuf);
   nscount = DNS_HEADER_NSCOUNT (abuf);
@@ -1486,7 +1494,9 @@ _store_naptr (void *arg, int status, int timeouts, unsigned char *abuf, int alen
 {
   osip_naptr_t *output_record = (osip_naptr_t *) arg;
 
+#if 0
   int qr, aa, tc, rd, ra, opcode, rcode;        /* , id; */
+#endif
   unsigned int qdcount, ancount, nscount, arcount, i;
   const unsigned char *aptr;
 
@@ -1503,6 +1513,7 @@ _store_naptr (void *arg, int status, int timeouts, unsigned char *abuf, int alen
   if (alen < HFIXEDSZ)
     return;
 
+#if 0
   /* id = DNS_HEADER_QID(abuf); */
   qr = DNS_HEADER_QR (abuf);
   opcode = DNS_HEADER_OPCODE (abuf);
@@ -1511,6 +1522,7 @@ _store_naptr (void *arg, int status, int timeouts, unsigned char *abuf, int alen
   rd = DNS_HEADER_RD (abuf);
   ra = DNS_HEADER_RA (abuf);
   rcode = DNS_HEADER_RCODE (abuf);
+#endif
   qdcount = DNS_HEADER_QDCOUNT (abuf);
   ancount = DNS_HEADER_ANCOUNT (abuf);
   nscount = DNS_HEADER_NSCOUNT (abuf);
