@@ -460,13 +460,14 @@ _eXosip_process_new_invite (struct eXosip_t *excontext, osip_transaction_t * tra
   }
 
   i = _eXosip_dialog_init_as_uas (&jd, evt->sip, answer);
+  osip_message_free (answer);
   if (i != 0) {
     OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "eXosip: cannot create dialog!\n"));
     osip_list_add (&excontext->j_transactions, transaction, 0);
     osip_transaction_set_reserved2 (transaction, NULL);
-    osip_message_free (answer);
     return;
   }
+
   _eXosip_check_allow_header (jd, evt->sip);
 
   ADD_ELEMENT (jc->c_dialogs, jd);
@@ -474,12 +475,8 @@ _eXosip_process_new_invite (struct eXosip_t *excontext, osip_transaction_t * tra
   osip_transaction_set_reserved2 (transaction, jc);
   osip_transaction_set_reserved3 (transaction, jd);
 
-  evt_answer = osip_new_outgoing_sipmessage (answer);
-  evt_answer->transactionid = transaction->transactionid;
-
   _eXosip_update (excontext);
   jc->c_inc_tr = transaction;
-  osip_transaction_add_event (transaction, evt_answer);
 
   /* be sure the invite will be processed
      before any API call on this dialog */
