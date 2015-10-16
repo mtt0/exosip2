@@ -938,8 +938,8 @@ udp_tl_send_message (struct eXosip_t *excontext, osip_transaction_t * tr, osip_m
 
   _eXosip_freeaddrinfo (addrinfo);
 
-  _eXosip_request_viamanager(excontext, tr, sip, host);
-  _eXosip_message_contactmanager(excontext, tr, sip, host);
+  _eXosip_request_viamanager(excontext, tr, sip, IPPROTO_UDP, reserved->udp_socket, host);
+  _eXosip_message_contactmanager(excontext, tr, sip, IPPROTO_UDP, reserved->udp_socket, host);
   _udp_tl_update_contact(excontext, sip);
 
   /* remove preloaded route if there is no tag in the To header

@@ -507,6 +507,69 @@ _eXosip_guess_ip_for_destination (struct eXosip_t *excontext, int family, char *
   return OSIP_SUCCESS;
 }
 
+int
+_eXosip_guess_ip_for_destinationsock (struct eXosip_t *excontext, int family, int proto, int sock, char *destination, char *address, int size)
+{
+  SOCKADDR_STORAGE local_addr;
+
+  int local_addr_len;
+
+  struct addrinfo *addrf = NULL;
+
+  address[0] = '\0';
+
+  if (destination==NULL && family == AF_INET)
+    destination = excontext->ipv4_for_gateway;
+  if (destination==NULL && family == AF_INET6)
+    destination = excontext->ipv6_for_gateway;
+
+#ifdef TSC_SUPPORT
+  if (excontext->tunnel_handle) {
+    tsc_config config;
+
+    tsc_get_config (excontext->tunnel_handle, &config);
+    tsc_ip_address_to_str (&(config.internal_address), address, TSC_ADDR_STR_LEN);
+    return 0;
+  }
+#endif
+
+  if (family == AF_INET) {
+    _eXosip_get_addrinfo (excontext, &addrf, destination, 0, proto);
+  }
+  else if (family == AF_INET6) {
+    _eXosip_get_addrinfo (excontext, &addrf, destination, 0, proto);
+  }
+
+  if (addrf == NULL) {
+    if (family == AF_INET) {
+      _eXosip_get_addrinfo (excontext, &addrf, "217.12.3.11", 0, proto);
+    }
+    else if (family == AF_INET6) {
+      _eXosip_get_addrinfo (excontext, &addrf, "2001:638:500:101:2e0:81ff:fe24:37c6", 0, proto);
+    }
+  }
+
+  if (addrf == NULL) {
+    snprintf (address, size, (family == AF_INET) ? "127.0.0.1" : "::1");
+    return OSIP_NO_NETWORK;
+  }
+
+  if (WSAIoctl (sock, SIO_ROUTING_INTERFACE_QUERY, addrf->ai_addr, addrf->ai_addrlen, &local_addr, sizeof (local_addr), &local_addr_len, NULL, NULL) != 0) {
+    _eXosip_freeaddrinfo (addrf);
+    snprintf (address, size, (family == AF_INET) ? "127.0.0.1" : "::1");
+    return OSIP_NO_NETWORK;
+  }
+
+  _eXosip_freeaddrinfo (addrf);
+
+  if (getnameinfo ((const struct sockaddr *) &local_addr, local_addr_len, address, size, NULL, 0, NI_NUMERICHOST)) {
+    snprintf (address, size, (family == AF_INET) ? "127.0.0.1" : "::1");
+    return OSIP_NO_NETWORK;
+  }
+
+  return OSIP_SUCCESS;
+}
+
 #else /* sun, *BSD, linux, and other? */
 
 
@@ -522,10 +585,6 @@ _eXosip_guess_ip_for_destination (struct eXosip_t *excontext, int family, char *
 #include <sys/param.h>
 
 #include <stdio.h>
-
-static int _eXosip_default_gateway_ipv4 (struct eXosip_t *excontext, char *destination, char *address, int size);
-
-static int _eXosip_default_gateway_ipv6 (struct eXosip_t *excontext, char *destination, char *address, int size);
 
 #ifdef HAVE_GETIFADDRS
 
@@ -557,24 +616,6 @@ _eXosip_default_gateway_with_getifaddrs (int type, char *address, int size)
   return ret;
 }
 #endif
-
-int
-_eXosip_guess_ip_for_destination (struct eXosip_t *excontext, int family, char *destination, char *address, int size)
-{
-  int err;
-
-  if (family == AF_INET6) {
-    err = _eXosip_default_gateway_ipv6 (excontext, destination, address, size);
-  }
-  else {
-    err = _eXosip_default_gateway_ipv4 (excontext, destination, address, size);
-  }
-#ifdef HAVE_GETIFADDRS
-  if (err < 0)
-    err = _eXosip_default_gateway_with_getifaddrs (family, address, size);
-#endif
-  return err;
-}
 
 /* This is a portable way to find the default gateway.
  * The ip of the default interface is returned.
@@ -678,6 +719,136 @@ _eXosip_default_gateway_ipv6 (struct eXosip_t *excontext, char *destination, cha
   }
   inet_ntop (AF_INET6, (const void *) &iface_out.sin6_addr, address, size - 1);
   return OSIP_SUCCESS;
+}
+
+int
+_eXosip_guess_ip_for_destination (struct eXosip_t *excontext, int family, char *destination, char *address, int size)
+{
+  int err;
+
+  if (family == AF_INET6) {
+    err = _eXosip_default_gateway_ipv6 (excontext, destination, address, size);
+  }
+  else {
+    err = _eXosip_default_gateway_ipv4 (excontext, destination, address, size);
+  }
+#ifdef HAVE_GETIFADDRS
+  if (err < 0)
+    err = _eXosip_default_gateway_with_getifaddrs (family, address, size);
+#endif
+  return err;
+}
+
+/* This is a portable way to find the default gateway.
+ * The ip of the default interface is returned.
+ */
+static int
+  _eXosip_default_gateway_ipv4sock (struct eXosip_t *excontext, int proto, int sock, char *destination, char *address, int size)
+{
+  socklen_t len;
+  int on = 1;
+
+  struct sockaddr_in iface_out;
+
+  struct sockaddr_in remote;
+
+  memset (&remote, 0, sizeof (struct sockaddr_in));
+
+  remote.sin_family = AF_INET;
+  remote.sin_addr.s_addr = inet_addr (destination);
+  remote.sin_port = htons (11111);
+
+  memset (&iface_out, 0, sizeof (iface_out));
+
+  if (setsockopt (sock, SOL_SOCKET, SO_BROADCAST, &on, sizeof (on)) == -1) {
+    perror ("DEBUG: [get_output_if] setsockopt(SOL_SOCKET, SO_BROADCAST");
+    snprintf (address, size, "127.0.0.1");
+    return OSIP_NO_NETWORK;
+  }
+
+  if (connect (sock, (struct sockaddr *) &remote, sizeof (struct sockaddr_in)) == -1) {
+    perror ("DEBUG: [get_output_if] connect");
+    snprintf (address, size, "127.0.0.1");
+    return OSIP_NO_NETWORK;
+  }
+
+  len = sizeof (iface_out);
+  if (getsockname (sock, (struct sockaddr *) &iface_out, &len) == -1) {
+    perror ("DEBUG: [get_output_if] getsockname");
+    snprintf (address, size, "127.0.0.1");
+    return OSIP_NO_NETWORK;
+  }
+
+  if (iface_out.sin_addr.s_addr == 0) { /* what is this case?? */
+    snprintf (address, size, "127.0.0.1");
+    return OSIP_NO_NETWORK;
+  }
+  osip_strncpy (address, inet_ntoa (iface_out.sin_addr), size - 1);
+  return OSIP_SUCCESS;
+}
+
+
+/* This is a portable way to find the default gateway.
+ * The ip of the default interface is returned.
+ */
+static int
+_eXosip_default_gateway_ipv6sock (struct eXosip_t *excontext, int proto, int sock, char *destination, char *address, int size)
+{
+  socklen_t len;
+  int on = 1;
+
+  struct sockaddr_in6 iface_out;
+
+  struct sockaddr_in6 remote;
+
+  memset (&remote, 0, sizeof (struct sockaddr_in6));
+
+  remote.sin6_family = AF_INET6;
+  inet_pton (AF_INET6, destination, &remote.sin6_addr);
+  remote.sin6_port = htons (11111);
+
+  memset (&iface_out, 0, sizeof (iface_out));
+  /*default to ipv6 local loopback in case something goes wrong: */
+  snprintf (address, size, "::1");
+  if (setsockopt (sock, SOL_SOCKET, SO_BROADCAST, &on, sizeof (on)) == -1) {
+    perror ("DEBUG: [get_output_if] setsockopt(SOL_SOCKET, SO_BROADCAST");
+    return OSIP_NO_NETWORK;
+  }
+
+  if (connect (sock, (struct sockaddr *) &remote, sizeof (struct sockaddr_in6)) == -1) {
+    perror ("DEBUG: [get_output_if] connect");
+    return OSIP_NO_NETWORK;
+  }
+
+  len = sizeof (iface_out);
+  if (getsockname (sock, (struct sockaddr *) &iface_out, &len) == -1) {
+    perror ("DEBUG: [get_output_if] getsockname");
+    return OSIP_NO_NETWORK;
+  }
+
+  if (iface_out.sin6_addr.s6_addr == 0) {       /* what is this case?? */
+    return OSIP_NO_NETWORK;
+  }
+  inet_ntop (AF_INET6, (const void *) &iface_out.sin6_addr, address, size - 1);
+  return OSIP_SUCCESS;
+}
+
+int
+_eXosip_guess_ip_for_destinationsock (struct eXosip_t *excontext, int family, int proto, int sock, char *destination, char *address, int size)
+{
+  int err;
+
+  if (family == AF_INET6) {
+    err = _eXosip_default_gateway_ipv6sock (excontext, proto, sock, destination, address, size);
+  }
+  else {
+    err = _eXosip_default_gateway_ipv4sock (excontext, proto, sock, destination, address, size);
+  }
+#ifdef HAVE_GETIFADDRS
+  if (err < 0)
+    err = _eXosip_default_gateway_with_getifaddrs (family, address, size);
+#endif
+  return err;
 }
 
 #endif

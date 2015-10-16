@@ -954,32 +954,6 @@ dtls_tl_send_message (struct eXosip_t *excontext, osip_transaction_t * tr, osip_
 
   _eXosip_freeaddrinfo (addrinfo);
 
-  _eXosip_request_viamanager(excontext, tr, sip, host);
-  _eXosip_message_contactmanager(excontext, tr, sip, host);
-  _dtls_tl_update_contact(excontext, sip);
-
-  /* remove preloaded route if there is no tag in the To header
-   */
-  {
-    osip_route_t *route = NULL;
-    osip_generic_param_t *tag = NULL;
-
-    osip_message_get_route (sip, 0, &route);
-
-    osip_to_get_tag (sip->to, &tag);
-    if (tag == NULL && route != NULL && route->url != NULL) {
-      osip_list_remove (&sip->routes, 0);
-    }
-    i = osip_message_to_str (sip, &message, &length);
-    if (tag == NULL && route != NULL && route->url != NULL) {
-      osip_list_add (&sip->routes, route, 0);
-    }
-  }
-
-  if (i != 0 || length <= 0) {
-    return -1;
-  }
-
   switch (((struct sockaddr *) &addr)->sa_family) {
   case AF_INET:
     inet_ntop (((struct sockaddr *) &addr)->sa_family, &(((struct sockaddr_in *) &addr)->sin_addr), ipbuf, sizeof (ipbuf));
@@ -991,8 +965,6 @@ dtls_tl_send_message (struct eXosip_t *excontext, osip_transaction_t * tr, osip_
     strncpy (ipbuf, "(unknown)", sizeof (ipbuf));
     break;
   }
-
-  OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO1, NULL, "Message sent: \n%s (to dest=%s:%i)\n", message, ipbuf, port));
 
   if (osip_strcasecmp (host, ipbuf) != 0 && MSG_IS_REQUEST (sip)) {
     if (MSG_IS_REGISTER (sip)) {
@@ -1060,7 +1032,6 @@ dtls_tl_send_message (struct eXosip_t *excontext, osip_transaction_t * tr, osip_
 
       memset (&reserved->socket_tab[pos], 0, sizeof (struct _dtls_stream));
 
-      osip_free (message);
       return -1;
     }
 
@@ -1073,7 +1044,6 @@ dtls_tl_send_message (struct eXosip_t *excontext, osip_transaction_t * tr, osip_
 
       memset (&reserved->socket_tab[pos], 0, sizeof (struct _dtls_stream));
 
-      osip_free (message);
       return -1;
     }
 
@@ -1090,6 +1060,34 @@ dtls_tl_send_message (struct eXosip_t *excontext, osip_transaction_t * tr, osip_
     osip_strncpy (reserved->socket_tab[pos].remote_ip, ipbuf, sizeof (reserved->socket_tab[pos].remote_ip) - 1);
     reserved->socket_tab[pos].remote_port = port;
   }
+
+  _eXosip_request_viamanager(excontext, tr, sip, IPPROTO_UDP, reserved->dtls_socket, host);
+  _eXosip_message_contactmanager(excontext, tr, sip, IPPROTO_UDP, reserved->dtls_socket, host);
+  _dtls_tl_update_contact(excontext, sip);
+
+  /* remove preloaded route if there is no tag in the To header
+   */
+  {
+    osip_route_t *route = NULL;
+    osip_generic_param_t *tag = NULL;
+
+    osip_message_get_route (sip, 0, &route);
+
+    osip_to_get_tag (sip->to, &tag);
+    if (tag == NULL && route != NULL && route->url != NULL) {
+      osip_list_remove (&sip->routes, 0);
+    }
+    i = osip_message_to_str (sip, &message, &length);
+    if (tag == NULL && route != NULL && route->url != NULL) {
+      osip_list_add (&sip->routes, route, 0);
+    }
+  }
+
+  if (i != 0 || length <= 0) {
+    return -1;
+  }
+
+  OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO1, NULL, "Message sent: (to dest=%s:%i)\n%s\n", ipbuf, port, message));
 
   i = SSL_write (reserved->socket_tab[pos].ssl_conn, message, (int) length);
 

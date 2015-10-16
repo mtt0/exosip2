@@ -1502,8 +1502,8 @@ tcp_tl_send_message (struct eXosip_t *excontext, osip_transaction_t * tr, osip_m
   }
 #endif
 
-  _eXosip_request_viamanager(excontext, tr, sip, host);
-  _eXosip_message_contactmanager(excontext, tr, sip, host);
+  _eXosip_request_viamanager(excontext, tr, sip, IPPROTO_TCP, reserved->socket_tab[pos].socket, host);
+  _eXosip_message_contactmanager(excontext, tr, sip, IPPROTO_TCP, reserved->socket_tab[pos].socket, host);
   if (MSG_IS_REGISTER (sip) && atoi(sip->cseq->number)!=1) {
   } else {
     if (excontext->use_ephemeral_port==1)
