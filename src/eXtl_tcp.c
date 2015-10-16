@@ -1455,7 +1455,7 @@ tcp_tl_send_message (struct eXosip_t *excontext, osip_transaction_t * tr, osip_m
       OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO2, NULL, "socket node:%s, socket %d [pos=%d], in progress\n", host, out_socket, pos));
       if (tr != NULL && now - tr->birth_time > 10) {
         if (naptr_record != NULL && (MSG_IS_REGISTER (sip) || MSG_IS_OPTIONS (sip))) {
-          if (eXosip_dnsutils_rotate_srv (&naptr_record->sipudp_record) > 0) {
+          if (eXosip_dnsutils_rotate_srv (&naptr_record->siptcp_record) > 0) {
             _eXosip_mark_registration_expired (excontext, reserved->socket_tab[pos].reg_call_id);
             if (pos >= 0) _tcp_tl_close_sockinfo (&reserved->socket_tab[pos]);
             OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO1, NULL,
@@ -1473,7 +1473,7 @@ tcp_tl_send_message (struct eXosip_t *excontext, osip_transaction_t * tr, osip_m
   }
   else {
     if (naptr_record != NULL && (MSG_IS_REGISTER (sip) || MSG_IS_OPTIONS (sip))) {
-      if (eXosip_dnsutils_rotate_srv (&naptr_record->sipudp_record) > 0) {
+      if (eXosip_dnsutils_rotate_srv (&naptr_record->siptcp_record) > 0) {
         _eXosip_mark_registration_expired (excontext, reserved->socket_tab[pos].reg_call_id);
       }
     }
