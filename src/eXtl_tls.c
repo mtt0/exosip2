@@ -2723,30 +2723,6 @@ _tls_tl_connect_socket (struct eXosip_t *excontext, char *host, int port, int re
 }
 
 static int
-_tls_tl_update_contact_use_ephemeral_port (struct eXosip_t *excontext, osip_message_t * req, int ephemeral_port)
-{
-  int pos = 0;
-
-  while (!osip_list_eol (&req->contacts, pos)) {
-    osip_contact_t *co;
-
-    co = (osip_contact_t *) osip_list_get (&req->contacts, pos);
-    pos++;
-    if (co != NULL && co->url != NULL && co->url->host != NULL) {
-      if (ephemeral_port > 0) {
-        if (co->url->port)
-          osip_free (co->url->port);
-        co->url->port = (char *) osip_malloc (10);
-        snprintf (co->url->port, 9, "%i", ephemeral_port);
-        osip_message_force_update (req);
-      }
-    }
-  }
-
-  return OSIP_SUCCESS;
-}
-
-static int
 _tls_tl_update_contact (struct eXosip_t *excontext, osip_message_t * req, char *natted_ip, int natted_port)
 {
   int pos = 0;
