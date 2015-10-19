@@ -788,10 +788,7 @@ static int
   _eXosip_default_gateway_ipv4sock (struct eXosip_t *excontext, int proto, int sock, char *destination, char *address, int size)
 {
   socklen_t len;
-  int on = 1;
-
   struct sockaddr_in iface_out;
-
   struct sockaddr_in remote;
 
   memset (&remote, 0, sizeof (struct sockaddr_in));
@@ -801,28 +798,19 @@ static int
   remote.sin_port = htons (11111);
 
   memset (&iface_out, 0, sizeof (iface_out));
-
-  if (setsockopt (sock, SOL_SOCKET, SO_BROADCAST, &on, sizeof (on)) == -1) {
-    perror ("DEBUG: [get_output_if] setsockopt(SOL_SOCKET, SO_BROADCAST");
-    snprintf (address, size, "127.0.0.1");
-    return OSIP_NO_NETWORK;
-  }
+  snprintf (address, size, "127.0.0.1");
 
   if (connect (sock, (struct sockaddr *) &remote, sizeof (struct sockaddr_in)) == -1) {
-    perror ("DEBUG: [get_output_if] connect");
-    snprintf (address, size, "127.0.0.1");
-    return OSIP_NO_NETWORK;
+    /* socket already connected... it's good enough. */
   }
 
   len = sizeof (iface_out);
   if (getsockname (sock, (struct sockaddr *) &iface_out, &len) == -1) {
     perror ("DEBUG: [get_output_if] getsockname");
-    snprintf (address, size, "127.0.0.1");
     return OSIP_NO_NETWORK;
   }
 
   if (iface_out.sin_addr.s_addr == 0) { /* what is this case?? */
-    snprintf (address, size, "127.0.0.1");
     return OSIP_NO_NETWORK;
   }
   osip_strncpy (address, inet_ntoa (iface_out.sin_addr), size - 1);
@@ -837,10 +825,7 @@ static int
 _eXosip_default_gateway_ipv6sock (struct eXosip_t *excontext, int proto, int sock, char *destination, char *address, int size)
 {
   socklen_t len;
-  int on = 1;
-
   struct sockaddr_in6 iface_out;
-
   struct sockaddr_in6 remote;
 
   memset (&remote, 0, sizeof (struct sockaddr_in6));
@@ -850,16 +835,10 @@ _eXosip_default_gateway_ipv6sock (struct eXosip_t *excontext, int proto, int soc
   remote.sin6_port = htons (11111);
 
   memset (&iface_out, 0, sizeof (iface_out));
-  /*default to ipv6 local loopback in case something goes wrong: */
   snprintf (address, size, "::1");
-  if (setsockopt (sock, SOL_SOCKET, SO_BROADCAST, &on, sizeof (on)) == -1) {
-    perror ("DEBUG: [get_output_if] setsockopt(SOL_SOCKET, SO_BROADCAST");
-    return OSIP_NO_NETWORK;
-  }
 
   if (connect (sock, (struct sockaddr *) &remote, sizeof (struct sockaddr_in6)) == -1) {
-    perror ("DEBUG: [get_output_if] connect");
-    return OSIP_NO_NETWORK;
+    /* socket already connected... it's good enough. */
   }
 
   len = sizeof (iface_out);
