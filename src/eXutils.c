@@ -682,14 +682,12 @@ static int
   sock_rt = socket (AF_INET, SOCK_DGRAM, 0);
 
   if (setsockopt (sock_rt, SOL_SOCKET, SO_BROADCAST, &on, sizeof (on)) == -1) {
-    perror ("DEBUG: [get_output_if] setsockopt(SOL_SOCKET, SO_BROADCAST");
     close (sock_rt);
     snprintf (address, size, "127.0.0.1");
     return OSIP_NO_NETWORK;
   }
 
   if (connect (sock_rt, (struct sockaddr *) &remote, sizeof (struct sockaddr_in)) == -1) {
-    perror ("DEBUG: [get_output_if] connect");
     close (sock_rt);
     snprintf (address, size, "127.0.0.1");
     return OSIP_NO_NETWORK;
@@ -697,7 +695,6 @@ static int
 
   len = sizeof (iface_out);
   if (getsockname (sock_rt, (struct sockaddr *) &iface_out, &len) == -1) {
-    perror ("DEBUG: [get_output_if] getsockname");
     close (sock_rt);
     snprintf (address, size, "127.0.0.1");
     return OSIP_NO_NETWORK;
@@ -737,28 +734,22 @@ _eXosip_default_gateway_ipv6 (struct eXosip_t *excontext, char *destination, cha
   /*default to ipv6 local loopback in case something goes wrong: */
   snprintf (address, size, "::1");
   if (setsockopt (sock_rt, SOL_SOCKET, SO_BROADCAST, &on, sizeof (on)) == -1) {
-    perror ("DEBUG: [get_output_if] setsockopt(SOL_SOCKET, SO_BROADCAST");
     close (sock_rt);
     return OSIP_NO_NETWORK;
   }
 
   if (connect (sock_rt, (struct sockaddr *) &remote, sizeof (struct sockaddr_in6)) == -1) {
-    perror ("DEBUG: [get_output_if] connect");
     close (sock_rt);
     return OSIP_NO_NETWORK;
   }
 
   len = sizeof (iface_out);
   if (getsockname (sock_rt, (struct sockaddr *) &iface_out, &len) == -1) {
-    perror ("DEBUG: [get_output_if] getsockname");
     close (sock_rt);
     return OSIP_NO_NETWORK;
   }
   close (sock_rt);
 
-  if (iface_out.sin6_addr.s6_addr == 0) {       /* what is this case?? */
-    return OSIP_NO_NETWORK;
-  }
   inet_ntop (AF_INET6, (const void *) &iface_out.sin6_addr, address, size - 1);
   return OSIP_SUCCESS;
 }
@@ -785,28 +776,51 @@ _eXosip_guess_ip_for_destination (struct eXosip_t *excontext, int family, char *
  * The ip of the default interface is returned.
  */
 static int
-  _eXosip_default_gateway_ipv4sock (struct eXosip_t *excontext, int proto, int sock, char *destination, char *address, int size)
+  _eXosip_default_gateway_ipv4sock (struct eXosip_t *excontext, int proto, struct sockaddr_storage *udp_local_bind, int sock, char *destination, char *address, int size)
 {
   socklen_t len;
   struct sockaddr_in iface_out;
-  struct sockaddr_in remote;
 
-  memset (&remote, 0, sizeof (struct sockaddr_in));
-
-  remote.sin_family = AF_INET;
-  remote.sin_addr.s_addr = inet_addr (destination);
-  remote.sin_port = htons (11111);
-
-  memset (&iface_out, 0, sizeof (iface_out));
   snprintf (address, size, "127.0.0.1");
-
-  if (connect (sock, (struct sockaddr *) &remote, sizeof (struct sockaddr_in)) == -1) {
-    /* socket already connected... it's good enough. */
+  if (udp_local_bind!=NULL) {
+    struct sockaddr_in remote;
+    /* for udp, we use an independant socket with similar binding, because we can't connect the socket */
+    
+    memset (&remote, 0, sizeof (struct sockaddr_in));
+    remote.sin_family = AF_INET;
+    remote.sin_addr.s_addr = inet_addr (destination);
+    remote.sin_port = htons (11111);
+    
+    memcpy (&iface_out, udp_local_bind, sizeof (iface_out));
+    len = sizeof (iface_out);
+    iface_out.sin_port = htons (0);
+    
+    sock = socket (AF_INET, SOCK_DGRAM, proto);
+    if (bind (sock, (struct sockaddr*)&iface_out, len)<0) {
+      close (sock);
+      return OSIP_NO_NETWORK;
+    }
+    if (connect (sock, (struct sockaddr *) &remote, sizeof (struct sockaddr_in)) == -1) {
+      close (sock);
+      return OSIP_NO_NETWORK;
+    }
+    len = sizeof (iface_out);
+    if (getsockname (sock, (struct sockaddr *) &iface_out, &len) == -1) {
+      close (sock);
+      return OSIP_NO_NETWORK;
+    }
+    
+    close (sock);
+    if (iface_out.sin_addr.s_addr == 0) { /* what is this case?? */
+      return OSIP_NO_NETWORK;
+    }
+    osip_strncpy (address, inet_ntoa (iface_out.sin_addr), size - 1);
+    return OSIP_SUCCESS;
   }
-
+  
+  memset (&iface_out, 0, sizeof (iface_out));
   len = sizeof (iface_out);
   if (getsockname (sock, (struct sockaddr *) &iface_out, &len) == -1) {
-    perror ("DEBUG: [get_output_if] getsockname");
     return OSIP_NO_NETWORK;
   }
 
@@ -822,48 +836,67 @@ static int
  * The ip of the default interface is returned.
  */
 static int
-_eXosip_default_gateway_ipv6sock (struct eXosip_t *excontext, int proto, int sock, char *destination, char *address, int size)
+_eXosip_default_gateway_ipv6sock (struct eXosip_t *excontext, int proto, struct sockaddr_storage *udp_local_bind, int sock, char *destination, char *address, int size)
 {
   socklen_t len;
   struct sockaddr_in6 iface_out;
-  struct sockaddr_in6 remote;
 
-  memset (&remote, 0, sizeof (struct sockaddr_in6));
+  snprintf (address, size, "::1");
+  if (udp_local_bind!=NULL) {
+    /* for udp, we use an independant socket with similar binding, because we can't connect the socket */
+    struct sockaddr_in6 remote;
 
-  remote.sin6_family = AF_INET6;
-  inet_pton (AF_INET6, destination, &remote.sin6_addr);
-  remote.sin6_port = htons (11111);
+    memset (&remote, 0, sizeof (struct sockaddr_in6));
+    remote.sin6_family = AF_INET6;
+    inet_pton (AF_INET6, destination, &remote.sin6_addr);
+    remote.sin6_port = htons (11111);
+
+    memcpy (&iface_out, udp_local_bind, sizeof (iface_out));
+    len = sizeof (iface_out);
+    iface_out.sin6_port = htons (0);
+    
+    sock = socket (AF_INET6, SOCK_DGRAM, proto);
+    if (bind(sock, (struct sockaddr*)&iface_out, len)<0) {
+      close (sock);
+      return OSIP_NO_NETWORK;
+    }
+    
+    if (connect (sock, (struct sockaddr *) &remote, sizeof (struct sockaddr_in6)) == -1) {
+      close (sock);
+      return OSIP_NO_NETWORK;
+    }
+    
+    len = sizeof (iface_out);
+    if (getsockname (sock, (struct sockaddr *) &iface_out, &len) == -1) {
+      close (sock);
+      return OSIP_NO_NETWORK;
+    }
+    close (sock);
+    
+    inet_ntop (AF_INET6, (const void *) &iface_out.sin6_addr, address, size - 1);
+    return OSIP_SUCCESS;
+  }
 
   memset (&iface_out, 0, sizeof (iface_out));
-  snprintf (address, size, "::1");
-
-  if (connect (sock, (struct sockaddr *) &remote, sizeof (struct sockaddr_in6)) == -1) {
-    /* socket already connected... it's good enough. */
-  }
-
   len = sizeof (iface_out);
   if (getsockname (sock, (struct sockaddr *) &iface_out, &len) == -1) {
-    perror ("DEBUG: [get_output_if] getsockname");
     return OSIP_NO_NETWORK;
   }
 
-  if (iface_out.sin6_addr.s6_addr == 0) {       /* what is this case?? */
-    return OSIP_NO_NETWORK;
-  }
   inet_ntop (AF_INET6, (const void *) &iface_out.sin6_addr, address, size - 1);
   return OSIP_SUCCESS;
 }
 
 int
-_eXosip_guess_ip_for_destinationsock (struct eXosip_t *excontext, int family, int proto, int sock, char *destination, char *address, int size)
+_eXosip_guess_ip_for_destinationsock (struct eXosip_t *excontext, int family, int proto, struct sockaddr_storage *udp_local_bind, int sock, char *destination, char *address, int size)
 {
   int err;
 
   if (family == AF_INET6) {
-    err = _eXosip_default_gateway_ipv6sock (excontext, proto, sock, destination, address, size);
+    err = _eXosip_default_gateway_ipv6sock (excontext, proto, udp_local_bind, sock, destination, address, size);
   }
   else {
-    err = _eXosip_default_gateway_ipv4sock (excontext, proto, sock, destination, address, size);
+    err = _eXosip_default_gateway_ipv4sock (excontext, proto, udp_local_bind, sock, destination, address, size);
   }
 #ifdef HAVE_GETIFADDRS
   if (err < 0)
