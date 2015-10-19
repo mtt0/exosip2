@@ -492,6 +492,8 @@ extern "C" {
   int _eXosip_guess_ip_for_destinationsock (struct eXosip_t *excontext, int family, int proto, int sock, char *destination, char *address, int size);
 
 
+  int _eXosip_getnameinfo(const struct sockaddr *sa, socklen_t salen, char *host, socklen_t hostlen, char *serv, socklen_t servlen, int flags);
+  int _eXosip_getport(const struct sockaddr *sa, socklen_t salen);
   int _eXosip_get_addrinfo (struct eXosip_t *excontext, struct addrinfo **addrinfo, const char *hostname, int service, int protocol);
 
   int _eXosip_set_callbacks (osip_t * osip);
@@ -507,8 +509,8 @@ extern "C" {
   int _eXosip_generating_publish (struct eXosip_t *excontext, osip_message_t ** message, const char *to, const char *from, const char *route);
   int _eXosip_generating_cancel (struct eXosip_t *excontext, osip_message_t ** dest, osip_message_t * request_cancelled);
   int _eXosip_generating_bye (struct eXosip_t *excontext, osip_message_t ** bye, osip_dialog_t * dialog);
-  int _eXosip_request_viamanager(struct eXosip_t *excontext, osip_transaction_t * tr, osip_message_t * sip, int proto, int sock, char *host);
-  int _eXosip_message_contactmanager(struct eXosip_t *excontext, osip_transaction_t * tr, osip_message_t * sip, int proto, int sock, char *host);
+  int _eXosip_request_viamanager(struct eXosip_t *excontext, osip_transaction_t * tr, osip_message_t * sip, int proto, int local_port, int sock, char *host);
+  int _eXosip_message_contactmanager(struct eXosip_t *excontext, osip_transaction_t * tr, osip_message_t * sip, int proto, int local_port, int sock, char *host);
   
   int _eXosip_update_top_via (struct eXosip_t *excontext, osip_message_t * sip);
   int _eXosip_request_add_via (struct eXosip_t *excontext, osip_message_t * request);

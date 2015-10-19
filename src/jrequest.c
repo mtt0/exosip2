@@ -913,7 +913,7 @@ _eXosip_generating_cancel (struct eXosip_t *excontext, osip_message_t ** dest, o
 }
 
 int
-_eXosip_request_viamanager(struct eXosip_t *excontext, osip_transaction_t * tr, osip_message_t * sip, int proto, int sock, char *host)
+_eXosip_request_viamanager(struct eXosip_t *excontext, osip_transaction_t * tr, osip_message_t * sip, int proto, int ephemeral_port, int sock, char *host)
 {
   /* step1: put local-ip in VIA->host or udp_firewall_ip set by eXosip_masquerade_contact (tl_get_masquerade_contact) */
   /* step2: put local-port in VIA->port or udp_firewall_port set by eXosip_masquerade_contact (tl_get_masquerade_contact) */
@@ -944,6 +944,15 @@ _eXosip_request_viamanager(struct eXosip_t *excontext, osip_transaction_t * tr, 
   if (masquerade_port[0]!='\0') {
     via_port = masquerade_port;
   }
+  if (via_port==NULL && ephemeral_port>0) {
+    snprintf(masquerade_port, sizeof(masquerade_port), "%i", ephemeral_port);
+    via_port = masquerade_port;
+  }
+  if (via_port==NULL && excontext->eXtl_transport.proto_local_port>0) {
+    snprintf(masquerade_port, sizeof(masquerade_port), "%i", excontext->eXtl_transport.proto_local_port);
+    via_port = masquerade_port;
+  }
+  
 #ifdef MASQUERADE_VIA
   if (masquerade_ip[0]!='\0') {
     via_ip = masquerade_ip;
@@ -982,7 +991,7 @@ _eXosip_request_viamanager(struct eXosip_t *excontext, osip_transaction_t * tr, 
 }
 
 int
-_eXosip_message_contactmanager(struct eXosip_t *excontext, osip_transaction_t * tr, osip_message_t * sip, int proto, int sock, char *host)
+_eXosip_message_contactmanager(struct eXosip_t *excontext, osip_transaction_t * tr, osip_message_t * sip, int proto, int ephemeral_port, int sock, char *host)
 {
   /* step1: put local-ip in Contact ->host or udp_firewall_ip set by eXosip_masquerade_contact (_eXosip_register_add_contact) */
   /* step2: put local-port in Contact->port or udp_firewall_port set by eXosip_masquerade_contact (_eXosip_register_add_contact) */
@@ -1011,6 +1020,15 @@ _eXosip_message_contactmanager(struct eXosip_t *excontext, osip_transaction_t * 
   if (masquerade_port[0]!='\0') {
     contact_port = masquerade_port;
   }
+  if (contact_port==NULL && ephemeral_port>0) {
+    snprintf(masquerade_port, sizeof(masquerade_port), "%i", ephemeral_port);
+    contact_port = masquerade_port;
+  }
+  if (contact_port==NULL && excontext->eXtl_transport.proto_local_port>0) {
+    snprintf(masquerade_port, sizeof(masquerade_port), "%i", excontext->eXtl_transport.proto_local_port);
+    contact_port = masquerade_port;
+  }
+
   if (masquerade_ip[0]!='\0') {
     contact_ip = masquerade_ip;
   } 

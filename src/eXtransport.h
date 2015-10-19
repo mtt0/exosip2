@@ -58,6 +58,7 @@ struct eXtl_protocol {
   int proto_family;
   int proto_secure;
   int proto_reliable;
+  int proto_local_port;
 
   int (*tl_init) (struct eXosip_t * excontext);
   int (*tl_free) (struct eXosip_t * excontext);

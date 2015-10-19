@@ -426,6 +426,48 @@ _eXosip_get_addrinfo (struct eXosip_t *excontext, struct addrinfo **addrinfo, co
 
 #endif
 
+int _eXosip_getport(const struct sockaddr *sa, socklen_t salen)
+{
+  if (sa->sa_family == AF_INET)
+    return ntohs (((struct sockaddr_in *) sa)->sin_port);
+
+  return ntohs (((struct sockaddr_in6 *) sa)->sin6_port);
+}
+
+#if defined(__arc__)
+
+int _eXosip_getnameinfo(const struct sockaddr *sa, socklen_t salen, char *host, socklen_t hostlen, char *serv, socklen_t servlen, int flags)
+{
+  struct sockaddr_in *fromsa = (struct sockaddr_in *) sa;
+  char *tmp;
+
+  tmp = inet_ntoa (fromsa->sin_addr);
+  if (tmp == NULL) {
+    OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "_eXosip_getnameinfo failure\n"));
+    snprintf (host, hostlen, "127.0.0.1");
+    return OSIP_UNDEFINED_ERROR;
+  }
+
+  snprintf (host, hostlen, "%s", tmp);
+  return OSIP_SUCCESS;
+}
+
+#else
+int _eXosip_getnameinfo(const struct sockaddr *sa, socklen_t salen, char *host, socklen_t hostlen, char *serv, socklen_t servlen, int flags)
+{
+  int err;
+
+  err = getnameinfo ((struct sockaddr *) sa, salen, host, hostlen, serv, servlen, flags);
+
+  if (err != 0) {
+    OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "_eXosip_getnameinfo failure\n"));
+    snprintf (host, hostlen, "127.0.0.1");
+    return OSIP_UNDEFINED_ERROR;
+  }
+  return OSIP_SUCCESS;
+}
+#endif
+
 int
 _eXosip_guess_ip_for_via (struct eXosip_t *excontext, int family, char *address, int size)
 {
@@ -512,8 +554,8 @@ _eXosip_guess_ip_for_destinationsock (struct eXosip_t *excontext, int family, in
 {
   SOCKADDR_STORAGE local_addr;
 
-  int local_addr_len;
-
+  DWORD local_addr_len;
+  
   struct addrinfo *addrf = NULL;
 
   address[0] = '\0';
@@ -562,7 +604,7 @@ _eXosip_guess_ip_for_destinationsock (struct eXosip_t *excontext, int family, in
 
   _eXosip_freeaddrinfo (addrf);
 
-  if (getnameinfo ((const struct sockaddr *) &local_addr, local_addr_len, address, size, NULL, 0, NI_NUMERICHOST)) {
+  if (getnameinfo ((const struct sockaddr *) &local_addr, (socklen_t)local_addr_len, address, size, NULL, 0, NI_NUMERICHOST)) {
     snprintf (address, size, (family == AF_INET) ? "127.0.0.1" : "::1");
     return OSIP_NO_NETWORK;
   }
