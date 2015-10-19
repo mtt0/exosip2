@@ -173,6 +173,8 @@ udp_tl_free (struct eXosip_t *excontext)
 #endif
   if (reserved->udp_socket > 0)
     close (reserved->udp_socket);
+  if (reserved->udp_socket_oc > 0)
+    close (reserved->udp_socket_oc);
 
   if (reserved->buf != NULL)
     osip_free(reserved->buf);
@@ -913,7 +915,7 @@ _udp_tl_update_contact (struct eXosip_t *excontext, osip_message_t * req)
 #endif
         ) {
         if (ainfo == NULL) {
-          if (excontext->udp_firewall_port=='\0') {
+          if (excontext->udp_firewall_port[0]=='\0') {
           } else if (co->url->port == NULL && 0 != osip_strcasecmp (excontext->udp_firewall_port, "5060")) {
             co->url->port = osip_strdup (excontext->udp_firewall_port);
             osip_message_force_update (req);
@@ -955,7 +957,7 @@ _udp_tl_update_contact (struct eXosip_t *excontext, osip_message_t * req)
   if (excontext->masquerade_via)
     if (via!=NULL) {
         if (ainfo == NULL) {
-          if (excontext->udp_firewall_port=='\0') {
+          if (excontext->udp_firewall_port[0]=='\0') {
           } else if (via->port == NULL && 0 != osip_strcasecmp (excontext->udp_firewall_port, "5060")) {
             via->port = osip_strdup (excontext->udp_firewall_port);
             osip_message_force_update (req);
@@ -1012,6 +1014,7 @@ udp_tl_send_message (struct eXosip_t *excontext, osip_transaction_t * tr, osip_m
   int i;
   osip_naptr_t *naptr_record = NULL;
   int sock;
+  struct sockaddr_storage *local_ai_addr;
   int local_port;
 
   if (reserved == NULL) {
@@ -1189,6 +1192,7 @@ udp_tl_send_message (struct eXosip_t *excontext, osip_transaction_t * tr, osip_m
   /* default socket used */
   sock = reserved->udp_socket;
   local_port = excontext->eXtl_transport.proto_local_port;
+  local_ai_addr = &reserved->ai_addr;
 
   /* if we have a second socket for outbound connection, re-use the incoming socket (udp_socket) for any message sent there */
   if (reserved->udp_socket_oc > 0)
@@ -1197,6 +1201,7 @@ udp_tl_send_message (struct eXosip_t *excontext, osip_transaction_t * tr, osip_m
     
     sock = reserved->udp_socket_oc;
     local_port = excontext->oc_local_port_range[0];
+    local_ai_addr = &reserved->ai_addr_oc;
     
     for (pos = 0; pos < EXOSIP_MAX_SOCKETS; pos++) {
       if (reserved->socket_tab[pos].out_socket == 0)
@@ -1205,13 +1210,26 @@ udp_tl_send_message (struct eXosip_t *excontext, osip_transaction_t * tr, osip_m
       if (reserved->socket_tab[pos].remote_port == port && osip_strcasecmp(reserved->socket_tab[pos].remote_ip, ipbuf)==0) {
         sock = reserved->socket_tab[pos].out_socket;
         local_port = excontext->eXtl_transport.proto_local_port;
+        local_ai_addr = &reserved->ai_addr;
         break;
       }
     }
   }
 
-  _eXosip_request_viamanager(excontext, tr, sip, IPPROTO_UDP, local_port, sock, host);
-  _eXosip_message_contactmanager(excontext, tr, sip, IPPROTO_UDP, local_port, sock, host);
+  switch (((struct sockaddr *) &addr)->sa_family) {
+    case AF_INET:
+      inet_ntop (((struct sockaddr *) &addr)->sa_family, &(((struct sockaddr_in *) &addr)->sin_addr), ipbuf, sizeof (ipbuf));
+      break;
+    case AF_INET6:
+      inet_ntop (((struct sockaddr *) &addr)->sa_family, &(((struct sockaddr_in6 *) &addr)->sin6_addr), ipbuf, sizeof (ipbuf));
+      break;
+    default:
+      strncpy (ipbuf, "(unknown)", sizeof (ipbuf));
+      break;
+  }
+  
+  _eXosip_request_viamanager(excontext, tr, sip, IPPROTO_UDP, local_ai_addr, local_port, sock, ipbuf);
+  _eXosip_message_contactmanager(excontext, tr, sip, IPPROTO_UDP, local_ai_addr, local_port, sock, ipbuf);
   _udp_tl_update_contact(excontext, sip);
 
   /* remove preloaded route if there is no tag in the To header
@@ -1238,17 +1256,6 @@ udp_tl_send_message (struct eXosip_t *excontext, osip_transaction_t * tr, osip_m
     return -1;
   }
 
-  switch (((struct sockaddr *) &addr)->sa_family) {
-  case AF_INET:
-    inet_ntop (((struct sockaddr *) &addr)->sa_family, &(((struct sockaddr_in *) &addr)->sin_addr), ipbuf, sizeof (ipbuf));
-    break;
-  case AF_INET6:
-    inet_ntop (((struct sockaddr *) &addr)->sa_family, &(((struct sockaddr_in6 *) &addr)->sin6_addr), ipbuf, sizeof (ipbuf));
-    break;
-  default:
-    strncpy (ipbuf, "(unknown)", sizeof (ipbuf));
-    break;
-  }
 
   OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO1, NULL, "Message sent: (to dest=%s:%i)\n%s\n", ipbuf, port, message));
   

@@ -663,7 +663,7 @@ _dtls_tl_update_contact (struct eXosip_t *excontext, osip_message_t * req)
 #endif
         ) {
         if (ainfo == NULL) {
-          if (excontext->dtls_firewall_port=='\0') {
+          if (excontext->dtls_firewall_port[0]=='\0') {
           } else if (co->url->port == NULL && 0 != osip_strcasecmp (excontext->dtls_firewall_port, "5061")) {
             co->url->port = osip_strdup (excontext->dtls_firewall_port);
             osip_message_force_update (req);
@@ -705,7 +705,7 @@ _dtls_tl_update_contact (struct eXosip_t *excontext, osip_message_t * req)
   if (excontext->masquerade_via)
     if (via!=NULL) {
         if (ainfo == NULL) {
-          if (excontext->dtls_firewall_port=='\0') {
+          if (excontext->dtls_firewall_port[0]=='\0') {
           } else if (via->port == NULL && 0 != osip_strcasecmp (excontext->dtls_firewall_port, "5060")) {
             via->port = osip_strdup (excontext->dtls_firewall_port);
             osip_message_force_update (req);
@@ -1034,8 +1034,8 @@ dtls_tl_send_message (struct eXosip_t *excontext, osip_transaction_t * tr, osip_
     reserved->socket_tab[pos].remote_port = port;
   }
 
-  _eXosip_request_viamanager(excontext, tr, sip, IPPROTO_UDP, excontext->eXtl_transport.proto_local_port, reserved->dtls_socket, host);
-  _eXosip_message_contactmanager(excontext, tr, sip, IPPROTO_UDP, excontext->eXtl_transport.proto_local_port, reserved->dtls_socket, host);
+  _eXosip_request_viamanager(excontext, tr, sip, IPPROTO_UDP, &reserved->ai_addr, excontext->eXtl_transport.proto_local_port, reserved->dtls_socket, host);
+  _eXosip_message_contactmanager(excontext, tr, sip, IPPROTO_UDP, &reserved->ai_addr, excontext->eXtl_transport.proto_local_port, reserved->dtls_socket, host);
   _dtls_tl_update_contact(excontext, sip);
 
   /* remove preloaded route if there is no tag in the To header
