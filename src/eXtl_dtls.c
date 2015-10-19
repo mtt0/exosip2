@@ -663,7 +663,7 @@ _dtls_tl_update_contact (struct eXosip_t *excontext, osip_message_t * req)
 #endif
         ) {
         if (ainfo == NULL) {
-          if (excontext->dtls_firewall_port=='\0') {
+          if (excontext->dtls_firewall_port[0]=='\0') {
           } else if (co->url->port == NULL && 0 != osip_strcasecmp (excontext->dtls_firewall_port, "5061")) {
             co->url->port = osip_strdup (excontext->dtls_firewall_port);
             osip_message_force_update (req);
@@ -705,7 +705,7 @@ _dtls_tl_update_contact (struct eXosip_t *excontext, osip_message_t * req)
   if (excontext->masquerade_via)
     if (via!=NULL) {
         if (ainfo == NULL) {
-          if (excontext->dtls_firewall_port=='\0') {
+          if (excontext->dtls_firewall_port[0]=='\0') {
           } else if (via->port == NULL && 0 != osip_strcasecmp (excontext->dtls_firewall_port, "5060")) {
             via->port = osip_strdup (excontext->dtls_firewall_port);
             osip_message_force_update (req);
