@@ -550,7 +550,7 @@ _eXosip_guess_ip_for_destination (struct eXosip_t *excontext, int family, char *
 }
 
 int
-_eXosip_guess_ip_for_destinationsock (struct eXosip_t *excontext, int family, int proto, int sock, char *destination, char *address, int size)
+_eXosip_guess_ip_for_destinationsock (struct eXosip_t *excontext, int family, int proto, struct sockaddr_storage *udp_local_bind, int sock, char *destination, char *address, int size)
 {
   SOCKADDR_STORAGE local_addr;
 

@@ -1041,7 +1041,7 @@ _eXosip_message_contactmanager(struct eXosip_t *excontext, osip_transaction_t * 
   }
 
   /* search for correct ip */
-  if (masquerade_ip[0] != '\0' && sip->req_uri->host != NULL) {
+  if (masquerade_ip[0] != '\0' && sip->req_uri != NULL && sip->req_uri->host != NULL) {
 #ifdef USE_LOCALIP_WITH_LOCALPROXY      /* disable this code for local testing because it adds an extra DNS */
     char *c_address = sip->req_uri->host;
 
