@@ -440,6 +440,7 @@ extern "C" {
     int ka_options;
     int learn_port;
     int use_rport;
+    int remove_prerouteset;
     int dns_capabilities;
     int enable_dns_cache;
     int dscp;

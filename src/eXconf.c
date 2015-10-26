@@ -743,6 +743,7 @@ eXosip_init (struct eXosip_t *excontext)
   osip_fifo_init (excontext->j_events);
 
   excontext->use_rport = 1;
+  excontext->remove_prerouteset = 1;
   excontext->dns_capabilities = 2;
   excontext->enable_dns_cache = 1;
   excontext->ka_interval = 17000;
@@ -1038,6 +1039,12 @@ eXosip_set_option (struct eXosip_t *excontext, int opt, const void *value)
     /* 0: A request, 1: SRV support, 2: NAPTR+SRV support */
     excontext->dns_capabilities = val;
     break;
+  case EXOSIP_OPT_REMOVE_PREROUTESET:
+    val = *((int *) value);
+    /* 0: keep pre-route set in initial INVITE/SUBSCRIBE/REFER, 1: remove pre-route set */
+      excontext->remove_prerouteset = val;
+    break;
+
   case EXOSIP_OPT_SET_DSCP:
     val = *((int *) value);
     /* 0x1A by default */

@@ -987,6 +987,8 @@ _eXosip_request_viamanager(struct eXosip_t *excontext, osip_transaction_t * tr, 
 
   osip_free(via->port);
   via->port = osip_strdup(via_port);
+  OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO1, NULL, "updating: Via header to %s:%i\n", via_ip, via_port));
+  osip_message_force_update(sip);
   return OSIP_SUCCESS;
 }
 
@@ -1086,6 +1088,8 @@ _eXosip_message_contactmanager(struct eXosip_t *excontext, osip_transaction_t * 
 
   osip_free(acontact->url->port);
   acontact->url->port = osip_strdup(contact_port);
+  OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO1, NULL, "updating: Contact header to %s:%i\n", contact_ip, contact_port));
+  osip_message_force_update(sip);
   return OSIP_SUCCESS;
 }
 

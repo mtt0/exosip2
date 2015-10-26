@@ -3059,11 +3059,13 @@ tls_tl_send_message (struct eXosip_t *excontext, osip_transaction_t * tr, osip_m
     osip_route_t *route = NULL;
     osip_generic_param_t *tag = NULL;
 
-    osip_message_get_route (sip, 0, &route);
-
-    osip_to_get_tag (sip->to, &tag);
-    if (tag == NULL && route != NULL && route->url != NULL) {
-      osip_list_remove (&sip->routes, 0);
+    if (excontext->remove_prerouteset>0) {
+      osip_message_get_route (sip, 0, &route);
+      osip_to_get_tag (sip->to, &tag);
+      if (tag == NULL && route != NULL && route->url != NULL) {
+        osip_list_remove (&sip->routes, 0);
+        osip_message_force_update(sip);
+      }
     }
     i = osip_message_to_str (sip, &message, &length);
     if (tag == NULL && route != NULL && route->url != NULL) {

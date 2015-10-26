@@ -118,7 +118,7 @@ extern "C" {
 #define EXOSIP_OPT_DELETE_DNS_CACHE (EXOSIP_OPT_BASE_OPTION+10) /**< struct eXosip_dns_cache *: force removal of some cache entry to avoid DNS */
 #define EXOSIP_OPT_SET_IPV6_FOR_GATEWAY (EXOSIP_OPT_BASE_OPTION+12) /**< char *: usually, this is the proxy address */
 #define EXOSIP_OPT_ADD_ACCOUNT_INFO (EXOSIP_OPT_BASE_OPTION+13) /**< struct eXosip_account_info *: internal stuff */
-#define EXOSIP_OPT_DNS_CAPABILITIES (EXOSIP_OPT_BASE_OPTION+14) /**< int *: 0 to disable, 2 to use NAPTR/SRV record */
+#define EXOSIP_OPT_DNS_CAPABILITIES (EXOSIP_OPT_BASE_OPTION+14) /**< int *: 0 to disable, 2 (default) to use NAPTR/SRV record */
 #define EXOSIP_OPT_SET_DSCP (EXOSIP_OPT_BASE_OPTION+15) /**< int *: set a dscp value for SIP socket */
 #define EXOSIP_OPT_REGISTER_WITH_DATE (EXOSIP_OPT_BASE_OPTION+16) /**< int *: enable usage of Date header in REGISTER */
 #define EXOSIP_OPT_SET_HEADER_USER_AGENT (EXOSIP_OPT_BASE_OPTION+17) /**< char *: set the User-Agent header */
@@ -131,6 +131,7 @@ extern "C" {
 #define EXOSIP_OPT_ENABLE_OUTBOUND (EXOSIP_OPT_BASE_OPTION+24) /**< int *: 0 to disable, 1 to enable usage of ob parmeter (rfc 5626) in dialog's contact headers */
 #define EXOSIP_OPT_SET_OC_LOCAL_ADDRESS (EXOSIP_OPT_BASE_OPTION+25) /**< char *: set the ip address to bind for outbound connection */
 #define EXOSIP_OPT_SET_OC_PORT_RANGE (EXOSIP_OPT_BASE_OPTION+26) /**< int[2] *: set the port range (min, max) to bind for outbound connection */
+#define EXOSIP_OPT_REMOVE_PREROUTESET (EXOSIP_OPT_BASE_OPTION+27) /**< int *: 0: keep pre-route set in initial INVITE/SUBSCRIBE/REFER, 1 (default): remove pre-route set*/
 
 #define EXOSIP_OPT_SET_TLS_VERIFY_CERTIFICATE (EXOSIP_OPT_BASE_OPTION+500) /**< int *: enable verification of certificate for TLS connection */
 #define EXOSIP_OPT_SET_TLS_CERTIFICATES_INFO (EXOSIP_OPT_BASE_OPTION+501) /**< eXosip_tls_ctx_t *: client and/or server certificate/ca-root/key info */
