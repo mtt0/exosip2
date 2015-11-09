@@ -617,19 +617,16 @@ dialog_fill_route_set (osip_dialog_t * dialog, osip_message_t * request)
   /* add the route set */
   /* "The UAC MUST add a route header field containing
      the remainder of the route set values in order. */
-  pos = 0;                      /* yes it is */
+  pos = 1;                      /* yes it is */
 
-  while (!osip_list_eol (&dialog->route_set, pos)) {    /* not the first one in the list */
+  while (!osip_list_eol (&dialog->route_set, pos)) {
     osip_route_t *route2;
 
     route = osip_list_get (&dialog->route_set, pos);
     i = osip_route_clone (route, &route2);
     if (i != 0)
       return i;
-    if (!osip_list_eol (&dialog->route_set, pos + 1))
-      osip_list_add (&request->routes, route2, -1);
-    else
-      osip_route_free (route2);
+    osip_list_add (&request->routes, route2, -1);
     pos++;
   }
 
