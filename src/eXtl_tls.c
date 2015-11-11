@@ -2974,6 +2974,14 @@ tls_tl_send_message (struct eXosip_t *excontext, osip_transaction_t * tr, osip_m
   }
 
   if (out_socket <= 0) {
+    if (naptr_record != NULL && MSG_IS_REGISTER (sip)) {
+      if (eXosip_dnsutils_rotate_srv (&naptr_record->siptls_record) > 0) {
+        /* reg_call_id is not set! */
+        _eXosip_mark_registration_expired (excontext, sip->call_id->number);
+        OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO1, NULL,
+                                "Doing TLS failover: %s:%i->%s:%i\n", host, port, naptr_record->siptls_record.srventry[naptr_record->siptls_record.index].srv, naptr_record->siptls_record.srventry[naptr_record->siptls_record.index].port));
+      }
+    }
     return -1;
   }
 

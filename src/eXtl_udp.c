@@ -1181,6 +1181,16 @@ udp_tl_send_message (struct eXosip_t *excontext, osip_transaction_t * tr, osip_m
   }
 
   if (i != 0) {
+    if (naptr_record != NULL) {
+      /* rotate on failure! */
+      if (MSG_IS_REGISTER (sip)) {
+        if (eXosip_dnsutils_rotate_srv (&naptr_record->sipudp_record) > 0) {
+          OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO1, NULL,
+                                  "Doing UDP failover: %s:%i->%s:%i\n", host, port, naptr_record->sipudp_record.srventry[naptr_record->sipudp_record.index].srv, naptr_record->sipudp_record.srventry[naptr_record->sipudp_record.index].port));
+          _eXosip_mark_registration_expired(excontext, sip->call_id->number);
+        }
+      }
+    }
     return -1;
   }
 

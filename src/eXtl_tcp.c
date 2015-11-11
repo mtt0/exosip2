@@ -1398,6 +1398,14 @@ tcp_tl_send_message (struct eXosip_t *excontext, osip_transaction_t * tr, osip_m
   }
 
   if (out_socket <= 0) {
+    OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO2, NULL, "no socket can be found or created\n"));
+    if (naptr_record != NULL && (MSG_IS_REGISTER (sip) || MSG_IS_OPTIONS (sip))) {
+      if (eXosip_dnsutils_rotate_srv (&naptr_record->siptcp_record) > 0) {
+        _eXosip_mark_registration_expired (excontext, sip->call_id->number);
+        OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO1, NULL,
+                                "Doing TCP failover: %s:%i->%s:%i\n", host, port, naptr_record->siptcp_record.srventry[naptr_record->siptcp_record.index].srv, naptr_record->siptcp_record.srventry[naptr_record->siptcp_record.index].port));
+      }
+    }
     return -1;
   }
 
