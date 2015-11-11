@@ -1796,7 +1796,7 @@ _naptr_callback (void *arg, int status, int timeouts, unsigned char *abuf, int a
   osip_naptr_t *output_record = (osip_naptr_t *) arg;
 
   if (status != ARES_SUCCESS) {
-    if (status == ARES_ENODATA) {       /* no NAPTR record for this domain */
+    if (status == ARES_ENODATA || status == ARES_ENOTFOUND) {       /* no NAPTR record for this domain */
       osip_srv_record_t srvrecord;
 
       OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO2, NULL, "_naptr_callback: %s %s\n", output_record->domain, ares_strerror (status)));
