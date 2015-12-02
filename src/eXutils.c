@@ -1547,10 +1547,10 @@ save_NAPTR (osip_naptr_t * output_record, const unsigned char *aptr, const unsig
       snprintf (srvrecord.name, sizeof (srvrecord.name), "%s", name.as_char);
 
       srvrecord.srv_state = OSIP_SRV_STATE_UNKNOWN;
-      if (osip_strncasecmp (srvrecord.protocol, "SIP+D2U", 8) == 0) {   /* udp */
+      if (osip_strncasecmp(srvrecord.name, "_sip._udp.", 10)==0 || osip_strncasecmp (srvrecord.protocol, "SIP+D2U", 8) == 0) {   /* udp */
         memcpy (&output_record->sipudp_record, &srvrecord, sizeof (osip_srv_record_t));
       }
-      else if (osip_strncasecmp (srvrecord.protocol, "SIP+D2T", 8) == 0) {      /* tcp */
+      else if (osip_strncasecmp(srvrecord.name, "_sip._tcp.", 10)==0 || osip_strncasecmp (srvrecord.protocol, "SIP+D2T", 8) == 0) {      /* tcp */
         memcpy (&output_record->siptcp_record, &srvrecord, sizeof (osip_srv_record_t));
       }
       else if (osip_strncasecmp (srvrecord.protocol, "SIPS+D2T", 9) == 0) {     /* tls */
