@@ -133,7 +133,7 @@ _eXosip_dialog_add_contact (struct eXosip_t *excontext, osip_message_t * request
     strcat (contact, ">");
   }
   if (excontext->sip_instance[0] != 0) {
-    strcat(contact, "+sip.instance=\"<urn:uuid:");
+    strcat(contact, ";+sip.instance=\"<urn:uuid:");
     strcat(contact, excontext->sip_instance);
     strcat(contact, ">\"");
   }
