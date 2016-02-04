@@ -301,20 +301,6 @@ extern "C" {
   int eXosip_set_cbsip_message (struct eXosip_t *excontext, CbSipCallback cbsipCallback);
 
 /**
- * Use IPv6 instead of IPv4. (global setting)
- *
- * DEPRECATED: you MUST use EXOSIP_OPT_ENABLE_IPV6 to configure each
- * eXosip_t independantly.
- *
- * **THIS CODE DOES NOTHING, REPLACE WITH**
- *
- * eXosip_set_option(excontext, EXOSIP_OPT_ENABLE_IPV6, &val);
- * 
- * @param ipv6_enable  This paramter should be set to 1 to enable IPv6 mode.
- */
-  void eXosip_enable_ipv6 (int ipv6_enable);
-
-/**
  * This method is used to replace contact address with
  * the public address of your NAT. The ip address should
  * be retreived manually (fixed IP address) or with STUN.

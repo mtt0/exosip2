@@ -1034,7 +1034,6 @@ udp_tl_send_message (struct eXosip_t *excontext, osip_transaction_t * tr, osip_m
   }
 
   i = -1;
-#ifndef MINISIZE
   if (tr == NULL) {
     _eXosip_srv_lookup (excontext, sip, &naptr_record);
 
@@ -1173,7 +1172,6 @@ udp_tl_send_message (struct eXosip_t *excontext, osip_transaction_t * tr, osip_m
         tr->naptr_record = NULL;
     }
   }
-#endif
 
   /* if SRV was used, destination may be already found */
   if (i != 0) {
@@ -1301,7 +1299,6 @@ udp_tl_send_message (struct eXosip_t *excontext, osip_transaction_t * tr, osip_m
   i = sendto (sock, (const void *) message, length, 0, (struct sockaddr *) &addr, len);
 #endif
   if (0 > i) {
-#ifndef MINISIZE
     if (naptr_record != NULL) {
       /* rotate on failure! */
       if (MSG_IS_REGISTER (sip)) {
@@ -1312,7 +1309,6 @@ udp_tl_send_message (struct eXosip_t *excontext, osip_transaction_t * tr, osip_m
         }
       }
     }
-#endif
     /* SIP_NETWORK_ERROR; */
     osip_free (message);
     return -1;
@@ -1329,7 +1325,6 @@ udp_tl_send_message (struct eXosip_t *excontext, osip_transaction_t * tr, osip_m
     }
   }
 
-#ifndef MINISIZE
   if (naptr_record != NULL) {
     if (tr != NULL && MSG_IS_REGISTER (sip) && tr->last_response == NULL) {
       /* failover for outgoing transaction */
@@ -1348,7 +1343,6 @@ udp_tl_send_message (struct eXosip_t *excontext, osip_transaction_t * tr, osip_m
       }
     }
   }
-#endif
 
   osip_free (message);
   return OSIP_SUCCESS;

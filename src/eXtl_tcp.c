@@ -1239,7 +1239,6 @@ _tcp_tl_is_connected (int sock)
       }
       
       i = -1;
-#ifndef MINISIZE
       if (tr == NULL) {
         _eXosip_srv_lookup (excontext, sip, &naptr_record);
         
@@ -1346,7 +1345,6 @@ _tcp_tl_is_connected (int sock)
             tr->naptr_record = NULL;
         }
       }
-#endif
       
       /* verify all current connections */
       _tcp_tl_check_connected (excontext);

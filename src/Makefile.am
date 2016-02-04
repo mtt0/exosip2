@@ -20,6 +20,7 @@ jcallback.c      jdialog.c        \
 udp.c            jcall.c          \
 jreg.c           eXutils.c        \
 jevents.c        misc.c           \
+jpipe.c          jpipe.h          \
 jauth.c          eXtransport.h    \
 eXosip2.h
 
@@ -41,7 +42,6 @@ eXsubscription_api.c    eXoptions_api.c    \
 eXinsubscription_api.c  eXpublish_api.c    \
 jnotify.c               jsubscribe.c       \
 inet_ntop.c             inet_ntop.h        \
-jpipe.c                 jpipe.h            \
 jpublish.c              sdp_offans.c
 endif
 

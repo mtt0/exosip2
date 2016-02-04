@@ -47,18 +47,6 @@ static void *_eXosip_thread (void *arg);
 #endif
 static void _eXosip_keep_alive (struct eXosip_t *excontext);
 
-#ifndef MINISIZE
-
-void
-eXosip_enable_ipv6 (int _ipv6_enable)
-{
-  /* obsolete, use:
-     eXosip_set_option(excontext, EXOSIP_OPT_ENABLE_IPV6, &val);
-   */
-}
-
-#endif
-
 const char *
 eXosip_get_version (void)
 {
@@ -834,8 +822,8 @@ eXosip_execute (struct eXosip_t *excontext)
   /* free all Calls that are in the TERMINATED STATE? */
   _eXosip_release_terminated_calls (excontext);
   _eXosip_release_terminated_registrations (excontext);
-  _eXosip_release_terminated_publications (excontext);
 #ifndef MINISIZE
+  _eXosip_release_terminated_publications (excontext);
   _eXosip_release_terminated_subscriptions (excontext);
   _eXosip_release_terminated_in_subscriptions (excontext);
 #endif

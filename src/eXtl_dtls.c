@@ -575,7 +575,6 @@ dtls_tl_read_message (struct eXosip_t *excontext, fd_set * osip_fdset, fd_set * 
         _eXosip_handle_incoming_message (excontext, dec_buf, i, reserved->dtls_socket, src6host, recvport, NULL, NULL);
 
       }
-#ifndef MINISIZE
       else if (i <= 0) {
         err = SSL_get_error (reserved->socket_tab[pos].ssl_conn, i);
         print_ssl_error (err);
@@ -594,7 +593,6 @@ dtls_tl_read_message (struct eXosip_t *excontext, fd_set * osip_fdset, fd_set * 
       else {
         OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO1, NULL, "Dummy SIP message received\n"));
       }
-#endif
 
       osip_free (dec_buf);
       osip_free (enc_buf);
@@ -786,7 +784,6 @@ dtls_tl_send_message (struct eXosip_t *excontext, osip_transaction_t * tr, osip_
     port = 5061;
 
   i = -1;
-#ifndef MINISIZE
   if (tr == NULL) {
     _eXosip_srv_lookup (excontext, sip, &naptr_record);
 
@@ -911,7 +908,6 @@ dtls_tl_send_message (struct eXosip_t *excontext, osip_transaction_t * tr, osip_
         tr->naptr_record = NULL;
     }
   }
-#endif
 
   /* if SRV was used, destination may be already found */
   if (i != 0) {
@@ -1079,7 +1075,7 @@ dtls_tl_send_message (struct eXosip_t *excontext, osip_transaction_t * tr, osip_
       memset (&reserved->socket_tab[pos], 0, sizeof (struct _dtls_stream));
 
     }
-#ifndef MINISIZE
+
     if (naptr_record != NULL) {
       /* rotate on failure! */
       if (eXosip_dnsutils_rotate_srv (&naptr_record->sipdtls_record) > 0) {
@@ -1087,7 +1083,7 @@ dtls_tl_send_message (struct eXosip_t *excontext, osip_transaction_t * tr, osip_
         return OSIP_SUCCESS;    /* retry for next retransmission! */
       }
     }
-#endif
+
     /* SIP_NETWORK_ERROR; */
     osip_free (message);
     return -1;

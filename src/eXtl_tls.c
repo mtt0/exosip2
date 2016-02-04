@@ -2788,7 +2788,6 @@ tls_tl_send_message (struct eXosip_t *excontext, osip_transaction_t * tr, osip_m
     port = 5061;
 
   i = -1;
-#ifndef MINISIZE
   if (tr == NULL) {
     _eXosip_srv_lookup (excontext, sip, &naptr_record);
 
@@ -2895,7 +2894,6 @@ tls_tl_send_message (struct eXosip_t *excontext, osip_transaction_t * tr, osip_m
         tr->naptr_record = NULL;
     }
   }
-#endif
 
   /* verify all current connections */
   _tls_tl_check_connected (excontext);

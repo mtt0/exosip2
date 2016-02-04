@@ -50,34 +50,6 @@
 #include "tsc_control_api.h"
 #endif
 
-/* Private functions */
-
-static void _eXosip_send_default_answer (struct eXosip_t *excontext, eXosip_dialog_t * jd, osip_transaction_t * transaction, osip_event_t * evt, int status, char *reason_phrase, char *warning, int line);
-static void _eXosip_process_bye (struct eXosip_t *excontext, eXosip_call_t * jc, eXosip_dialog_t * jd, osip_transaction_t * transaction, osip_event_t * evt);
-static void _eXosip_process_ack (struct eXosip_t *excontext, eXosip_call_t * jc, eXosip_dialog_t * jd, osip_event_t * evt);
-static int _cancel_match_invite (osip_transaction_t * invite, osip_message_t * cancel);
-static void _eXosip_process_cancel (struct eXosip_t *excontext, osip_transaction_t * transaction, osip_event_t * evt);
-static void _eXosip_process_reinvite (struct eXosip_t *excontext, eXosip_call_t * jc, eXosip_dialog_t * jd, osip_transaction_t * transaction, osip_event_t * evt);
-static void _eXosip_process_new_invite (struct eXosip_t *excontext, osip_transaction_t * transaction, osip_event_t * evt);
-
-#ifndef MINISIZE
-static void _eXosip_process_new_subscription (struct eXosip_t *excontext, osip_transaction_t * transaction, osip_event_t * evt);
-static void _eXosip_process_subscribe_within_call (struct eXosip_t *excontext, eXosip_notify_t * jn, eXosip_dialog_t * jd, osip_transaction_t * transaction, osip_event_t * evt);
-static void _eXosip_process_notify_within_dialog (struct eXosip_t *excontext, eXosip_subscribe_t * js, eXosip_dialog_t * jd, osip_transaction_t * transaction, osip_event_t * evt);
-static int _eXosip_match_notify_for_subscribe (eXosip_subscribe_t * js, osip_message_t * notify);
-#endif
-static void _eXosip_process_message_within_dialog (struct eXosip_t *excontext, eXosip_call_t * jc, eXosip_dialog_t * jd, osip_transaction_t * transaction, osip_event_t * evt);
-static void _eXosip_process_newrequest (struct eXosip_t *excontext, osip_event_t * evt, int socket);
-static void _eXosip_process_response_out_of_transaction (struct eXosip_t *excontext, osip_event_t * evt);
-static int _eXosip_pendingosip_transaction_exist (struct eXosip_t *excontext, eXosip_call_t * jc, eXosip_dialog_t * jd);
-static int _eXosip_release_finished_calls (struct eXosip_t *excontext, eXosip_call_t * jc, eXosip_dialog_t * jd);
-static int _eXosip_release_aborted_calls (struct eXosip_t *excontext, eXosip_call_t * jc, eXosip_dialog_t * jd);
-
-static int _eXosip_release_finished_transactions (struct eXosip_t *excontext, eXosip_call_t * jc, eXosip_dialog_t * jd);
-
-#ifndef MINISIZE
-static int _eXosip_release_finished_transactions_for_subscription (struct eXosip_t *excontext, eXosip_dialog_t * jd);
-#endif
 
 static void
 _eXosip_send_default_answer (struct eXosip_t *excontext, eXosip_dialog_t * jd, osip_transaction_t * transaction, osip_event_t * evt, int status, char *reason_phrase, char *warning, int line)
@@ -786,20 +758,16 @@ static void
 _eXosip_process_newrequest (struct eXosip_t *excontext, osip_event_t * evt, int socket)
 {
   osip_transaction_t *transaction;
-
-#ifndef MINISIZE
-  osip_event_t *evt_answer;
-  osip_message_t *answer;
-#endif
   int i;
   int ctx_type;
   eXosip_call_t *jc;
-
+  eXosip_dialog_t *jd;
 #ifndef MINISIZE
   eXosip_subscribe_t *js;
   eXosip_notify_t *jn;
+  osip_event_t *evt_answer;
+  osip_message_t *answer;
 #endif
-  eXosip_dialog_t *jd;
 
   if (MSG_IS_INVITE (evt->sip)) {
     ctx_type = IST;
@@ -1159,9 +1127,7 @@ _eXosip_process_newrequest (struct eXosip_t *excontext, osip_event_t * evt, int 
     }
     return;
   }
-#endif
 
-#ifndef MINISIZE
   if (MSG_IS_REFER (evt->sip)) {
     osip_header_t *refer_sub;
     osip_message_header_get_byname (evt->sip, "Refer-Sub", 0, &refer_sub);
@@ -1239,7 +1205,7 @@ _eXosip_process_response_out_of_transaction (struct eXosip_t *excontext, osip_ev
     osip_event_free (evt);
     return;
   }
-#ifndef MINISIZE
+
   if (jc != NULL && jd != NULL) {
     /* we have to restransmit the ACK (if already available) */
     OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO1, NULL, "2xx restransmission receveid.\r\n"));
@@ -1254,15 +1220,12 @@ _eXosip_process_response_out_of_transaction (struct eXosip_t *excontext, osip_ev
     osip_event_free (evt);
     return;
   }
-#endif
 
   if (jc != NULL) {
     /* match answer with dialog */
     osip_dialog_t *dlg;
-
-#ifndef MINISIZE
     osip_transaction_t *last_tr;
-#endif
+
     int i;
 
     /* we match an existing dialog: send a retransmission of ACK */
@@ -1277,8 +1240,6 @@ _eXosip_process_response_out_of_transaction (struct eXosip_t *excontext, osip_ev
 
     {
       osip_message_t *bye = NULL;
-
-#ifndef MINISIZE                /* Don't send ACK in MINISIZE mode to save code size */
       osip_message_t *ack;
 
       i = _eXosip_build_request_within_dialog (excontext, &ack, "ACK", dlg);
@@ -1311,7 +1272,7 @@ _eXosip_process_response_out_of_transaction (struct eXosip_t *excontext, osip_ev
       }
       _eXosip_snd_message (excontext, NULL, ack, NULL, 0, -1);
       osip_message_free (ack);
-#endif
+
       /* in some case, PRACK and UPDATE may have been sent
          so we have to send a cseq which is above the previous
          one. */
@@ -1953,69 +1914,23 @@ _eXosip_release_aborted_calls (struct eXosip_t *excontext, eXosip_call_t * jc, e
         /* OSIP_TRACE(osip_trace(__FILE__,__LINE__,OSIP_INFO2,NULL,
            "eXosip: _eXosip_release_aborted_calls transaction with no answer\n")); */
       }
-#ifndef MINISIZE
-      else if (MSG_IS_STATUS_3XX (jc->c_inc_tr->last_response)) {
-        OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO2, NULL, "eXosip: _eXosip_release_aborted_calls answered with a 3xx\n"));
-        _eXosip_release_call (excontext, jc, jd);
-        return OSIP_SUCCESS;
-      }
-      else if (MSG_IS_STATUS_4XX (jc->c_inc_tr->last_response)) {
-        OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO2, NULL, "eXosip: _eXosip_release_aborted_calls answered with a 4xx\n"));
-        _eXosip_release_call (excontext, jc, jd);
-        return OSIP_SUCCESS;
-      }
-      else if (MSG_IS_STATUS_5XX (jc->c_inc_tr->last_response)) {
-        OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO2, NULL, "eXosip: _eXosip_release_aborted_calls answered with a 5xx\n"));
-        _eXosip_release_call (excontext, jc, jd);
-        return OSIP_SUCCESS;
-      }
-      else if (MSG_IS_STATUS_6XX (jc->c_inc_tr->last_response)) {
-        OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO2, NULL, "eXosip: _eXosip_release_aborted_calls answered with a 6xx\n"));
-        _eXosip_release_call (excontext, jc, jd);
-        return OSIP_SUCCESS;
-      }
-#else
       else if (jc->c_inc_tr->last_response->status_code >= 300) {
-        OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO2, NULL, "eXosip: _eXosip_release_aborted_calls answered with a answer above 3xx\n"));
+        OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO2, NULL, "eXosip: _eXosip_release_aborted_calls (answer sent = %i %s)\n", jc->c_inc_tr->last_response->status_code, jc->c_inc_tr->last_response->reason_phrase));
         _eXosip_release_call (excontext, jc, jd);
         return OSIP_SUCCESS;
       }
-#endif
     }
     else if (tr == jc->c_out_tr) {
       if (jc->c_out_tr->last_response == NULL) {
-        OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO2, NULL, "eXosip: _eXosip_release_aborted_calls completed with no answer\n"));
+        OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO2, NULL, "eXosip: _eXosip_release_aborted_calls (answer received = 0 Timeout)\n"));
         _eXosip_release_call (excontext, jc, jd);
         return OSIP_SUCCESS;
       }
-#ifndef MINISIZE
-      else if (MSG_IS_STATUS_3XX (jc->c_out_tr->last_response)) {
-        OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO2, NULL, "eXosip: _eXosip_release_aborted_calls completed answered with 3xx\n"));
-        _eXosip_release_call (excontext, jc, jd);
-        return OSIP_SUCCESS;
-      }
-      else if (MSG_IS_STATUS_4XX (jc->c_out_tr->last_response)) {
-        OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO2, NULL, "eXosip: _eXosip_release_aborted_calls completed answered with 4xx\n"));
-        _eXosip_release_call (excontext, jc, jd);
-        return OSIP_SUCCESS;
-      }
-      else if (MSG_IS_STATUS_5XX (jc->c_out_tr->last_response)) {
-        OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO2, NULL, "eXosip: _eXosip_release_aborted_calls completed answered with 5xx\n"));
-        _eXosip_release_call (excontext, jc, jd);
-        return OSIP_SUCCESS;
-      }
-      else if (MSG_IS_STATUS_6XX (jc->c_out_tr->last_response)) {
-        OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO2, NULL, "eXosip: _eXosip_release_aborted_calls completed answered with 6xx\n"));
-        _eXosip_release_call (excontext, jc, jd);
-        return OSIP_SUCCESS;
-      }
-#else
       else if (jc->c_out_tr->last_response->status_code >= 300) {
-        OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO2, NULL, "eXosip: _eXosip_release_aborted_calls completed answered with 3xx\n"));
-        _eXosip_release_call (jc, jd);
+        OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO2, NULL, "eXosip: _eXosip_release_aborted_calls (answer received = %i %s)\n", jc->c_out_tr->last_response->status_code, jc->c_out_tr->last_response->reason_phrase));
+        _eXosip_release_call (excontext, jc, jd);
         return OSIP_SUCCESS;
       }
-#endif
     }
   }
 
@@ -2152,6 +2067,8 @@ _eXosip_release_terminated_registrations (struct eXosip_t *excontext)
   return;
 }
 
+#ifndef MINISIZE
+
 void
 _eXosip_release_terminated_publications (struct eXosip_t *excontext)
 {
@@ -2179,7 +2096,6 @@ _eXosip_release_terminated_publications (struct eXosip_t *excontext)
 
 }
 
-#ifndef MINISIZE
 
 static int
 _eXosip_release_finished_transactions_for_subscription (struct eXosip_t *excontext, eXosip_dialog_t * jd)
@@ -2344,12 +2260,27 @@ _eXosip_release_terminated_in_subscriptions (struct eXosip_t *excontext)
       osip_transaction_t *transaction_notify;
 
       jdnext = jd->next;
+
+      /* if a SUBSCRIBE is rejected, the context will be released automatically */
+      if (jn->n_inc_tr->state == NIST_TERMINATED) {
+	if (jn->n_inc_tr->last_response==NULL) {
+	  REMOVE_ELEMENT (excontext->j_notifies, jn);
+	  _eXosip_notify_free (excontext, jn);
+	  break;
+	} else if (jn->n_inc_tr->last_response->status_code >= 300) {
+	  REMOVE_ELEMENT (excontext->j_notifies, jn);
+	  _eXosip_notify_free (excontext, jn);
+	  break;
+	}
+      }
+      
       _eXosip_release_finished_transactions_for_subscription (excontext, jd);
 
       transaction_notify =  _eXosip_find_last_out_notify(jn, jd);
       if (transaction_notify!=NULL && transaction_notify->state == NICT_TERMINATED && now > jn->n_ss_expires ) {
         REMOVE_ELEMENT (excontext->j_notifies, jn);
         _eXosip_notify_free (excontext, jn);
+	break;
       }
 
       jd = jdnext;
