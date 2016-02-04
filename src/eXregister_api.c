@@ -131,6 +131,13 @@ _eXosip_register_add_contact(struct eXosip_t *excontext, eXosip_reg_t * jreg, os
   if (jreg->r_qvalue[0] != 0)
     osip_contact_param_add (new_contact, osip_strdup ("q"), osip_strdup (jreg->r_qvalue));
 
+  if (excontext->sip_instance[0] != 0) {
+    char *sip_instance = (char *) osip_malloc(50); /* "<urn:uuid:f81d4fae-7dec-11d0-a765-00a0c91e6bf6>" */
+    if (sip_instance!=NULL) {
+      snprintf(sip_instance, 50, "\"<urn:uuid:%s>\"", excontext->sip_instance);
+      osip_contact_param_add (new_contact, osip_strdup ("+sip.instance"), sip_instance);
+    }
+  }
   /* If the address-of-record in the To header field of a REGISTER request
    is a SIPS URI, then any Contact header field values in the request
    SHOULD also be SIPS URIs.

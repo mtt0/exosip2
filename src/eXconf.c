@@ -786,8 +786,7 @@ eXosip_execute (struct eXosip_t *excontext)
     }
   }
   else {
-    /*  add a small amount of time on windows to avoid
-       waking up too early. (probably a bad time precision) */
+    /* add a small amount of time on windows to avoid waking up too early. (probably a bad time precision) */
     if (lower_tv.tv_usec < 990000)
       lower_tv.tv_usec += 10000;        /* add 10ms */
     else {
@@ -1032,7 +1031,13 @@ eXosip_set_option (struct eXosip_t *excontext, int opt, const void *value)
     /* 0: keep pre-route set in initial INVITE/SUBSCRIBE/REFER, 1: remove pre-route set */
       excontext->remove_prerouteset = val;
     break;
-
+  case EXOSIP_OPT_SET_SIP_INSTANCE:
+    tmp = (char *) value;
+    memset (excontext->sip_instance, '\0', sizeof (excontext->sip_instance));
+    if (tmp != NULL && tmp[0] != '\0')
+      osip_strncpy (excontext->sip_instance, tmp, sizeof (excontext->sip_instance) - 1);
+    OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO1, NULL, "eXosip option set: +sip.instance:%s!\n", excontext->sip_instance));
+    break;
   case EXOSIP_OPT_SET_DSCP:
     val = *((int *) value);
     /* 0x1A by default */

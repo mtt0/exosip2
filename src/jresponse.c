@@ -243,6 +243,11 @@ _eXosip_complete_answer_that_establish_a_dialog (struct eXosip_t *excontext, osi
       strcat (contact, via->protocol);
       strcat (contact, ">");
     }
+    if (excontext->sip_instance[0] != 0 && strlen (contact) + 64 < 1024) {
+      strcat(contact, ";+sip.instance=\"<urn:uuid:");
+      strcat(contact, excontext->sip_instance);
+      strcat(contact, ">\"");
+    }
   }
 
   osip_message_set_contact (response, contact);

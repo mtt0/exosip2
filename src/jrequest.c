@@ -75,7 +75,6 @@ eXosip_generate_random (char *buf, int buf_size)
 int
 _eXosip_dialog_add_contact (struct eXosip_t *excontext, osip_message_t * request)
 {
-  osip_via_t *via;
   osip_from_t *a_from;
   char *contact = NULL;
   char scheme[10];
@@ -85,13 +84,6 @@ _eXosip_dialog_add_contact (struct eXosip_t *excontext, osip_message_t * request
     return OSIP_NO_NETWORK;
   if (request == NULL)
     return OSIP_BADPARAMETER;
-
-  /* search for topmost Via which indicate the transport protocol */
-  via = (osip_via_t *) osip_list_get (&request->vias, 0);
-  if (via == NULL || via->protocol == NULL) {
-    OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "eXosip: missing via header\n"));
-    return OSIP_SYNTAXERROR;
-  }
 
   a_from = request->from;
 
@@ -110,6 +102,9 @@ _eXosip_dialog_add_contact (struct eXosip_t *excontext, osip_message_t * request
     len = (int) (2 + 4 + 100 + 6 + 10 + 3 + strlen (excontext->transport));
 
   len++; /* if using sips instead of sip */
+
+  if (excontext->sip_instance[0] != 0)
+    len+=64;
 
   contact = (char *) osip_malloc (len + 1);
   if (contact == NULL)
@@ -137,6 +132,12 @@ _eXosip_dialog_add_contact (struct eXosip_t *excontext, osip_message_t * request
     strcat (contact, excontext->transport);
     strcat (contact, ">");
   }
+  if (excontext->sip_instance[0] != 0) {
+    strcat(contact, "+sip.instance=\"<urn:uuid:");
+    strcat(contact, excontext->sip_instance);
+    strcat(contact, ">\"");
+  }
+
   osip_message_set_contact (request, contact);
   osip_free (contact);
 
@@ -562,6 +563,8 @@ _eXosip_generating_publish (struct eXosip_t *excontext, osip_message_t ** messag
   if (i != 0)
     return i;
 
+  if (excontext->sip_instance[0]!= 0)
+    _eXosip_dialog_add_contact(excontext, *message);
   /* osip_message_set_organization(*message, "Jack's Org"); */
 
   return OSIP_SUCCESS;

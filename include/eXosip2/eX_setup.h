@@ -132,6 +132,7 @@ extern "C" {
 #define EXOSIP_OPT_SET_OC_LOCAL_ADDRESS (EXOSIP_OPT_BASE_OPTION+25) /**< char *: set the ip address to bind for outbound connection */
 #define EXOSIP_OPT_SET_OC_PORT_RANGE (EXOSIP_OPT_BASE_OPTION+26) /**< int[2] *: set the port range (min, max) to bind for outbound connection */
 #define EXOSIP_OPT_REMOVE_PREROUTESET (EXOSIP_OPT_BASE_OPTION+27) /**< int *: 0: keep pre-route set in initial INVITE/SUBSCRIBE/REFER, 1 (default): remove pre-route set*/
+#define EXOSIP_OPT_SET_SIP_INSTANCE (EXOSIP_OPT_BASE_OPTION+28) /**< char *: define +sip.instance parameter in Contact headers  (example: f81d4fae-7dec-11d0-a765-00a0c91e6bf6) */
 
 #define EXOSIP_OPT_SET_TLS_VERIFY_CERTIFICATE (EXOSIP_OPT_BASE_OPTION+500) /**< int *: enable verification of certificate for TLS connection */
 #define EXOSIP_OPT_SET_TLS_CERTIFICATES_INFO (EXOSIP_OPT_BASE_OPTION+501) /**< eXosip_tls_ctx_t *: client and/or server certificate/ca-root/key info */
