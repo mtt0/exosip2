@@ -104,7 +104,7 @@ _eXosip_dialog_add_contact (struct eXosip_t *excontext, osip_message_t * request
   len++; /* if using sips instead of sip */
 
   if (excontext->sip_instance[0] != 0)
-    len+=64;
+    len+=65;
 
   contact = (char *) osip_malloc (len + 1);
   if (contact == NULL)
