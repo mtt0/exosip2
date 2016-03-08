@@ -19,11 +19,25 @@ eXosip2 (5.0.0)
 	eXosip_publish returns a positive transaction id (tid) on success.
 	note: eXosip_message_send_request was already returing the transaction id (tid) on success.
 	* new API options:
+	EXOSIP_OPT_SET_SIP_INSTANCE: define +sip.instance parameter in Contact headers
 	EXOSIP_OPT_ENABLE_USE_EPHEMERAL_PORT: option to use/not use ephemeral port in Contact.
 	EXOSIP_OPT_ENABLE_REUSE_TCP_PORT: option to reuse port.
 	EXOSIP_OPT_AUTO_MASQUERADE_CONTACT: option to enable automatic masquerading for Contact headers.
 	EXOSIP_OPT_UDP_LEARN_PORT: obsolete and will be removed in the future.
+	* new API options: (high load traffic use-case: DO NOT USE FOR COMMON USAGE)
+	EXOSIP_OPT_SET_MAX_MESSAGE_TO_READ: set the number of message to read at once for each network processing.
+	EXOSIP_OPT_SET_MAX_READ_TIMEOUT: set the period in nano seconds during we read for sip message.
+	EXOSIP_OPT_GET_STATISTICS: retreive numerous statistics.
 
+	* if a SUBSCRIBE is rejected, the context will be released automatically
+	* rename usage of -DHAVE_CARES_H into -DHAVE_ARES_H real name of header.
+	* remove warnings mainly related to socket API (getnameinfo/bind/accept/recv/connect/sendto)
+	* rewrite/update autotools and ./configure options
+	  --enable-pthread=[autodetect|force]
+	    autodetect POSIX threads or force -DHAVE_PTHREAD [default=autodetect]
+	  --enable-semaphore=[autodetect|semaphore|sysv]
+	    select your prefered semaphore [default=autodetect].
+	* rewrite all loop using iterator to improve performance (useful for high load traffic)
 	* rewrite Via and Contact management: both will now contains the IP of the real network interface
 	  instead of the default one.
 	* improve NAPTR failover, more reliable // add failover for 503 answer

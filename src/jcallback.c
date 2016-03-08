@@ -846,8 +846,8 @@ cb_rcv2xx_4subscribe (osip_transaction_t * tr, osip_message_t * sip)
 static int
 _eXosip_update_expires_according_to_contact (eXosip_reg_t * jreg, osip_transaction_t * tr, osip_message_t * sip)
 {
+  osip_list_iterator_t it;
   osip_contact_t *co_register;
-  int pos;
   int maxval = 0;
 
   if (jreg == NULL)
@@ -862,9 +862,8 @@ _eXosip_update_expires_according_to_contact (eXosip_reg_t * jreg, osip_transacti
 
 
   /* search for matching contact (line parameter must be equal) */
-  pos = 0;
-  co_register = (osip_contact_t *) osip_list_get (&sip->contacts, pos);
-  while (co_register != NULL) {
+  co_register = (osip_contact_t *)osip_list_get_first(&sip->contacts, &it);
+  while (co_register != OSIP_SUCCESS) {
     osip_uri_param_t *line_param = NULL;
 
     if (co_register->url != NULL)
@@ -886,8 +885,7 @@ _eXosip_update_expires_according_to_contact (eXosip_reg_t * jreg, osip_transacti
       }
     }
 
-    pos++;
-    co_register = (osip_contact_t *) osip_list_get (&sip->contacts, pos);
+    co_register = (osip_contact_t *)osip_list_get_next(&it);
   }
 
   if (maxval == 0)

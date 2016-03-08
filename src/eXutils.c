@@ -531,7 +531,7 @@ _eXosip_guess_ip_for_destination (struct eXosip_t *excontext, int family, char *
     return OSIP_NO_NETWORK;
   }
 
-  if (WSAIoctl (sock, SIO_ROUTING_INTERFACE_QUERY, addrf->ai_addr, addrf->ai_addrlen, &local_addr, sizeof (local_addr), &local_addr_len, NULL, NULL) != 0) {
+  if (WSAIoctl (sock, SIO_ROUTING_INTERFACE_QUERY, addrf->ai_addr, (DWORD)addrf->ai_addrlen, &local_addr, sizeof (local_addr), &local_addr_len, NULL, NULL) != 0) {
     closesocket (sock);
     _eXosip_freeaddrinfo (addrf);
     snprintf (address, size, (family == AF_INET) ? "127.0.0.1" : "::1");
@@ -596,7 +596,7 @@ _eXosip_guess_ip_for_destinationsock (struct eXosip_t *excontext, int family, in
     return OSIP_NO_NETWORK;
   }
 
-  if (WSAIoctl (sock, SIO_ROUTING_INTERFACE_QUERY, addrf->ai_addr, addrf->ai_addrlen, &local_addr, sizeof (local_addr), &local_addr_len, NULL, NULL) != 0) {
+  if (WSAIoctl (sock, SIO_ROUTING_INTERFACE_QUERY, addrf->ai_addr, (DWORD)addrf->ai_addrlen, &local_addr, sizeof (local_addr), &local_addr_len, NULL, NULL) != 0) {
     _eXosip_freeaddrinfo (addrf);
     snprintf (address, size, (family == AF_INET) ? "127.0.0.1" : "::1");
     return OSIP_NO_NETWORK;
@@ -1014,7 +1014,7 @@ _eXosip_get_addrinfo (struct eXosip_t *excontext, struct addrinfo **addrinfo, co
     char porttmp[10];
 
     for (elem = *addrinfo; elem != NULL; elem = elem->ai_next) {
-      getnameinfo (elem->ai_addr, elem->ai_addrlen, tmp, sizeof (tmp), porttmp, sizeof (porttmp), NI_NUMERICHOST | NI_NUMERICSERV);
+      getnameinfo (elem->ai_addr, (socklen_t)elem->ai_addrlen, tmp, sizeof (tmp), porttmp, sizeof (porttmp), NI_NUMERICHOST | NI_NUMERICSERV);
       OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO2, NULL, "getaddrinfo returned: %s port %s\n", tmp, porttmp));
     }
   }
@@ -1178,7 +1178,7 @@ eXosip_dnsutils_rotate_srv (osip_srv_record_t * srv_record)
 
 static osip_list_t *dnsutils_list = NULL;
 
-#if defined(HAVE_CARES_H)
+#if defined(HAVE_CARES_H) || defined(HAVE_ARES_H)
 
 #ifdef HAVE_SYS_SOCKET_H
 #include <sys/socket.h>
@@ -2123,8 +2123,8 @@ eXosip_dnsutils_naptr_lookup (osip_naptr_t * output_record, const char *domain)
 struct osip_naptr *
 eXosip_dnsutils_naptr (struct eXosip_t *excontext, const char *domain, const char *protocol, const char *transport, int keep_in_cache)
 {
+  osip_list_iterator_t it;
   struct osip_naptr *naptr_record;
-  int pos;
   int i;
 
 #if defined(HAVE_WINDNS_H)
@@ -2149,10 +2149,8 @@ eXosip_dnsutils_naptr (struct eXosip_t *excontext, const char *domain, const cha
   }
 
   if (keep_in_cache < 0) {
-    naptr_record = NULL;
-    pos = 0;
-    while (!osip_list_eol (dnsutils_list, pos)) {
-      naptr_record = (osip_naptr_t *) osip_list_get (dnsutils_list, pos);
+    naptr_record = (osip_naptr_t *)osip_list_get_first(dnsutils_list, &it);
+    while (naptr_record != NULL) {
       if (osip_strcasecmp (domain, naptr_record->domain) == 0) {
         if (naptr_record->naptr_state == OSIP_NAPTR_STATE_RETRYLATER)
           break;
@@ -2163,9 +2161,9 @@ eXosip_dnsutils_naptr (struct eXosip_t *excontext, const char *domain, const cha
       }
 
       naptr_record = NULL;
-      pos++;
-      if (pos == 10)
+      if (it.pos == 9)
         break;
+      naptr_record = (osip_naptr_t *)osip_list_get_next(&it);
     }
     return NULL;
   }
@@ -2206,28 +2204,25 @@ eXosip_dnsutils_naptr (struct eXosip_t *excontext, const char *domain, const cha
   osip_free (dns_servers);
 #endif
 
-  naptr_record = NULL;
-  pos = 0;
-  while (!osip_list_eol (dnsutils_list, pos)) {
-    naptr_record = (osip_naptr_t *) osip_list_get (dnsutils_list, pos);
+  naptr_record = (osip_naptr_t *)osip_list_get_first(dnsutils_list, &it);
+  while (naptr_record != NULL) {
 
     /* process all */
     if (naptr_record->naptr_state == OSIP_NAPTR_STATE_NAPTRDONE || naptr_record->naptr_state == OSIP_NAPTR_STATE_SRVINPROGRESS)
       eXosip_dnsutils_srv_lookup (naptr_record);
 
     naptr_record = NULL;
-    pos++;
-    if (pos == 10)
+    if (it.pos == 9)
       break;
+    naptr_record = (osip_naptr_t *)osip_list_get_next(&it);
   }
 
   if (domain == NULL)
     return NULL;
 
-  naptr_record = NULL;
-  pos = 0;
-  while (!osip_list_eol (dnsutils_list, pos)) {
-    naptr_record = (osip_naptr_t *) osip_list_get (dnsutils_list, pos);
+  it.pos=0;
+  naptr_record = (osip_naptr_t *)osip_list_get_first(dnsutils_list, &it);
+  while (naptr_record != NULL) {
     if (osip_strcasecmp (domain, naptr_record->domain) == 0) {
       if (naptr_record->naptr_state == OSIP_NAPTR_STATE_RETRYLATER)
         break;
@@ -2239,12 +2234,12 @@ eXosip_dnsutils_naptr (struct eXosip_t *excontext, const char *domain, const cha
     }
 
     naptr_record = NULL;
-    pos++;
-    if (pos == 10)
+    if (it.pos == 9)
       break;
+    naptr_record = (osip_naptr_t *)osip_list_get_next(&it);
   }
 
-  if (pos == 10 && keep_in_cache > 0) {
+  if (it.pos == 9 && keep_in_cache > 0) {
     /* no NAPTR found within the last 10 NAPTR : refuse to keep in cache... */
     /* If we were adding unlimited NAPTR record into the cache, the program
        would infinitly increase memory usage. If you reach there, then you
@@ -2774,8 +2769,8 @@ eXosip_dnsutils_naptr_lookup (osip_naptr_t * output_record, const char *domain)
 struct osip_naptr *
 eXosip_dnsutils_naptr (struct eXosip_t *excontext, const char *domain, const char *protocol, const char *transport, int keep_in_cache)
 {
+  osip_list_iterator_t it;
   struct osip_naptr *naptr_record;
-  int pos;
   int i;
   DNS_STATUS err;
   DWORD buf_length = 0;
@@ -2791,10 +2786,8 @@ eXosip_dnsutils_naptr (struct eXosip_t *excontext, const char *domain, const cha
   }
 
   if (keep_in_cache < 0) {
-    naptr_record = NULL;
-    pos = 0;
-    while (!osip_list_eol (dnsutils_list, pos)) {
-      naptr_record = (osip_naptr_t *) osip_list_get (dnsutils_list, pos);
+    naptr_record = (osip_naptr_t *)osip_list_get_first(dnsutils_list, &it);
+    while (naptr_record != NULL) {
       if (osip_strcasecmp (domain, naptr_record->domain) == 0) {
         if (naptr_record->naptr_state == OSIP_NAPTR_STATE_RETRYLATER)
           break;
@@ -2805,9 +2798,9 @@ eXosip_dnsutils_naptr (struct eXosip_t *excontext, const char *domain, const cha
       }
 
       naptr_record = NULL;
-      pos++;
-      if (pos == 10)
+      if (it.pos == 9)
         break;
+      naptr_record = (osip_naptr_t *)osip_list_get_next(&it);
     }
     return NULL;
   }
@@ -2846,28 +2839,25 @@ eXosip_dnsutils_naptr (struct eXosip_t *excontext, const char *domain, const cha
   }
 
 
-  naptr_record = NULL;
-  pos = 0;
-  while (!osip_list_eol (dnsutils_list, pos)) {
-    naptr_record = (osip_naptr_t *) osip_list_get (dnsutils_list, pos);
+  naptr_record = (osip_naptr_t *)osip_list_get_first(dnsutils_list, &it);
+  while (naptr_record != NULL) {
 
     /* process all */
     if (naptr_record->naptr_state == OSIP_NAPTR_STATE_NAPTRDONE || naptr_record->naptr_state == OSIP_NAPTR_STATE_SRVINPROGRESS)
       eXosip_dnsutils_srv_lookup (naptr_record);
 
     naptr_record = NULL;
-    pos++;
-    if (pos == 10)
+    if (it.pos == 9)
       break;
+    naptr_record = (osip_naptr_t *)osip_list_get_next(&it);
   }
 
   if (domain == NULL)
     return NULL;
 
-  naptr_record = NULL;
-  pos = 0;
-  while (!osip_list_eol (dnsutils_list, pos)) {
-    naptr_record = (osip_naptr_t *) osip_list_get (dnsutils_list, pos);
+  it.pos=0;
+  naptr_record = (osip_naptr_t *)osip_list_get_first(dnsutils_list, &it);
+  while (naptr_record != NULL) {
     if (osip_strcasecmp (domain, naptr_record->domain) == 0) {
       if (naptr_record->naptr_state == OSIP_NAPTR_STATE_RETRYLATER)
         break;
@@ -2879,12 +2869,12 @@ eXosip_dnsutils_naptr (struct eXosip_t *excontext, const char *domain, const cha
     }
 
     naptr_record = NULL;
-    pos++;
-    if (pos == 10)
+    if (it.pos == 9)
       break;
+    naptr_record = (osip_naptr_t *)osip_list_get_next(&it);
   }
 
-  if (pos == 10 && keep_in_cache > 0) {
+  if (it.pos == 9 && keep_in_cache > 0) {
     /* no NAPTR found within the last 10 NAPTR : refuse to keep in cache... */
     /* If we were adding unlimited NAPTR record into the cache, the program
        would infinitly increase memory usage. If you reach there, then you
@@ -3405,8 +3395,8 @@ defined(OLD_NAMESER) || defined(__FreeBSD__)
 struct osip_naptr *
 eXosip_dnsutils_naptr (struct eXosip_t *excontext, const char *domain, const char *protocol, const char *transport, int keep_in_cache)
 {
+  osip_list_iterator_t it;
   struct osip_naptr *naptr_record;
-  int pos;
   int i;
   int not_in_list = 0;
 
@@ -3419,10 +3409,8 @@ eXosip_dnsutils_naptr (struct eXosip_t *excontext, const char *domain, const cha
   }
 
   if (keep_in_cache < 0) {
-    naptr_record = NULL;
-    pos = 0;
-    while (!osip_list_eol (dnsutils_list, pos)) {
-      naptr_record = (osip_naptr_t *) osip_list_get (dnsutils_list, pos);
+    naptr_record = (osip_naptr_t *)osip_list_get_first(dnsutils_list, &it);
+    while (naptr_record != NULL) {
       if (osip_strcasecmp (domain, naptr_record->domain) == 0) {
         if (naptr_record->naptr_state == OSIP_NAPTR_STATE_RETRYLATER)
           break;
@@ -3433,35 +3421,32 @@ eXosip_dnsutils_naptr (struct eXosip_t *excontext, const char *domain, const cha
       }
 
       naptr_record = NULL;
-      pos++;
-      if (pos == 10)
+      if (it.pos == 9)
         break;
+      naptr_record = (osip_naptr_t *)osip_list_get_next(&it);
     }
     return NULL;
   }
 
-  naptr_record = NULL;
-  pos = 0;
-  while (!osip_list_eol (dnsutils_list, pos)) {
-    naptr_record = (osip_naptr_t *) osip_list_get (dnsutils_list, pos);
+  naptr_record = (osip_naptr_t *)osip_list_get_first(dnsutils_list, &it);
+  while (naptr_record != NULL) {
 
     /* process all */
     if (naptr_record->naptr_state == OSIP_NAPTR_STATE_NAPTRDONE || naptr_record->naptr_state == OSIP_NAPTR_STATE_SRVINPROGRESS)
       eXosip_dnsutils_srv_lookup (naptr_record);
 
     naptr_record = NULL;
-    pos++;
-    if (pos == 10)
+    if (it.pos == 9)
       break;
+    naptr_record = (osip_naptr_t *)osip_list_get_next(&it);
   }
 
   if (domain == NULL)
     return NULL;
 
-  naptr_record = NULL;
-  pos = 0;
-  while (!osip_list_eol (dnsutils_list, pos)) {
-    naptr_record = (osip_naptr_t *) osip_list_get (dnsutils_list, pos);
+  it.pos=0;
+  naptr_record = (osip_naptr_t *)osip_list_get_first(dnsutils_list, &it);
+  while (naptr_record != NULL) {
     if (osip_strcasecmp (domain, naptr_record->domain) == 0) {
       if (naptr_record->naptr_state == OSIP_NAPTR_STATE_RETRYLATER)
         break;
@@ -3473,12 +3458,12 @@ eXosip_dnsutils_naptr (struct eXosip_t *excontext, const char *domain, const cha
     }
 
     naptr_record = NULL;
-    pos++;
-    if (pos == 10)
+    if (it.pos == 9)
       break;
+    naptr_record = (osip_naptr_t *)osip_list_get_next(&it);
   }
 
-  if (pos == 10 && keep_in_cache > 0) {
+  if (it.pos == 9 && keep_in_cache > 0) {
     /* no NAPTR found within the last 10 NAPTR : refuse to keep in cache... */
     /* If we were adding unlimited NAPTR record into the cache, the program
        would infinitly increase memory usage. If you reach there, then you

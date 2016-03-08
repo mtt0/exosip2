@@ -305,16 +305,15 @@ _eXosip_register_build_register (struct eXosip_t *excontext, eXosip_reg_t * jr, 
       osip_contact_t *contact;
       osip_message_get_contact(reg, 0, &contact);
       if (contact!=NULL) {
-        osip_generic_param_t *exp_param = NULL;
-        int pos=0;
-        while (!osip_list_eol (&contact->gen_params, pos)) {
-          exp_param = (osip_uri_param_t *) osip_list_get (&contact->gen_params, pos);
+        osip_list_iterator_t it;
+        osip_generic_param_t* exp_param = (osip_generic_param_t*)osip_list_get_first(&contact->gen_params, &it);
+        while (exp_param != NULL) {
           if (exp_param->gname!=NULL && osip_strcasecmp (exp_param->gname, "expires") == 0) {
-            osip_list_remove(&contact->gen_params, pos);
+            osip_list_iterator_remove(&it);
             osip_generic_param_free(exp_param);
             break;
           }
-          pos++;
+          exp_param = (osip_generic_param_t *)osip_list_get_next(&it);
         }
       }
       if (excontext->eXtl_transport._tl_update_contact!=NULL)

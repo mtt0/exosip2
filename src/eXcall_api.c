@@ -133,26 +133,25 @@ _eXosip_call_transaction_find (struct eXosip_t *excontext, int tid, eXosip_call_
       return OSIP_SUCCESS;
     }
     for (*jd = (*jc)->c_dialogs; *jd != NULL; *jd = (*jd)->next) {
-      osip_transaction_t *transaction;
-      int pos = 0;
+      osip_list_iterator_t it;
+      osip_transaction_t* transaction;
 
-      while (!osip_list_eol ((*jd)->d_inc_trs, pos)) {
-        transaction = (osip_transaction_t *) osip_list_get ((*jd)->d_inc_trs, pos);
+      transaction = (osip_transaction_t*)osip_list_get_first((*jd)->d_inc_trs, &it);
+      while (transaction != OSIP_SUCCESS) {
         if (transaction != NULL && transaction->transactionid == tid) {
           *tr = transaction;
           return OSIP_SUCCESS;
         }
-        pos++;
+        transaction = (osip_transaction_t *)osip_list_get_next(&it);
       }
 
-      pos = 0;
-      while (!osip_list_eol ((*jd)->d_out_trs, pos)) {
-        transaction = (osip_transaction_t *) osip_list_get ((*jd)->d_out_trs, pos);
+      transaction = (osip_transaction_t*)osip_list_get_first((*jd)->d_out_trs, &it);
+      while (transaction != OSIP_SUCCESS) {
         if (transaction != NULL && transaction->transactionid == tid) {
           *tr = transaction;
           return OSIP_SUCCESS;
         }
-        pos++;
+        transaction = (osip_transaction_t *)osip_list_get_next(&it);
       }
     }
   }
@@ -249,7 +248,7 @@ eXosip_call_send_initial_invite (struct eXosip_t *excontext, osip_message_t * in
     return OSIP_BADPARAMETER;
   }
 
-  i = _eXosip_call_init (&jc);
+  i = _eXosip_call_init (excontext, &jc);
   if (i != 0) {
     osip_message_free (invite);
     return i;
@@ -718,6 +717,37 @@ eXosip_call_build_answer (struct eXosip_t *excontext, int tid, int status, osip_
   return OSIP_SUCCESS;
 }
 
+static osip_header_t *
+_eXosip_header_strcasestr(osip_message_t *message, const char *hname, const char *hname_short, const char *value) {
+  osip_header_t *header;
+  int i;
+  i = osip_message_header_get_byname (message, hname, 0, &header);
+  while (i >= 0) {
+    if (header == NULL)
+      break;
+    if (header->hvalue != NULL && osip_strcasestr (header->hvalue, value) != NULL) {
+      /*found */
+      break;
+    }
+    header = NULL;
+    i = osip_message_header_get_byname (message, hname, i + 1, &header);
+  }
+  if (header == NULL) {
+    i = osip_message_header_get_byname (message, hname_short, 0, &header);
+    while (i >= 0) {
+      if (header == NULL)
+        break;
+      if (header->hvalue != NULL && osip_strcasestr (header->hvalue, value) != NULL) {
+        /*found */
+        break;
+      }
+      header = NULL;
+      i = osip_message_header_get_byname (message, hname_short, i + 1, &header);
+    }
+  }
+  return header;
+}
+
 int
 eXosip_call_send_answer (struct eXosip_t *excontext, int tid, int status, osip_message_t * answer)
 {
@@ -779,34 +809,10 @@ eXosip_call_send_answer (struct eXosip_t *excontext, int tid, int status, osip_m
       || 0 == osip_strcasecmp (tr->orig_request->sip_method, "UPDATE")) {
     if (MSG_IS_STATUS_2XX (answer) && jd != NULL) {
       osip_header_t *supported = NULL;
-      int i = 0;
 
       /* look for timer in supported header: must be added by user-application */
+      supported = _eXosip_header_strcasestr(answer, "supported", "k", "timer");
 
-      i = osip_message_header_get_byname (answer, "supported", 0, &supported);
-      while (i >= 0) {
-        if (supported == NULL)
-          break;
-        if (supported->hvalue != NULL && strstr (supported->hvalue, "timer") != NULL) {
-          /*found */
-          break;
-        }
-        supported = NULL;
-        i = osip_message_header_get_byname (answer, "supported", i + 1, &supported);
-      }
-      if (supported == NULL) {
-        i = osip_message_header_get_byname (answer, "k", 0, &supported);
-        while (i >= 0) {
-          if (supported == NULL)
-            break;
-          if (supported->hvalue != NULL && strstr (supported->hvalue, "timer") != NULL) {
-            /*found */
-            break;
-          }
-          supported = NULL;
-          i = osip_message_header_get_byname (answer, "k", i + 1, &supported);
-        }
-      }
       if (supported != NULL) {  /* timer is supported */
         /* copy session-expires */
         /* add refresher=uas, if it's not already there */
@@ -818,7 +824,7 @@ eXosip_call_send_answer (struct eXosip_t *excontext, int tid, int status, osip_m
         if (se_exp != NULL) {
           osip_header_t *cp = NULL;
 
-          i = osip_header_clone (se_exp, &cp);
+          osip_header_clone (se_exp, &cp);
           if (cp != NULL) {
             osip_content_disposition_t *exp_h = NULL;
 
@@ -864,30 +870,7 @@ eXosip_call_send_answer (struct eXosip_t *excontext, int tid, int status, osip_m
 
 
             /* add Require only if remote UA support "timer" */
-            i = osip_message_header_get_byname (tr->orig_request, "supported", 0, &supported);
-            while (i >= 0) {
-              if (supported == NULL)
-                break;
-              if (supported->hvalue != NULL && strstr (supported->hvalue, "timer") != NULL) {
-                /*found */
-                break;
-              }
-              supported = NULL;
-              i = osip_message_header_get_byname (tr->orig_request, "supported", i + 1, &supported);
-            }
-            if (supported == NULL) {
-              i = osip_message_header_get_byname (tr->orig_request, "k", 0, &supported);
-              while (i >= 0) {
-                if (supported == NULL)
-                  break;
-                if (supported->hvalue != NULL && strstr (supported->hvalue, "timer") != NULL) {
-                  /*found */
-                  break;
-                }
-                supported = NULL;
-                i = osip_message_header_get_byname (tr->orig_request, "k", i + 1, &supported);
-              }
-            }
+            supported = _eXosip_header_strcasestr(tr->orig_request, "supported", "k", "timer");
             if (supported != NULL) {    /* timer is supported */
               osip_message_set_header (answer, "Require", "timer");
             }
@@ -1034,6 +1017,7 @@ eXosip_call_terminate_with_reason (struct eXosip_t *excontext, int cid, int did,
 int
 eXosip_call_build_prack (struct eXosip_t *excontext, int tid, osip_message_t *response1xx, osip_message_t ** prack)
 {
+  osip_list_iterator_t it;
   eXosip_dialog_t *jd = NULL;
   eXosip_call_t *jc = NULL;
   osip_transaction_t *tr = NULL;
@@ -1042,7 +1026,6 @@ eXosip_call_build_prack (struct eXosip_t *excontext, int tid, osip_message_t *re
 
   osip_header_t *rseq;
   int i;
-  int pos;
 
   *prack = NULL;
 
@@ -1075,10 +1058,8 @@ eXosip_call_build_prack (struct eXosip_t *excontext, int tid, osip_message_t *re
   memset (tmp, '\0', sizeof (tmp));
   snprintf (tmp, 127, "%s %s %s", rseq->hvalue, tr->orig_request->cseq->number, tr->orig_request->cseq->method);
 
-  pos = 0;
-  while (!osip_list_eol (jd->d_out_trs, pos)) {
-    old_prack_tr = (osip_transaction_t *) osip_list_get (jd->d_out_trs, pos);
-
+  old_prack_tr = (osip_transaction_t*)osip_list_get_first(jd->d_out_trs, &it);
+  while (old_prack_tr != NULL) {
     if (old_prack_tr != NULL && old_prack_tr->orig_request != NULL && 0 == osip_strcasecmp (old_prack_tr->orig_request->sip_method, "PRACK")) {
       osip_header_t *rack_header = NULL;
 
@@ -1088,7 +1069,7 @@ eXosip_call_build_prack (struct eXosip_t *excontext, int tid, osip_message_t *re
         return OSIP_WRONG_STATE;
       }
     }
-    pos++;
+    old_prack_tr = (osip_transaction_t *)osip_list_get_next(&it);
   }
 
   {
@@ -1182,7 +1163,6 @@ _eXosip_call_retry_request (struct eXosip_t *excontext, eXosip_call_t * jc, eXos
   int cseq;
   osip_via_t *via;
   osip_contact_t *co;
-  int pos;
   int i;
 
   if (jc == NULL)
@@ -1208,11 +1188,10 @@ _eXosip_call_retry_request (struct eXosip_t *excontext, eXosip_call_t * jc, eXos
   }
 
   if (MSG_IS_STATUS_3XX (out_tr->last_response)) {
-    co = NULL;
-    pos = 0;
-    while (!osip_list_eol (&out_tr->last_response->contacts, pos)) {
-      co = (osip_contact_t *) osip_list_get (&out_tr->last_response->contacts, pos);
-      if (co != NULL && co->url != NULL) {
+    osip_list_iterator_t it;
+    co = (osip_contact_t*)osip_list_get_first(&out_tr->last_response->contacts, &it);
+    while (co != NULL) {
+      if (co->url != NULL && (osip_strcasestr(co->url->scheme, "sip")!=NULL || osip_strcasestr(co->url->scheme, "tel")!=NULL)) {
         /* check tranport? */
         osip_uri_param_t *u_param;
 
@@ -1226,13 +1205,12 @@ _eXosip_call_retry_request (struct eXosip_t *excontext, eXosip_call_t * jc, eXos
           break;                /* transport param in uri & match our protocol */
         }
       }
-      pos++;
-      co = NULL;
+      co = (osip_contact_t *)osip_list_get_next(&it);
     }
 
     if (co == NULL || co->url == NULL) {
       osip_message_free (msg);
-      OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "eXosip: contact header\n"));
+      OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_WARNING, NULL, "eXosip: no contact header usable for SIP redirection\n"));
       return OSIP_SYNTAXERROR;
     }
 
@@ -1272,21 +1250,17 @@ _eXosip_call_retry_request (struct eXosip_t *excontext, eXosip_call_t * jc, eXos
 
     /* support for diversions headers/draft! */
     {
-      int count = 0;
-
-      pos = 0;
-      while (!osip_list_eol (&out_tr->last_response->headers, pos)) {
+      osip_header_t *head = (osip_header_t*)osip_list_get_first(&out_tr->last_response->headers, &it);
+      while (head != NULL) {
         osip_header_t *copy = NULL;
-        osip_header_t *head = osip_list_get (&out_tr->last_response->headers, pos);
 
-        if (head != NULL && 0 == osip_strcasecmp (head->hname, "diversion")) {
+        if (0 == osip_strcasecmp (head->hname, "diversion")) {
           i = osip_header_clone (head, &copy);
           if (i == 0) {
-            osip_list_add (&msg->headers, copy, count);
-            count++;
+            osip_list_add (&msg->headers, copy, -1);
           }
         }
-        pos++;
+        head = (osip_header_t *)osip_list_get_next(&it);
       }
     }
 

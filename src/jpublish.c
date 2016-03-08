@@ -97,7 +97,7 @@ _eXosip_pub_find_by_tid (struct eXosip_t *excontext, eXosip_pub_t ** pjp, int ti
 }
 
 int
-_eXosip_pub_init (eXosip_pub_t ** pub, const char *aor, const char *exp)
+_eXosip_pub_init (struct eXosip_t *excontext, eXosip_pub_t ** pub, const char *aor, const char *exp)
 {
   static int p_id = 0;
   eXosip_pub_t *jpub;
@@ -117,6 +117,15 @@ _eXosip_pub_init (eXosip_pub_t ** pub, const char *aor, const char *exp)
   jpub->p_id = ++p_id;
 
   *pub = jpub;
+
+#ifndef MINISIZE
+  {
+    struct timeval now;
+    excontext->statistics.allocated_publications++;
+    osip_gettimeofday(&now, NULL);
+    _eXosip_counters_update(&excontext->average_publications, 1, &now);
+  }
+#endif
   return OSIP_SUCCESS;
 }
 
@@ -130,6 +139,9 @@ _eXosip_pub_free (struct eXosip_t *excontext, eXosip_pub_t * pub)
     osip_list_add (&excontext->j_transactions, pub->p_last_tr, 0);
   }
   osip_free (pub);
+#ifndef MINISIZE
+  excontext->statistics.allocated_publications--;
+#endif
 }
 
 #endif

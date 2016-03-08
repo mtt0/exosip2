@@ -76,8 +76,6 @@
 extern "C" {
 #endif
 
-#ifndef WIN32
-
 /**
  * Structure for storing a pipe descriptor
  * @defvar jpipe_t
@@ -87,20 +85,6 @@ extern "C" {
   struct jpipe_t {
     int pipes[2];
   };
-
-#else
-
-/**
- * Structure for storing a pipe descriptor
- * @defvar ppl_pipe_t
- */
-  typedef struct jpipe_t jpipe_t;
-
-  struct jpipe_t {
-    int pipes[2];
-  };
-
-#endif
 
 /**
  * Get New pipe pair.

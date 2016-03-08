@@ -246,15 +246,13 @@ _eXosip_process_cancel (struct eXosip_t *excontext, osip_transaction_t * transac
     }
     tr = NULL;
     for (jd = jc->c_dialogs; jd != NULL; jd = jd->next) {
-      int pos = 0;
-
-      while (!osip_list_eol (jd->d_inc_trs, pos)) {
-        tr = osip_list_get (jd->d_inc_trs, pos);
+      osip_list_iterator_t it;
+      tr = (osip_transaction_t*)osip_list_get_first(jd->d_inc_trs, &it);
+      while (tr != OSIP_SUCCESS) {
         i = _cancel_match_invite (tr, evt->sip);
         if (i == 0)
           break;
-        tr = NULL;
-        pos++;
+        tr = (osip_transaction_t *)osip_list_get_next(&it);;
       }
       if (tr != NULL)
         break;
@@ -409,7 +407,7 @@ _eXosip_process_new_invite (struct eXosip_t *excontext, osip_transaction_t * tra
     return;
   }
 
-  _eXosip_call_init (&jc);
+  _eXosip_call_init (excontext, &jc);
 
   ADD_ELEMENT (excontext->j_calls, jc);
 
@@ -492,7 +490,7 @@ _eXosip_process_new_subscription (struct eXosip_t *excontext, osip_transaction_t
     return;
   }
 
-  i = _eXosip_notify_init (&jn, evt->sip);
+  i = _eXosip_notify_init (excontext, &jn, evt->sip);
   if (i != 0) {
     OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "ERROR: missing contact or memory\n"));
     i = _eXosip_build_response_default (excontext, &answer, NULL, 400, evt->sip);
@@ -850,9 +848,7 @@ _eXosip_process_newrequest (struct eXosip_t *excontext, osip_event_t * evt, int 
               if (osip_strcasecmp (br->gvalue, br2->gvalue) == 0) {
                 /* use-case: 1/ a duplicate of initial INVITE is received (same TOP Via header) after we replied -> discard */
                 OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "eXosip: drop INVITE retransmission after INVITE reply\n"));
-                _eXosip_dnsutils_release (transaction->naptr_record);
-                transaction->naptr_record = NULL;
-                osip_transaction_free (transaction);
+                _eXosip_transaction_free (excontext, transaction);
                 return;
               }
               else {
@@ -872,9 +868,7 @@ _eXosip_process_newrequest (struct eXosip_t *excontext, osip_event_t * evt, int 
 
         if (jd != NULL) {
           OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "eXosip: receive a request with same cseq??\n"));
-          _eXosip_dnsutils_release (transaction->naptr_record);
-          transaction->naptr_record = NULL;
-          osip_transaction_free (transaction);
+          _eXosip_transaction_free (excontext, transaction);
           return;
         }
       }
@@ -884,10 +878,7 @@ _eXosip_process_newrequest (struct eXosip_t *excontext, osip_event_t * evt, int 
   if (ctx_type == IST) {
     i = _eXosip_build_response_default (excontext, &answer, NULL, 100, evt->sip);
     if (i != 0) {
-      _eXosip_delete_reserved (transaction);
-      _eXosip_dnsutils_release (transaction->naptr_record);
-      transaction->naptr_record = NULL;
-      osip_transaction_free (transaction);
+      _eXosip_transaction_free (excontext, transaction);
       return;
     }
 
@@ -1649,6 +1640,7 @@ _eXosip_read_message (struct eXosip_t *excontext, int max_message_nb, int sec_ma
 #endif
 
     if (0 == i || excontext->j_stop_ua != 0) {
+      return OSIP_SUCCESS;
     }
     else if (-1 == i) {
 #if !defined (_WIN32_WCE)       /* TODO: fix me for wince */
@@ -1673,6 +1665,10 @@ _eXosip_read_message (struct eXosip_t *excontext, int max_message_nb, int sec_ma
       }
     }
 
+    /* avoid infinite select if a message was read at the very end of period */
+    if (tv.tv_sec == 0 && tv.tv_usec == 0 && (sec_max != 0 || usec_max != 0)) {
+      return OSIP_SUCCESS;
+    }
     max_message_nb--;
   }
   return OSIP_SUCCESS;
@@ -1754,11 +1750,11 @@ _eXosip_pendingosip_transaction_exist (struct eXosip_t *excontext, eXosip_call_t
 static int
 _eXosip_release_finished_transactions (struct eXosip_t *excontext, eXosip_call_t * jc, eXosip_dialog_t * jd)
 {
+  osip_list_iterator_t it;
   time_t now = osip_getsystemtime (NULL);
   osip_transaction_t *inc_tr;
   osip_transaction_t *out_tr;
   osip_transaction_t *last_invite;
-  int pos;
   int ret;
 
   ret = -1;
@@ -1767,16 +1763,16 @@ _eXosip_release_finished_transactions (struct eXosip_t *excontext, eXosip_call_t
 
   if (jd != NULL) {
     /* go through all incoming transactions of this dialog */
-    pos = 1;
-    while (!osip_list_eol (jd->d_inc_trs, pos)) {
-      inc_tr = osip_list_get (jd->d_inc_trs, pos);
+    inc_tr = (osip_transaction_t*)osip_list_get_first(jd->d_inc_trs, &it);
+    if (inc_tr!=NULL) inc_tr = (osip_transaction_t *)osip_list_get_next(&it); /* skip first one */
+    while (inc_tr != OSIP_SUCCESS) {
       if (0 != osip_strcasecmp (inc_tr->cseq->method, "INVITE")) {
         /* remove, if transaction too old, independent of the state */
         if ((inc_tr->state == NIST_TERMINATED) && (inc_tr->birth_time + 30 < now)) {    /* Wait a max of 30 seconds */
           /* remove the transaction from oSIP */
           OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO2, NULL, "eXosip: release non-INVITE server transaction (did=%i)\n", jd->d_id));
           osip_remove_transaction (excontext->j_osip, inc_tr);
-          osip_list_remove (jd->d_inc_trs, pos);
+          osip_list_iterator_remove(&it);
           osip_list_add (&excontext->j_transactions, inc_tr, 0);
 
           ret = 0;
@@ -1789,29 +1785,29 @@ _eXosip_release_finished_transactions (struct eXosip_t *excontext, eXosip_call_t
           /* remove the transaction from oSIP */
           OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO2, NULL, "eXosip: release INVITE server transaction (did=%i)\n", jd->d_id));
           osip_remove_transaction (excontext->j_osip, inc_tr);
-          osip_list_remove (jd->d_inc_trs, pos);
+          osip_list_iterator_remove(&it);
           osip_list_add (&excontext->j_transactions, inc_tr, 0);
 
           ret = 0;
           break;
         }
       }
-      pos++;
+      inc_tr = (osip_transaction_t *)osip_list_get_next(&it);
     }
 
     last_invite = _eXosip_find_last_out_invite (jc, jd);
 
     /* go through all outgoing transactions of this dialog */
-    pos = 1;
-    while (!osip_list_eol (jd->d_out_trs, pos)) {
-      out_tr = osip_list_get (jd->d_out_trs, pos);
+    out_tr = (osip_transaction_t*)osip_list_get_first(jd->d_out_trs, &it);
+    if (out_tr!=NULL) out_tr = (osip_transaction_t *)osip_list_get_next(&it); /* skip first one */
+    while (out_tr != OSIP_SUCCESS) {
       if (0 != osip_strcasecmp (out_tr->cseq->method, "INVITE")) {
         /* remove, if transaction too old, independent of the state */
         if ((out_tr->state == NICT_TERMINATED) && (out_tr->birth_time + 30 < now)) {    /* Wait a max of 30 seconds */
           /* remove the transaction from oSIP */
           OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO2, NULL, "eXosip: release non INVITE client transaction (did=%i)\n", jd->d_id));
           osip_remove_transaction (excontext->j_osip, out_tr);
-          osip_list_remove (jd->d_out_trs, pos);
+          osip_list_iterator_remove(&it);
           osip_list_add (&excontext->j_transactions, out_tr, 0);
 
           ret = 0;
@@ -1824,14 +1820,14 @@ _eXosip_release_finished_transactions (struct eXosip_t *excontext, eXosip_call_t
           /* remove the transaction from oSIP */
           OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO2, NULL, "eXosip: release INVITE client transaction (did=%i)\n", jd->d_id));
           osip_remove_transaction (excontext->j_osip, out_tr);
-          osip_list_remove (jd->d_out_trs, pos);
+          osip_list_iterator_remove(&it);
           osip_list_add (&excontext->j_transactions, out_tr, 0);
 
           ret = 0;
           break;
         }
       }
-      pos++;
+      out_tr = (osip_transaction_t *)osip_list_get_next(&it);
     }
   }
 
@@ -1941,12 +1937,13 @@ _eXosip_release_aborted_calls (struct eXosip_t *excontext, eXosip_call_t * jc, e
 void
 _eXosip_release_terminated_calls (struct eXosip_t *excontext)
 {
+  osip_list_iterator_t it;
+  osip_transaction_t *tr;
   eXosip_dialog_t *jd;
   eXosip_dialog_t *jdnext;
   eXosip_call_t *jc;
   eXosip_call_t *jcnext;
   time_t now = osip_getsystemtime (NULL);
-  int pos;
 
 
   for (jc = excontext->j_calls; jc != NULL;) {
@@ -2012,30 +2009,25 @@ _eXosip_release_terminated_calls (struct eXosip_t *excontext)
     jc = jcnext;
   }
 
-  pos = 0;
-  while (!osip_list_eol (&excontext->j_transactions, pos)) {
-    osip_transaction_t *tr = (osip_transaction_t *) osip_list_get (&excontext->j_transactions, pos);
+  
+  tr = (osip_transaction_t*)osip_list_get_first(&excontext->j_transactions, &it);
+  while (tr != NULL) {
 
     if (tr->state == NICT_TERMINATED && tr->last_response != NULL && tr->completed_time + 5 > now) {
       /* keep transaction until authentication or ... */
-      pos++;
     }
     else if (tr->state == IST_TERMINATED || tr->state == ICT_TERMINATED || tr->state == NICT_TERMINATED || tr->state == NIST_TERMINATED) {      /* free (transaction is already removed from the oSIP stack) */
-      osip_list_remove (&excontext->j_transactions, pos);
-      _eXosip_delete_reserved (tr);
-      _eXosip_dnsutils_release (tr->naptr_record);
-      tr->naptr_record = NULL;
-      osip_transaction_free (tr);
+      _eXosip_transaction_free (excontext, tr);
+      tr = (osip_transaction_t *)osip_list_iterator_remove(&it);
+      continue;
     }
     else if (tr->birth_time + 180 < now) {      /* Wait a max of 2 minutes */
-      osip_list_remove (&excontext->j_transactions, pos);
-      _eXosip_delete_reserved (tr);
-      _eXosip_dnsutils_release (tr->naptr_record);
-      tr->naptr_record = NULL;
-      osip_transaction_free (tr);
+      _eXosip_transaction_free (excontext, tr);
+      tr = (osip_transaction_t *)osip_list_iterator_remove(&it);
+      continue;
     }
-    else
-      pos++;
+    
+    tr = (osip_transaction_t *)osip_list_get_next(&it);
   }
 }
 
@@ -2100,26 +2092,25 @@ _eXosip_release_terminated_publications (struct eXosip_t *excontext)
 static int
 _eXosip_release_finished_transactions_for_subscription (struct eXosip_t *excontext, eXosip_dialog_t * jd)
 {
+  osip_list_iterator_t it;
   time_t now = osip_getsystemtime (NULL);
   osip_transaction_t *inc_tr;
   osip_transaction_t *out_tr;
   int skip_first = 0;
-  int pos;
   int ret;
 
   ret = OSIP_UNDEFINED_ERROR;
 
   if (jd != NULL) {
     /* go through all incoming transactions of this dialog */
-    pos = 0;
-    while (!osip_list_eol (jd->d_inc_trs, pos)) {
-      inc_tr = osip_list_get (jd->d_inc_trs, pos);
+    inc_tr = (osip_transaction_t*)osip_list_get_first(jd->d_inc_trs, &it);
+    while (inc_tr != OSIP_SUCCESS) {
       /* remove, if transaction too old, independent of the state */
       if ((skip_first == 1) && (inc_tr->state == NIST_TERMINATED) && (inc_tr->birth_time + 30 < now)) { /* keep it for 30 seconds */
         /* remove the transaction from oSIP */
         OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO2, NULL, "eXosip: release non-INVITE server transaction (did=%i)\n", jd->d_id));
         osip_remove_transaction (excontext->j_osip, inc_tr);
-        osip_list_remove (jd->d_inc_trs, pos);
+        osip_list_iterator_remove(&it);
         osip_list_add (&excontext->j_transactions, inc_tr, 0);
 
         ret = OSIP_SUCCESS;     /* return "released" */
@@ -2131,21 +2122,21 @@ _eXosip_release_finished_transactions_for_subscription (struct eXosip_t *exconte
         skip_first = 1;
       if (0 == osip_strcasecmp (inc_tr->cseq->method, "NOTIFY"))
         skip_first = 1;
-      pos++;
+      inc_tr = (osip_transaction_t *)osip_list_get_next(&it);
     }
 
     skip_first = 0;
 
     /* go through all outgoing transactions of this dialog */
-    pos = 0;
-    while (!osip_list_eol (jd->d_out_trs, pos)) {
-      out_tr = osip_list_get (jd->d_out_trs, pos);
+    
+    out_tr = (osip_transaction_t*)osip_list_get_first(jd->d_out_trs, &it);
+    while (out_tr != OSIP_SUCCESS) {
       /* remove, if transaction too old, independent of the state */
       if ((skip_first == 1) && (out_tr->state == NICT_TERMINATED) && (out_tr->birth_time + 30 < now)) { /* Wait a max of 30 seconds */
         /* remove the transaction from oSIP */
         OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO2, NULL, "eXosip: release non INVITE client transaction (did=%i)\n", jd->d_id));
         osip_remove_transaction (excontext->j_osip, out_tr);
-        osip_list_remove (jd->d_out_trs, pos);
+        osip_list_iterator_remove(&it);
         osip_list_add (&excontext->j_transactions, out_tr, 0);
 
         ret = OSIP_SUCCESS;     /* return "released" */
@@ -2157,7 +2148,8 @@ _eXosip_release_finished_transactions_for_subscription (struct eXosip_t *exconte
         skip_first = 1;
       if (0 == osip_strcasecmp (out_tr->cseq->method, "NOTIFY"))
         skip_first = 1;
-      pos++;
+
+      out_tr = (osip_transaction_t *)osip_list_get_next(&it);
     }
   }
 

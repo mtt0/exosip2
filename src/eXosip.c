@@ -101,6 +101,16 @@ _eXosip_transaction_init (struct eXosip_t *excontext, osip_transaction_t ** tran
   if (i != 0) {
     return i;
   }
+
+#ifndef MINISIZE
+  {
+    struct timeval now;
+    excontext->statistics.allocated_transactions++;
+    osip_gettimeofday(&now, NULL);
+    _eXosip_counters_update(&excontext->average_transactions, 1, &now);
+  }
+#endif
+
   osip_transaction_set_reserved1 (*transaction, excontext);
   {
     osip_naptr_t *naptr_record = NULL;
@@ -115,21 +125,29 @@ _eXosip_transaction_init (struct eXosip_t *excontext, osip_transaction_t ** tran
   return OSIP_SUCCESS;
 }
 
+void
+_eXosip_transaction_free (struct eXosip_t *excontext, osip_transaction_t *transaction)
+{
+  _eXosip_delete_reserved (transaction);
+  _eXosip_dnsutils_release (transaction->naptr_record);
+  transaction->naptr_record = NULL;
+  osip_transaction_free (transaction);
+#ifndef MINISIZE
+  excontext->statistics.allocated_transactions--;
+#endif
+}
+
 int
 _eXosip_transaction_find (struct eXosip_t *excontext, int tid, osip_transaction_t ** transaction)
 {
-  int pos = 0;
-
-  *transaction = NULL;
-  while (!osip_list_eol (&excontext->j_transactions, pos)) {
-    osip_transaction_t *tr;
-
-    tr = (osip_transaction_t *) osip_list_get (&excontext->j_transactions, pos);
+  osip_list_iterator_t it;
+  osip_transaction_t* tr = (osip_transaction_t*)osip_list_get_first(&excontext->j_transactions, &it);
+  while (tr != OSIP_SUCCESS) {
     if (tr->transactionid == tid) {
       *transaction = tr;
       return OSIP_SUCCESS;
     }
-    pos++;
+    tr = (osip_transaction_t *)osip_list_get_next(&it);
   }
   return OSIP_NOTFOUND;
 }
@@ -330,17 +348,16 @@ _eXosip_publish_refresh (struct eXosip_t *excontext, eXosip_dialog_t * jd, osip_
 
   if (out_tr != NULL && out_tr->last_response != NULL && out_tr->last_response->status_code == 412) {
     /* remove SIP-If-Match header */
-    int pos = 0;
-
-    while (!osip_list_eol (&msg->headers, pos)) {
-      osip_header_t *head = osip_list_get (&msg->headers, pos);
+    osip_list_iterator_t it;
+    osip_header_t* head = (osip_header_t*)osip_list_get_first(&msg->headers, &it);
+    while (head != OSIP_SUCCESS) {
 
       if (head != NULL && 0 == osip_strcasecmp (head->hname, "sip-if-match")) {
-        i = osip_list_remove (&msg->headers, pos);
+        osip_list_iterator_remove (&it);
         osip_header_free (head);
         break;
       }
-      pos++;
+      head = (osip_header_t*)osip_list_get_next(&it);
     }
   }
 
@@ -1191,7 +1208,6 @@ _eXosip_add_authentication_information (struct eXosip_t *excontext, osip_message
   if (last_response == NULL) {
     /* we can add all credential that belongs to the same call-id */
     struct eXosip_http_auth *http_auth;
-    int pos;
 
     /* update entries with same call_id */
     for (pos = 0; pos < MAX_EXOSIP_HTTP_AUTH; pos++) {
@@ -1418,35 +1434,29 @@ _eXosip_mark_registration_expired (struct eXosip_t *excontext, const char *call_
 int
 _eXosip_check_allow_header (eXosip_dialog_t * jd, osip_message_t * message)
 {
-  int i;
-
 #ifndef MINISIZE
-  for (i = 0; !osip_list_eol (&message->allows, i); i++) {
-    osip_allow_t *dest = (osip_allow_t *) osip_list_get (&message->allows, i);
-
-    if (dest == NULL)
-      return -1;
-    if (dest->value == NULL)
-      continue;
-    if (osip_strcasecmp (dest->value, "UPDATE") == 0) {
+  osip_list_iterator_t it;
+  osip_allow_t* dest = (osip_allow_t*)osip_list_get_first(&message->allows, &it);
+  while (dest != NULL) {
+    if (dest->value != NULL && osip_strcasecmp (dest->value, "update") == 0) {
       jd->d_session_timer_use_update = 1;
       OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO2, NULL, "Allow header contains UPDATE\n"));
+      break;
     }
+    dest = (osip_allow_t*)osip_list_get_next(&it);
   }
 #else
-  for (i = 0; !osip_list_eol (&message->headers, i); i++) {
-    osip_header_t *dest = (osip_header_t *) osip_list_get (&message->headers, i);
-
-    if (dest == NULL)
-      return -1;
-    if (dest->hvalue == NULL)
-      continue;
-    if (osip_strcasecmp (dest->hname, "allow") != 0)
-      continue;
-    if (osip_strcasecmp (dest->hvalue, "UPDATE") == 0) {
-      jd->d_session_timer_use_update = 1;
-      OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO2, NULL, "Allow header contains UPDATE\n"));
+  osip_list_iterator_t it;
+  osip_header_t* dest = (osip_header_t*)osip_list_get_first(&message->headers, &it);
+  while (dest != OSIP_SUCCESS) {
+    if (dest->hvalue != NULL && osip_strcasecmp (dest->hname, "allow") == 0) {
+      if (osip_strcasestr (dest->hvalue, "UPDATE") != NULL) {
+        jd->d_session_timer_use_update = 1;
+        OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO2, NULL, "Allow header contains UPDATE\n"));
+        break;
+      }
     }
+    dest = (osip_header_t*)osip_list_get_next(&it);
   }
 #endif
   return 0;

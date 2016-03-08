@@ -133,7 +133,9 @@ extern "C" {
 #define EXOSIP_OPT_SET_OC_PORT_RANGE (EXOSIP_OPT_BASE_OPTION+26) /**< int[2] *: set the port range (min, max) to bind for outbound connection */
 #define EXOSIP_OPT_REMOVE_PREROUTESET (EXOSIP_OPT_BASE_OPTION+27) /**< int *: 0: keep pre-route set in initial INVITE/SUBSCRIBE/REFER, 1 (default): remove pre-route set*/
 #define EXOSIP_OPT_SET_SIP_INSTANCE (EXOSIP_OPT_BASE_OPTION+28) /**< char *: define +sip.instance parameter in Contact headers  (example: f81d4fae-7dec-11d0-a765-00a0c91e6bf6) */
-
+#define EXOSIP_OPT_SET_MAX_MESSAGE_TO_READ (EXOSIP_OPT_BASE_OPTION+29) /**< int: set the number of message to read at once for each network processing (high load traffic use-case: DO NOT USE FOR COMMON USAGE) */
+#define EXOSIP_OPT_SET_MAX_READ_TIMEOUT (EXOSIP_OPT_BASE_OPTION+30) /**< long int: set the period in nano seconds during we read for sip message. (high load traffic use-case: DO NOT USE FOR COMMON USAGE)*/
+    
 #define EXOSIP_OPT_SET_TLS_VERIFY_CERTIFICATE (EXOSIP_OPT_BASE_OPTION+500) /**< int *: enable verification of certificate for TLS connection */
 #define EXOSIP_OPT_SET_TLS_CERTIFICATES_INFO (EXOSIP_OPT_BASE_OPTION+501) /**< eXosip_tls_ctx_t *: client and/or server certificate/ca-root/key info */
 #define EXOSIP_OPT_SET_TLS_CLIENT_CERTIFICATE_NAME (EXOSIP_OPT_BASE_OPTION+502) /**< char*: user can choose a specific certifcate present in Windows Certificate Store */
@@ -142,6 +144,8 @@ extern "C" {
   /* non standard option: need a compilation flag to activate */
 #define EXOSIP_OPT_KEEP_ALIVE_OPTIONS_METHOD (EXOSIP_OPT_BASE_OPTION+1000)
 #define EXOSIP_OPT_SET_TSC_SERVER (EXOSIP_OPT_BASE_OPTION+1001) /**< void*: set the tsc tunnel handle */
+
+#define EXOSIP_OPT_GET_STATISTICS (EXOSIP_OPT_BASE_OPTION+2000) /**< struct eXosip_stats*: retreive numerous statistics about transactions, registrations, calls, publications and subscriptions... */
 
  /**
   * structure used to for inserting a DNS cache entry and avoid DNS resolution.
@@ -166,6 +170,34 @@ extern "C" {
     int answer_code;
   };
 
+#ifndef MINISIZE
+  /**
+   * Structure used to retrieve eXosip internal statistics.
+   * Total numbers are provided since last start or restart of eXosip.
+   * Average values are calculated over the last EXOSIP_STATS_PERIOD
+   * which default to 3600 seconds.
+   *
+   * @struct eXosip_stats
+   */
+  struct eXosip_stats
+  {
+    int allocated_transactions;        /**< current number of allocated transactions. */
+    float average_transactions;     /**< average number of new transactions/hour.  (default period: 1 hour) */
+    int allocated_registrations;       /**< current number of allocated registrations. (should remains 1 in standard usage) */
+    float average_registrations;    /**< average number of new registrations/hour. (default period: 1 hour) */
+    int allocated_calls;               /**< current number of allocated calls. */
+    float average_calls;            /**< average number of new calls/hour. (default period: 1 hour) */
+    int allocated_publications;        /**< current number of allocated publications. */
+    float average_publications;     /**< average number of new publication/hour. (default period: 1 hour) */
+    int allocated_subscriptions;       /**< current number of allocated outgoing subscriptions. */
+    float average_subscriptions;    /**< average number of new outgoing subscriptions/hour. (default period: 1 hour) */
+    int allocated_insubscriptions;     /**< current number of allocated incoming subscriptions. */
+    float average_insubscriptions;  /**< average number of new incoming subscriptions/hour. (default period: 1 hour) */
+
+    int reserved1[20];               /**< reserved for future usage without breaking ABI */
+  };
+#endif
+  
 /**
  * Set eXosip options.
  * See eXosip_option for available options.

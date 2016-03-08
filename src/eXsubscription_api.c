@@ -49,26 +49,25 @@ _eXosip_subscription_transaction_find (struct eXosip_t *excontext, int tid, eXos
       return OSIP_SUCCESS;
     }
     for (*jd = (*js)->s_dialogs; *jd != NULL; *jd = (*jd)->next) {
-      osip_transaction_t *transaction;
-      int pos = 0;
+      osip_list_iterator_t it;
+      osip_transaction_t* transaction;
 
-      while (!osip_list_eol ((*jd)->d_inc_trs, pos)) {
-        transaction = (osip_transaction_t *) osip_list_get ((*jd)->d_inc_trs, pos);
+      transaction = (osip_transaction_t*)osip_list_get_first((*jd)->d_inc_trs, &it);
+      while (transaction != OSIP_SUCCESS) {
         if (transaction != NULL && transaction->transactionid == tid) {
           *tr = transaction;
           return OSIP_SUCCESS;
         }
-        pos++;
+        transaction = (osip_transaction_t *)osip_list_get_next(&it);
       }
 
-      pos = 0;
-      while (!osip_list_eol ((*jd)->d_out_trs, pos)) {
-        transaction = (osip_transaction_t *) osip_list_get ((*jd)->d_out_trs, pos);
+      transaction = (osip_transaction_t*)osip_list_get_first((*jd)->d_out_trs, &it);
+      while (transaction != OSIP_SUCCESS) {
         if (transaction != NULL && transaction->transactionid == tid) {
           *tr = transaction;
           return OSIP_SUCCESS;
         }
-        pos++;
+        transaction = (osip_transaction_t *)osip_list_get_next(&it);
       }
     }
   }
@@ -183,7 +182,7 @@ eXosip_subscription_send_initial_request (struct eXosip_t *excontext, osip_messa
   osip_event_t *sipevent;
   int i;
 
-  i = _eXosip_subscription_init (&js);
+  i = _eXosip_subscription_init (excontext, &js);
   if (i != 0) {
     OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "eXosip: cannot subscribe."));
     osip_message_free (subscribe);

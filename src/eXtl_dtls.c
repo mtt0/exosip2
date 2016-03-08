@@ -360,7 +360,7 @@ dtls_tl_open (struct eXosip_t *excontext)
 #endif /* IPV6_V6ONLY */
     }
 
-    res = bind (sock, curinfo->ai_addr, curinfo->ai_addrlen);
+    res = bind (sock, curinfo->ai_addr, (socklen_t)curinfo->ai_addrlen);
     if (res < 0) {
       OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "eXosip: Cannot bind socket node:%s family:%d %s\n", excontext->eXtl_transport.proto_ifs, curinfo->ai_family, strerror (errno)));
       close (sock);
@@ -613,8 +613,6 @@ dtls_tl_update_contact (struct eXosip_t *excontext, osip_message_t * req)
 static int
 _dtls_tl_update_contact (struct eXosip_t *excontext, osip_message_t * req)
 {
-  int pos = 0;
-
   struct eXosip_account_info *ainfo = NULL;
   char *proxy = NULL;
   int i;
@@ -650,16 +648,10 @@ _dtls_tl_update_contact (struct eXosip_t *excontext, osip_message_t * req)
 
   if (excontext->dtls_firewall_ip[0] != '\0' || excontext->auto_masquerade_contact > 0) {
 
-    while (!osip_list_eol (&req->contacts, pos)) {
-      osip_contact_t *co;
-
-      co = (osip_contact_t *) osip_list_get (&req->contacts, pos);
-      pos++;
-      if (co != NULL && co->url != NULL && co->url->host != NULL
-#if 0
-          && 0 == osip_strcasecmp (co->url->host, dtls_firewall_ip)
-#endif
-        ) {
+    osip_list_iterator_t it;
+    osip_contact_t* co = (osip_contact_t *)osip_list_get_first(&req->contacts, &it);
+    while (co != NULL) {
+      if (co != NULL && co->url != NULL && co->url->host != NULL) {
         if (ainfo == NULL) {
           if (excontext->dtls_firewall_port[0]=='\0') {
           } else if (co->url->port == NULL && 0 != osip_strcasecmp (excontext->dtls_firewall_port, "5061")) {
@@ -697,6 +689,7 @@ _dtls_tl_update_contact (struct eXosip_t *excontext, osip_message_t * req)
 #endif
         }
       }
+      co = (osip_contact_t *)osip_list_get_next(&it);
     }
   }
 
@@ -750,7 +743,7 @@ static int
 dtls_tl_send_message (struct eXosip_t *excontext, osip_transaction_t * tr, osip_message_t * sip, char *host, int port, int out_socket)
 {
   struct eXtldtls *reserved = (struct eXtldtls *) excontext->eXtldtls_reserved;
-  int len = 0;
+  socklen_t len = 0;
   size_t length = 0;
   struct addrinfo *addrinfo;
   struct __eXosip_sockaddr addr;
@@ -919,7 +912,7 @@ dtls_tl_send_message (struct eXosip_t *excontext, osip_transaction_t * tr, osip_
   }
 
   memcpy (&addr, addrinfo->ai_addr, addrinfo->ai_addrlen);
-  len = addrinfo->ai_addrlen;
+  len = (socklen_t)addrinfo->ai_addrlen;
 
   _eXosip_freeaddrinfo (addrinfo);
 

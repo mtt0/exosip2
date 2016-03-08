@@ -244,7 +244,7 @@ tcp_tl_open (struct eXosip_t *excontext)
     }
     
 #ifndef DISABLE_MAIN_SOCKET
-    res = bind (sock, curinfo->ai_addr, curinfo->ai_addrlen);
+    res = bind (sock, curinfo->ai_addr, (socklen_t)curinfo->ai_addrlen);
     if (res < 0) {
       OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "Cannot bind socket node:%s family:%d %s\n", excontext->eXtl_transport.proto_ifs, curinfo->ai_family, strerror (ex_errno)));
       closesocket (sock);
@@ -418,7 +418,7 @@ handle_messages (struct eXosip_t *excontext, struct _tcp_stream *sockinfo)
     }
     clen = clen_header ? atoi (clen_header) : 0;
     if (clen<0)
-      return sockinfo->buflen; /* discard data */
+      return (int)sockinfo->buflen; /* discard data */
     /* undo our overwrite and advance end_headers */
     *end_headers = END_HEADERS_STR[0];
     end_headers += const_strlen (END_HEADERS_STR);
@@ -468,8 +468,8 @@ _tcp_tl_recv (struct eXosip_t *excontext, struct _tcp_stream *sockinfo)
       return OSIP_NOMEM;
     sockinfo->bufsize = SIP_MESSAGE_MAX_LENGTH;
   }
-  
-  r = (int) recv (sockinfo->socket, sockinfo->buf + sockinfo->buflen, sockinfo->bufsize - sockinfo->buflen, 0);
+
+  r = (int) recv (sockinfo->socket, sockinfo->buf + sockinfo->buflen, (int)(sockinfo->bufsize - sockinfo->buflen), 0);
   if (r == 0) {
     OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO1, NULL, "socket %s:%i: eof\n", sockinfo->remote_ip, sockinfo->remote_port));
     _eXosip_mark_registration_expired (excontext, sockinfo->reg_call_id);
@@ -550,7 +550,8 @@ tcp_tl_read_message (struct eXosip_t *excontext, fd_set * osip_fdset, fd_set * o
     }
     
     OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO3, NULL, "creating TCP socket at index: %i\n", pos));
-    sock = accept (reserved->tcp_socket, (struct sockaddr *) &sa, &slen);
+
+    sock = (int)accept (reserved->tcp_socket, (struct sockaddr *) &sa, (socklen_t*)&slen);
     if (sock < 0) {
 #if defined(EBADF)
       int status = ex_errno;
@@ -799,7 +800,7 @@ _tcp_tl_is_connected (int sock)
       if (curinfo->ai_protocol && curinfo->ai_protocol != IPPROTO_TCP)
         continue;
       
-      res = getnameinfo ((struct sockaddr *) curinfo->ai_addr, curinfo->ai_addrlen, src6host, NI_MAXHOST, NULL, 0, NI_NUMERICHOST);
+      res = getnameinfo ((struct sockaddr *) curinfo->ai_addr, (socklen_t)curinfo->ai_addrlen, src6host, NI_MAXHOST, NULL, 0, NI_NUMERICHOST);
       if (res != 0)
         continue;
       
@@ -816,7 +817,7 @@ _tcp_tl_is_connected (int sock)
         continue;
       }
       
-      res = getnameinfo ((struct sockaddr *) curinfo->ai_addr, curinfo->ai_addrlen, src6host, NI_MAXHOST, NULL, 0, NI_NUMERICHOST);
+      res = getnameinfo ((struct sockaddr *) curinfo->ai_addr, (socklen_t)curinfo->ai_addrlen, src6host, NI_MAXHOST, NULL, 0, NI_NUMERICHOST);
       
       if (res == 0) {
         OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO1, NULL, "New binding with %s:%i\n", src6host, port));
@@ -918,7 +919,7 @@ _tcp_tl_is_connected (int sock)
               _eXosip_freeaddrinfo (oc_addrinfo);
               break;
             }
-            res = bind (sock, (const struct sockaddr *)oc_curinfo->ai_addr, oc_curinfo->ai_addrlen);
+            res = bind (sock, (const struct sockaddr *)oc_curinfo->ai_addr, (socklen_t)oc_curinfo->ai_addrlen);
             if (res < 0) {
               OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_WARNING, NULL, "Cannot bind socket node:%s family:%d (port=%i) %s\n", excontext->oc_local_address, oc_curinfo->ai_addr->sa_family, excontext->oc_local_port_current, strerror (ex_errno)));
               _eXosip_freeaddrinfo (oc_addrinfo);
@@ -1019,7 +1020,7 @@ _tcp_tl_is_connected (int sock)
       _eXosip_transport_set_dscp (excontext, excontext->eXtl_transport.proto_family, sock);
       
       OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO2, NULL, "socket node:%s , socket %d, family:%d set to non blocking mode\n", host, sock, curinfo->ai_family));
-      res = connect (sock, curinfo->ai_addr, curinfo->ai_addrlen);
+      res = connect (sock, curinfo->ai_addr, (socklen_t)curinfo->ai_addrlen);
       if (res < 0) {
         int connect_err = ex_errno;
         OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO2, NULL, "connecting socket node:%s, socket %d [pos=%d], family:%d, %s[%d]\n", host, sock, pos, curinfo->ai_family, strerror (connect_err), connect_err));
@@ -1037,7 +1038,7 @@ _tcp_tl_is_connected (int sock)
             res = _tcp_tl_is_connected (sock);
             if (res > 0) {
               OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO2, NULL, "socket node:%s, socket %d [pos=%d], family:%d, in progress\n", host, sock, pos, curinfo->ai_family));
-              selected_ai_addrlen = curinfo->ai_addrlen;
+              selected_ai_addrlen = (socklen_t)curinfo->ai_addrlen;
               memcpy (&selected_ai_addr, curinfo->ai_addr, sizeof (struct sockaddr));
               break;
             }
@@ -1183,18 +1184,13 @@ _tcp_tl_is_connected (int sock)
     static int
     _tcp_tl_update_contact (struct eXosip_t *excontext, osip_message_t * req, char *natted_ip, int natted_port)
     {
-      int pos = 0;
-      
       if (req->application_data != (void*) 0x1)
         return OSIP_SUCCESS;
       
       if ((natted_ip != NULL && natted_ip[0] != '\0') || natted_port > 0) {
-        
-        while (!osip_list_eol (&req->contacts, pos)) {
-          osip_contact_t *co;
-          
-          co = (osip_contact_t *) osip_list_get (&req->contacts, pos);
-          pos++;
+        osip_list_iterator_t it;
+        osip_contact_t* co = (osip_contact_t *)osip_list_get_first(&req->contacts, &it);
+        while (co != NULL) {
           if (co != NULL && co->url != NULL && co->url->host != NULL) {
             if (natted_port > 0) {
               if (co->url->port)
@@ -1209,6 +1205,7 @@ _tcp_tl_is_connected (int sock)
               osip_message_force_update (req);
             }
           }
+          co = (osip_contact_t *)osip_list_get_next(&it);
         }
       }
       

@@ -186,7 +186,7 @@ eXosip_get_sdp_info (osip_message_t * message)
   osip_content_type_t *ctt;
   sdp_message_t *sdp;
   osip_body_t *oldbody;
-  int pos;
+  osip_list_iterator_t it;
 
   if (message == NULL)
     return NULL;
@@ -204,18 +204,16 @@ eXosip_get_sdp_info (osip_message_t * message)
   else if (osip_strcasecmp (ctt->type, "application") != 0 || osip_strcasecmp (ctt->subtype, "sdp") != 0)
     return NULL;
 
-  pos = 0;
-  while (!osip_list_eol (&message->bodies, pos)) {
+  oldbody = (osip_body_t *)osip_list_get_first(&message->bodies, &it);
+  while (oldbody != NULL) {
     int i;
-
-    oldbody = (osip_body_t *) osip_list_get (&message->bodies, pos);
-    pos++;
     sdp_message_init (&sdp);
     i = sdp_message_parse (sdp, oldbody->body);
     if (i == 0)
       return sdp;
     sdp_message_free (sdp);
     sdp = NULL;
+    oldbody = (osip_body_t *)osip_list_get_next(&it);
   }
   return NULL;
 }

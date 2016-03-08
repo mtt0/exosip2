@@ -37,7 +37,6 @@ _eXosip_build_response_default (struct eXosip_t *excontext, osip_message_t ** de
 {
   osip_generic_param_t *tag;
   osip_message_t *response;
-  int pos;
   int i;
 
   *dest = NULL;
@@ -119,19 +118,21 @@ _eXosip_build_response_default (struct eXosip_t *excontext, osip_message_t ** de
     return i;
   }
 
-  pos = 0;
-  while (!osip_list_eol (&request->vias, pos)) {
-    osip_via_t *via;
-    osip_via_t *via2;
+  {
+    osip_list_iterator_t it;
+    osip_via_t *via = (osip_via_t*)osip_list_get_first(&request->vias, &it);
 
-    via = (osip_via_t *) osip_list_get (&request->vias, pos);
-    i = osip_via_clone (via, &via2);
-    if (i != 0) {
-      osip_message_free (response);
-      return i;
+    while (via != NULL) {
+      osip_via_t *via2;
+
+      i = osip_via_clone (via, &via2);
+      if (i != 0) {
+        osip_message_free (response);
+        return i;
+      }
+      osip_list_add (&response->vias, via2, -1);
+      via = (osip_via_t *)osip_list_get_next(&it);
     }
-    osip_list_add (&response->vias, via2, -1);
-    pos++;
   }
 
   i = osip_call_id_clone (request->call_id, &(response->call_id));
@@ -175,9 +176,11 @@ int
 _eXosip_complete_answer_that_establish_a_dialog (struct eXosip_t *excontext, osip_message_t * response, osip_message_t * request)
 {
   int i;
-  int pos = 0;
+  int route_found = 0;
   char contact[1024];
   char scheme[10];
+  osip_list_iterator_t it;
+  osip_record_route_t *rr;
 
   snprintf(scheme, sizeof(scheme), "sip");
 
@@ -185,31 +188,31 @@ _eXosip_complete_answer_that_establish_a_dialog (struct eXosip_t *excontext, osi
      copy all record-route in response
      add a contact with global scope
    */
-  while (!osip_list_eol (&request->record_routes, pos)) {
-    osip_record_route_t *rr;
+  rr = (osip_record_route_t *)osip_list_get_first(&request->record_routes, &it);
+  while (rr != NULL) {
     osip_record_route_t *rr2;
 
-    rr = (osip_record_route_t *) osip_list_get (&request->record_routes, pos);
     i = osip_record_route_clone (rr, &rr2);
     if (i != 0)
       return i;
     osip_list_add (&response->record_routes, rr2, -1);
 
     /* rfc3261: 12.1.1 UAS behavior (check sips in top most Record-Route) */
-    if (pos==0 && rr2!=NULL && rr2->url!=NULL && rr2->url->scheme!=NULL && osip_strcasecmp(rr2->url->scheme, "sips")==0)
+    if (it.pos==0 && rr2!=NULL && rr2->url!=NULL && rr2->url->scheme!=NULL && osip_strcasecmp(rr2->url->scheme, "sips")==0)
       snprintf(scheme, sizeof(scheme), "sips");
 
-    pos++;
+    rr = (osip_record_route_t *)osip_list_get_next(&it);
+    route_found=1;
   }
 
   if (MSG_IS_BYE (request)) {
     return OSIP_SUCCESS;
   }
 
-  if (pos==0) {
+  if (route_found==0) {
     /* rfc3261: 12.1.1 UAS behavior (check sips in Contact if no Record-Route) */
     osip_contact_t *co = (osip_contact_t *) osip_list_get(&request->contacts, 0);
-    if (pos==0 && co!=NULL && co->url!=NULL && co->url->scheme!=NULL && osip_strcasecmp(co->url->scheme, "sips")==0)
+    if (co!=NULL && co->url!=NULL && co->url->scheme!=NULL && osip_strcasecmp(co->url->scheme, "sips")==0)
       snprintf(scheme, sizeof(scheme), "sips");
   }
   /* rfc3261: 12.1.1 UAS behavior (check sips in Request-URI) */

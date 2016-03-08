@@ -1,5 +1,5 @@
-AC_PREREQ(2.50)
-AC_INIT([libeXosip2], [5.0.0])
+AC_PREREQ([2.69])
+AC_INIT([libeXosip2],[5.0.0])
 AC_CONFIG_SRCDIR([include/eXosip2/eXosip.h])
 
 AC_MSG_NOTICE([libeXosip2              The Extended Open SIP library.])
@@ -28,80 +28,87 @@ AC_PROG_CC
 AC_PROG_CPP
 AC_PROG_INSTALL
 
-dnl enable --enable-shared and --disable-shared options
-LT_AC_PROG_SED
-AC_PROG_LIBTOOL
+dnl Initialize libtool
+AC_PROG_SED
+LT_INIT
 
-#AC_ENABLE_SHARED(yes)
+
 
 dnl declare --enable-* args and collect ac_help strings
 
-AC_ARG_ENABLE(tools,
-[  --disable-tools         compile tools programs (yes).],
-enable_tools=$enableval,enable_tools="yes")
-
-AC_ARG_ENABLE(debug,
-[  --disable-debug         turn on debugging (yes).],
-enable_debug=$enableval,enable_debug="yes")
-
-AC_ARG_ENABLE(trace,
-[  --disable-trace         turn on trace (yes).],
-enable_trace=$enableval,enable_trace="yes")
-
 AC_ARG_ENABLE(mpatrol,
-[  --enable-mpatrol        turn on memory leak detection with patrol (no).],
-enable_mpatrol=$enableval,enable_mpatrol="no")
+  [AS_HELP_STRING([--enable-mpatrol],
+    [turn on memory leak detection with patrol @<:@default=no@:>@])],
+  enable_mpatrol=$enableval,enable_mpatrol="no")
 
 AC_ARG_ENABLE(gprof,
-[  --enable-gprof          turn on profiling support.],
-enable_gprof=$enableval,enable_gprof="no")
+  [AS_HELP_STRING([--enable-gprof],
+    [turn on profiling support @<:@default=no@:>@])],
+  enable_gprof=$enableval,enable_gprof="no")
 
-dnl support for linux-thread or posix thread (pthread.h)
-AC_ARG_ENABLE(pthread,
-[  --enable-pthread        enable support for POSIX threads. (autodetect)],
-enable_pthread=$enableval,enable_pthread="no")
-
-dnl support for semaphore.h (linux/sun...)
-AC_ARG_ENABLE(semaphore,
-[  --enable-semaphore      enable support for semaphore (semaphore.h)],
-enable_semaphore=$enableval,enable_semaphore="no")
-
-dnl support for sysV semaphore in sys/sem.h (BSD/linux...)
-AC_ARG_ENABLE(sysv,
-[  --enable-sysv           enable support for sysV semaphore (sys/sem.h).],
-enable_sysv=$enableval,enable_sysv="no")
+AC_ARG_ENABLE(trace,
+  [AS_HELP_STRING([--enable-trace],
+    [turn on trace @<:@default=yes@:>@])],
+  enable_trace=$enableval,enable_trace="yes")
 
 dnl minimize size of code.
 AC_ARG_ENABLE(minisize,
-[  --enable-minisize       only compile minimal voip related code).],
-enable_minisize=$enableval,enable_minisize="no")
+  [AS_HELP_STRING([--enable-minisize],
+    [only compile minimal voip related code @<:@default=no@:>@])],
+  enable_minisize=$enableval,enable_minisize="no")
+
+dnl support for linux-thread or posix thread (pthread.h)
+AC_ARG_ENABLE(pthread,
+  [AS_HELP_STRING([--enable-pthread=@<:@autodetect|force@:>@],
+    [autodetect POSIX threads or force -DHAVE_PTHREAD @<:@default=autodetect@:>@])],
+  enable_pthread=$enableval,enable_pthread="autodetect")
+
+dnl support for semaphore.h (linux/sun...)
+dnl support for sysV semaphore in sys/sem.h (BSD/linux...)
+AC_ARG_ENABLE(semaphore,
+  [AS_HELP_STRING([--enable-semaphore=@<:@autodetect|semaphore|sysv@:>@],
+    [select your prefered semaphore @<:@default=autodetect@:>@.])],
+  enable_semaphore=$enableval,enable_semaphore="autodetect")
+
+AC_ARG_ENABLE(openssl,
+  [AS_HELP_STRING([--enable-openssl],
+    [enable support for openssl @<:@default=yes@:>@])],
+  enable_openssl=$enableval,enable_openssl="yes")
 
 dnl build with multithreaded support (need semaphore).
 AC_ARG_ENABLE(mt,
-[  --enable-mt             compile eXosip2 without multi-thread support.],
-enable_mt=$enableval,enable_mt="yes")
+  [AS_HELP_STRING([--enable-mt],
+    [compile with multi-thread support @<:@default=yes@:>@])],
+  enable_mt=$enableval,enable_mt="yes")
+
+AC_ARG_ENABLE(srvrec,
+  [AS_HELP_STRING([--enable-srvrec],
+    [enable support for SRV records DNS queries @<:@default=yes@:>@])],
+  enable_srvrec=$enableval,enable_srvrec="yes")
+
+AC_ARG_ENABLE(tools,
+  [AS_HELP_STRING([--enable-tools],
+    [compile tools programs @<:@default=yes@:>@])],
+  enable_tools=$enableval,enable_tools="yes")
 
 dnl compile with mt support
 if test "x$enable_mt" = "xyes"; then
-  if test "x$enable_pthread" = "xyes"; then
-    EXOSIP_FLAGS="-DHAVE_PTHREAD"
-    SIP_FSM_FLAGS="-DHAVE_PTHREAD"
-    dnl FSM_LIB="-lpthread"
+  if test "x$enable_pthread" = "xforce"; then
+    AC_DEFINE(HAVE_PTHREAD)
   else
-    ACX_PTHREAD()
+    AX_PTHREAD([], [AC_MSG_ERROR([Could not configure pthreads support -use --enable-mt=no to disable or --enable-pthread=force to define HAVE_PTHREAD])])
+    LIBS="$PTHREAD_LIBS $LIBS"
+    CFLAGS="$CFLAGS $PTHREAD_CFLAGS"
+    CC="$PTHREAD_CC"
   fi
 else
     EXOSIP_FLAGS="$EXOSIP_FLAGS -DOSIP_MONOTHREAD"
 fi
 
-
-
-if test "x$enable_semaphore" = "xyes"; then
-  EXOSIP_FLAGS="$EXOSIP_FLAGS -DHAVE_SEMAPHORE_H"
-  AC_CHECK_HEADERS(semaphore.h)
-elif test "x$enable_sysv" = "xyes"; then
-  EXOSIP_FLAGS="$EXOSIP_FLAGS -UHAVE_SEMAPHORE_H -DHAVE_SYS_SEM_H"
-  AC_CHECK_HEADERS(sys/sem.h)
+if test "x$enable_semaphore" = "xsemaphore"; then
+  AC_DEFINE(HAVE_SEMAPHORE_H)
+elif test "x$enable_semaphore" = "xsysv"; then
+  AC_DEFINE(HAVE_SYS_SEM_H)
 else
   AC_CHECK_HEADERS(semaphore.h)
   AC_CHECK_HEADERS(sys/sem.h)
@@ -110,7 +117,6 @@ fi
 if test "x$host_cpu" = "x$build_cpu"; then
   case $OS in
    linux*)
-     EXOSIP_FLAGS="$EXOSIP_FLAGS -pedantic"
      ;;
    irix*)
      ;;
@@ -124,7 +130,6 @@ if test "x$host_cpu" = "x$build_cpu"; then
    sunos*)
      ;;
    darwin*)
-     EXOSIP_FLAGS="$EXOSIP_FLAGS -pedantic"
      ;;
    *mingw*)
      EXOSIP_FLAGS="$EXOSIP_FLAGS  -D_WIN32_WINNT=0x0501"
@@ -137,11 +142,6 @@ dnl tools are not ported to win32
  esac
 else
  AC_MSG_NOTICE([Cross compiling exosip.])
-fi
-
-if test "x$enable_debug" = "xyes"; then
-  EXOSIP_FLAGS="$EXOSIP_FLAGS -DENABLE_DEBUG -g"
-  CFLAGS=`echo $CFLAGS | sed 's/-O.//'`
 fi
 
 if test "x$enable_trace" = "xyes"; then
@@ -160,6 +160,7 @@ fi
 if test "x$enable_minisize" = "xyes"; then
   EXOSIP_FLAGS="$EXOSIP_FLAGS -DMINISIZE"
 fi
+
 AM_CONDITIONAL(BUILD_MAXSIZE, test x$enable_minisize = xno)
 AM_CONDITIONAL(COMPILE_TOOLS, test "x$enable_tools" = "xyes")
 
@@ -179,15 +180,14 @@ case $OS in
 esac
 
 AC_CHECK_LIB([cares], [ares_init],
-     [AC_CHECK_HEADER(ares.h,
-	[EXOSIP_LIB="$EXOSIP_LIB -lcares"
-        EXOSIP_FLAGS="$EXOSIP_FLAGS -DHAVE_CARES_H"],
+     [AC_CHECK_HEADERS(ares.h,
+	[EXOSIP_LIB="$EXOSIP_LIB -lcares"],
 	[AC_MSG_WARN([c-ares header files are not installed])])
      ],
      [AC_MSG_WARN([c-ares library is not installed])]
 )
 
-PKG_CHECK_MODULES(OSIP, libosip2 >= 4.1, [], [
+PKG_CHECK_MODULES(OSIP, libosip2 >= 5.0, [], [
 AC_MSG_WARN([assuming osip can be found in -I$includedir and -L$libdir])
 OSIP_CFLAGS='-I$(includedir) -I$(prefix)/include'
 OSIP_LIBS='-L$(libdir) -L$(prefix)/lib -losip2 -losipparser2'
@@ -198,7 +198,7 @@ EXOSIP_FLAGS="$EXOSIP_FLAGS"
 AC_CACHE_CHECK([whether -Wall works], Wall_cv_flag, [
   saved_CPPFLAGS=$CPPFLAGS
   CPPFLAGS="-Wall"
-  AC_TRY_COMPILE(, , Wall_cv_flag=yes, Wall_cv_flag=no)
+  AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[]], [[]])],[Wall_cv_flag=yes],[Wall_cv_flag=no])
   CPPFLAGS=$saved_CPPFLAGS
 ])
 
@@ -209,7 +209,7 @@ fi
 AC_CACHE_CHECK([whether -Wcast-align works], Wcast_align_cv_flag, [
   saved_CPPFLAGS=$CPPFLAGS
   CPPFLAGS="-Wcast-align"
-  AC_TRY_COMPILE(, , Wcast_align_cv_flag=yes, Wcast_align_cv_flag=no)
+  AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[]], [[]])],[Wcast_align_cv_flag=yes],[Wcast_align_cv_flag=no])
   CPPFLAGS=$saved_CPPFLAGS
 ])
 
@@ -220,7 +220,7 @@ fi
 AC_CACHE_CHECK([whether -Wchar-subscripts works], Wchar_subscripts_cv_flag, [
   saved_CPPFLAGS=$CPPFLAGS
   CPPFLAGS="-Wchar-subscripts"
-  AC_TRY_COMPILE(, , Wchar_subscripts_cv_flag=yes, Wchar_subscripts_cv_flag=no)
+  AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[]], [[]])],[Wchar_subscripts_cv_flag=yes],[Wchar_subscripts_cv_flag=no])
   CPPFLAGS=$saved_CPPFLAGS
 ])
 
@@ -231,7 +231,7 @@ fi
 AC_CACHE_CHECK([whether -Wformat works], Wformat_cv_flag, [
   saved_CPPFLAGS=$CPPFLAGS
   CPPFLAGS="-Wformat"
-  AC_TRY_COMPILE(, , Wformat_cv_flag=yes, Wformat_cv_flag=no)
+  AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[]], [[]])],[Wformat_cv_flag=yes],[Wformat_cv_flag=no])
   CPPFLAGS=$saved_CPPFLAGS
 ])
 
@@ -242,7 +242,7 @@ fi
 AC_CACHE_CHECK([whether -Winline works], Winline_cv_flag, [
   saved_CPPFLAGS=$CPPFLAGS
   CPPFLAGS="-Winline"
-  AC_TRY_COMPILE(, , Winline_cv_flag=yes, Winline_cv_flag=no)
+  AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[]], [[]])],[Winline_cv_flag=yes],[Winline_cv_flag=no])
   CPPFLAGS=$saved_CPPFLAGS
 ])
 
@@ -253,7 +253,7 @@ fi
 AC_CACHE_CHECK([whether -Wmissing-declarations works], Wmissing_declarations_cv_flag, [
   saved_CPPFLAGS=$CPPFLAGS
   CPPFLAGS="-Wmissing-declarations"
-  AC_TRY_COMPILE(, , Wmissing_declarations_cv_flag=yes, Wmissing_declarations_cv_flag=no)
+  AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[]], [[]])],[Wmissing_declarations_cv_flag=yes],[Wmissing_declarations_cv_flag=no])
   CPPFLAGS=$saved_CPPFLAGS
 ])
 
@@ -264,7 +264,7 @@ fi
 AC_CACHE_CHECK([whether -Wmissing-prototypes works], Wmissing_prototypes_cv_flag, [
   saved_CPPFLAGS=$CPPFLAGS
   CPPFLAGS="-Wmissing-prototypes"
-  AC_TRY_COMPILE(, , Wmissing_prototypes_cv_flag=yes, Wmissing_prototypes_cv_flag=no)
+  AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[]], [[]])],[Wmissing_prototypes_cv_flag=yes],[Wmissing_prototypes_cv_flag=no])
   CPPFLAGS=$saved_CPPFLAGS
 ])
 
@@ -275,7 +275,7 @@ fi
 AC_CACHE_CHECK([whether -Wnested-externs works], Wnested_externs_cv_flag, [
   saved_CPPFLAGS=$CPPFLAGS
   CPPFLAGS="-Wnested-externs"
-  AC_TRY_COMPILE(, , Wnested_externs_cv_flag=yes, Wnested_externs_cv_flag=no)
+  AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[]], [[]])],[Wnested_externs_cv_flag=yes],[Wnested_externs_cv_flag=no])
   CPPFLAGS=$saved_CPPFLAGS
 ])
 
@@ -286,7 +286,7 @@ fi
 AC_CACHE_CHECK([whether -Wpointer-arith works], Wpointer_arith_cv_flag, [
   saved_CPPFLAGS=$CPPFLAGS
   CPPFLAGS="-Wpointer-arith"
-  AC_TRY_COMPILE(, , Wpointer_arith_cv_flag=yes, Wpointer_arith_cv_flag=no)
+  AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[]], [[]])],[Wpointer_arith_cv_flag=yes],[Wpointer_arith_cv_flag=no])
   CPPFLAGS=$saved_CPPFLAGS
 ])
 
@@ -294,13 +294,8 @@ if test "x$Wpointer_arith_cv_flag" = xyes; then
   CPPFLAGS="$CPPFLAGS -Wpointer-arith"
 fi
 
-TOOLS_LIBS=$TOOLS_LIBS
-AC_SUBST(TOOLS_LIBS)
-
 AC_SUBST(EXOSIP_FLAGS)
 AC_SUBST(EXOSIP_LIB)
-
-AC_SUBST(CFLAGS)
 
 dnl Checks for header files.
 AC_HEADER_STDC
@@ -344,10 +339,6 @@ AC_CHECK_HEADERS([resolv.h], [], [],
 dnl check if we have the getifaddrs() sytem call
 AC_CHECK_FUNCS(getifaddrs)
 
-AC_ARG_ENABLE(openssl,
-	[  --enable-openssl        enable support for openssl],
-       enable_openssl=$enableval,enable_openssl="auto")
-
 AS_IF([test "$enable_openssl" = "yes" -o "$enable_openssl" = "auto"],
       [PKG_CHECK_MODULES([SSL], [openssl],
                          [EXOSIP_LIB="$EXOSIP_LIB $SSL_LIBS"]
@@ -361,16 +352,11 @@ AS_IF([test "$enable_openssl" = "yes" -o "$enable_openssl" = "auto"],
                          ])
       ])
 
-AC_ARG_ENABLE(srvrec,
-	[  --enable-srvrec         enable support for SRV records DNS queries (yes) ],
-	enable_srvrec=$enableval,enable_srvrec="yes")
-
 if test "x$enable_srvrec" = "xyes" ; then
-  CPPFLAGS="$CPPFLAGS -DSRV_RECORD"
+  AC_DEFINE([SRV_RECORD], [1], [Defined to 1 if compiled with NAPTR and SRV support.])
 fi
 
-AC_OUTPUT(
- Makefile
+AC_CONFIG_FILES([Makefile
  scripts/Makefile
  platform/Makefile
  platform/vsnet/Makefile
@@ -381,5 +367,6 @@ AC_OUTPUT(
  help/Makefile
  help/doxygen/Makefile
  help/doxygen/doxygen.dox
-)
+])
+AC_OUTPUT
 

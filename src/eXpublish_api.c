@@ -113,7 +113,7 @@ eXosip_publish (struct eXosip_t *excontext, osip_message_t * message, const char
     }
     else {
       /* start a new publication context */
-      i = _eXosip_pub_init (&pub, to, expires->hvalue);
+      i = _eXosip_pub_init (excontext, &pub, to, expires->hvalue);
       if (i != 0) {
         osip_message_free (message);
         return i;

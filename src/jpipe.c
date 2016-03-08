@@ -108,8 +108,14 @@ jpipe_get_read_descr (jpipe_t * apipe)
 
 #else
 
+#ifdef WIN32
+#define SOCKET_TYPE SOCKET
+#else
+#define SOCKET_TYPE int
+#endif
+
 int
-setNonBlocking (int fd)
+setNonBlocking (SOCKET_TYPE fd)
 {
   int flags;
 
@@ -221,7 +227,7 @@ jpipe ()
 
   connect (my_pipe->pipes[1], (struct sockaddr *) &raddr, sizeof (raddr));
 
-  my_pipe->pipes[0] = accept (s, NULL, NULL);
+  my_pipe->pipes[0] = (int)accept (s, NULL, NULL);
 
   if (my_pipe->pipes[0] <= 0) {
     OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "udp plugin; Failed to call accept!\n"));
@@ -295,7 +301,7 @@ jpipe_get_read_descr (jpipe_t * apipe)
 {
   if (apipe == NULL)
     return OSIP_BADPARAMETER;
-  return apipe->pipes[0];
+  return (int)apipe->pipes[0]; /* on windows, this is a conversion from SOCKET to int... doesn't seems to be an issue */
 }
 
 #endif

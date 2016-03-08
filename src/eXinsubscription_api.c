@@ -49,26 +49,25 @@ _eXosip_insubscription_transaction_find (struct eXosip_t *excontext, int tid, eX
       return OSIP_SUCCESS;
     }
     for (*jd = (*jn)->n_dialogs; *jd != NULL; *jd = (*jd)->next) {
-      osip_transaction_t *transaction;
-      int pos = 0;
+      osip_list_iterator_t it;
+      osip_transaction_t* transaction;
 
-      while (!osip_list_eol ((*jd)->d_inc_trs, pos)) {
-        transaction = (osip_transaction_t *) osip_list_get ((*jd)->d_inc_trs, pos);
+      transaction = (osip_transaction_t*)osip_list_get_first((*jd)->d_inc_trs, &it);
+      while (transaction != OSIP_SUCCESS) {
         if (transaction != NULL && transaction->transactionid == tid) {
           *tr = transaction;
           return OSIP_SUCCESS;
         }
-        pos++;
+        transaction = (osip_transaction_t *)osip_list_get_next(&it);
       }
 
-      pos = 0;
-      while (!osip_list_eol ((*jd)->d_out_trs, pos)) {
-        transaction = (osip_transaction_t *) osip_list_get ((*jd)->d_out_trs, pos);
+      transaction = (osip_transaction_t*)osip_list_get_first((*jd)->d_out_trs, &it);
+      while (transaction != OSIP_SUCCESS) {
         if (transaction != NULL && transaction->transactionid == tid) {
           *tr = transaction;
           return OSIP_SUCCESS;
         }
-        pos++;
+        transaction = (osip_transaction_t *)osip_list_get_next(&it);
       }
     }
   }

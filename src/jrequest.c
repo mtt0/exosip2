@@ -427,62 +427,44 @@ _eXosip_generating_request_out_of_dialog (struct eXosip_t *excontext, osip_messa
   }
 
   if (request->to != NULL && request->to->url != NULL) {
-    int pos = 0;
-    size_t pname_len;
-    osip_uri_param_t *u_param;
+    osip_list_iterator_t it;
+    osip_uri_param_t* u_param = (osip_uri_param_t*)osip_list_get_first(&request->to->url->url_params, &it);
 
-    pname_len = strlen ("method");
-    while (!osip_list_eol (&request->to->url->url_params, pos)) {
-      size_t len;
-
-      u_param = (osip_uri_param_t *) osip_list_get (&request->to->url->url_params, pos);
-      len = strlen (u_param->gname);
-      if (pname_len == len && osip_strncasecmp (u_param->gname, "method", pname_len) == 0 && u_param->gvalue != NULL) {
-        osip_list_remove (&request->to->url->url_params, pos);
+    while (u_param != NULL) {
+      if (u_param->gvalue != NULL && u_param->gname!=NULL && osip_strcasecmp (u_param->gname, "method") == 0) {
+        osip_list_iterator_remove(&it);
         osip_uri_param_free (u_param);
         break;
       }
-      pos++;
+      u_param = (osip_uri_param_t *)osip_list_get_next(&it);
     }
   }
 
   if (request->from != NULL && request->from->url != NULL) {
-    int pos = 0;
-    size_t pname_len;
-    osip_uri_param_t *u_param;
+    osip_list_iterator_t it;
+    osip_uri_param_t* u_param = (osip_uri_param_t*)osip_list_get_first(&request->from->url->url_params, &it);
 
-    pname_len = strlen ("method");
-    while (!osip_list_eol (&request->from->url->url_params, pos)) {
-      size_t len;
-
-      u_param = (osip_uri_param_t *) osip_list_get (&request->from->url->url_params, pos);
-      len = strlen (u_param->gname);
-      if (pname_len == len && osip_strncasecmp (u_param->gname, "method", pname_len) == 0 && u_param->gvalue != NULL) {
-        osip_list_remove (&request->from->url->url_params, pos);
+    while (u_param != NULL) {
+      if (u_param->gvalue != NULL && u_param->gname!=NULL && osip_strcasecmp (u_param->gname, "method") == 0) {
+        osip_list_iterator_remove(&it);
         osip_uri_param_free (u_param);
         break;
       }
-      pos++;
+      u_param = (osip_uri_param_t *)osip_list_get_next(&it);
     }
   }
 
   if (request->req_uri) {
-    int pos = 0;
-    size_t pname_len;
-    osip_uri_param_t *u_param;
+    osip_list_iterator_t it;
+    osip_uri_param_t* u_param = (osip_uri_param_t*)osip_list_get_first(&request->req_uri->url_params, &it);
 
-    pname_len = strlen ("method");
-    while (!osip_list_eol (&request->req_uri->url_params, pos)) {
-      size_t len;
-
-      u_param = (osip_uri_param_t *) osip_list_get (&request->req_uri->url_params, pos);
-      len = strlen (u_param->gname);
-      if (pname_len == len && osip_strncasecmp (u_param->gname, "method", pname_len) == 0 && u_param->gvalue != NULL) {
-        osip_list_remove (&request->req_uri->url_params, pos);
+    while (u_param != NULL) {
+      if (u_param->gvalue != NULL && u_param->gname!=NULL && osip_strcasecmp (u_param->gname, "method") == 0) {
+        osip_list_iterator_remove(&it);
         osip_uri_param_free (u_param);
         break;
       }
-      pos++;
+      u_param = (osip_uri_param_t *)osip_list_get_next(&it);
     }
   }
 
@@ -578,15 +560,12 @@ dialog_fill_route_set (osip_dialog_t * dialog, osip_message_t * request)
   /* if the pre-existing route set contains a "lr" (compliance
      with bis-08) then the req_uri should contains the remote target
      URI */
+  osip_list_iterator_t it;
   int i;
-  int pos = 0;
   osip_uri_param_t *lr_param;
   osip_route_t *route;
-  char *last_route;
 
-  /* AMD bug: fixed 17/06/2002 */
-
-  route = (osip_route_t *) osip_list_get (&dialog->route_set, 0);
+  route = (osip_route_t*)osip_list_get_first(&dialog->route_set, &it);
 
   osip_uri_uparam_get_byname (route->url, "lr", &lr_param);
   if (lr_param != NULL) {       /* the remote target URI is the req_uri! */
@@ -595,17 +574,15 @@ dialog_fill_route_set (osip_dialog_t * dialog, osip_message_t * request)
       return i;
     /* "[request] MUST includes a Route header field containing
        the route set values in order." */
-    /* AMD bug: fixed 17/06/2002 */
-    pos = 0;                    /* first element is at index 0 */
-    while (!osip_list_eol (&dialog->route_set, pos)) {
+
+    while (route != NULL) {
       osip_route_t *route2;
 
-      route = osip_list_get (&dialog->route_set, pos);
       i = osip_route_clone (route, &route2);
       if (i != 0)
         return i;
       osip_list_add (&request->routes, route2, -1);
-      pos++;
+      route = (osip_route_t*)osip_list_get_next(&it);
     }
     return OSIP_SUCCESS;
   }
@@ -620,28 +597,33 @@ dialog_fill_route_set (osip_dialog_t * dialog, osip_message_t * request)
   /* add the route set */
   /* "The UAC MUST add a route header field containing
      the remainder of the route set values in order. */
-  pos = 1;                      /* yes it is */
+  route = (osip_route_t*)osip_list_get_next(&it);  /* yes it is, skip first */
 
-  while (!osip_list_eol (&dialog->route_set, pos)) {
+  while (route != NULL) {
     osip_route_t *route2;
 
-    route = osip_list_get (&dialog->route_set, pos);
     i = osip_route_clone (route, &route2);
     if (i != 0)
       return i;
     osip_list_add (&request->routes, route2, -1);
-    pos++;
+    route = (osip_route_t*)osip_list_get_next(&it);
   }
 
   /* The UAC MUST then place the remote target URI into
      the route header field as the last value */
-  i = osip_uri_to_str (dialog->remote_contact_uri->url, &last_route);
-  if (i != 0)
-    return i;
-  i = osip_message_set_route (request, last_route);
-  osip_free (last_route);
-  if (i != 0) {
-    return i;
+  {
+    osip_uri_t *new_url;
+    /* Feb 05, 2016: old code was converting contact's URI's uri-param into Route route-param */
+    i = osip_uri_clone(dialog->remote_contact_uri->url, &new_url);
+    if (i != 0)
+      return i;
+    i = osip_route_init(&route);
+    if (i != 0) {
+      osip_uri_free(new_url);
+      return i;
+    }
+    osip_uri_free(route->url);
+    route->url = new_url;
   }
 
   /* route header and req_uri set */
@@ -888,12 +870,11 @@ _eXosip_generating_cancel (struct eXosip_t *excontext, osip_message_t ** dest, o
 
   /* add the same route-set than in the previous request */
   {
-    int pos = 0;
-    osip_route_t *route;
+    osip_list_iterator_t it;
+    osip_route_t* route = (osip_route_t*)osip_list_get_first(&request_cancelled->routes, &it);
     osip_route_t *route2;
 
-    while (!osip_list_eol (&request_cancelled->routes, pos)) {
-      route = (osip_route_t *) osip_list_get (&request_cancelled->routes, pos);
+    while (route != NULL) {
       i = osip_route_clone (route, &route2);
       if (i != 0) {
         osip_message_free (request);
@@ -901,7 +882,7 @@ _eXosip_generating_cancel (struct eXosip_t *excontext, osip_message_t ** dest, o
         return i;
       }
       osip_list_add (&request->routes, route2, -1);
-      pos++;
+      route = (osip_route_t *)osip_list_get_next(&it);
     }
   }
 

@@ -275,7 +275,7 @@ extern "C" {
     time_t r_last_deletion;     /* prevent loop for automasquerade: no more than one per minute. */
 
     struct __eXosip_sockaddr addr;
-    int len;
+    socklen_t len;
 
     eXosip_reg_t *next;
     eXosip_reg_t *parent;
@@ -339,7 +339,7 @@ extern "C" {
   int _eXosip_pub_update (struct eXosip_t *excontext, eXosip_pub_t ** pub, osip_transaction_t * tr, osip_message_t * answer);
   int _eXosip_pub_find_by_aor (struct eXosip_t *excontext, eXosip_pub_t ** pub, const char *aor);
   int _eXosip_pub_find_by_tid (struct eXosip_t *excontext, eXosip_pub_t ** pjp, int tid);
-  int _eXosip_pub_init (eXosip_pub_t ** pub, const char *aor, const char *exp);
+  int _eXosip_pub_init (struct eXosip_t *excontext, eXosip_pub_t ** pub, const char *aor, const char *exp);
   void _eXosip_pub_free (struct eXosip_t *excontext, eXosip_pub_t * pub);
 
 #endif
@@ -396,9 +396,30 @@ extern "C" {
 #define MAX_EXOSIP_HTTP_AUTH 100
 #endif
 
+struct eXosip_counters {
+  float current_average;
+  unsigned int num_entries;
+  unsigned short period; /* total max duration */
+  unsigned short interval; /* minimum interval */
+  unsigned short *values;
+  struct timeval *times;
+  unsigned int index_last;
+  unsigned int total_values;
+};
+
   typedef struct eXosip_t eXosip_t;
 
   struct eXosip_t {
+#ifndef MINISIZE
+    struct eXosip_stats statistics;
+    struct eXosip_counters average_transactions;
+    struct eXosip_counters average_registrations;
+    struct eXosip_counters average_calls;
+    struct eXosip_counters average_publications;
+    struct eXosip_counters average_subscriptions;
+    struct eXosip_counters average_insubscriptions;
+#endif
+
     struct eXtl_protocol eXtl_transport;
     void *eXtludp_reserved;
     void *eXtltcp_reserved;
@@ -428,7 +449,9 @@ extern "C" {
     jpipe_t *j_socketctl;
     jpipe_t *j_socketctl_event;
 #endif
-
+    int max_message_to_read;
+    long int max_read_timeout;
+    
     osip_fifo_t *j_events;
 
     jauthinfo_t *authinfos;
@@ -540,7 +563,6 @@ extern "C" {
   int _eXosip_build_response_default (struct eXosip_t *excontext, osip_message_t ** dest, osip_dialog_t * dialog, int status, osip_message_t * request);
   int _eXosip_complete_answer_that_establish_a_dialog (struct eXosip_t *excontext, osip_message_t * response, osip_message_t * request);
   int _eXosip_build_request_within_dialog (struct eXosip_t *excontext, osip_message_t ** dest, const char *method, osip_dialog_t * dialog);
-  void _eXosip_kill_transaction (osip_list_t * transactions);
   int _eXosip_remove_transaction_from_call (osip_transaction_t * tr, eXosip_call_t * jc);
 
   osip_transaction_t *_eXosip_find_last_transaction (eXosip_call_t * jc, eXosip_dialog_t * jd, const char *method);
@@ -551,8 +573,7 @@ extern "C" {
   osip_transaction_t *_eXosip_find_last_out_invite (eXosip_call_t * jc, eXosip_dialog_t * jd);
   osip_transaction_t *_eXosip_find_previous_invite (eXosip_call_t * jc, eXosip_dialog_t * jd, osip_transaction_t * last_invite);
 
-
-  int _eXosip_call_init (eXosip_call_t ** jc);
+  int _eXosip_call_init (struct eXosip_t *excontext, eXosip_call_t ** jc);
   void _eXosip_call_renew_expire_time (eXosip_call_t * jc);
   void _eXosip_call_free (struct eXosip_t *excontext, eXosip_call_t * jc);
   void _eXosip_call_remove_dialog_reference_in_call (eXosip_call_t * jc, eXosip_dialog_t * jd);
@@ -575,12 +596,12 @@ extern "C" {
   osip_transaction_t *_eXosip_find_last_out_subscribe (eXosip_subscribe_t * js, eXosip_dialog_t * jd);
   void _eXosip_release_terminated_subscriptions (struct eXosip_t *excontext);
   void _eXosip_release_terminated_in_subscriptions (struct eXosip_t *excontext);
-  int _eXosip_subscription_init (eXosip_subscribe_t ** js);
+  int _eXosip_subscription_init (struct eXosip_t *excontext, eXosip_subscribe_t ** js);
   void _eXosip_subscription_free (struct eXosip_t *excontext, eXosip_subscribe_t * js);
   int _eXosip_subscription_set_refresh_interval (eXosip_subscribe_t * js, osip_message_t * inc_subscribe);
   int _eXosip_subscription_send_request_with_credential (struct eXosip_t *excontext, eXosip_subscribe_t * js, eXosip_dialog_t * jd, osip_transaction_t * out_tr);
   int _eXosip_subscription_automatic_refresh (struct eXosip_t *excontext, eXosip_subscribe_t * js, eXosip_dialog_t * jd, osip_transaction_t * out_tr);
-  int _eXosip_notify_init (eXosip_notify_t ** jn, osip_message_t * inc_subscribe);
+  int _eXosip_notify_init (struct eXosip_t *excontext, eXosip_notify_t ** jn, osip_message_t * inc_subscribe);
   void _eXosip_notify_free (struct eXosip_t *excontext, eXosip_notify_t * jn);
   int _eXosip_notify_set_contact_info (eXosip_notify_t * jn, char *uri);
   int _eXosip_notify_set_refresh_interval (eXosip_notify_t * jn, osip_message_t * inc_subscribe);
@@ -594,6 +615,7 @@ extern "C" {
   int _eXosip_dialog_add_contact (struct eXosip_t *excontext, osip_message_t * request);
 
   int _eXosip_transaction_init (struct eXosip_t *excontext, osip_transaction_t ** transaction, osip_fsm_type_t ctx_type, osip_t * osip, osip_message_t * message);
+  void _eXosip_transaction_free (struct eXosip_t *excontext, osip_transaction_t *transaction);
 
   int _eXosip_srv_lookup (struct eXosip_t *excontext, osip_message_t * sip, osip_naptr_t ** naptr_record);
 
@@ -625,6 +647,24 @@ extern "C" {
   * Configure to accept/reject self signed and expired certificates.
   */
   eXosip_tls_ctx_error eXosip_tls_verify_certificate (struct eXosip_t *excontext, int _tls_verify_client_certificate);
+
+  
+#ifndef EXOSIP_STATS_PERIOD
+#define EXOSIP_STATS_PERIOD 3600  /* default period in seconds */
+#endif
+#ifndef EXOSIP_STATS_INTERVAL
+#define EXOSIP_STATS_INTERVAL 60 /* default interval in seconds */
+#endif
+
+#ifndef MINISIZE
+  void _eXosip_counters_init(struct eXosip_counters *bw_stats, int period, int interval);
+  void _eXosip_counters_update(struct eXosip_counters *bw_stats, int nvalues, struct timeval *now);
+  void _eXosip_counters_free(struct eXosip_counters *bw_stats);
+#else
+#define _eXosip_counters_init(A, B, C)
+#define _eXosip_counters_update(A, B, C)
+#define _eXosip_counters_free(A)
+#endif
 
 #ifdef __cplusplus
 }

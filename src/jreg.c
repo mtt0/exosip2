@@ -119,6 +119,14 @@ _eXosip_reg_init (struct eXosip_t *excontext, eXosip_reg_t ** jr, const char *fr
     osip_strncpy ((*jr)->r_line, key_line, sizeof ((*jr)->r_line) - 1);
   }
 
+#ifndef MINISIZE
+  {
+    struct timeval now;
+    excontext->statistics.allocated_registrations++;
+    osip_gettimeofday(&now, NULL);
+    _eXosip_counters_update(&excontext->average_registrations, 1, &now);
+  }
+#endif
   return OSIP_SUCCESS;
 }
 
@@ -149,6 +157,10 @@ _eXosip_reg_free (struct eXosip_t *excontext, eXosip_reg_t * jreg)
   }
 
   osip_free (jreg);
+
+#ifndef MINISIZE
+  excontext->statistics.allocated_registrations--;
+#endif
 }
 
 int

@@ -44,6 +44,10 @@
 #ifndef OSIP_MONOTHREAD
 #include <pthread.h>
 #endif
+#include <string.h>
+#ifdef __linux
+#include <signal.h>
+#endif
 #endif
 
 #ifdef _WIN32_WCE
@@ -63,6 +67,15 @@
 #define PROG_VER  "1.0"
 #define UA_STRING "SipReg v" PROG_VER
 #define SYSLOG_FACILITY LOG_DAEMON
+
+static volatile int keepRunning = 1;
+
+#ifdef __linux
+
+static void intHandler(int dummy) {
+  keepRunning = 0;
+}
+#endif
 
 #if defined(WIN32) || defined(_WIN32_WCE)
 static void
@@ -90,10 +103,6 @@ syslog_wrapper (int a, const char *fmt, ...)
 
 static void usage (void);
 
-#ifndef OSIP_MONOTHREAD
-static void *register_proc (void *arg);
-#endif
-
 static void
 usage (void)
 {
@@ -115,36 +124,6 @@ typedef struct regparam_t {
 } regparam_t;
 
 struct eXosip_t *context_eXosip;
-
-#ifndef OSIP_MONOTHREAD
-static void *
-register_proc (void *arg)
-{
-  struct regparam_t *regparam = arg;
-  int reg;
-
-  for (;;) {
-#ifdef _WIN32_WCE
-    Sleep ((regparam->expiry / 2) * 1000);
-#else
-    sleep (regparam->expiry / 2);
-#endif
-    eXosip_lock (context_eXosip);
-    reg = eXosip_register_send_register (context_eXosip, regparam->regid, NULL);
-    if (0 > reg) {
-#ifdef _WIN32_WCE
-      fprintf (stdout, "eXosip_register: error while registring");
-#else
-      perror ("eXosip_register");
-#endif
-      exit (1);
-    }
-    regparam->auth = 0;
-    eXosip_unlock (context_eXosip);
-  }
-  return NULL;
-}
-#endif
 
 #ifdef _WIN32_WCE
 int WINAPI
@@ -168,12 +147,13 @@ main (int argc, char *argv[])
   char *username = NULL;
   char *password = NULL;
   struct regparam_t regparam = { 0, 3600, 0 };
-#ifndef OSIP_MONOTHREAD
-  struct osip_thread *register_thread;
-#endif
   int debug = 0;
   int nofork = 0;
 
+#ifdef __linux
+  signal(SIGINT, intHandler);
+#endif
+  
 #ifdef _WIN32_WCE
   proxy = osip_strdup ("sip:sip.antisip.com");
   fromuser = osip_strdup ("sip:jack@sip.antisip.com");
@@ -329,22 +309,26 @@ main (int argc, char *argv[])
     }
   }
 
-#ifndef OSIP_MONOTHREAD
-  register_thread = osip_thread_create (20000, register_proc, &regparam);
-  if (register_thread == NULL) {
-    syslog_wrapper (LOG_ERR, "pthread_create failed");
-    exit (1);
-  }
-#endif
-
-  for (;;) {
+  for (;keepRunning;) {
+    static int counter=0;
     eXosip_event_t *event;
 
+    counter++;
+    if (counter%60000==0) {
+      struct eXosip_stats stats;
+      memset(&stats, 0, sizeof(struct eXosip_stats));
+      eXosip_lock (context_eXosip);
+      eXosip_set_option(context_eXosip, EXOSIP_OPT_GET_STATISTICS, &stats);
+      eXosip_unlock (context_eXosip);
+      syslog_wrapper (LOG_INFO, "eXosip stats: inmemory=(tr:%i//reg:%i) average=(tr:%f//reg:%f)",
+		      stats.allocated_transactions, stats.allocated_registrations,
+		      stats.average_transactions, stats.average_registrations);
+    }
     if (!(event = eXosip_event_wait (context_eXosip, 0, 1))) {
 #ifdef OSIP_MONOTHREAD
       eXosip_execute (context_eXosip);
-      eXosip_automatic_action (context_eXosip);
 #endif
+      eXosip_automatic_action (context_eXosip);
       osip_usleep (10000);
       continue;
     }
@@ -352,18 +336,81 @@ main (int argc, char *argv[])
     eXosip_execute (context_eXosip);
 #endif
 
+    eXosip_lock (context_eXosip);
     eXosip_automatic_action (context_eXosip);
+
     switch (event->type) {
     case EXOSIP_REGISTRATION_SUCCESS:
       syslog_wrapper (LOG_INFO, "registrered successfully");
       break;
     case EXOSIP_REGISTRATION_FAILURE:
-      regparam.auth = 1;
       break;
+    case EXOSIP_CALL_INVITE:
+      {
+	osip_message_t *answer;
+	int i;
+	
+	i = eXosip_call_build_answer (context_eXosip, event->tid, 405, &answer);
+	if (i!=0) {
+	  syslog_wrapper (LOG_ERR, "failed to reject INVITE");
+	  break;
+	}
+	osip_free(answer->reason_phrase);
+	answer->reason_phrase = osip_strdup ("No Support for Incoming Calls");
+	i = eXosip_call_send_answer (context_eXosip, event->tid, 405, answer);
+	if (i!=0) {
+	  syslog_wrapper (LOG_ERR, "failed to reject INVITE");
+	  break;
+	}
+	syslog_wrapper (LOG_INFO, "INVITE rejected with 405");
+	break;
+      }
+    case EXOSIP_MESSAGE_NEW:
+      {
+	osip_message_t *answer;
+	int i;
+	
+	i = eXosip_message_build_answer (context_eXosip, event->tid, 405, &answer);
+	if (i!=0) {
+	  syslog_wrapper (LOG_ERR, "failed to reject %s", event->request->sip_method);
+	  break;
+	}
+	i = eXosip_message_send_answer (context_eXosip, event->tid, 405, answer);
+	if (i!=0) {
+	  syslog_wrapper (LOG_ERR, "failed to reject %s", event->request->sip_method);
+	  break;
+	}
+	syslog_wrapper (LOG_INFO, "%s rejected with 405", event->request->sip_method);
+	break;
+      }
+    case EXOSIP_IN_SUBSCRIPTION_NEW:
+      {
+	osip_message_t *answer;
+	int i;
+	
+	i = eXosip_insubscription_build_answer (context_eXosip, event->tid, 405, &answer);
+	if (i!=0) {
+	  syslog_wrapper (LOG_ERR, "failed to reject %s", event->request->sip_method);
+	  break;
+	}
+	i = eXosip_insubscription_send_answer (context_eXosip, event->tid, 405, answer);
+	if (i!=0) {
+	  syslog_wrapper (LOG_ERR, "failed to reject %s", event->request->sip_method);
+	  break;
+	}
+	syslog_wrapper (LOG_INFO, "%s rejected with 405", event->request->sip_method);
+	break;
+      }
     default:
       syslog_wrapper (LOG_DEBUG, "recieved unknown eXosip event (type, did, cid) = (%d, %d, %d)", event->type, event->did, event->cid);
 
     }
+    eXosip_unlock (context_eXosip);
     eXosip_event_free (event);
   }
+
+  
+  eXosip_quit(context_eXosip);
+  osip_free(context_eXosip);
+  return 0;
 }

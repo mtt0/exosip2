@@ -9,7 +9,7 @@ lib_LTLIBRARIES = libeXosip2.la
 #	-Wstrict-prototypes
 #	-Werror
 #
-AM_CFLAGS = @EXOSIP_FLAGS@ @CFLAGS@  @PTHREAD_CFLAGS@
+AM_CFLAGS = $(EXOSIP_FLAGS)
 
 libeXosip2_la_SOURCES =           \
 eXosip.c         eXconf.c         \
@@ -46,6 +46,6 @@ jpublish.c              sdp_offans.c
 endif
 
 libeXosip2_la_LDFLAGS = -version-info $(LIBEXOSIP_SO_VERSION) -no-undefined
-libeXosip2_la_LIBADD = @EXOSIP_LIB@ @PTHREAD_LIBS@ $(OSIP_LIBS)
+libeXosip2_la_LIBADD = $(EXOSIP_LIB) $(OSIP_LIBS)
 
 AM_CPPFLAGS = -I$(top_srcdir) -I$(top_srcdir)/include $(OSIP_CFLAGS)
