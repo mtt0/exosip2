@@ -1154,6 +1154,8 @@ eXosip_add_authentication_info (struct eXosip_t *excontext, const char *username
     return OSIP_NOMEM;
   memset (authinfos, 0, sizeof (jauthinfo_t));
 
+  eXosip_remove_authentication_info(excontext, username, realm);
+
   snprintf (authinfos->username, 50, "%s", username);
   snprintf (authinfos->userid, 50, "%s", userid);
   if (passwd != NULL && passwd[0] != '\0')
