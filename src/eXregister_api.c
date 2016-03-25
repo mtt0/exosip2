@@ -112,6 +112,10 @@ _eXosip_register_add_contact(struct eXosip_t *excontext, eXosip_reg_t * jreg, os
     new_contact_url->username = osip_strdup (reg->from->url->username);
   }
 
+  if (excontext->default_contact_displayname[0]!='\0') {
+    new_contact->displayname = osip_strdup (excontext->default_contact_displayname);
+  }
+
   if (i != 0 || reg->from == NULL || reg->from->url == NULL) {
     osip_contact_free (new_contact);
     return OSIP_SYNTAXERROR;

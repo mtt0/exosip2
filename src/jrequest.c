@@ -141,6 +141,14 @@ _eXosip_dialog_add_contact (struct eXosip_t *excontext, osip_message_t * request
   osip_message_set_contact (request, contact);
   osip_free (contact);
 
+  if (excontext->default_contact_displayname[0]!='\0') {
+    osip_contact_t *new_contact;
+    osip_message_get_contact(request, 0, &new_contact);
+    if (new_contact!=NULL) {
+      new_contact->displayname = osip_strdup (excontext->default_contact_displayname);
+    }
+  }
+
   if (excontext->eXtl_transport._tl_update_contact!=NULL)
     excontext->eXtl_transport._tl_update_contact(excontext, request);
   return OSIP_SUCCESS;

@@ -255,6 +255,14 @@ _eXosip_complete_answer_that_establish_a_dialog (struct eXosip_t *excontext, osi
 
   osip_message_set_contact (response, contact);
 
+  if (excontext->default_contact_displayname[0]!='\0') {
+    osip_contact_t *new_contact;
+    osip_message_get_contact(response, 0, &new_contact);
+    if (new_contact!=NULL) {
+      new_contact->displayname = osip_strdup (excontext->default_contact_displayname);
+    }
+  }
+
   if (excontext->eXtl_transport._tl_update_contact!=NULL)
     excontext->eXtl_transport._tl_update_contact(excontext, response);
   return OSIP_SUCCESS;

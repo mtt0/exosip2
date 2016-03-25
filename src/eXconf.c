@@ -1043,6 +1043,13 @@ eXosip_set_option (struct eXosip_t *excontext, int opt, const void *value)
       osip_strncpy (excontext->sip_instance, tmp, sizeof (excontext->sip_instance) - 1);
     OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO1, NULL, "eXosip option set: +sip.instance:%s!\n", excontext->sip_instance));
     break;
+  case EXOSIP_OPT_SET_DEFAULT_CONTACT_DISPLAYNAME:
+    tmp = (char *) value;
+    memset (excontext->default_contact_displayname, '\0', sizeof (excontext->default_contact_displayname));
+    if (tmp != NULL && tmp[0] != '\0')
+      osip_strncpy (excontext->default_contact_displayname, tmp, sizeof (excontext->default_contact_displayname) - 1);
+    OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO1, NULL, "eXosip option set: default_contact_displayname:%s!\n", excontext->default_contact_displayname));
+    break;
   case EXOSIP_OPT_SET_DSCP:
     val = *((int *) value);
     /* 0x1A by default */

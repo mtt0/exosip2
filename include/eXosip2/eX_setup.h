@@ -135,7 +135,8 @@ extern "C" {
 #define EXOSIP_OPT_SET_SIP_INSTANCE (EXOSIP_OPT_BASE_OPTION+28) /**< char *: define +sip.instance parameter in Contact headers  (example: f81d4fae-7dec-11d0-a765-00a0c91e6bf6) */
 #define EXOSIP_OPT_SET_MAX_MESSAGE_TO_READ (EXOSIP_OPT_BASE_OPTION+29) /**< int: set the number of message to read at once for each network processing (high load traffic use-case: DO NOT USE FOR COMMON USAGE) */
 #define EXOSIP_OPT_SET_MAX_READ_TIMEOUT (EXOSIP_OPT_BASE_OPTION+30) /**< long int: set the period in nano seconds during we read for sip message. (high load traffic use-case: DO NOT USE FOR COMMON USAGE)*/
-    
+#define EXOSIP_OPT_SET_DEFAULT_CONTACT_DISPLAYNAME (EXOSIP_OPT_BASE_OPTION+31) /**< char *: define a display name to be added in Contact headers  (example: "john Doe") */
+
 #define EXOSIP_OPT_SET_TLS_VERIFY_CERTIFICATE (EXOSIP_OPT_BASE_OPTION+500) /**< int *: enable verification of certificate for TLS connection */
 #define EXOSIP_OPT_SET_TLS_CERTIFICATES_INFO (EXOSIP_OPT_BASE_OPTION+501) /**< eXosip_tls_ctx_t *: client and/or server certificate/ca-root/key info */
 #define EXOSIP_OPT_SET_TLS_CLIENT_CERTIFICATE_NAME (EXOSIP_OPT_BASE_OPTION+502) /**< char*: user can choose a specific certifcate present in Windows Certificate Store */
