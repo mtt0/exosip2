@@ -24,11 +24,13 @@ eXosip2 (5.0.0)
 	EXOSIP_OPT_ENABLE_REUSE_TCP_PORT: option to reuse port.
 	EXOSIP_OPT_AUTO_MASQUERADE_CONTACT: option to enable automatic masquerading for Contact headers.
 	EXOSIP_OPT_UDP_LEARN_PORT: obsolete and will be removed in the future.
+	EXOSIP_OPT_SET_DEFAULT_CONTACT_DISPLAYNAME: define a display name to be added in Contact headers
 	* new API options: (high load traffic use-case: DO NOT USE FOR COMMON USAGE)
 	EXOSIP_OPT_SET_MAX_MESSAGE_TO_READ: set the number of message to read at once for each network processing.
 	EXOSIP_OPT_SET_MAX_READ_TIMEOUT: set the period in nano seconds during we read for sip message.
 	EXOSIP_OPT_GET_STATISTICS: retreive numerous statistics.
 
+	* improve eXosip_add_authentication_info to avoid duplicate credentials
 	* if a SUBSCRIBE is rejected, the context will be released automatically
 	* rename usage of -DHAVE_CARES_H into -DHAVE_ARES_H real name of header.
 	* remove warnings mainly related to socket API (getnameinfo/bind/accept/recv/connect/sendto)
