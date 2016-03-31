@@ -922,7 +922,7 @@ _eXosip_request_viamanager(struct eXosip_t *excontext, osip_transaction_t * tr, 
   via = (osip_via_t *)osip_list_get(&sip->vias, 0);
   if (via==NULL || via->host==NULL)
     return OSIP_SYNTAXERROR;
-  if (osip_strcasecmp(via->host, "999.999.999.999")!=0)
+  if (osip_strcasecmp(via->host, "999.999.999.999")!=0 && via->port!=NULL && osip_strcasecmp(via->port, "99999")!=0)
     return OSIP_SUCCESS;
 
   masquerade_ip[0] = '\0';
@@ -971,11 +971,15 @@ _eXosip_request_viamanager(struct eXosip_t *excontext, osip_transaction_t * tr, 
     return OSIP_UNDEFINED_ERROR;
   }
 
-  osip_free(via->host);
-  via->host = osip_strdup(via_ip);
+  if (osip_strcasecmp(via->host, "999.999.999.999")==0) {
+    osip_free(via->host);
+    via->host = osip_strdup(via_ip);
+  }
 
-  osip_free(via->port);
-  via->port = osip_strdup(via_port);
+  if (via->port!=NULL && osip_strcasecmp(via->port, "99999")==0) {
+    osip_free(via->port);
+    via->port = osip_strdup(via_port);
+  }
   OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO1, NULL, "updating: Via header to %s:%s\n", via_ip, via_port));
   osip_message_force_update(sip);
   return OSIP_SUCCESS;
@@ -997,7 +1001,7 @@ _eXosip_message_contactmanager(struct eXosip_t *excontext, osip_transaction_t * 
   acontact = (osip_contact_t *)osip_list_get(&sip->contacts, 0);
   if (acontact==NULL || acontact->url==NULL || acontact->url->host==NULL)
     return OSIP_SUCCESS;
-  if (osip_strcasecmp(acontact->url->host, "999.999.999.999")!=0)
+  if (osip_strcasecmp(acontact->url->host, "999.999.999.999")!=0 && acontact->url->port!=NULL && osip_strcasecmp(acontact->url->port, "99999")!=0)
     return OSIP_SUCCESS;
 
 
@@ -1072,11 +1076,15 @@ _eXosip_message_contactmanager(struct eXosip_t *excontext, osip_transaction_t * 
     return OSIP_UNDEFINED_ERROR;
   }
 
-  osip_free(acontact->url->host);
-  acontact->url->host = osip_strdup(contact_ip);
+  if (osip_strcasecmp(acontact->url->host, "999.999.999.999")==0) {
+    osip_free(acontact->url->host);
+    acontact->url->host = osip_strdup(contact_ip);
+  }
 
-  osip_free(acontact->url->port);
-  acontact->url->port = osip_strdup(contact_port);
+  if (acontact->url->port!=NULL && osip_strcasecmp(acontact->url->port, "99999")==0) {
+    osip_free(acontact->url->port);
+    acontact->url->port = osip_strdup(contact_port);
+  }
   OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO1, NULL, "updating: Contact header to %s:%s\n", contact_ip, contact_port));
   osip_message_force_update(sip);
   return OSIP_SUCCESS;
