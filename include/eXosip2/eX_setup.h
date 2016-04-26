@@ -130,7 +130,7 @@ extern "C" {
 #define EXOSIP_OPT_SET_CALLBACK_WAKELOCK (EXOSIP_OPT_BASE_OPTION+23) /**< CbSipWakeLock *: set a callback to be called upon start/end of transaction */
 #define EXOSIP_OPT_ENABLE_OUTBOUND (EXOSIP_OPT_BASE_OPTION+24) /**< int *: 0 to disable, 1 to enable usage of ob parmeter (rfc 5626) in dialog's contact headers */
 #define EXOSIP_OPT_SET_OC_LOCAL_ADDRESS (EXOSIP_OPT_BASE_OPTION+25) /**< char *: set the ip address to bind for outbound connection */
-#define EXOSIP_OPT_SET_OC_PORT_RANGE (EXOSIP_OPT_BASE_OPTION+26) /**< int[2] *: set the port range (min, max) to bind for outbound connection */
+#define EXOSIP_OPT_SET_OC_PORT_RANGE (EXOSIP_OPT_BASE_OPTION+26) /**< int[2] *: set the port range (min, max) to bind for outbound connection (if EXOSIP_OPT_SET_OC_LOCAL_ADDRESS is not used, this options apply to TCP/TLS only) */
 #define EXOSIP_OPT_REMOVE_PREROUTESET (EXOSIP_OPT_BASE_OPTION+27) /**< int *: 0: keep pre-route set in initial INVITE/SUBSCRIBE/REFER, 1 (default): remove pre-route set*/
 #define EXOSIP_OPT_SET_SIP_INSTANCE (EXOSIP_OPT_BASE_OPTION+28) /**< char *: define +sip.instance parameter in Contact headers  (example: f81d4fae-7dec-11d0-a765-00a0c91e6bf6) */
 #define EXOSIP_OPT_SET_MAX_MESSAGE_TO_READ (EXOSIP_OPT_BASE_OPTION+29) /**< int: set the number of message to read at once for each network processing (high load traffic use-case: DO NOT USE FOR COMMON USAGE) */
