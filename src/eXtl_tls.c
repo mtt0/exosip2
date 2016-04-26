@@ -2510,30 +2510,42 @@ _tls_tl_connect_socket (struct eXosip_t *excontext, char *host, int port, int re
           break;
         }
       } else {
-        struct addrinfo *addrinfo = NULL;
         int count=0;
+
+        if (excontext->oc_local_port_range[0]<1024)
+          excontext->oc_local_port_range[0]=0;
         while (count<100) {
-          if (excontext->oc_local_port_range[0]<1024) {
-            excontext->oc_local_port_current=0;
-            _eXosip_get_addrinfo(excontext, &addrinfo, excontext->oc_local_address, 0, IPPROTO_TCP);
-          } else {
-            if (excontext->oc_local_port_current==0)
-              excontext->oc_local_port_current = excontext->oc_local_port_range[0];
-            if (excontext->oc_local_port_current>=excontext->oc_local_port_range[1])
-              excontext->oc_local_port_current = excontext->oc_local_port_range[0];
+          struct addrinfo *oc_addrinfo = NULL;
+          struct addrinfo *oc_curinfo;
+          if (excontext->oc_local_port_current==0)
+            excontext->oc_local_port_current = excontext->oc_local_port_range[0];
+          if (excontext->oc_local_port_current>=excontext->oc_local_port_range[1])
+            excontext->oc_local_port_current = excontext->oc_local_port_range[0];
 
-            _eXosip_get_addrinfo(excontext, &addrinfo, excontext->oc_local_address, excontext->oc_local_port_current, IPPROTO_TCP);
-
+          _eXosip_get_addrinfo(excontext, &oc_addrinfo, excontext->oc_local_address, excontext->oc_local_port_current, IPPROTO_TCP);
+            
+          for (oc_curinfo = oc_addrinfo; oc_curinfo; oc_curinfo = oc_curinfo->ai_next) {
+            if  (oc_curinfo->ai_protocol && oc_curinfo->ai_protocol != IPPROTO_TCP) {
+              OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO2, NULL, "Skipping protocol %d\n", oc_curinfo->ai_protocol));
+              continue;
+            }
+            break;
           }
-          res = bind (sock, (const struct sockaddr *)&curinfo->ai_addr, (socklen_t)curinfo->ai_addrlen);
+          if (oc_curinfo==NULL) {
+            OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO2, NULL, "not able to find any address to bind\n"));
+            _eXosip_freeaddrinfo (oc_addrinfo);
+            break;
+          }
+          res = bind (sock, (const struct sockaddr *)oc_curinfo->ai_addr, (socklen_t)oc_curinfo->ai_addrlen);
           if (res < 0) {
             OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_WARNING, NULL, "Cannot bind socket node:%s family:%d (port=%i) %s\n", excontext->oc_local_address, curinfo->ai_addr->sa_family, excontext->oc_local_port_current, strerror (ex_errno)));
             count++;
-            if (excontext->oc_local_port_range[0]>=1024)
+            if (excontext->oc_local_port_range[0]!=0)
               excontext->oc_local_port_current++;
             continue;
           }
-          if (excontext->oc_local_port_range[0]>=1024)
+          _eXosip_freeaddrinfo (oc_addrinfo);
+          if (excontext->oc_local_port_range[0]!=0)
             excontext->oc_local_port_current++;
           break;
         }
