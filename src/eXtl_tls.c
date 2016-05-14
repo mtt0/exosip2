@@ -2181,14 +2181,16 @@ _tls_tl_recv (struct eXosip_t *excontext, struct _tls_stream *sockinfo)
   }
   else {
     int consumed;
+    int err=OSIP_SUCCESS;
+
+    if (SSL_pending (sockinfo->ssl_conn))
+      err = -999;
+
     sockinfo->tcp_max_timeout=0;
     OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO1, NULL, "socket %s:%i: read %d bytes\n", sockinfo->remote_ip, sockinfo->remote_port, r));
     sockinfo->buflen += rlen;
     consumed = handle_messages (excontext, sockinfo);
-    if (consumed == 0) {
-      return OSIP_SUCCESS;
-    }
-    else {
+    if (consumed != 0) {
       if (sockinfo->buflen > consumed) {
         memmove (sockinfo->buf, sockinfo->buf + consumed, sockinfo->buflen - consumed);
         sockinfo->buflen -= consumed;
@@ -2196,8 +2198,9 @@ _tls_tl_recv (struct eXosip_t *excontext, struct _tls_stream *sockinfo)
       else {
         sockinfo->buflen = 0;
       }
-      return OSIP_SUCCESS;
     }
+
+    return err; /* if -999 is returned, internal buffer of SSL still contains some data */
   }
 }
 
@@ -2335,8 +2338,14 @@ tls_tl_read_message (struct eXosip_t *excontext, fd_set * osip_fdset, fd_set * o
 
   for (pos = 0; pos < EXOSIP_MAX_SOCKETS; pos++) {
     if (reserved->socket_tab[pos].socket > 0) {
-      if (FD_ISSET (reserved->socket_tab[pos].socket, osip_fdset))
-        _tls_tl_recv (excontext, &reserved->socket_tab[pos]);
+      if (FD_ISSET (reserved->socket_tab[pos].socket, osip_fdset)) {
+        int err = -999;
+        int max = 5;
+        while (err == -999 && max>0) {
+          err = _tls_tl_recv (excontext, &reserved->socket_tab[pos]);
+          max--;
+        }
+      }
     }
   }
 
