@@ -83,6 +83,15 @@ struct _udp_stream {
 #define EXOSIP_MAX_SOCKETS 200
 #endif
 
+/* recv on long message returns -1 with errno=0 */
+#if !defined(WIN32) && !defined(_WIN32_WCE)
+#define SOCKET_OPTION_VALUE	void *
+static size_t udp_message_max_length = SIP_MESSAGE_MAX_LENGTH;
+#else
+static int udp_message_max_length = SIP_MESSAGE_MAX_LENGTH;
+#define SOCKET_OPTION_VALUE char *
+#endif
+
 struct eXtludp {
   int udp_socket;
   struct sockaddr_storage ai_addr;
@@ -183,12 +192,6 @@ udp_tl_free (struct eXosip_t *excontext)
   excontext->eXtludp_reserved = NULL;
   return OSIP_SUCCESS;
 }
-
-#if !defined(WIN32) && !defined(_WIN32_WCE)
-#define SOCKET_OPTION_VALUE	void *
-#else
-#define SOCKET_OPTION_VALUE char *
-#endif
 
 #ifdef ENABLE_SIP_QOS
 static int
@@ -735,19 +738,19 @@ udp_tl_read_message (struct eXosip_t *excontext, fd_set * osip_fdset, fd_set * o
     struct sockaddr_storage sa;
 
     if (reserved->buf == NULL)
-      reserved->buf = (char *) osip_malloc (SIP_MESSAGE_MAX_LENGTH * sizeof (char) + 1);
+      reserved->buf = (char *) osip_malloc (udp_message_max_length * sizeof (char) + 1);
     if (reserved->buf == NULL)
       return OSIP_NOMEM;
 
 #ifdef TSC_SUPPORT
     if (excontext->tunnel_handle) {
-      i = tsc_recvfrom (reserved->udp_socket, reserved->buf, SIP_MESSAGE_MAX_LENGTH, 0, (struct sockaddr *) &sa, &slen);
+      i = tsc_recvfrom (reserved->udp_socket, reserved->buf, udp_message_max_length, 0, (struct sockaddr *) &sa, &slen);
     }
     else {
-      i = recvfrom (reserved->udp_socket, reserved->buf, SIP_MESSAGE_MAX_LENGTH, 0, (struct sockaddr *) &sa, &slen);
+      i = recvfrom (reserved->udp_socket, reserved->buf, udp_message_max_length, 0, (struct sockaddr *) &sa, &slen);
     }
 #else
-    i = (int) recvfrom (reserved->udp_socket, reserved->buf, SIP_MESSAGE_MAX_LENGTH, 0, (struct sockaddr *) &sa, &slen);
+    i = (int) recvfrom (reserved->udp_socket, reserved->buf, udp_message_max_length, 0, (struct sockaddr *) &sa, &slen);
 #endif
 
     if (i > 32) {
@@ -796,6 +799,11 @@ udp_tl_read_message (struct eXosip_t *excontext, fd_set * osip_fdset, fd_set * o
       int my_errno = errno;
 #endif
       OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "Could not read socket (%i) (%i) (%s)\n", i, my_errno, strerror (my_errno)));
+      if (errno==0) {
+        udp_message_max_length = udp_message_max_length*2;
+        osip_free(reserved->buf);
+        reserved->buf = (char *) osip_malloc (udp_message_max_length * sizeof (char) + 1);
+      }
       if (my_errno == 57) {
         _udp_tl_reset (excontext);
       }
@@ -809,19 +817,19 @@ udp_tl_read_message (struct eXosip_t *excontext, fd_set * osip_fdset, fd_set * o
     struct sockaddr_storage sa;
     
     if (reserved->buf == NULL)
-      reserved->buf = (char *) osip_malloc (SIP_MESSAGE_MAX_LENGTH * sizeof (char) + 1);
+      reserved->buf = (char *) osip_malloc (udp_message_max_length * sizeof (char) + 1);
     if (reserved->buf == NULL)
       return OSIP_NOMEM;
     
 #ifdef TSC_SUPPORT
     if (excontext->tunnel_handle) {
-      i = tsc_recvfrom (reserved->udp_socket_oc, reserved->buf, SIP_MESSAGE_MAX_LENGTH, 0, (struct sockaddr *) &sa, &slen);
+      i = tsc_recvfrom (reserved->udp_socket_oc, reserved->buf, udp_message_max_length, 0, (struct sockaddr *) &sa, &slen);
     }
     else {
-      i = recvfrom (reserved->udp_socket_oc, reserved->buf, SIP_MESSAGE_MAX_LENGTH, 0, (struct sockaddr *) &sa, &slen);
+      i = recvfrom (reserved->udp_socket_oc, reserved->buf, udp_message_max_length, 0, (struct sockaddr *) &sa, &slen);
 	}
 #else
-    i = (int) recvfrom (reserved->udp_socket_oc, reserved->buf, SIP_MESSAGE_MAX_LENGTH, 0, (struct sockaddr *) &sa, &slen);
+    i = (int) recvfrom (reserved->udp_socket_oc, reserved->buf, udp_message_max_length, 0, (struct sockaddr *) &sa, &slen);
 #endif
     
     if (i > 32) {
@@ -845,6 +853,11 @@ udp_tl_read_message (struct eXosip_t *excontext, fd_set * osip_fdset, fd_set * o
       int my_errno = errno;
 #endif
       OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "Could not read socket (%i) (%i) (%s)\n", i, my_errno, strerror (my_errno)));
+      if (errno==0) {
+        udp_message_max_length = udp_message_max_length*2;
+        osip_free(reserved->buf);
+        reserved->buf = (char *) osip_malloc (udp_message_max_length * sizeof (char) + 1);
+      }
       if (my_errno == 57) {
         _udp_tl_reset_oc (excontext);
       }
