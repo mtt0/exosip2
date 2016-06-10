@@ -300,7 +300,7 @@ dtls_tl_free (struct eXosip_t *excontext)
 
   memset (&reserved->ai_addr, 0, sizeof (struct sockaddr_storage));
   if (reserved->dtls_socket > 0)
-    close (reserved->dtls_socket);
+    _eXosip_closesocket (reserved->dtls_socket);
   reserved->dtls_socket = 0;
 
   osip_free (reserved);
@@ -352,7 +352,7 @@ dtls_tl_open (struct eXosip_t *excontext)
     if (curinfo->ai_family == AF_INET6) {
 #ifdef IPV6_V6ONLY
       if (setsockopt_ipv6only (sock)) {
-        close (sock);
+        _eXosip_closesocket (sock);
         sock = -1;
         OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "eXosip: Cannot set socket option %s!\n", strerror (errno)));
         continue;
@@ -363,7 +363,7 @@ dtls_tl_open (struct eXosip_t *excontext)
     res = bind (sock, curinfo->ai_addr, (socklen_t)curinfo->ai_addrlen);
     if (res < 0) {
       OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "eXosip: Cannot bind socket node:%s family:%d %s\n", excontext->eXtl_transport.proto_ifs, curinfo->ai_family, strerror (errno)));
-      close (sock);
+      _eXosip_closesocket (sock);
       sock = -1;
       continue;
     }
@@ -378,7 +378,7 @@ dtls_tl_open (struct eXosip_t *excontext)
       res = listen (sock, SOMAXCONN);
       if (res < 0) {
         OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "eXosip: Cannot bind socket node:%s family:%d %s\n", excontext->eXtl_transport.proto_ifs, curinfo->ai_family, strerror (errno)));
-        close (sock);
+        _eXosip_closesocket (sock);
         sock = -1;
         continue;
       }
@@ -736,7 +736,7 @@ _dtls_tl_update_contact (struct eXosip_t *excontext, osip_message_t * req)
 }
 
 #ifndef INET6_ADDRSTRLEN
-#define INET6_ADDRSTRLEN 46
+#define INET6_ADDRSTRLEN 65
 #endif
 
 static int

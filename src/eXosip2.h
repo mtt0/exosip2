@@ -131,11 +131,9 @@
 #include <winsock2.h>
 #include <osipparser2/osip_port.h>
 #include <ws2tcpip.h>
-#define close(s) closesocket(s)
 #elif WIN32
 #include <winsock2.h>
 #include <ws2tcpip.h>
-#define close(s) closesocket(s)
 #else
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -153,6 +151,12 @@
 #include "jpipe.h"
 
 #define EXOSIP_VERSION	"5.0.0"
+
+#ifdef WIN32
+#define SOCKET_TYPE SOCKET
+#else
+#define SOCKET_TYPE int
+#endif
 
 #ifdef __cplusplus
 extern "C" {
@@ -518,7 +522,7 @@ struct eXosip_counters {
   int _eXosip_guess_ip_for_destination (struct eXosip_t *excontext, int family, char *destination, char *address, int size);
   int _eXosip_guess_ip_for_destinationsock (struct eXosip_t *excontext, int family, int proto, struct sockaddr_storage *udp_local_bind, int sock, char *destination, char *address, int size);
 
-
+  int _eXosip_closesocket(SOCKET_TYPE sock);
   int _eXosip_getnameinfo(const struct sockaddr *sa, socklen_t salen, char *host, socklen_t hostlen, char *serv, socklen_t servlen, int flags);
   int _eXosip_getport(const struct sockaddr *sa, socklen_t salen);
   int _eXosip_get_addrinfo (struct eXosip_t *excontext, struct addrinfo **addrinfo, const char *hostname, int service, int protocol);

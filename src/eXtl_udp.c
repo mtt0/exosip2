@@ -181,9 +181,9 @@ udp_tl_free (struct eXosip_t *excontext)
   }
 #endif
   if (reserved->udp_socket > 0)
-    close (reserved->udp_socket);
+    _eXosip_closesocket (reserved->udp_socket);
   if (reserved->udp_socket_oc > 0)
-    close (reserved->udp_socket_oc);
+    _eXosip_closesocket (reserved->udp_socket_oc);
 
   if (reserved->buf != NULL)
     osip_free(reserved->buf);
@@ -367,7 +367,7 @@ _udp_tl_open (struct eXosip_t *excontext)
     if (curinfo->ai_family == AF_INET6) {
 #ifdef IPV6_V6ONLY
       if (setsockopt_ipv6only (sock)) {
-        close (sock);
+        _eXosip_closesocket (sock);
         sock = -1;
         OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "eXosip: Cannot set socket option %s!\n", strerror (errno)));
         continue;
@@ -415,10 +415,10 @@ _udp_tl_open (struct eXosip_t *excontext)
         tsc_close (sock);
       }
       else {
-        close (sock);
+        _eXosip_closesocket (sock);
       }
 #else
-      close (sock);
+      _eXosip_closesocket (sock);
 #endif
       sock = -1;
       continue;
@@ -453,7 +453,7 @@ _udp_tl_open (struct eXosip_t *excontext)
       res = listen (sock, SOMAXCONN);
       if (res < 0) {
         OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "eXosip: Cannot bind socket node:%s family:%d %s\n", excontext->eXtl_transport.proto_ifs, curinfo->ai_family, strerror (errno)));
-        close (sock);
+        _eXosip_closesocket (sock);
         sock = -1;
         continue;
       }
@@ -526,7 +526,7 @@ _udp_tl_open_oc (struct eXosip_t *excontext)
     if (curinfo->ai_family == AF_INET6) {
 #ifdef IPV6_V6ONLY
       if (setsockopt_ipv6only (sock)) {
-        close (sock);
+        _eXosip_closesocket (sock);
         sock = -1;
         OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "eXosip: Cannot set socket option %s!\n", strerror (errno)));
         continue;
@@ -574,10 +574,10 @@ _udp_tl_open_oc (struct eXosip_t *excontext)
         tsc_close (sock);
       }
       else {
-        close (sock);
+        _eXosip_closesocket (sock);
       }
 #else
-      close (sock);
+      _eXosip_closesocket (sock);
 #endif
       sock = -1;
       continue;
@@ -612,7 +612,7 @@ _udp_tl_open_oc (struct eXosip_t *excontext)
       res = listen (sock, SOMAXCONN);
       if (res < 0) {
         OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "eXosip: Cannot bind socket node:%s family:%d %s\n", excontext->eXtl_transport.proto_ifs, curinfo->ai_family, strerror (errno)));
-        close (sock);
+        _eXosip_closesocket (sock);
         sock = -1;
         continue;
       }
@@ -657,7 +657,7 @@ _udp_tl_reset (struct eXosip_t *excontext)
   struct eXtludp *reserved = (struct eXtludp *) excontext->eXtludp_reserved;
 
   if (reserved->udp_socket > 0)
-    close (reserved->udp_socket);
+    _eXosip_closesocket (reserved->udp_socket);
   reserved->udp_socket=0;
   return _udp_tl_open (excontext);
   }
@@ -668,7 +668,7 @@ _udp_tl_reset_oc (struct eXosip_t *excontext)
   struct eXtludp *reserved = (struct eXtludp *) excontext->eXtludp_reserved;
   
   if (reserved->udp_socket_oc > 0)
-    close (reserved->udp_socket_oc);
+    _eXosip_closesocket (reserved->udp_socket_oc);
   reserved->udp_socket_oc=0;
   return _udp_tl_open_oc (excontext);
 }
@@ -1002,7 +1002,7 @@ _udp_tl_update_contact (struct eXosip_t *excontext, osip_message_t * req)
 }
 
 #ifndef INET6_ADDRSTRLEN
-#define INET6_ADDRSTRLEN 46
+#define INET6_ADDRSTRLEN 65
 #endif
 
 static int

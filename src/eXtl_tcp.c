@@ -63,7 +63,6 @@
 #define is_connreset_error(r) ((r)==WSAECONNRESET || (r)==WSAECONNABORTED || (r)==WSAETIMEDOUT || (r)==WSAENETRESET || (r)==WSAENOTCONN)
 #else
 #define ex_errno errno
-#define closesocket close
 #endif
 #ifndef is_wouldblock_error
 #define is_wouldblock_error(r) ((r)==EINTR||(r)==EWOULDBLOCK||(r)==EAGAIN)
@@ -146,7 +145,7 @@ tcp_tl_init (struct eXosip_t *excontext)
 static void
 _tcp_tl_close_sockinfo (struct _tcp_stream *sockinfo)
 {
-  closesocket (sockinfo->socket);
+  _eXosip_closesocket (sockinfo->socket);
   if (sockinfo->buf != NULL)
     osip_free (sockinfo->buf);
   if (sockinfo->sendbuf != NULL)
@@ -176,7 +175,7 @@ tcp_tl_free (struct eXosip_t *excontext)
   memset (&reserved->ai_addr, 0, sizeof (struct sockaddr_storage));
   reserved->ai_addr_len=0;
   if (reserved->tcp_socket > 0)
-    closesocket (reserved->tcp_socket);
+    _eXosip_closesocket (reserved->tcp_socket);
   
   for (pos = 0; pos < EXOSIP_MAX_SOCKETS; pos++) {
     if (reserved->socket_tab[pos].socket > 0) {
@@ -229,7 +228,7 @@ tcp_tl_open (struct eXosip_t *excontext)
     if (curinfo->ai_family == AF_INET6) {
 #ifdef IPV6_V6ONLY
       if (setsockopt_ipv6only (sock)) {
-        closesocket (sock);
+        _eXosip_closesocket (sock);
         sock = -1;
         OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "Cannot set socket option %s!\n", strerror (ex_errno)));
         continue;
@@ -247,7 +246,7 @@ tcp_tl_open (struct eXosip_t *excontext)
     res = bind (sock, curinfo->ai_addr, (socklen_t)curinfo->ai_addrlen);
     if (res < 0) {
       OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "Cannot bind socket node:%s family:%d %s\n", excontext->eXtl_transport.proto_ifs, curinfo->ai_family, strerror (ex_errno)));
-      closesocket (sock);
+      _eXosip_closesocket (sock);
       sock = -1;
       continue;
     }
@@ -263,7 +262,7 @@ tcp_tl_open (struct eXosip_t *excontext)
       res = listen (sock, SOMAXCONN);
       if (res < 0) {
         OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "Cannot bind socket node:%s family:%d %s\n", excontext->eXtl_transport.proto_ifs, curinfo->ai_family, strerror (ex_errno)));
-        closesocket (sock);
+        _eXosip_closesocket (sock);
         sock = -1;
         continue;
       }
@@ -562,7 +561,7 @@ tcp_tl_read_message (struct eXosip_t *excontext, fd_set * osip_fdset, fd_set * o
         OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "Error accepting TCP socket: EBADF\n"));
         memset (&reserved->ai_addr, 0, sizeof (struct sockaddr_storage));
         if (reserved->tcp_socket > 0) {
-          closesocket (reserved->tcp_socket);
+          _eXosip_closesocket (reserved->tcp_socket);
           for (i = 0; i < EXOSIP_MAX_SOCKETS; i++) {
             if (reserved->socket_tab[i].socket > 0 && reserved->socket_tab[i].is_server > 0)
               _tcp_tl_close_sockinfo (&reserved->socket_tab[i]);
@@ -832,7 +831,7 @@ _tcp_tl_is_connected (int sock)
       if (curinfo->ai_family == AF_INET6) {
 #ifdef IPV6_V6ONLY
         if (setsockopt_ipv6only (sock)) {
-          closesocket (sock);
+          _eXosip_closesocket (sock);
           sock = -1;
           OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO2, NULL, "Cannot set socket option %s!\n", strerror (ex_errno)));
           continue;
@@ -946,7 +945,7 @@ _tcp_tl_is_connected (int sock)
         
         val = 1;
         if (setsockopt (sock, SOL_SOCKET, SO_KEEPALIVE, (char *) &val, sizeof (val)) == -1) {
-          closesocket (sock);
+          _eXosip_closesocket (sock);
           sock = -1;
           OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO2, NULL, "Cannot get socket flag!\n"));
           continue;
@@ -973,14 +972,14 @@ _tcp_tl_is_connected (int sock)
         
         val = fcntl (sock, F_GETFL);
         if (val < 0) {
-          closesocket (sock);
+          _eXosip_closesocket (sock);
           sock = -1;
           OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO2, NULL, "Cannot get socket flag!\n"));
           continue;
         }
         val |= O_NONBLOCK;
         if (fcntl (sock, F_SETFL, val) < 0) {
-          closesocket (sock);
+          _eXosip_closesocket (sock);
           sock = -1;
           OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO2, NULL, "Cannot set socket flag!\n"));
           continue;
@@ -1030,7 +1029,7 @@ _tcp_tl_is_connected (int sock)
           if (connect_err != EINPROGRESS) {
 #endif
             OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO2, NULL, "Cannot connect socket node:%s family:%d %s[%d]\n", host, curinfo->ai_family, strerror (connect_err), connect_err));
-            closesocket (sock);
+            _eXosip_closesocket (sock);
             sock = -1;
             continue;
           }
@@ -1064,7 +1063,7 @@ _tcp_tl_is_connected (int sock)
               break;
             }
             else {
-              closesocket (sock);
+              _eXosip_closesocket (sock);
               sock = -1;
               continue;
             }

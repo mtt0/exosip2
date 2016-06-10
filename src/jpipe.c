@@ -66,8 +66,8 @@ jpipe_close (jpipe_t * apipe)
 {
   if (apipe == NULL)
     return OSIP_BADPARAMETER;
-  close (apipe->pipes[0]);
-  close (apipe->pipes[1]);
+  _eXosip_closesocket (apipe->pipes[0]);
+  _eXosip_closesocket (apipe->pipes[1]);
   osip_free (apipe);
   return OSIP_SUCCESS;
 }
@@ -108,12 +108,6 @@ jpipe_get_read_descr (jpipe_t * apipe)
 
 #else
 
-#ifdef WIN32
-#define SOCKET_TYPE SOCKET
-#else
-#define SOCKET_TYPE int
-#endif
-
 int
 setNonBlocking (SOCKET_TYPE fd)
 {
@@ -153,11 +147,7 @@ jpipe ()
   }
   my_pipe->pipes[1] = (int) socket (PF_INET, SOCK_STREAM, IPPROTO_TCP);
   if (0 > my_pipe->pipes[1]) {
-#if defined(__arc__)
-    close (s);
-#else
-    closesocket (s);
-#endif
+    _eXosip_closesocket (s);
     osip_free (my_pipe);
     return NULL;
   }
@@ -179,13 +169,8 @@ jpipe ()
 
   if (j == 0) {
     OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "Failed to bind a local socket, aborting!\n"));
-#if defined(__arc__)
-    close (s);
-    close (my_pipe->pipes[1]);
-#else
-    closesocket (s);
-    closesocket (my_pipe->pipes[1]);
-#endif
+    _eXosip_closesocket (s);
+    _eXosip_closesocket (my_pipe->pipes[1]);
     osip_free (my_pipe);
     return NULL;
   }
@@ -193,13 +178,8 @@ jpipe ()
   j = listen (s, 1);
   if (j != 0) {
     OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "Failed to listen on a local socket, aborting!\n"));
-#if defined(__arc__)
-    close (s);
-    close (my_pipe->pipes[1]);
-#else
-    closesocket (s);
-    closesocket (my_pipe->pipes[1]);
-#endif
+    _eXosip_closesocket (s);
+    _eXosip_closesocket (my_pipe->pipes[1]);
     osip_free (my_pipe);
     return NULL;
   }
@@ -209,8 +189,8 @@ jpipe ()
   if (j != 0) {
     /* failed for some reason... */
     OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "udp plugin; cannot set O_NONBLOCK to the file desciptor!\n"));
-    close (s);
-    close (my_pipe->pipes[1]);
+    _eXosip_closesocket (s);
+    _eXosip_closesocket (my_pipe->pipes[1]);
     osip_free (my_pipe);
     return NULL;
   }
@@ -218,8 +198,8 @@ jpipe ()
   if (j != NO_ERROR) {
     /* failed for some reason... */
     OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "udp plugin; cannot set O_NONBLOCK to the file desciptor!\n"));
-    closesocket (s);
-    closesocket (my_pipe->pipes[1]);
+    _eXosip_closesocket (s);
+    _eXosip_closesocket (my_pipe->pipes[1]);
     osip_free (my_pipe);
     return NULL;
   }
@@ -231,13 +211,8 @@ jpipe ()
 
   if (my_pipe->pipes[0] <= 0) {
     OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "udp plugin; Failed to call accept!\n"));
-#if defined(__arc__)
-    close (s);
-    close (my_pipe->pipes[1]);
-#else
-    closesocket (s);
-    closesocket (my_pipe->pipes[1]);
-#endif
+    _eXosip_closesocket (s);
+    _eXosip_closesocket (my_pipe->pipes[1]);
     osip_free (my_pipe);
     return NULL;
   }
@@ -245,11 +220,7 @@ jpipe ()
   /* set the socket to non-blocking to avoid a deadly embrace problem. */
   setNonBlocking (my_pipe->pipes[1]);
 
-#if defined(__arc__)
-  close (s);
-#else
-  closesocket (s);
-#endif
+  _eXosip_closesocket (s);
 
   return my_pipe;
 }
@@ -259,13 +230,8 @@ jpipe_close (jpipe_t * apipe)
 {
   if (apipe == NULL)
     return OSIP_BADPARAMETER;
-#if defined(__arc__)
-  close (apipe->pipes[0]);
-  close (apipe->pipes[1]);
-#else
-  closesocket (apipe->pipes[0]);
-  closesocket (apipe->pipes[1]);
-#endif
+  _eXosip_closesocket (apipe->pipes[0]);
+  _eXosip_closesocket (apipe->pipes[1]);
   osip_free (apipe);
   return OSIP_SUCCESS;
 }

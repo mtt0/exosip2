@@ -98,6 +98,15 @@
 #define USE_GETHOSTBYNAME
 #endif
 
+int
+_eXosip_closesocket(SOCKET_TYPE sock) {
+#if	!defined(_WIN32) && !defined(_WIN32_WCE)
+  return close (sock);
+#else
+  return closesocket(sock);
+#endif
+}
+
 #if defined(USE_GETHOSTBYNAME)
 
 void
@@ -526,19 +535,19 @@ _eXosip_guess_ip_for_destination (struct eXosip_t *excontext, int family, char *
   }
 
   if (addrf == NULL) {
-    closesocket (sock);
+    _eXosip_closesocket (sock);
     snprintf (address, size, (family == AF_INET) ? "127.0.0.1" : "::1");
     return OSIP_NO_NETWORK;
   }
 
   if (WSAIoctl (sock, SIO_ROUTING_INTERFACE_QUERY, addrf->ai_addr, (DWORD)addrf->ai_addrlen, &local_addr, sizeof (local_addr), &local_addr_len, NULL, NULL) != 0) {
-    closesocket (sock);
+    _eXosip_closesocket (sock);
     _eXosip_freeaddrinfo (addrf);
     snprintf (address, size, (family == AF_INET) ? "127.0.0.1" : "::1");
     return OSIP_NO_NETWORK;
   }
 
-  closesocket (sock);
+  _eXosip_closesocket (sock);
   _eXosip_freeaddrinfo (addrf);
 
   if (getnameinfo ((const struct sockaddr *) &local_addr, local_addr_len, address, size, NULL, 0, NI_NUMERICHOST)) {
@@ -682,25 +691,25 @@ static int
   sock_rt = socket (AF_INET, SOCK_DGRAM, 0);
 
   if (setsockopt (sock_rt, SOL_SOCKET, SO_BROADCAST, &on, sizeof (on)) == -1) {
-    close (sock_rt);
+    _eXosip_closesocket (sock_rt);
     snprintf (address, size, "127.0.0.1");
     return OSIP_NO_NETWORK;
   }
 
   if (connect (sock_rt, (struct sockaddr *) &remote, sizeof (struct sockaddr_in)) == -1) {
-    close (sock_rt);
+    _eXosip_closesocket (sock_rt);
     snprintf (address, size, "127.0.0.1");
     return OSIP_NO_NETWORK;
   }
 
   len = sizeof (iface_out);
   if (getsockname (sock_rt, (struct sockaddr *) &iface_out, &len) == -1) {
-    close (sock_rt);
+    _eXosip_closesocket (sock_rt);
     snprintf (address, size, "127.0.0.1");
     return OSIP_NO_NETWORK;
   }
 
-  close (sock_rt);
+  _eXosip_closesocket (sock_rt);
   if (iface_out.sin_addr.s_addr == 0) { /* what is this case?? */
     snprintf (address, size, "127.0.0.1");
     return OSIP_NO_NETWORK;
@@ -734,21 +743,21 @@ _eXosip_default_gateway_ipv6 (struct eXosip_t *excontext, char *destination, cha
   /*default to ipv6 local loopback in case something goes wrong: */
   snprintf (address, size, "::1");
   if (setsockopt (sock_rt, SOL_SOCKET, SO_BROADCAST, &on, sizeof (on)) == -1) {
-    close (sock_rt);
+    _eXosip_closesocket (sock_rt);
     return OSIP_NO_NETWORK;
   }
 
   if (connect (sock_rt, (struct sockaddr *) &remote, sizeof (struct sockaddr_in6)) == -1) {
-    close (sock_rt);
+    _eXosip_closesocket (sock_rt);
     return OSIP_NO_NETWORK;
   }
 
   len = sizeof (iface_out);
   if (getsockname (sock_rt, (struct sockaddr *) &iface_out, &len) == -1) {
-    close (sock_rt);
+    _eXosip_closesocket (sock_rt);
     return OSIP_NO_NETWORK;
   }
-  close (sock_rt);
+  _eXosip_closesocket (sock_rt);
 
   inet_ntop (AF_INET6, (const void *) &iface_out.sin6_addr, address, size - 1);
   return OSIP_SUCCESS;
@@ -797,20 +806,20 @@ static int
     
     sock = socket (AF_INET, SOCK_DGRAM, proto);
     if (bind (sock, (struct sockaddr*)&iface_out, len)<0) {
-      close (sock);
+      _eXosip_closesocket (sock);
       return OSIP_NO_NETWORK;
     }
     if (connect (sock, (struct sockaddr *) &remote, sizeof (struct sockaddr_in)) == -1) {
-      close (sock);
+      _eXosip_closesocket (sock);
       return OSIP_NO_NETWORK;
     }
     len = sizeof (iface_out);
     if (getsockname (sock, (struct sockaddr *) &iface_out, &len) == -1) {
-      close (sock);
+      _eXosip_closesocket (sock);
       return OSIP_NO_NETWORK;
     }
     
-    close (sock);
+    _eXosip_closesocket (sock);
     if (iface_out.sin_addr.s_addr == 0) { /* what is this case?? */
       return OSIP_NO_NETWORK;
     }
@@ -857,21 +866,21 @@ _eXosip_default_gateway_ipv6sock (struct eXosip_t *excontext, int proto, struct 
     
     sock = socket (AF_INET6, SOCK_DGRAM, proto);
     if (bind(sock, (struct sockaddr*)&iface_out, len)<0) {
-      close (sock);
+      _eXosip_closesocket (sock);
       return OSIP_NO_NETWORK;
     }
     
     if (connect (sock, (struct sockaddr *) &remote, sizeof (struct sockaddr_in6)) == -1) {
-      close (sock);
+      _eXosip_closesocket (sock);
       return OSIP_NO_NETWORK;
     }
     
     len = sizeof (iface_out);
     if (getsockname (sock, (struct sockaddr *) &iface_out, &len) == -1) {
-      close (sock);
+      _eXosip_closesocket (sock);
       return OSIP_NO_NETWORK;
     }
-    close (sock);
+    _eXosip_closesocket (sock);
     
     inet_ntop (AF_INET6, (const void *) &iface_out.sin6_addr, address, size - 1);
     return OSIP_SUCCESS;

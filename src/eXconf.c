@@ -382,7 +382,7 @@ eXosip_find_free_port (struct eXosip_t *excontext, int free_port, int transport)
         if (curinfo_rtp->ai_family == AF_INET6) {
 #ifdef IPV6_V6ONLY
           if (setsockopt_ipv6only (sock)) {
-            close (sock);
+            _eXosip_closesocket (sock);
             sock = -1;
             OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "eXosip: Cannot set socket option!\n"));
             continue;
@@ -393,7 +393,7 @@ eXosip_find_free_port (struct eXosip_t *excontext, int free_port, int transport)
         res1 = bind (sock, curinfo_rtp->ai_addr, (socklen_t)curinfo_rtp->ai_addrlen);
         if (res1 < 0) {
           OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_WARNING, NULL, "eXosip: Cannot bind socket node: 0.0.0.0 family:%d\n", curinfo_rtp->ai_family));
-          close (sock);
+          _eXosip_closesocket (sock);
           sock = -1;
           continue;
         }
@@ -407,7 +407,7 @@ eXosip_find_free_port (struct eXosip_t *excontext, int free_port, int transport)
         continue;
       }
 
-      close (sock);
+      _eXosip_closesocket (sock);
       sock = -1;
       for (curinfo_rtcp = addrinfo_rtcp; curinfo_rtcp; curinfo_rtcp = curinfo_rtcp->ai_next) {
         if (curinfo_rtcp->ai_protocol && curinfo_rtcp->ai_protocol != transport) {
@@ -424,7 +424,7 @@ eXosip_find_free_port (struct eXosip_t *excontext, int free_port, int transport)
         if (curinfo_rtcp->ai_family == AF_INET6) {
 #ifdef IPV6_V6ONLY
           if (setsockopt_ipv6only (sock)) {
-            close (sock);
+            _eXosip_closesocket (sock);
             sock = -1;
             OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "eXosip: Cannot set socket option!\n"));
             continue;
@@ -436,7 +436,7 @@ eXosip_find_free_port (struct eXosip_t *excontext, int free_port, int transport)
         res1 = bind (sock, curinfo_rtcp->ai_addr, (socklen_t)curinfo_rtcp->ai_addrlen);
         if (res1 < 0) {
           OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_WARNING, NULL, "eXosip: Cannot bind socket node: 0.0.0.0 family:%d\n", curinfo_rtp->ai_family));
-          close (sock);
+          _eXosip_closesocket (sock);
           sock = -1;
           continue;
         }
@@ -449,7 +449,7 @@ eXosip_find_free_port (struct eXosip_t *excontext, int free_port, int transport)
       if (sock == -1)
         continue;
 
-      close (sock);
+      _eXosip_closesocket (sock);
       sock = -1;
       return free_port + count * 2;
     }
@@ -484,7 +484,7 @@ eXosip_find_free_port (struct eXosip_t *excontext, int free_port, int transport)
       if (curinfo_rtp->ai_family == AF_INET6) {
   #ifdef IPV6_V6ONLY
         if (setsockopt_ipv6only (sock)) {
-          close (sock);
+          _eXosip_closesocket (sock);
           sock = -1;
           OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "eXosip: Cannot set socket option!\n"));
           continue;
@@ -495,7 +495,7 @@ eXosip_find_free_port (struct eXosip_t *excontext, int free_port, int transport)
       res1 = bind (sock, curinfo_rtp->ai_addr, (socklen_t)curinfo_rtp->ai_addrlen);
       if (res1 < 0) {
         OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_WARNING, NULL, "eXosip: Cannot bind socket node: 0.0.0.0 family:%d\n", curinfo_rtp->ai_family));
-        close (sock);
+        _eXosip_closesocket (sock);
         sock = -1;
         continue;
       }
@@ -503,12 +503,12 @@ eXosip_find_free_port (struct eXosip_t *excontext, int free_port, int transport)
       len = sizeof (ai_addr);
       res1 = getsockname (sock, (struct sockaddr *) &ai_addr, &len);
       if (res1 != 0) {
-        close (sock);
+        _eXosip_closesocket (sock);
         sock = -1;
         continue;
       }
 
-      close (sock);
+      _eXosip_closesocket (sock);
       sock = -1;
 
       {
@@ -531,7 +531,7 @@ eXosip_find_free_port (struct eXosip_t *excontext, int free_port, int transport)
     _eXosip_freeaddrinfo (addrinfo_rtp);
 
     if (sock != -1) {
-      close (sock);
+      _eXosip_closesocket (sock);
       sock = -1;
     }
   }

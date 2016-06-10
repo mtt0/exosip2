@@ -84,7 +84,6 @@
 #define is_connreset_error(r) ((r)==WSAECONNRESET || (r)==WSAECONNABORTED || (r)==WSAETIMEDOUT || (r)==WSAENETRESET || (r)==WSAENOTCONN)
 #else
 #define ex_errno errno
-#define closesocket close
 #endif
 #ifndef is_wouldblock_error
 #define is_wouldblock_error(r) ((r)==EINTR||(r)==EWOULDBLOCK||(r)==EAGAIN)
@@ -223,7 +222,7 @@ _tls_tl_close_sockinfo (struct _tls_stream *sockinfo)
     }
     if (sockinfo->ssl_ctx != NULL)
       SSL_CTX_free (sockinfo->ssl_ctx);
-    closesocket (sockinfo->socket);
+    _eXosip_closesocket (sockinfo->socket);
   }
   if (sockinfo->buf != NULL)
     osip_free (sockinfo->buf);
@@ -270,7 +269,7 @@ tls_tl_free (struct eXosip_t *excontext)
   memset (&reserved->ai_addr, 0, sizeof (struct sockaddr_storage));
   reserved->ai_addr_len=0;
   if (reserved->tls_socket > 0)
-    close (reserved->tls_socket);
+    _eXosip_closesocket (reserved->tls_socket);
   reserved->tls_socket = 0;
 
   osip_free (reserved);
@@ -1505,7 +1504,7 @@ tls_tl_open (struct eXosip_t *excontext)
     if (curinfo->ai_family == AF_INET6) {
 #ifdef IPV6_V6ONLY
       if (setsockopt_ipv6only (sock)) {
-        close (sock);
+        _eXosip_closesocket (sock);
         sock = -1;
         OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "eXosip: Cannot set socket option %s!\n", strerror (ex_errno)));
         continue;
@@ -1523,7 +1522,7 @@ tls_tl_open (struct eXosip_t *excontext)
     res = bind (sock, curinfo->ai_addr, (socklen_t)curinfo->ai_addrlen);
     if (res < 0) {
       OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "eXosip: Cannot bind socket node:%s family:%d %s\n", excontext->eXtl_transport.proto_ifs, curinfo->ai_family, strerror (ex_errno)));
-      close (sock);
+      _eXosip_closesocket (sock);
       sock = -1;
       continue;
     }
@@ -1539,7 +1538,7 @@ tls_tl_open (struct eXosip_t *excontext)
       res = listen (sock, SOMAXCONN);
       if (res < 0) {
         OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "eXosip: Cannot bind socket node:%s family:%d %s\n", excontext->eXtl_transport.proto_ifs, curinfo->ai_family, strerror (ex_errno)));
-        close (sock);
+        _eXosip_closesocket (sock);
         sock = -1;
         continue;
       }
@@ -2260,7 +2259,7 @@ tls_tl_read_message (struct eXosip_t *excontext, fd_set * osip_fdset, fd_set * o
         OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "Error accepting TLS socket: EBADF\n"));
         memset (&reserved->ai_addr, 0, sizeof (struct sockaddr_storage));
         if (reserved->tls_socket > 0) {
-          closesocket (reserved->tls_socket);
+          _eXosip_closesocket (reserved->tls_socket);
           for (i = 0; i < EXOSIP_MAX_SOCKETS; i++) {
             if (reserved->socket_tab[i].socket > 0 && reserved->socket_tab[i].is_server > 0)
               _tls_tl_close_sockinfo (&reserved->socket_tab[i]);
@@ -2273,7 +2272,7 @@ tls_tl_read_message (struct eXosip_t *excontext, fd_set * osip_fdset, fd_set * o
     else {
       if (reserved->server_ctx == NULL) {
         OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO1, NULL, "TLS connection rejected\n"));
-        close (sock);
+        _eXosip_closesocket (sock);
         return -1;
       }
 
@@ -2306,7 +2305,7 @@ tls_tl_read_message (struct eXosip_t *excontext, fd_set * osip_fdset, fd_set * o
 
 
         SSL_shutdown (ssl);
-        close (sock);
+        _eXosip_closesocket (sock);
         SSL_free (ssl);
         return -1;
       }
@@ -2454,7 +2453,7 @@ _tls_tl_connect_socket (struct eXosip_t *excontext, char *host, int port, int re
     if (curinfo->ai_family == AF_INET6) {
 #ifdef IPV6_V6ONLY
       if (setsockopt_ipv6only (sock)) {
-        close (sock);
+        _eXosip_closesocket (sock);
         sock = -1;
 #if defined(OSIP_MONOTHREAD) || defined(_WIN32_WCE)
         OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO2, NULL, "eXosip: Cannot set socket option!\n"));
@@ -2571,7 +2570,7 @@ _tls_tl_connect_socket (struct eXosip_t *excontext, char *host, int port, int re
 
       val = 1;
       if (setsockopt (sock, SOL_SOCKET, SO_KEEPALIVE, (char *) &val, sizeof (val)) == -1) {
-        close (sock);
+        _eXosip_closesocket (sock);
         sock = -1;
         OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO2, NULL, "Cannot get socket flag!\n"));
         continue;
@@ -2598,14 +2597,14 @@ _tls_tl_connect_socket (struct eXosip_t *excontext, char *host, int port, int re
 
       val = fcntl (sock, F_GETFL);
       if (val < 0) {
-        close (sock);
+        _eXosip_closesocket (sock);
         sock = -1;
         OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO2, NULL, "Cannot get socket flag!\n"));
         continue;
       }
       val |= O_NONBLOCK;
       if (fcntl (sock, F_SETFL, val) < 0) {
-        close (sock);
+        _eXosip_closesocket (sock);
         sock = -1;
         OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO2, NULL, "Cannot set socket flag!\n"));
         continue;
@@ -2647,7 +2646,7 @@ _tls_tl_connect_socket (struct eXosip_t *excontext, char *host, int port, int re
 #endif
         OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO2, NULL, "Cannot connect socket node:%s family:%d %s[%d]\n", host, curinfo->ai_family, strerror (ex_errno), ex_errno));
 
-        close (sock);
+        _eXosip_closesocket (sock);
         sock = -1;
         continue;
       }
@@ -2681,7 +2680,7 @@ _tls_tl_connect_socket (struct eXosip_t *excontext, char *host, int port, int re
           break;
         }
         else {
-          close (sock);
+          _eXosip_closesocket (sock);
           sock = -1;
           continue;
         }
