@@ -19,6 +19,7 @@ eXosip2 (5.0.0)
 	eXosip_publish returns a positive transaction id (tid) on success.
 	note: eXosip_message_send_request was already returing the transaction id (tid) on success.
 	* new API options:
+	EXOSIP_OPT_REMOVE_PREROUTESET: to keep Route Set
 	EXOSIP_OPT_SET_SIP_INSTANCE: define +sip.instance parameter in Contact headers
 	EXOSIP_OPT_ENABLE_USE_EPHEMERAL_PORT: option to use/not use ephemeral port in Contact.
 	EXOSIP_OPT_ENABLE_REUSE_TCP_PORT: option to reuse port.
@@ -29,16 +30,20 @@ eXosip2 (5.0.0)
 	EXOSIP_OPT_SET_MAX_MESSAGE_TO_READ: set the number of message to read at once for each network processing.
 	EXOSIP_OPT_SET_MAX_READ_TIMEOUT: set the period in nano seconds during we read for sip message.
 	EXOSIP_OPT_GET_STATISTICS: retreive numerous statistics.
-
-	* improve eXosip_add_authentication_info to avoid duplicate credentials
-	* if a SUBSCRIBE is rejected, the context will be released automatically
-	* rename usage of -DHAVE_CARES_H into -DHAVE_ARES_H real name of header.
-	* remove warnings mainly related to socket API (getnameinfo/bind/accept/recv/connect/sendto)
 	* rewrite/update autotools and ./configure options
 	  --enable-pthread=[autodetect|force]
 	    autodetect POSIX threads or force -DHAVE_PTHREAD [default=autodetect]
 	  --enable-semaphore=[autodetect|semaphore|sysv]
 	    select your prefered semaphore [default=autodetect].
+
+	* fix bug when reading sip message longuer than 8000 over UDP and TLS.
+	* improve eXosip_add_authentication_info to avoid duplicate credentials
+	* if a SUBSCRIBE is rejected, the context will be released automatically
+	* add failover after a DNS failure.
+	* fallback to SRV even if we receive a NOTFOUND reply for NAPTR.
+	* fix route set with strict router.
+	* rename usage of -DHAVE_CARES_H into -DHAVE_ARES_H real name of header.
+	* remove warnings mainly related to socket API (getnameinfo/bind/accept/recv/connect/sendto)
 	* rewrite all loop using iterator to improve performance (useful for high load traffic)
 	* rewrite Via and Contact management: both will now contains the IP of the real network interface
 	  instead of the default one.
