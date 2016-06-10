@@ -2077,10 +2077,10 @@ _tls_tl_recv (struct eXosip_t *excontext, struct _tls_stream *sockinfo)
 
   /* buffer is 100% full -> realloc with more size */
   if (sockinfo->bufsize - sockinfo->buflen <= 0) {
-    sockinfo->buf = (char *) osip_realloc (sockinfo->buf, sockinfo->bufsize + 1000);
+    sockinfo->buf = (char *) osip_realloc (sockinfo->buf, sockinfo->bufsize + 5000);
     if (sockinfo->buf == NULL)
       return OSIP_NOMEM;
-    sockinfo->bufsize = sockinfo->bufsize + 1000;
+    sockinfo->bufsize = sockinfo->bufsize + 5000;
   }
 
   /* buffer is 100% empty-> realloc with initial size */
