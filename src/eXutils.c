@@ -2346,8 +2346,8 @@ eXosip_dnsutils_dns_process (osip_naptr_t * naptr_record, int force)
       nfds = ares_fds (channel, &read_fds, &write_fds);
     }
     if (nfds == 0) {
-      if (naptr_record->naptr_state == OSIP_NAPTR_STATE_NAPTRDONE) {
-        /* missing all SRV */
+      if (naptr_record->naptr_state == OSIP_NAPTR_STATE_NAPTRDONE || naptr_record->naptr_state == OSIP_NAPTR_STATE_SRVINPROGRESS) {
+        /* missing SRV */
         eXosip_dnsutils_srv_lookup (naptr_record);
       }
       else if (naptr_record->naptr_state == OSIP_NAPTR_STATE_INPROGRESS) {
