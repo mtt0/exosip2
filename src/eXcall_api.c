@@ -1188,6 +1188,7 @@ _eXosip_call_retry_request (struct eXosip_t *excontext, eXosip_call_t * jc, eXos
   }
 
   if (MSG_IS_STATUS_3XX (out_tr->last_response)) {
+    osip_contact_t *co_usable=NULL;
     osip_list_iterator_t it;
     co = (osip_contact_t*)osip_list_get_first(&out_tr->last_response->contacts, &it);
     while (co != NULL) {
@@ -1204,8 +1205,15 @@ _eXosip_call_retry_request (struct eXosip_t *excontext, eXosip_call_t * jc, eXos
         else if (0 == osip_strcasecmp (u_param->gvalue, excontext->transport)) {
           break;                /* transport param in uri & match our protocol */
         }
+        if (co_usable==NULL)
+          co_usable = co;
       }
       co = (osip_contact_t *)osip_list_get_next(&it);
+    }
+
+    if (co == NULL || co->url == NULL) {
+      /* revert anyway to first(tel/sip/sips) contact // we don't care: we use our own transport with proxy */
+      co = co_usable;
     }
 
     if (co == NULL || co->url == NULL) {
