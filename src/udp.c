@@ -1922,7 +1922,13 @@ _eXosip_release_aborted_calls (struct eXosip_t *excontext, eXosip_call_t * jc, e
         _eXosip_release_call (excontext, jc, jd);
         return OSIP_SUCCESS;
       }
-      else if (jc->c_out_tr->last_response->status_code >= 300) {
+      else if (jc->c_out_tr->last_response->status_code >= 300 && tr->completed_time + 2 < now) {
+        /* wait for 3xx to be processed */
+        OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO2, NULL, "eXosip: _eXosip_release_aborted_calls (answer received = %i %s)\n", jc->c_out_tr->last_response->status_code, jc->c_out_tr->last_response->reason_phrase));
+        _eXosip_release_call (excontext, jc, jd);
+        return OSIP_SUCCESS;
+      }
+      else if (jc->c_out_tr->last_response->status_code >= 400) {
         OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO2, NULL, "eXosip: _eXosip_release_aborted_calls (answer received = %i %s)\n", jc->c_out_tr->last_response->status_code, jc->c_out_tr->last_response->reason_phrase));
         _eXosip_release_call (excontext, jc, jd);
         return OSIP_SUCCESS;
