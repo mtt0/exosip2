@@ -952,6 +952,30 @@ _eXosip_strdup_printf (const char *fmt, ...)
 
 #if !defined(USE_GETHOSTBYNAME)
 
+static int
+  _exosip_isipv4addr(const char *ip)
+{
+  int i;
+
+  for(i = 0; i < 4 && *ip != '\0'; i++) {
+    char c=*ip;
+    while(*ip != '\0' && (c>='0') && (c<='9'))
+      ip++;
+
+    if(*ip != '\0') {
+      if(*ip == '.' && i < 3)
+        ip++;
+      else
+        break;
+    }
+  }
+
+  if(i == 4 && *ip == '\0')
+    return 1;
+
+  return 0;
+}
+
 int
 _eXosip_get_addrinfo (struct eXosip_t *excontext, struct addrinfo **addrinfo, const char *hostname, int service, int protocol)
 {
@@ -991,6 +1015,11 @@ _eXosip_get_addrinfo (struct eXosip_t *excontext, struct addrinfo **addrinfo, co
     hints.ai_family = PF_INET6;
   else
     hints.ai_family = PF_INET;  /* ipv4 only support */
+
+  if (strchr(hostname, ':')!=NULL) /* it's an IPv6 address... */
+    hints.ai_family = PF_INET6;
+  else if (_exosip_isipv4addr(hostname))
+    hints.ai_family = PF_INET;  /* it's an IPv4 address... */
 
   if (protocol == IPPROTO_UDP)
     hints.ai_socktype = SOCK_DGRAM;
