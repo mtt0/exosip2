@@ -36,6 +36,9 @@ eXosip2 (5.0.0)
 	  --enable-semaphore=[autodetect|semaphore|sysv]
 	    select your prefered semaphore [default=autodetect].
 
+	* fix selection of Contact header for 3xx (default to a tel/sip/sips one with any transport)
+	* keep to call context enough time to handle redirection.
+	* fix race condition for processing SRV results (not likely to happen)
 	* fix bug when reading sip message longuer than 8000 over UDP and TLS.
 	* improve eXosip_add_authentication_info to avoid duplicate credentials
 	* if a SUBSCRIBE is rejected, the context will be released automatically
