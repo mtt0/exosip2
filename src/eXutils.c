@@ -958,8 +958,7 @@ static int
   int i;
 
   for(i = 0; i < 4 && *ip != '\0'; i++) {
-    char c=*ip;
-    while(*ip != '\0' && (c>='0') && (c<='9'))
+    while(*ip != '\0' && (*ip>='0') && (*ip<='9'))
       ip++;
 
     if(*ip != '\0') {
