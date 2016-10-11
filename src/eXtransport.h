@@ -53,7 +53,7 @@ struct eXtl_protocol {
 
   int proto_port;
   char proto_name[10];
-  char proto_ifs[20];
+  char proto_ifs[64];
   int proto_num;
   int proto_family;
   int proto_secure;
