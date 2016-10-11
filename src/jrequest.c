@@ -1037,29 +1037,7 @@ _eXosip_message_contactmanager(struct eXosip_t *excontext, osip_transaction_t * 
 
   /* search for correct ip */
   if (masquerade_ip[0] != '\0' && sip->req_uri != NULL && sip->req_uri->host != NULL) {
-#ifdef USE_LOCALIP_WITH_LOCALPROXY      /* disable this code for local testing because it adds an extra DNS */
-    char *c_address = sip->req_uri->host;
-
-    struct addrinfo *addrinfo;
-    struct __eXosip_sockaddr addr;
-
-    i = _eXosip_get_addrinfo (excontext, &addrinfo, sip->req_uri->host, 5060, IPPROTO_UDP);
-    if (i == 0) {
-      memcpy (&addr, addrinfo->ai_addr, addrinfo->ai_addrlen);
-      _eXosip_freeaddrinfo (addrinfo);
-      c_address = inet_ntoa (((struct sockaddr_in *) &addr)->sin_addr);
-      OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO1, NULL, "eXosip: here is the resolved destination host=%s\n", c_address));
-    }
-
-    if (_eXosip_is_public_address (c_address)) {
-      contact_ip = masquerade_ip;
-    }
-    else {
-      contact_ip = locip;
-    }
-#else
     contact_ip = masquerade_ip;
-#endif
   }
   
   if (contact_ip==NULL || contact_ip[0]=='\0') {
