@@ -723,6 +723,7 @@ _eXosip_build_request_within_dialog (struct eXosip_t *excontext, osip_message_t 
     tmp = osip_malloc (20);
     if (tmp == NULL) {
       osip_message_free (request);
+      osip_cseq_free (cseq);
       return OSIP_NOMEM;
     }
     sprintf (tmp, "%i", dialog->local_cseq);
@@ -743,6 +744,7 @@ _eXosip_build_request_within_dialog (struct eXosip_t *excontext, osip_message_t 
     tmp = osip_malloc (20);
     if (tmp == NULL) {
       osip_message_free (request);
+      osip_cseq_free (cseq);
       return OSIP_NOMEM;
     }
     snprintf (tmp, 20, "%i", dialog->local_cseq);
@@ -902,7 +904,7 @@ _eXosip_generating_cancel (struct eXosip_t *excontext, osip_message_t ** dest, o
 }
 
 int
-_eXosip_request_viamanager(struct eXosip_t *excontext, osip_transaction_t * tr, osip_message_t * sip, int proto, struct sockaddr_storage *udp_local_bind, int ephemeral_port, int tcp_sock, char *host)
+_eXosip_request_viamanager(struct eXosip_t *excontext, osip_transaction_t * tr, osip_message_t * sip, int family, int proto, struct sockaddr_storage *udp_local_bind, int ephemeral_port, int tcp_sock, char *host)
 {
   /* step1: put local-ip in VIA->host or udp_firewall_ip set by eXosip_masquerade_contact (tl_get_masquerade_contact) */
   /* step2: put local-port in VIA->port or udp_firewall_port set by eXosip_masquerade_contact (tl_get_masquerade_contact) */
@@ -955,7 +957,7 @@ _eXosip_request_viamanager(struct eXosip_t *excontext, osip_transaction_t * tr, 
 
   if (via_ip==NULL) {
     masquerade_ip[0] = '\0';
-    _eXosip_guess_ip_for_destinationsock (excontext, excontext->eXtl_transport.proto_family, proto, udp_local_bind, tcp_sock, host, masquerade_ip, 49);
+    _eXosip_guess_ip_for_destinationsock (excontext, family, proto, udp_local_bind, tcp_sock, host, masquerade_ip, 49);
     if (masquerade_ip[0] != '\0') {
       via_ip = masquerade_ip;
     }
@@ -986,7 +988,7 @@ _eXosip_request_viamanager(struct eXosip_t *excontext, osip_transaction_t * tr, 
 }
 
 int
-_eXosip_message_contactmanager(struct eXosip_t *excontext, osip_transaction_t * tr, osip_message_t * sip, int proto, struct sockaddr_storage *udp_local_bind, int ephemeral_port, int sock, char *host)
+_eXosip_message_contactmanager(struct eXosip_t *excontext, osip_transaction_t * tr, osip_message_t * sip, int family, int proto, struct sockaddr_storage *udp_local_bind, int ephemeral_port, int sock, char *host)
 {
   /* step1: put local-ip in Contact ->host or udp_firewall_ip set by eXosip_masquerade_contact (_eXosip_register_add_contact) */
   /* step2: put local-port in Contact->port or udp_firewall_port set by eXosip_masquerade_contact (_eXosip_register_add_contact) */
@@ -1029,7 +1031,7 @@ _eXosip_message_contactmanager(struct eXosip_t *excontext, osip_transaction_t * 
   } 
 
   locip[0] = '\0';
-  _eXosip_guess_ip_for_destinationsock (excontext, excontext->eXtl_transport.proto_family, proto, udp_local_bind, sock, host, locip, 49);
+  _eXosip_guess_ip_for_destinationsock (excontext, family, proto, udp_local_bind, sock, host, locip, 49);
   if (locip[0] == '\0') {
     OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "eXosip: no network interface found\n"));
     return OSIP_NO_NETWORK;
@@ -1037,29 +1039,7 @@ _eXosip_message_contactmanager(struct eXosip_t *excontext, osip_transaction_t * 
 
   /* search for correct ip */
   if (masquerade_ip[0] != '\0' && sip->req_uri != NULL && sip->req_uri->host != NULL) {
-#ifdef USE_LOCALIP_WITH_LOCALPROXY      /* disable this code for local testing because it adds an extra DNS */
-    char *c_address = sip->req_uri->host;
-
-    struct addrinfo *addrinfo;
-    struct __eXosip_sockaddr addr;
-
-    i = _eXosip_get_addrinfo (excontext, &addrinfo, sip->req_uri->host, 5060, IPPROTO_UDP);
-    if (i == 0) {
-      memcpy (&addr, addrinfo->ai_addr, addrinfo->ai_addrlen);
-      _eXosip_freeaddrinfo (addrinfo);
-      c_address = inet_ntoa (((struct sockaddr_in *) &addr)->sin_addr);
-      OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO1, NULL, "eXosip: here is the resolved destination host=%s\n", c_address));
-    }
-
-    if (_eXosip_is_public_address (c_address)) {
-      contact_ip = masquerade_ip;
-    }
-    else {
-      contact_ip = locip;
-    }
-#else
     contact_ip = masquerade_ip;
-#endif
   }
   
   if (contact_ip==NULL || contact_ip[0]=='\0') {

@@ -359,6 +359,7 @@ eXosip_register_build_initial_register_withqvalue (struct eXosip_t *excontext, c
 {
   eXosip_reg_t *jr = NULL;
   int i;
+  int lallocated=0;
 
   *reg = NULL;
 
@@ -385,6 +386,7 @@ eXosip_register_build_initial_register_withqvalue (struct eXosip_t *excontext, c
       return i;
     }
     ADD_ELEMENT (excontext->j_reg, jr);
+    lallocated=1;
   }
 
   /* build register */
@@ -406,6 +408,10 @@ eXosip_register_build_initial_register_withqvalue (struct eXosip_t *excontext, c
   if (i != 0) {
     OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "eXosip: cannot build REGISTER!\n"));
     *reg = NULL;
+    if (lallocated==1) {
+      REMOVE_ELEMENT (excontext->j_reg, jr);
+      _eXosip_reg_free (excontext, jr);
+    }
     return i;
   }
 

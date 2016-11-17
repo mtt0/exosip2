@@ -89,6 +89,7 @@ eXosip_publish (struct eXosip_t *excontext, osip_message_t * message, const char
   osip_event_t *sipevent;
   int i;
   eXosip_pub_t *pub = NULL;
+  int lallocated = 0;
 
   if (message == NULL)
     return OSIP_BADPARAMETER;
@@ -119,6 +120,7 @@ eXosip_publish (struct eXosip_t *excontext, osip_message_t * message, const char
         return i;
       }
       ADD_ELEMENT (excontext->j_pub, pub);
+      lallocated = 1;
     }
   }
   else {
@@ -157,6 +159,11 @@ eXosip_publish (struct eXosip_t *excontext, osip_message_t * message, const char
   i = _eXosip_transaction_init (excontext, &transaction, NICT, excontext->j_osip, message);
   if (i != 0) {
     osip_message_free (message);
+    if (lallocated==1)
+    {
+      REMOVE_ELEMENT (excontext->j_pub, pub);
+      _eXosip_pub_free (excontext, pub);
+    }
     return i;
   }
 
