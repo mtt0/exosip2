@@ -723,6 +723,7 @@ _eXosip_build_request_within_dialog (struct eXosip_t *excontext, osip_message_t 
     tmp = osip_malloc (20);
     if (tmp == NULL) {
       osip_message_free (request);
+      osip_cseq_free (cseq);
       return OSIP_NOMEM;
     }
     sprintf (tmp, "%i", dialog->local_cseq);
@@ -743,6 +744,7 @@ _eXosip_build_request_within_dialog (struct eXosip_t *excontext, osip_message_t 
     tmp = osip_malloc (20);
     if (tmp == NULL) {
       osip_message_free (request);
+      osip_cseq_free (cseq);
       return OSIP_NOMEM;
     }
     snprintf (tmp, 20, "%i", dialog->local_cseq);

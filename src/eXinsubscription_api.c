@@ -148,9 +148,10 @@ eXosip_insubscription_send_answer (struct eXosip_t *excontext, int tid, int stat
   osip_transaction_t *tr = NULL;
   osip_event_t *evt_answer;
 
-  if (tid <= 0)
+  if (tid <= 0) {
+    osip_message_free (answer);
     return OSIP_BADPARAMETER;
-
+  }
   if (tid > 0) {
     _eXosip_insubscription_transaction_find (excontext, tid, &jn, &jd, &tr);
   }
