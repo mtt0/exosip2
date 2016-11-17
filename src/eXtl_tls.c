@@ -1449,6 +1449,7 @@ tls_tl_open (struct eXosip_t *excontext)
   struct addrinfo *addrinfo = NULL;
   struct addrinfo *curinfo;
   int sock = -1;
+  char *node = NULL;
 
   if (reserved == NULL) {
     OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "wrong state: create transport layer first\n"));
@@ -1483,7 +1484,10 @@ tls_tl_open (struct eXosip_t *excontext)
     OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_WARNING, NULL, "eXosip: Couldn't load randomness\n"));
 #endif
 
-  res = _eXosip_get_addrinfo (excontext, &addrinfo, excontext->eXtl_transport.proto_ifs, excontext->eXtl_transport.proto_local_port, excontext->eXtl_transport.proto_num);
+  if (osip_strcasecmp(excontext->eXtl_transport.proto_ifs, "0.0.0.0")!=0 && osip_strcasecmp(excontext->eXtl_transport.proto_ifs, "::")!=0)
+    node = excontext->eXtl_transport.proto_ifs;
+
+  res = _eXosip_get_addrinfo (excontext, &addrinfo, node, excontext->eXtl_transport.proto_local_port, excontext->eXtl_transport.proto_num);
   if (res)
     return -1;
 
@@ -1559,7 +1563,7 @@ tls_tl_open (struct eXosip_t *excontext)
 
   if (excontext->eXtl_transport.proto_local_port == 0) {
     /* get port number from socket */
-    if (excontext->eXtl_transport.proto_family == AF_INET)
+    if (reserved->ai_addr.ss_family == AF_INET)
       excontext->eXtl_transport.proto_local_port = ntohs (((struct sockaddr_in *) &reserved->ai_addr)->sin_port);
     else
       excontext->eXtl_transport.proto_local_port = ntohs (((struct sockaddr_in6 *) &reserved->ai_addr)->sin6_port);
@@ -2228,7 +2232,7 @@ tls_tl_read_message (struct eXosip_t *excontext, fd_set * osip_fdset, fd_set * o
     BIO *sbio;
 
 
-    if (excontext->eXtl_transport.proto_family == AF_INET)
+    if (reserved->ai_addr.ss_family == AF_INET)
       slen = sizeof (struct sockaddr_in);
     else
       slen = sizeof (struct sockaddr_in6);
@@ -2327,7 +2331,7 @@ tls_tl_read_message (struct eXosip_t *excontext, fd_set * osip_fdset, fd_set * o
       recvport = _eXosip_getport((struct sockaddr *) &sa, slen);
       _eXosip_getnameinfo((struct sockaddr *) &sa, slen, src6host, NI_MAXHOST, NULL, 0, NI_NUMERICHOST);
 
-      _eXosip_transport_set_dscp (excontext, excontext->eXtl_transport.proto_family, sock);
+      _eXosip_transport_set_dscp (excontext, sa.ss_family, sock);
 
       OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO1, NULL, "Message received from: %s:%i\n", src6host, recvport));
       osip_strncpy (reserved->socket_tab[pos].remote_ip, src6host, sizeof (reserved->socket_tab[pos].remote_ip) - 1);
@@ -2483,39 +2487,41 @@ _tls_tl_connect_socket (struct eXosip_t *excontext, char *host, int port, int re
           OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_WARNING, NULL, "Cannot bind socket node:%s family:%d %s\n", excontext->eXtl_transport.proto_ifs, ai_addr.ss_family, strerror (ex_errno)));
         }
       } else if (excontext->oc_local_address[0]=='\0') {
-        struct sockaddr_storage ai_addr;
-        int count=0;
-        memcpy(&ai_addr, &reserved->ai_addr, reserved->ai_addr_len);
-        while (count<100) {
-          if (excontext->oc_local_port_range[0]<1024) {
-            if (ai_addr.ss_family == AF_INET)
-              ((struct sockaddr_in *) &ai_addr)->sin_port = htons(0);
-            else
-              ((struct sockaddr_in6 *) &ai_addr)->sin6_port = htons(0);
-          } else {
-            if (excontext->oc_local_port_current==0)
-              excontext->oc_local_port_current = excontext->oc_local_port_range[0];
-            /* reset value */
-            if (excontext->oc_local_port_current>=excontext->oc_local_port_range[1])
-              excontext->oc_local_port_current = excontext->oc_local_port_range[0];
+        if (reserved->ai_addr.ss_family==curinfo->ai_family) {
+          struct sockaddr_storage ai_addr;
+          int count=0;
+          memcpy(&ai_addr, &reserved->ai_addr, reserved->ai_addr_len);
+          while (count<100) {
+            if (excontext->oc_local_port_range[0]<1024) {
+              if (ai_addr.ss_family == AF_INET)
+                ((struct sockaddr_in *) &ai_addr)->sin_port = htons(0);
+              else
+                ((struct sockaddr_in6 *) &ai_addr)->sin6_port = htons(0);
+            } else {
+              if (excontext->oc_local_port_current==0)
+                excontext->oc_local_port_current = excontext->oc_local_port_range[0];
+              /* reset value */
+              if (excontext->oc_local_port_current>=excontext->oc_local_port_range[1])
+                excontext->oc_local_port_current = excontext->oc_local_port_range[0];
 
-            if (ai_addr.ss_family == AF_INET)
-              ((struct sockaddr_in *) &ai_addr)->sin_port = htons(excontext->oc_local_port_current);
-            else
-              ((struct sockaddr_in6 *) &ai_addr)->sin6_port = htons(excontext->oc_local_port_current);
+              if (ai_addr.ss_family == AF_INET)
+                ((struct sockaddr_in *) &ai_addr)->sin_port = htons(excontext->oc_local_port_current);
+              else
+                ((struct sockaddr_in6 *) &ai_addr)->sin6_port = htons(excontext->oc_local_port_current);
 
-          }
-          res = bind (sock, (const struct sockaddr *)&ai_addr, reserved->ai_addr_len);
-          if (res < 0) {
-            OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_WARNING, NULL, "Cannot bind socket node:%s family:%d (port=%i) %s\n", excontext->eXtl_transport.proto_ifs, ai_addr.ss_family, excontext->oc_local_port_current, strerror (ex_errno)));
-            count++;
+            }
+            res = bind (sock, (const struct sockaddr *)&ai_addr, reserved->ai_addr_len);
+            if (res < 0) {
+              OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_WARNING, NULL, "Cannot bind socket node:%s family:%d (port=%i) %s\n", excontext->eXtl_transport.proto_ifs, ai_addr.ss_family, excontext->oc_local_port_current, strerror (ex_errno)));
+              count++;
+              if (excontext->oc_local_port_range[0]>=1024)
+                excontext->oc_local_port_current++;
+              continue;
+            }
             if (excontext->oc_local_port_range[0]>=1024)
               excontext->oc_local_port_current++;
-            continue;
+            break;
           }
-          if (excontext->oc_local_port_range[0]>=1024)
-            excontext->oc_local_port_current++;
-          break;
         }
       } else {
         int count=0;
@@ -2634,7 +2640,7 @@ _tls_tl_connect_socket (struct eXosip_t *excontext, char *host, int port, int re
     }
 #endif
 
-    _eXosip_transport_set_dscp (excontext, excontext->eXtl_transport.proto_family, sock);
+    _eXosip_transport_set_dscp (excontext, curinfo->ai_family, sock);
 
     OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO2, NULL, "eXosip: socket node:%s , socket %d, family:%d set to non blocking mode\n", host, sock, curinfo->ai_family));
     res = connect (sock, curinfo->ai_addr, (socklen_t)curinfo->ai_addrlen);
@@ -3068,11 +3074,11 @@ tls_tl_send_message (struct eXosip_t *excontext, osip_transaction_t * tr, osip_m
   }
 #endif
 
-  _eXosip_request_viamanager(excontext, tr, sip, IPPROTO_TCP, NULL, reserved->socket_tab[pos].ephemeral_port, reserved->socket_tab[pos].socket, host);
+  _eXosip_request_viamanager(excontext, tr, sip, reserved->socket_tab[pos].ai_addr.sa_family, IPPROTO_TCP, NULL, reserved->socket_tab[pos].ephemeral_port, reserved->socket_tab[pos].socket, host);
   if (excontext->use_ephemeral_port==1)
-    _eXosip_message_contactmanager(excontext, tr, sip, IPPROTO_TCP, NULL, reserved->socket_tab[pos].ephemeral_port, reserved->socket_tab[pos].socket, host);
+    _eXosip_message_contactmanager(excontext, tr, sip, reserved->socket_tab[pos].ai_addr.sa_family, IPPROTO_TCP, NULL, reserved->socket_tab[pos].ephemeral_port, reserved->socket_tab[pos].socket, host);
   else
-    _eXosip_message_contactmanager(excontext, tr, sip, IPPROTO_TCP, NULL, excontext->eXtl_transport.proto_local_port, reserved->socket_tab[pos].socket, host);
+    _eXosip_message_contactmanager(excontext, tr, sip, reserved->socket_tab[pos].ai_addr.sa_family, IPPROTO_TCP, NULL, excontext->eXtl_transport.proto_local_port, reserved->socket_tab[pos].socket, host);
   if (excontext->tls_firewall_ip[0] != '\0' || excontext->auto_masquerade_contact > 0)
     _tls_tl_update_contact (excontext, sip, reserved->socket_tab[pos].natted_ip, reserved->socket_tab[pos].natted_port);
 

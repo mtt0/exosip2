@@ -518,12 +518,7 @@ _eXosip_guess_ip_for_destination (struct eXosip_t *excontext, int family, char *
 
   sock = socket (family, SOCK_DGRAM, 0);
 
-  if (family == AF_INET) {
-    _eXosip_get_addrinfo (excontext, &addrf, destination, 0, IPPROTO_UDP);
-  }
-  else if (family == AF_INET6) {
-    _eXosip_get_addrinfo (excontext, &addrf, destination, 0, IPPROTO_UDP);
-  }
+  _eXosip_get_addrinfo (excontext, &addrf, destination, 0, IPPROTO_UDP);
 
   if (addrf == NULL) {
     if (family == AF_INET) {
@@ -584,12 +579,7 @@ _eXosip_guess_ip_for_destinationsock (struct eXosip_t *excontext, int family, in
   }
 #endif
 
-  if (family == AF_INET) {
-    _eXosip_get_addrinfo (excontext, &addrf, destination, 0, proto);
-  }
-  else if (family == AF_INET6) {
-    _eXosip_get_addrinfo (excontext, &addrf, destination, 0, proto);
-  }
+  _eXosip_get_addrinfo (excontext, &addrf, destination, 0, proto);
 
   if (addrf == NULL) {
     if (family == AF_INET) {
@@ -983,9 +973,6 @@ _eXosip_get_addrinfo (struct eXosip_t *excontext, struct addrinfo **addrinfo, co
   int error;
   int i;
 
-  if (hostname == NULL)
-    return OSIP_BADPARAMETER;
-
   if (service == -1) {          /* -1 for SRV record */
     /* obsolete code: make an SRV record? */
     OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO1, NULL, "_eXosip_get_addrinfo: obsolete code?\n"));
@@ -1009,13 +996,19 @@ _eXosip_get_addrinfo (struct eXosip_t *excontext, struct addrinfo **addrinfo, co
   memset (&hints, 0, sizeof (hints));
 
   hints.ai_flags = 0;
+  if (hostname == NULL) {
+    hints.ai_flags = AI_PASSIVE;
+  }
 
-  if (excontext->ipv6_enable)
+  if (excontext->ipv6_enable>1)
+    hints.ai_family = AF_UNSPEC;
+  else if (excontext->ipv6_enable)
     hints.ai_family = PF_INET6;
   else
     hints.ai_family = PF_INET;  /* ipv4 only support */
 
-  if (strchr(hostname, ':')!=NULL) /* it's an IPv6 address... */
+  if (hostname==NULL) {
+  } else if (strchr(hostname, ':')!=NULL) /* it's an IPv6 address... */
     hints.ai_family = PF_INET6;
   else if (_exosip_isipv4addr(hostname))
     hints.ai_family = PF_INET;  /* it's an IPv4 address... */
@@ -1027,7 +1020,7 @@ _eXosip_get_addrinfo (struct eXosip_t *excontext, struct addrinfo **addrinfo, co
 
   hints.ai_protocol = protocol; /* IPPROTO_UDP or IPPROTO_TCP */
   error = getaddrinfo (hostname, portbuf, &hints, addrinfo);
-  if (osip_strcasecmp (hostname, "0.0.0.0") != 0) {
+  if (hostname!=NULL && osip_strcasecmp (hostname, "0.0.0.0") != 0) {
     OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO2, NULL, "DNS resolution with %s:%i\n", hostname, service));
   }
 

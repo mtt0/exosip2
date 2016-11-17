@@ -398,7 +398,7 @@ dtls_tl_open (struct eXosip_t *excontext)
 
   if (excontext->eXtl_transport.proto_local_port == 0) {
     /* get port number from socket */
-    if (excontext->eXtl_transport.proto_family == AF_INET)
+    if (reserved->ai_addr.ss_family == AF_INET)
       excontext->eXtl_transport.proto_local_port = ntohs (((struct sockaddr_in *) &reserved->ai_addr)->sin_port);
     else
       excontext->eXtl_transport.proto_local_port = ntohs (((struct sockaddr_in6 *) &reserved->ai_addr)->sin6_port);
@@ -453,7 +453,7 @@ dtls_tl_read_message (struct eXosip_t *excontext, fd_set * osip_fdset, fd_set * 
 
     socklen_t slen;
 
-    if (excontext->eXtl_transport.proto_family == AF_INET)
+    if (reserved->ai_addr.ss_family == AF_INET)
       slen = sizeof (struct sockaddr_in);
     else
       slen = sizeof (struct sockaddr_in6);
@@ -1023,8 +1023,8 @@ dtls_tl_send_message (struct eXosip_t *excontext, osip_transaction_t * tr, osip_
     reserved->socket_tab[pos].remote_port = port;
   }
 
-  _eXosip_request_viamanager(excontext, tr, sip, IPPROTO_UDP, &reserved->ai_addr, excontext->eXtl_transport.proto_local_port, reserved->dtls_socket, host);
-  _eXosip_message_contactmanager(excontext, tr, sip, IPPROTO_UDP, &reserved->ai_addr, excontext->eXtl_transport.proto_local_port, reserved->dtls_socket, host);
+  _eXosip_request_viamanager(excontext, tr, sip, addr.ss_family, IPPROTO_UDP, &reserved->ai_addr, excontext->eXtl_transport.proto_local_port, reserved->dtls_socket, host);
+  _eXosip_message_contactmanager(excontext, tr, sip, addr.ss_family, IPPROTO_UDP, &reserved->ai_addr, excontext->eXtl_transport.proto_local_port, reserved->dtls_socket, host);
   _dtls_tl_update_contact(excontext, sip);
 
   /* remove preloaded route if there is no tag in the To header
