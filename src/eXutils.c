@@ -979,7 +979,7 @@ _eXosip_get_addrinfo (struct eXosip_t *excontext, struct addrinfo **addrinfo, co
     return -1;
   }
 
-  if (excontext != NULL) {
+  if (excontext != NULL && hostname!=NULL) {
     for (i = 0; i < MAX_EXOSIP_DNS_ENTRY; i++) {
       if (excontext->dns_entries[i].host[0] != '\0' && 0 == osip_strcasecmp (excontext->dns_entries[i].host, hostname)) {
         /* update entry */
