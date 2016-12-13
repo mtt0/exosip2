@@ -278,7 +278,7 @@ eXosip_call_send_initial_invite (struct eXosip_t *excontext, osip_message_t * in
 }
 
 int
-eXosip_call_build_ack (struct eXosip_t *excontext, int did, osip_message_t ** _ack)
+eXosip_call_build_ack (struct eXosip_t *excontext, int tid, osip_message_t ** _ack)
 {
   eXosip_dialog_t *jd = NULL;
   eXosip_call_t *jc = NULL;
@@ -289,17 +289,22 @@ eXosip_call_build_ack (struct eXosip_t *excontext, int did, osip_message_t ** _a
 
   *_ack = NULL;
 
-  if (did <= 0)
+  if (tid <= 0)
     return OSIP_BADPARAMETER;
-  if (did > 0) {
-    _eXosip_call_dialog_find (excontext, did, &jc, &jd);
-  }
-  if (jc == NULL || jd == NULL || jd->d_dialog == NULL) {
-    OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "eXosip: No call here?\n"));
-    return OSIP_NOTFOUND;
-  }
 
-  tr = _eXosip_find_last_invite (jc, jd);
+  if (tid > 0) {
+    _eXosip_call_transaction_find (excontext, tid, &jc, &jd, &tr);
+  }
+  if (tr == NULL) {
+    /* For old API, did was used here. So use it for backward compatibility */
+    _eXosip_call_dialog_find (excontext, tid, &jc, &jd);
+    if (jc == NULL || jd == NULL || jd->d_dialog == NULL) {
+      OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "eXosip: No call here?\n"));
+      return OSIP_NOTFOUND;
+    }
+
+    tr = _eXosip_find_last_out_invite (jc, jd);
+  }
 
   if (tr == NULL || tr->orig_request == NULL) {
     OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "eXosip: No transaction for call?\n"));
@@ -353,23 +358,28 @@ eXosip_call_build_ack (struct eXosip_t *excontext, int did, osip_message_t ** _a
 }
 
 int
-eXosip_call_send_ack (struct eXosip_t *excontext, int did, osip_message_t * ack)
+eXosip_call_send_ack (struct eXosip_t *excontext, int tid, osip_message_t * ack)
 {
   eXosip_dialog_t *jd = NULL;
   eXosip_call_t *jc = NULL;
+  osip_transaction_t *tr = NULL;
   int i;
 
   osip_route_t *route;
   char *host = NULL;
   int port;
 
-  if (did <= 0) {
+  if (tid <= 0) {
     if (ack != NULL)
       osip_message_free (ack);
     return OSIP_BADPARAMETER;
   }
-  if (did > 0) {
-    _eXosip_call_dialog_find (excontext, did, &jc, &jd);
+  if (tid > 0) {
+    _eXosip_call_transaction_find (excontext, tid, &jc, &jd, &tr);
+  }
+  if (jc == NULL || jd == NULL) {
+    /* For old API, did was used here. So use it for backward compatibility */
+    _eXosip_call_dialog_find (excontext, tid, &jc, &jd);
   }
 
   if (jc == NULL || jd == NULL) {
@@ -380,7 +390,7 @@ eXosip_call_send_ack (struct eXosip_t *excontext, int did, osip_message_t * ack)
   }
 
   if (ack == NULL) {
-    i = eXosip_call_build_ack (excontext, did, &ack);
+    i = eXosip_call_build_ack (excontext, tid, &ack);
     if (i != 0) {
       return i;
     }

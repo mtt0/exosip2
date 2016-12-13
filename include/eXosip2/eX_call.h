@@ -126,19 +126,19 @@ extern "C" {
  * Build a default ACK for a 200ok received.
  * 
  * @param excontext    eXosip_t instance.
- * @param did          dialog id of call.
+ * @param tid          transaction id of INVITE/2xx.
  * @param ack          The sip request to build.
  */
-  int eXosip_call_build_ack (struct eXosip_t *excontext, int did, osip_message_t ** ack);
+  int eXosip_call_build_ack (struct eXosip_t *excontext, int tid, osip_message_t ** ack);
 
 /**
  * Send the ACK for the 200ok received..
  * 
  * @param excontext    eXosip_t instance.
- * @param did          dialog id of call.
+ * @param tid          transaction id of INVITE/2xx.
  * @param ack          SIP ACK message to send.
  */
-  int eXosip_call_send_ack (struct eXosip_t *excontext, int did, osip_message_t * ack);
+  int eXosip_call_send_ack (struct eXosip_t *excontext, int tid, osip_message_t * ack);
 
 /**
  * Build a default REFER for a call transfer.
