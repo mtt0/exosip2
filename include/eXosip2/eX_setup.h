@@ -136,6 +136,7 @@ extern "C" {
 #define EXOSIP_OPT_SET_MAX_MESSAGE_TO_READ (EXOSIP_OPT_BASE_OPTION+29) /**< int: set the number of message to read at once for each network processing (high load traffic use-case: DO NOT USE FOR COMMON USAGE) */
 #define EXOSIP_OPT_SET_MAX_READ_TIMEOUT (EXOSIP_OPT_BASE_OPTION+30) /**< long int: set the period in nano seconds during we read for sip message. (high load traffic use-case: DO NOT USE FOR COMMON USAGE)*/
 #define EXOSIP_OPT_SET_DEFAULT_CONTACT_DISPLAYNAME (EXOSIP_OPT_BASE_OPTION+31) /**< char *: define a display name to be added in Contact headers  (example: "john Doe") */
+#define EXOSIP_OPT_SET_SESSIONTIMERS_FORCE (EXOSIP_OPT_BASE_OPTION+32) /**< int *: 0 (default): activate "session timers" if supported on both side, 1: if remote side (UAS) do not indicate support for "session timers", activate feature on UAC (local) side */
 
 #define EXOSIP_OPT_SET_TLS_VERIFY_CERTIFICATE (EXOSIP_OPT_BASE_OPTION+500) /**< int *: enable verification of certificate for TLS connection */
 #define EXOSIP_OPT_SET_TLS_CERTIFICATES_INFO (EXOSIP_OPT_BASE_OPTION+501) /**< eXosip_tls_ctx_t *: client and/or server certificate/ca-root/key info */

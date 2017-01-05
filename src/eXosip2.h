@@ -516,6 +516,7 @@ struct eXosip_counters {
 
     char sip_instance[37]; /* can only be used if ONE excontext is used for ONE registration only */
     char default_contact_displayname[256];
+    int opt_sessiontimers_force;
   };
 
   int _eXosip_guess_ip_for_via (struct eXosip_t *excontext, int family, char *address, int size);

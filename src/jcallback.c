@@ -752,6 +752,24 @@ cb_rcv2xx_4invite (osip_transaction_t * tr, osip_message_t * sip)
         osip_content_disposition_free (exp_h);
         exp_h = NULL;
       }
+    } else if (se_exp != NULL && se_exp_answer == NULL && excontext->opt_sessiontimers_force>0) {
+      /* not supported on remote end, but we want timer at UAC with  */
+      osip_content_disposition_t *exp_h = NULL;
+
+      /* syntax of Session-Expires is equivalent to "Content-Disposition" */
+      osip_content_disposition_init (&exp_h);
+      if (exp_h != NULL) {
+        osip_content_disposition_parse (exp_h, se_exp->hvalue);
+        if (exp_h->element != NULL) {
+          jd->d_refresher = 0;
+          jd->d_session_timer_start = osip_getsystemtime (NULL);
+          jd->d_session_timer_length = atoi (exp_h->element);
+          if (jd->d_session_timer_length <= 90)
+            jd->d_session_timer_length = 90;
+        }
+        osip_content_disposition_free (exp_h);
+        exp_h = NULL;
+      }
     }
   }
 
@@ -1055,6 +1073,24 @@ cb_rcv2xx (int type, osip_transaction_t * tr, osip_message_t * sip)
                 else
                   jd->d_refresher = 1;
               }
+              jd->d_session_timer_start = osip_getsystemtime (NULL);
+              jd->d_session_timer_length = atoi (exp_h->element);
+              if (jd->d_session_timer_length <= 90)
+                jd->d_session_timer_length = 90;
+            }
+            osip_content_disposition_free (exp_h);
+            exp_h = NULL;
+          }
+        } else if (se_exp != NULL && se_exp_answer == NULL && excontext->opt_sessiontimers_force>0) {
+          /* not supported on remote end, but we want timer at UAC with  */
+          osip_content_disposition_t *exp_h = NULL;
+
+          /* syntax of Session-Expires is equivalent to "Content-Disposition" */
+          osip_content_disposition_init (&exp_h);
+          if (exp_h != NULL) {
+            osip_content_disposition_parse (exp_h, se_exp->hvalue);
+            if (exp_h->element != NULL) {
+              jd->d_refresher = 0;
               jd->d_session_timer_start = osip_getsystemtime (NULL);
               jd->d_session_timer_length = atoi (exp_h->element);
               if (jd->d_session_timer_length <= 90)
