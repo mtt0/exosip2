@@ -1493,13 +1493,18 @@ tls_tl_open (struct eXosip_t *excontext)
 
   for (curinfo = addrinfo; curinfo; curinfo = curinfo->ai_next) {
     socklen_t len;
+    int type;
 
     if (curinfo->ai_protocol && curinfo->ai_protocol != excontext->eXtl_transport.proto_num) {
       OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO3, NULL, "eXosip: Skipping protocol %d\n", curinfo->ai_protocol));
       continue;
     }
 
-    sock = (int) socket (curinfo->ai_family, curinfo->ai_socktype, curinfo->ai_protocol);
+    type = curinfo->ai_socktype;
+#if defined(SOCK_CLOEXEC)
+    type = SOCK_CLOEXEC|type;
+#endif
+    sock = (int) socket (curinfo->ai_family, type, curinfo->ai_protocol);
     if (sock < 0) {
       OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "eXosip: Cannot create socket %s!\n", strerror (ex_errno)));
       continue;
@@ -2427,6 +2432,7 @@ _tls_tl_connect_socket (struct eXosip_t *excontext, char *host, int port, int re
     return -1;
 
   for (curinfo = addrinfo; curinfo; curinfo = curinfo->ai_next) {
+    int type;
     if (curinfo->ai_protocol && curinfo->ai_protocol != IPPROTO_TCP) {
       OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO2, NULL, "eXosip: Skipping protocol %d\n", curinfo->ai_protocol));
       continue;
@@ -2444,7 +2450,11 @@ _tls_tl_connect_socket (struct eXosip_t *excontext, char *host, int port, int re
       OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO1, NULL, "New binding with %s\n", src6host));
     }
 
-    sock = (int) socket (curinfo->ai_family, curinfo->ai_socktype, curinfo->ai_protocol);
+    type = curinfo->ai_socktype;
+#if defined(SOCK_CLOEXEC)
+    type = SOCK_CLOEXEC|type;
+#endif
+    sock = (int) socket (curinfo->ai_family, type, curinfo->ai_protocol);
     if (sock < 0) {
 #if defined(OSIP_MONOTHREAD) || defined(_WIN32_WCE)
       OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO2, NULL, "eXosip: Cannot create socket!\n"));
@@ -2615,10 +2625,12 @@ _tls_tl_connect_socket (struct eXosip_t *excontext, char *host, int port, int re
         OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO2, NULL, "Cannot set socket flag!\n"));
         continue;
       }
-#if 0
+#if SO_KEEPALIVE
       val = 1;
       if (setsockopt (sock, SOL_SOCKET, SO_KEEPALIVE, &val, sizeof (val)) == -1) {
       }
+#endif
+#if 0
       val = 30;                 /* 30 sec before starting probes */
       setsockopt (sock, SOL_TCP, TCP_KEEPIDLE, &val, sizeof (val));
       val = 2;                  /* 2 probes max */

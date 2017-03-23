@@ -348,6 +348,7 @@ _udp_tl_open (struct eXosip_t *excontext, int force_family)
 
   for (curinfo = addrinfo; curinfo; curinfo = curinfo->ai_next) {
     socklen_t len;
+    int type;
 
     if (curinfo->ai_protocol && curinfo->ai_protocol != excontext->eXtl_transport.proto_num) {
       OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO3, NULL, "eXosip: Skipping protocol %d\n", curinfo->ai_protocol));
@@ -357,15 +358,19 @@ _udp_tl_open (struct eXosip_t *excontext, int force_family)
     if (force_family>0 && force_family!=curinfo->ai_family)
       continue;
 
+    type = curinfo->ai_socktype;
+#if defined(SOCK_CLOEXEC)
+    type = SOCK_CLOEXEC|type;
+#endif
 #ifdef TSC_SUPPORT
     if (excontext->tunnel_handle) {
-      sock = (int) tsc_socket (excontext->tunnel_handle, curinfo->ai_family, curinfo->ai_socktype, curinfo->ai_protocol);
+      sock = (int) tsc_socket (excontext->tunnel_handle, curinfo->ai_family, type, curinfo->ai_protocol);
     }
     else {
-      sock = (int) socket (curinfo->ai_family, curinfo->ai_socktype, curinfo->ai_protocol);
+      sock = (int) socket (curinfo->ai_family, type, curinfo->ai_protocol);
     }
 #else
-    sock = (int) socket (curinfo->ai_family, curinfo->ai_socktype, curinfo->ai_protocol);
+    sock = (int) socket (curinfo->ai_family, type, curinfo->ai_protocol);
 #endif
     if (sock < 0) {
       OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "eXosip: Cannot create socket %s!\n", strerror (errno)));
@@ -510,7 +515,8 @@ _udp_tl_open_oc (struct eXosip_t *excontext, int force_family)
   
   for (curinfo = addrinfo; curinfo; curinfo = curinfo->ai_next) {
     socklen_t len;
-    
+    int type;
+
     if (curinfo->ai_protocol && curinfo->ai_protocol != excontext->eXtl_transport.proto_num) {
       OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO3, NULL, "eXosip: Skipping protocol %d\n", curinfo->ai_protocol));
       continue;
@@ -519,15 +525,19 @@ _udp_tl_open_oc (struct eXosip_t *excontext, int force_family)
     if (force_family>0 && force_family==curinfo->ai_family)
       continue;
 
+    type = curinfo->ai_socktype;
+#if defined(SOCK_CLOEXEC)
+    type = SOCK_CLOEXEC|type;
+#endif
 #ifdef TSC_SUPPORT
     if (excontext->tunnel_handle) {
-      sock = (int) tsc_socket (excontext->tunnel_handle, curinfo->ai_family, curinfo->ai_socktype, curinfo->ai_protocol);
+      sock = (int) tsc_socket (excontext->tunnel_handle, curinfo->ai_family, type, curinfo->ai_protocol);
     }
     else {
-      sock = (int) socket (curinfo->ai_family, curinfo->ai_socktype, curinfo->ai_protocol);
+      sock = (int) socket (curinfo->ai_family, type, curinfo->ai_protocol);
     }
 #else
-    sock = (int) socket (curinfo->ai_family, curinfo->ai_socktype, curinfo->ai_protocol);
+    sock = (int) socket (curinfo->ai_family, type, curinfo->ai_protocol);
 #endif
     if (sock < 0) {
       OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "eXosip: Cannot create socket %s!\n", strerror (errno)));

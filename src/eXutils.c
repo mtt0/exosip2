@@ -498,6 +498,7 @@ _eXosip_guess_ip_for_destination (struct eXosip_t *excontext, int family, char *
   int local_addr_len;
 
   struct addrinfo *addrf = NULL;
+  int type;
 
   address[0] = '\0';
 
@@ -516,7 +517,11 @@ _eXosip_guess_ip_for_destination (struct eXosip_t *excontext, int family, char *
   }
 #endif
 
-  sock = socket (family, SOCK_DGRAM, 0);
+  type = SOCK_DGRAM;
+#if defined(SOCK_CLOEXEC)
+  type = SOCK_CLOEXEC|SOCK_DGRAM;
+#endif
+  sock = socket (family, type, 0);
 
   _eXosip_get_addrinfo (excontext, &addrf, destination, 0, IPPROTO_UDP);
 
@@ -670,6 +675,7 @@ static int
   struct sockaddr_in iface_out;
 
   struct sockaddr_in remote;
+  int type;
 
   memset (&remote, 0, sizeof (struct sockaddr_in));
 
@@ -678,7 +684,12 @@ static int
   remote.sin_port = htons (11111);
 
   memset (&iface_out, 0, sizeof (iface_out));
-  sock_rt = socket (AF_INET, SOCK_DGRAM, 0);
+
+  type = SOCK_DGRAM;
+#if defined(SOCK_CLOEXEC)
+  type = SOCK_CLOEXEC|SOCK_DGRAM;
+#endif
+  sock_rt = socket (AF_INET, type, 0);
 
   if (setsockopt (sock_rt, SOL_SOCKET, SO_BROADCAST, &on, sizeof (on)) == -1) {
     _eXosip_closesocket (sock_rt);
@@ -721,6 +732,7 @@ _eXosip_default_gateway_ipv6 (struct eXosip_t *excontext, char *destination, cha
   struct sockaddr_in6 iface_out;
 
   struct sockaddr_in6 remote;
+  int type;
 
   memset (&remote, 0, sizeof (struct sockaddr_in6));
 
@@ -729,7 +741,11 @@ _eXosip_default_gateway_ipv6 (struct eXosip_t *excontext, char *destination, cha
   remote.sin6_port = htons (11111);
 
   memset (&iface_out, 0, sizeof (iface_out));
-  sock_rt = socket (AF_INET6, SOCK_DGRAM, 0);
+  type = SOCK_DGRAM;
+#if defined(SOCK_CLOEXEC)
+  type = SOCK_CLOEXEC|SOCK_DGRAM;
+#endif
+  sock_rt = socket (AF_INET6, type, 0);
   /*default to ipv6 local loopback in case something goes wrong: */
   snprintf (address, size, "::1");
   if (setsockopt (sock_rt, SOL_SOCKET, SO_BROADCAST, &on, sizeof (on)) == -1) {
@@ -779,6 +795,7 @@ static int
 {
   socklen_t len;
   struct sockaddr_in iface_out;
+  int type;
 
   snprintf (address, size, "127.0.0.1");
   if (udp_local_bind!=NULL) {
@@ -794,7 +811,11 @@ static int
     len = sizeof (iface_out);
     iface_out.sin_port = htons (0);
     
-    sock = socket (AF_INET, SOCK_DGRAM, proto);
+    type = SOCK_DGRAM;
+#if defined(SOCK_CLOEXEC)
+    type = SOCK_CLOEXEC|SOCK_DGRAM;
+#endif
+    sock = socket (AF_INET, type, proto);
     if (bind (sock, (struct sockaddr*)&iface_out, len)<0) {
       _eXosip_closesocket (sock);
       return OSIP_NO_NETWORK;
@@ -839,6 +860,7 @@ _eXosip_default_gateway_ipv6sock (struct eXosip_t *excontext, int proto, struct 
 {
   socklen_t len;
   struct sockaddr_in6 iface_out;
+  int type;
 
   snprintf (address, size, "::1");
   if (udp_local_bind!=NULL) {
@@ -854,7 +876,11 @@ _eXosip_default_gateway_ipv6sock (struct eXosip_t *excontext, int proto, struct 
     len = sizeof (iface_out);
     iface_out.sin6_port = htons (0);
     
-    sock = socket (AF_INET6, SOCK_DGRAM, proto);
+    type = SOCK_DGRAM;
+#if defined(SOCK_CLOEXEC)
+    type = SOCK_CLOEXEC|SOCK_DGRAM;
+#endif
+    sock = socket (AF_INET6, type, proto);
     if (bind(sock, (struct sockaddr*)&iface_out, len)<0) {
       _eXosip_closesocket (sock);
       return OSIP_NO_NETWORK;

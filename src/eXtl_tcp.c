@@ -215,13 +215,17 @@ tcp_tl_open (struct eXosip_t *excontext)
   
   for (curinfo = addrinfo; curinfo; curinfo = curinfo->ai_next) {
     socklen_t len;
+    int type;
     
     if (curinfo->ai_protocol && curinfo->ai_protocol != excontext->eXtl_transport.proto_num) {
       OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO3, NULL, "Skipping protocol %d\n", curinfo->ai_protocol));
       continue;
     }
-    
-    sock = (int) socket (curinfo->ai_family, curinfo->ai_socktype, curinfo->ai_protocol);
+    type = curinfo->ai_socktype;
+#if defined(SOCK_CLOEXEC)
+    type = SOCK_CLOEXEC|type;
+#endif
+    sock = (int) socket (curinfo->ai_family, type, curinfo->ai_protocol);
     if (sock < 0) {
       OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "Cannot create socket %s!\n", strerror (ex_errno)));
       continue;
@@ -813,6 +817,7 @@ _tcp_tl_is_connected (int sock)
     }
     
     for (curinfo = addrinfo; curinfo; curinfo = curinfo->ai_next) {
+      int type;
       if (curinfo->ai_protocol && curinfo->ai_protocol != IPPROTO_TCP) {
         OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO2, NULL, "Skipping protocol %d\n", curinfo->ai_protocol));
         continue;
@@ -823,8 +828,12 @@ _tcp_tl_is_connected (int sock)
       if (res == 0) {
         OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO1, NULL, "New binding with %s:%i\n", src6host, port));
       }
-      
-      sock = (int) socket (curinfo->ai_family, curinfo->ai_socktype, curinfo->ai_protocol);
+
+      type = curinfo->ai_socktype;
+  #if defined(SOCK_CLOEXEC)
+      type = SOCK_CLOEXEC|type;
+  #endif
+      sock = (int) socket (curinfo->ai_family, type, curinfo->ai_protocol);
       if (sock < 0) {
         OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO2, NULL, "Cannot create socket %s!\n", strerror (ex_errno)));
         continue;

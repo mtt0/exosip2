@@ -368,12 +368,16 @@ eXosip_find_free_port (struct eXosip_t *excontext, int free_port, int transport)
 
       sock = -1;
       for (curinfo_rtp = addrinfo_rtp; curinfo_rtp; curinfo_rtp = curinfo_rtp->ai_next) {
+        int type;
         if (curinfo_rtp->ai_protocol && curinfo_rtp->ai_protocol != transport) {
           OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO3, NULL, "eXosip: Skipping protocol %d\n", curinfo_rtp->ai_protocol));
           continue;
         }
-
-        sock = (int) socket (curinfo_rtp->ai_family, curinfo_rtp->ai_socktype, curinfo_rtp->ai_protocol);
+        type = curinfo_rtp->ai_socktype;
+#if defined(SOCK_CLOEXEC)
+        type = SOCK_CLOEXEC|type;
+#endif
+        sock = (int) socket (curinfo_rtp->ai_family, type, curinfo_rtp->ai_protocol);
         if (sock < 0) {
           OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "eXosip: Cannot create socket!\n"));
           continue;
@@ -410,12 +414,16 @@ eXosip_find_free_port (struct eXosip_t *excontext, int free_port, int transport)
       _eXosip_closesocket (sock);
       sock = -1;
       for (curinfo_rtcp = addrinfo_rtcp; curinfo_rtcp; curinfo_rtcp = curinfo_rtcp->ai_next) {
+        int type;
         if (curinfo_rtcp->ai_protocol && curinfo_rtcp->ai_protocol != transport) {
           OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO3, NULL, "eXosip: Skipping protocol %d\n", curinfo_rtcp->ai_protocol));
           continue;
         }
-
-        sock = (int) socket (curinfo_rtcp->ai_family, curinfo_rtcp->ai_socktype, curinfo_rtcp->ai_protocol);
+        type = curinfo_rtcp->ai_socktype;
+#if defined(SOCK_CLOEXEC)
+        type = SOCK_CLOEXEC|type;
+#endif
+        sock = (int) socket (curinfo_rtcp->ai_family, type, curinfo_rtcp->ai_protocol);
         if (sock < 0) {
           OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "eXosip: Cannot create socket!\n"));
           continue;
@@ -469,13 +477,16 @@ eXosip_find_free_port (struct eXosip_t *excontext, int free_port, int transport)
     for (curinfo_rtp = addrinfo_rtp; curinfo_rtp; curinfo_rtp = curinfo_rtp->ai_next) {
       socklen_t len;
       struct sockaddr_storage ai_addr;
-
+      int type;
       if (curinfo_rtp->ai_protocol && curinfo_rtp->ai_protocol != transport) {
         OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO3, NULL, "eXosip: Skipping protocol %d\n", curinfo_rtp->ai_protocol));
         continue;
       }
-
-      sock = (int) socket (curinfo_rtp->ai_family, curinfo_rtp->ai_socktype, curinfo_rtp->ai_protocol);
+      type = curinfo_rtp->ai_socktype;
+#if defined(SOCK_CLOEXEC)
+      type = SOCK_CLOEXEC|type;
+#endif
+      sock = (int) socket (curinfo_rtp->ai_family, type, curinfo_rtp->ai_protocol);
       if (sock < 0) {
         OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "eXosip: Cannot create socket!\n"));
         continue;
