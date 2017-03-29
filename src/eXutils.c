@@ -1925,6 +1925,53 @@ _naptr_callback (void *arg, int status, int timeouts, unsigned char *abuf, int a
   _store_srv (arg, status, timeouts, abuf, alen, 0);
   _store_A (arg, status, timeouts, abuf, alen, 0);
   output_record->naptr_state = OSIP_NAPTR_STATE_NAPTRDONE;
+
+  
+  /* check if something was found? */
+  if (status == ARES_SUCCESS
+    && output_record->sipudp_record.name[0]=='\0'
+    &&output_record->siptcp_record.name[0]=='\0'
+    &&output_record->siptls_record.name[0]=='\0'
+    &&output_record->sipdtls_record.name[0]=='\0'
+    &&output_record->sipsctp_record.name[0]=='\0')
+  {
+      osip_srv_record_t srvrecord;
+
+      OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO2, NULL, "_naptr_callback: %s %s (but missing NAPTR data)\n", output_record->domain, ares_strerror (status)));
+      /* pre-set all SRV record to unsupported? */
+      output_record->naptr_state = OSIP_NAPTR_STATE_NAPTRDONE;
+
+      output_record->sipudp_record.srv_state = OSIP_SRV_STATE_NOTSUPPORTED;
+      output_record->siptcp_record.srv_state = OSIP_SRV_STATE_NOTSUPPORTED;
+      output_record->siptls_record.srv_state = OSIP_SRV_STATE_NOTSUPPORTED;
+      output_record->sipdtls_record.srv_state = OSIP_SRV_STATE_NOTSUPPORTED;
+      output_record->sipsctp_record.srv_state = OSIP_SRV_STATE_NOTSUPPORTED;
+
+      memset (&srvrecord, 0, sizeof (osip_srv_record_t));
+
+      srvrecord.order = 49;
+      srvrecord.preference = 49;
+      srvrecord.srv_state = OSIP_SRV_STATE_UNKNOWN;
+
+      snprintf (srvrecord.protocol, sizeof (srvrecord.protocol), "%s", "SIP+D2U");
+      snprintf (srvrecord.name, sizeof (srvrecord.name), "_sip._udp.%s", output_record->domain);
+      memcpy (&output_record->sipudp_record, &srvrecord, sizeof (osip_srv_record_t));
+
+      snprintf (srvrecord.protocol, sizeof (srvrecord.protocol), "%s", "SIP+D2T");
+      snprintf (srvrecord.name, sizeof (srvrecord.name), "_sip._tcp.%s", output_record->domain);
+      memcpy (&output_record->siptcp_record, &srvrecord, sizeof (osip_srv_record_t));
+
+      snprintf (srvrecord.protocol, sizeof (srvrecord.protocol), "%s", "SIPS+D2T");
+      snprintf (srvrecord.name, sizeof (srvrecord.name), "_sips._tcp.%s", output_record->domain);
+      memcpy (&output_record->siptls_record, &srvrecord, sizeof (osip_srv_record_t));
+
+      snprintf (srvrecord.protocol, sizeof (srvrecord.protocol), "%s", "SIPS+D2U");
+      snprintf (srvrecord.name, sizeof (srvrecord.name), "_sips._udp.%s", output_record->domain);
+      memcpy (&output_record->sipdtls_record, &srvrecord, sizeof (osip_srv_record_t));
+
+      OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO2, NULL, "_naptr_callback: NO NAPTR DNS // SRV record created manually ->%i/%i/%s\n", srvrecord.order, srvrecord.preference, srvrecord.name));
+      return;
+  }
 }
 
 static int
