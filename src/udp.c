@@ -698,7 +698,7 @@ _eXosip_match_notify_for_subscribe (eXosip_subscribe_t * js, osip_message_t * no
     return OSIP_BADPARAMETER;
   OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO1, NULL, "Trying to match notify with subscribe\n"));
 
-  out_sub = _eXosip_find_last_out_subscribe (js, NULL);
+  out_sub = js->s_out_tr;
   if (out_sub == NULL || out_sub->orig_request == NULL)
     return OSIP_NOTFOUND;
   OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO1, NULL, "subscribe transaction found\n"));
@@ -1050,6 +1050,17 @@ _eXosip_process_newrequest (struct eXosip_t *excontext, osip_event_t * evt, int 
     /* first, look for a Dialog in the map of element */
     for (js = excontext->j_subscribes; js != NULL; js = js->next) {
       if (_eXosip_match_notify_for_subscribe (js, evt->sip) == 0) {
+        if (js->s_out_tr!=NULL) {
+          time_t now = osip_getsystemtime (NULL);
+          if (now-js->s_out_tr->birth_time>64) {
+            /* we are receiving a NOTIFY with different tag, but we don't expect newer dialogs to be initiated outside of forking */
+            OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_WARNING, NULL, "eXosip: outoftime NOTIFY no part of any established dialogs\n"));
+            osip_list_add (&excontext->j_transactions, transaction, 0);
+            _eXosip_send_default_answer (excontext, jd, transaction, evt, SIP_INTERNAL_SERVER_ERROR, NULL, "Outoftime Notification", __LINE__);
+            return;
+          }
+        }
+
         i = _eXosip_dialog_init_as_uac (&jd, evt->sip);
         if (i != 0) {
           OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "eXosip: cannot establish a dialog\n"));
