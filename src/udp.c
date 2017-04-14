@@ -722,11 +722,11 @@ _eXosip_match_notify_for_subscribe (eXosip_subscribe_t * js, osip_message_t * no
 
     osip_from_param_get_byname (out_sub->from, "tag", &tag_from);
     osip_from_param_get_byname (notify->to, "tag", &tag_to);
-    if (tag_to == NULL || tag_to->gvalue == NULL) {
+    if (tag_from == NULL || tag_from->gvalue == NULL) {
       OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "Uncompliant user agent: no tag in from of outgoing request\n"));
       return OSIP_SYNTAXERROR;
     }
-    if (tag_from == NULL || tag_to->gvalue == NULL) {
+    if (tag_to == NULL || tag_to->gvalue == NULL) {
       OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "Uncompliant user agent: no tag in to of incoming request\n"));
       return OSIP_SYNTAXERROR;
     }
