@@ -690,6 +690,55 @@ _eXosip_process_notify_within_dialog (struct eXosip_t *excontext, eXosip_subscri
 }
 
 static int
+_eXosip_match_update_for_invite (eXosip_call_t * jc, osip_message_t * update)
+{
+  osip_transaction_t *out_inv;
+
+  if (jc == NULL)
+    return OSIP_BADPARAMETER;
+  OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO1, NULL, "Trying to match update with invite\n"));
+
+  out_inv = _eXosip_find_last_out_invite (jc, NULL);
+  if (out_inv == NULL || out_inv->orig_request == NULL)
+    return OSIP_NOTFOUND;
+  OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO1, NULL, "invite transaction found\n"));
+
+  /* some checks to avoid crashing on bad requests */
+  if (update == NULL)
+    return OSIP_BADPARAMETER;
+
+  if (update->cseq == NULL || update->cseq->method == NULL || update->to == NULL)
+    return OSIP_SYNTAXERROR;
+
+  if (0 != osip_call_id_match (out_inv->callid, update->call_id))
+    return OSIP_UNDEFINED_ERROR;
+
+  {
+    /* The From tag of outgoing request must match
+       the To tag of incoming update:
+     */
+    osip_generic_param_t *tag_from;
+    osip_generic_param_t *tag_to;
+
+    osip_from_param_get_byname (out_inv->from, "tag", &tag_from);
+    osip_from_param_get_byname (update->to, "tag", &tag_to);
+    if (tag_from == NULL || tag_from->gvalue == NULL) {
+      OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "Uncompliant user agent: no tag in from of outgoing request\n"));
+      return OSIP_SYNTAXERROR;
+    }
+    if (tag_to == NULL || tag_to->gvalue == NULL) {
+      OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "Uncompliant user agent: no tag in to of incoming request\n"));
+      return OSIP_SYNTAXERROR;
+    }
+
+    if (0 != strcmp (tag_from->gvalue, tag_to->gvalue))
+      return OSIP_UNDEFINED_ERROR;
+  }
+
+  return OSIP_SUCCESS;
+}
+
+static int
 _eXosip_match_notify_for_subscribe (eXosip_subscribe_t * js, osip_message_t * notify)
 {
   osip_transaction_t *out_sub;
@@ -893,6 +942,44 @@ _eXosip_process_newrequest (struct eXosip_t *excontext, osip_event_t * evt, int 
     _eXosip_wakeup (excontext);
   }
 #endif
+
+  if (jc==NULL && jd==NULL && MSG_IS_UPDATE (evt->sip)) {
+    /* let's try to check if the UPDATE is related to an existing
+       call */
+    jc = NULL;
+    /* first, look for a Dialog in the map of element */
+    for (jc = excontext->j_calls; jc != NULL; jc = jc->next) {
+      if (_eXosip_match_update_for_invite (jc, evt->sip) == 0) {
+        int old_cseq = -1;
+        jd=jc->c_dialogs;
+        if (jd!=NULL && jd->d_dialog!=NULL && jd->d_dialog->state != DIALOG_EARLY) {
+          /* discard if dialog is not "early" */
+          osip_list_add (&excontext->j_transactions, transaction, 0);
+          _eXosip_send_default_answer (excontext, jd, transaction, evt, 481, NULL, "Call Does Not Exist", __LINE__);
+          return;
+        }
+#if 1
+        if (jd->d_dialog) {
+          old_cseq = jd->d_dialog->local_cseq;
+          osip_dialog_free (jd->d_dialog);
+        }
+        i = osip_dialog_init_as_uac_with_remote_request (&(jd->d_dialog), evt->sip, old_cseq);
+        if (i != 0) {
+          OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "eXosip: cannot establish a dialog with UPDATE\n"));
+          osip_list_add (&excontext->j_transactions, transaction, 0);
+          _eXosip_send_default_answer (excontext, jd, transaction, evt, 500, NULL, NULL, __LINE__);
+          break;
+        }
+        jd->d_dialog->state = DIALOG_EARLY;
+
+        if (old_cseq==-1) {
+          jd->d_dialog->local_cseq = 22 + jd->d_mincseq;
+        }
+#endif
+        break;
+      }
+    }
+  }
 
   if (jd != NULL) {
     osip_transaction_t *old_trn;
