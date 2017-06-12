@@ -116,33 +116,24 @@ fi
 
 if test "x$host_cpu" = "x$build_cpu"; then
   case $OS in
-   linux*)
-     ;;
-   irix*)
-     ;;
-   hpux* | hp-ux*)
-     ;;
-   aix*)
-     ;;
    osf*)
      AC_CHECK_LIB(rt,sem_open,[EXOSIP_LIB="$EXOSIP_LIB -lrt"])
-     ;;
-   sunos*)
-     ;;
-   darwin*)
-     ;;
-   *mingw*)
-     EXOSIP_FLAGS="$EXOSIP_FLAGS  -D_WIN32_WINNT=0x0501"
-     EXOSIP_LIB="EXOSIP_LIB -lws2_32 -liphlpapi -ldnsapi"
-dnl tools are not ported to win32
-     enable_tools=no
      ;;
    *)
      ;;
  esac
-else
- AC_MSG_NOTICE([Cross compiling exosip.])
 fi
+
+case $OS in
+  *mingw*)
+    EXOSIP_FLAGS="$EXOSIP_FLAGS  -D_WIN32_WINNT=0x0501"
+    EXOSIP_LIB="EXOSIP_LIB -lws2_32 -liphlpapi -ldnsapi"
+    dnl tools are not ported to win32
+    enable_tools=no
+    ;;
+  *)
+    ;;
+esac
 
 if test "x$enable_trace" = "xyes"; then
   EXOSIP_FLAGS="$EXOSIP_FLAGS -DENABLE_TRACE"
