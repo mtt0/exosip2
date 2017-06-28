@@ -660,6 +660,7 @@ eXosip_init (struct eXosip_t *excontext)
 
   excontext->max_message_to_read=1;
   excontext->dscp = 0x1A;
+  excontext->implicit_subscription_expires = 60;
 
   snprintf (excontext->ipv4_for_gateway, 256, "%s", "217.12.3.11");
   snprintf (excontext->ipv6_for_gateway, 256, "%s", "2001:638:500:101:2e0:81ff:fe24:37c6");

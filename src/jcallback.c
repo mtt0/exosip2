@@ -934,6 +934,9 @@ cb_rcv2xx (int type, osip_transaction_t * tr, osip_message_t * sip)
   eXosip_subscribe_t *js = (eXosip_subscribe_t *) osip_transaction_get_reserved5 (tr);
   eXosip_notify_t *jn = (eXosip_notify_t *) osip_transaction_get_reserved4 (tr);
 #endif
+  osip_header_t *sub_state;
+  osip_header_t *refer_sub;
+  time_t now = osip_getsystemtime (NULL);
 
   OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO3, NULL, "cb_rcv2xx (id=%i)\r\n", tr->transactionid));
 
@@ -1102,6 +1105,45 @@ cb_rcv2xx (int type, osip_transaction_t * tr, osip_message_t * sip)
         }
       }
     }
+    else if (MSG_IS_RESPONSE_FOR (sip, "NOTIFY")) {
+      if (jd != NULL) {
+        /* get subscription-state */
+        jd->implicit_subscription_expire_time = 0;
+        osip_message_header_get_byname (tr->orig_request, "subscription-state", 0, &sub_state);
+        if (sub_state != NULL && sub_state->hvalue != NULL) {
+          if (0 == osip_strncasecmp (sub_state->hvalue, "active", 6) ||0 == osip_strncasecmp (sub_state->hvalue, "pending", 7)) {
+            const char *tmp = strstr(sub_state->hvalue+6, "expires");
+            const char *ss_expires = NULL;
+            if (tmp!=NULL) {
+              ss_expires = strchr(tmp+7, '=');
+              jd->implicit_subscription_expire_time = now + excontext->implicit_subscription_expires;
+              if (ss_expires!=NULL) {
+                ss_expires++;
+                int exp = osip_atoi(ss_expires);
+                if (exp>=0 && exp<600) {
+                  jd->implicit_subscription_expire_time = now + exp;
+                }
+              }
+            }
+            OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO3, NULL, "eXosip: dialog marked for ImplicitSubscription (did=%i)\n", jd->d_id));
+          }
+        }
+      }
+    }
+    else if (MSG_IS_RESPONSE_FOR (sip, "REFER")) {
+      if (jd != NULL) {
+        /* check for "Refer-Sub: false" */
+        osip_message_header_get_byname (tr->orig_request, "Refer-Sub", 0, &refer_sub);
+        jd->implicit_subscription_expire_time = now + excontext->implicit_subscription_expires;
+        if ((refer_sub != NULL) && (refer_sub->hvalue != NULL) && (0 == osip_strncasecmp (refer_sub->hvalue, "false", 5)) )
+        {
+           /* implicit subscription removed */
+           jd->implicit_subscription_expire_time = 0;
+           OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_WARNING, NULL, "eXosip: dialog un-marked for ImplicitSubscription (did=%i)\n", jd->d_id));
+        }
+      }
+    }
+
     _eXosip_report_call_event (excontext, EXOSIP_CALL_MESSAGE_ANSWERED, jc, jd, tr);
     return;
   }

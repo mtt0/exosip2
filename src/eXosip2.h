@@ -230,6 +230,8 @@ extern "C" {
     int d_retry;                /* avoid too many unsuccessful retry */
     int d_mincseq;              /* remember cseq after PRACK and UPDATE during setup */
 
+    time_t implicit_subscription_expire_time;
+
     eXosip_dialog_t *next;
     eXosip_dialog_t *parent;
   };
@@ -471,6 +473,7 @@ struct eXosip_counters {
     int dns_capabilities;
     int enable_dns_cache;
     int dscp;
+    int implicit_subscription_expires;
     int register_with_date;
     int autoanswer_bye;
     int ipv6_enable;

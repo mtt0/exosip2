@@ -815,6 +815,50 @@ eXosip_call_send_answer (struct eXosip_t *excontext, int tid, int status, osip_m
     return OSIP_BADPARAMETER;
   }
 
+  /* check for implicit subscription */
+  if (MSG_IS_NOTIFY (tr->orig_request)) {
+    if (jd != NULL) {
+      osip_header_t *sub_state;
+      time_t now = osip_getsystemtime (NULL);
+      /* get subscription-state */
+      jd->implicit_subscription_expire_time = 0;
+      osip_message_header_get_byname (tr->orig_request, "subscription-state", 0, &sub_state);
+      if (sub_state != NULL && (sub_state->hvalue != NULL)) {
+        if (0 == osip_strncasecmp (sub_state->hvalue, "active", 6) || 0 == osip_strncasecmp (sub_state->hvalue, "pending", 7)) {
+          const char *tmp = strstr(sub_state->hvalue+6, "expires");
+          const char *ss_expires = NULL;
+          jd->implicit_subscription_expire_time = now + excontext->implicit_subscription_expires;
+          if (tmp!=NULL) {
+            ss_expires = strchr(tmp+7, '=');
+            if (ss_expires!=NULL) {
+              ss_expires++;
+              int exp = osip_atoi(ss_expires);
+              if (exp>=0 && exp<600) {
+                jd->implicit_subscription_expire_time = now + exp;
+              }
+            }
+          }
+          OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO3, NULL, "eXosip: dialog marked for ImplicitSubscription (did=%i)\n", jd->d_id));
+        }
+      }
+    }
+  }
+  else if (MSG_IS_REFER (tr->orig_request)) {
+    if (jd != NULL) {
+      /* check for "Refer-Sub: false" */
+      osip_header_t *refer_sub;
+      time_t now = osip_getsystemtime (NULL);
+      osip_message_header_get_byname (tr->orig_request, "Refer-Sub", 0, &refer_sub);
+      jd->implicit_subscription_expire_time = now + excontext->implicit_subscription_expires;
+      if ((refer_sub != NULL) && (refer_sub->hvalue != NULL) && (0 == osip_strncasecmp (refer_sub->hvalue, "false", 5)) )
+      {
+          /* implicit subscription removed */
+          jd->implicit_subscription_expire_time = 0;
+          OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_WARNING, NULL, "eXosip: dialog un-marked for ImplicitSubscription (did=%i)\n", jd->d_id));
+      }
+    }
+  }
+
   if (0 == osip_strcasecmp (tr->orig_request->sip_method, "INVITE")
       || 0 == osip_strcasecmp (tr->orig_request->sip_method, "UPDATE")) {
     if (MSG_IS_STATUS_2XX (answer) && jd != NULL) {
@@ -1016,8 +1060,11 @@ eXosip_call_terminate_with_reason (struct eXosip_t *excontext, int cid, int did,
     return i;
   }
 
-  osip_dialog_free (jd->d_dialog);
-  jd->d_dialog = NULL;
+  if (jd->implicit_subscription_expire_time == 0)
+  {
+    osip_dialog_free (jd->d_dialog);
+    jd->d_dialog = NULL;
+  }
   _eXosip_update (excontext);   /* AMD 30/09/05 */
   return OSIP_SUCCESS;
 }
