@@ -831,8 +831,9 @@ eXosip_call_send_answer (struct eXosip_t *excontext, int tid, int status, osip_m
           if (tmp!=NULL) {
             ss_expires = strchr(tmp+7, '=');
             if (ss_expires!=NULL) {
+              int exp;
               ss_expires++;
-              int exp = osip_atoi(ss_expires);
+              exp = osip_atoi(ss_expires);
               if (exp>=0 && exp<600) {
                 jd->implicit_subscription_expire_time = now + exp;
               }

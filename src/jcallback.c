@@ -1118,8 +1118,9 @@ cb_rcv2xx (int type, osip_transaction_t * tr, osip_message_t * sip)
               ss_expires = strchr(tmp+7, '=');
               jd->implicit_subscription_expire_time = now + excontext->implicit_subscription_expires;
               if (ss_expires!=NULL) {
+                int exp;
                 ss_expires++;
-                int exp = osip_atoi(ss_expires);
+                exp = osip_atoi(ss_expires);
                 if (exp>=0 && exp<600) {
                   jd->implicit_subscription_expire_time = now + exp;
                 }
