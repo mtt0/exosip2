@@ -34,6 +34,11 @@ scripts/config.sub
 scripts/depcomp
 scripts/ltmain.sh
 scripts/compile
+scripts/libtool.m4
+scripts/ltoptions.m4
+scripts/ltsugar.m4
+scripts/ltversion.m4
+scripts/lt~obsolete.m4
 stamp-h1
 osip.1
 doxygen.dox
