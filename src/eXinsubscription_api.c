@@ -280,7 +280,7 @@ eXosip_insubscription_build_notify (struct eXosip_t *excontext, int did, int sub
 
   tmp = subscription_state + strlen (subscription_state);
   if (subscription_status != EXOSIP_SUBCRSTATE_TERMINATED)
-    snprintf (tmp, 50 - (tmp - subscription_state), "%li", jn->n_ss_expires - now);
+    snprintf (tmp, 50 - (tmp - subscription_state), "%li", (long)(jn->n_ss_expires - now));
   osip_message_set_header (*request, "Subscription-State", subscription_state);
 #endif
 

@@ -174,7 +174,7 @@ _eXosip_notify_add_expires_in_2XX_for_subscribe (eXosip_notify_t * jn, osip_mess
     tmp[1] = '\0';
   }
   else {
-    snprintf (tmp, 20, "%li", jn->n_ss_expires - now);
+    snprintf (tmp, 20, "%li", (long)(jn->n_ss_expires - now));
   }
   osip_message_set_expires (answer, tmp);
 }
