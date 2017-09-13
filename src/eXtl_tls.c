@@ -1527,7 +1527,7 @@ tls_tl_open (struct eXosip_t *excontext)
       setsockopt (sock, SOL_SOCKET, SO_REUSEADDR, (void *) &valopt, sizeof (valopt));
     }
 
-#ifndef DISABLE_MAIN_SOCKET
+#ifdef ENABLE_MAIN_SOCKET
     res = bind (sock, curinfo->ai_addr, (socklen_t)curinfo->ai_addrlen);
     if (res < 0) {
       OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "eXosip: Cannot bind socket node:%s family:%d %s\n", excontext->eXtl_transport.proto_ifs, curinfo->ai_family, strerror (ex_errno)));
@@ -1588,7 +1588,7 @@ tls_tl_set_fdset (struct eXosip_t *excontext, fd_set * osip_fdset, fd_set * osip
     return OSIP_WRONG_STATE;
   }
 
-#ifndef DISABLE_MAIN_SOCKET
+#ifdef ENABLE_MAIN_SOCKET
   if (reserved->tls_socket <= 0)
     return -1;
 
@@ -1604,6 +1604,8 @@ tls_tl_set_fdset (struct eXosip_t *excontext, fd_set * osip_fdset, fd_set * osip
       if (reserved->socket_tab[pos].socket > *fd_max)
         *fd_max = reserved->socket_tab[pos].socket;
       if (reserved->socket_tab[pos].sendbuflen > 0)
+        eXFD_SET (reserved->socket_tab[pos].socket, osip_wrset);
+      if (reserved->socket_tab[pos].ssl_state == 0) /* wait for establishment */
         eXFD_SET (reserved->socket_tab[pos].socket, osip_wrset);
     }
   }
@@ -2123,9 +2125,16 @@ _tls_tl_recv (struct eXosip_t *excontext, struct _tls_stream *sockinfo)
 
   if (sockinfo->ssl_state == 1) {
     r = _tls_tl_ssl_connect_socket (excontext, sockinfo);
+
     if (r < 0) {
       _tls_tl_close_sockinfo (sockinfo);
+      /* force to have an immediate send call? This may accelerate the network callback error */
+      _eXosip_mark_registration_ready (excontext, sockinfo->reg_call_id);
       return OSIP_SUCCESS;
+    }
+    if (sockinfo->ssl_state == 3) {
+      /* we are now ready to write in socket, we want send to be called asap */
+      _eXosip_mark_registration_ready (excontext, sockinfo->reg_call_id);
     }
   }
 
@@ -2346,7 +2355,7 @@ tls_tl_read_message (struct eXosip_t *excontext, fd_set * osip_fdset, fd_set * o
 
   for (pos = 0; pos < EXOSIP_MAX_SOCKETS; pos++) {
     if (reserved->socket_tab[pos].socket > 0) {
-      if (FD_ISSET (reserved->socket_tab[pos].socket, osip_fdset)) {
+      if (FD_ISSET (reserved->socket_tab[pos].socket, osip_fdset) || FD_ISSET (reserved->socket_tab[pos].socket, osip_wrset)) {
         int err = -999;
         int max = 5;
         while (err == -999 && max>0) {

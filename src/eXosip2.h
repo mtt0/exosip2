@@ -554,6 +554,8 @@ struct eXosip_counters {
 
   void _eXosip_mark_all_registrations_expired (struct eXosip_t *excontext);
   void _eXosip_mark_registration_expired (struct eXosip_t *excontext, const char *call_id);
+  void _eXosip_mark_registration_ready (struct eXosip_t *excontext, const char *call_id);
+
   int _eXosip_check_allow_header (eXosip_dialog_t * jd, osip_message_t * message);
 
   int _eXosip_add_authentication_information (struct eXosip_t *excontext, osip_message_t * req, osip_message_t * last_response);

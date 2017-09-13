@@ -1433,6 +1433,32 @@ _eXosip_mark_registration_expired (struct eXosip_t *excontext, const char *call_
   }
 }
 
+void
+_eXosip_mark_registration_ready (struct eXosip_t *excontext, const char *call_id)
+{
+  eXosip_reg_t *jr;
+  int wakeup = 0;
+  
+  for (jr = excontext->j_reg; jr != NULL; jr = jr->next) {
+    if (jr->r_id < 1 || jr->r_last_tr == NULL)
+      continue;
+    if (jr->r_last_tr->orig_request==NULL || jr->r_last_tr->orig_request->call_id==NULL || jr->r_last_tr->orig_request->call_id->number==NULL)
+      continue;
+    if (osip_strcasecmp(jr->r_last_tr->orig_request->call_id->number, call_id)==0) {
+      time_t now;
+      now = osip_getsystemtime (NULL);
+      if (jr->r_last_tr->state == NICT_TRYING) {
+        osip_gettimeofday (&jr->r_last_tr->nict_context->timer_e_start, NULL);
+        add_gettimeofday (&jr->r_last_tr->nict_context->timer_e_start, 1);
+        wakeup = 1;
+      }
+    }
+  }
+  if (wakeup) {
+    _eXosip_wakeup (excontext);
+  }
+}
+
 int
 _eXosip_check_allow_header (eXosip_dialog_t * jd, osip_message_t * message)
 {
