@@ -1700,9 +1700,9 @@ _eXosip_read_message (struct eXosip_t *excontext, int max_message_nb, int sec_ma
     }
     else {
       if ((sec_max == -1) || (usec_max == -1))
-        i = select (max + 1, &osip_fdset, osip_wrset, NULL, NULL);
+        i = select (max + 1, &osip_fdset, &osip_wrset, NULL, NULL);
       else
-        i = select (max + 1, &osip_fdset, osip_wrset, NULL, &tv);
+        i = select (max + 1, &osip_fdset, &osip_wrset, NULL, &tv);
     }
 #else
     if ((sec_max == -1) || (usec_max == -1))
