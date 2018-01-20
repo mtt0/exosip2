@@ -316,6 +316,11 @@ eXosip_call_build_ack (struct eXosip_t *excontext, int tid, osip_message_t ** _a
     return OSIP_BADPARAMETER;
   }
 
+  if (jd==NULL) {
+	  OSIP_TRACE(osip_trace(__FILE__, __LINE__, OSIP_ERROR, NULL, "eXosip: ACK not built, dialog is already over\n"));
+	  return OSIP_NOTFOUND;
+  }
+
   i = _eXosip_build_request_within_dialog (excontext, &ack, "ACK", jd->d_dialog);
 
   if (i != 0) {
