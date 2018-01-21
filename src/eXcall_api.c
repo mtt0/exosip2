@@ -317,12 +317,23 @@ eXosip_call_build_ack (struct eXosip_t *excontext, int tid, osip_message_t ** _a
   }
 
   if (jd==NULL) {
-	  OSIP_TRACE(osip_trace(__FILE__, __LINE__, OSIP_ERROR, NULL, "eXosip: ACK not built, dialog is already over\n"));
-	  return OSIP_NOTFOUND;
+	  osip_dialog_t *d_dialog=NULL;
+	  if (tr->last_response==NULL) {
+		  OSIP_TRACE(osip_trace(__FILE__, __LINE__, OSIP_ERROR, NULL, "eXosip: ACK can't be sent without any answer received\n"));
+		  return OSIP_NOTFOUND;
+	  }
+	  /* we need to re-build a temporary dialog, to rebuild ACK */
+	  i = osip_dialog_init_as_uac(&d_dialog, tr->last_response);
+	  if (i != 0) {
+		  OSIP_TRACE(osip_trace(__FILE__, __LINE__, OSIP_ERROR, NULL, "eXosip: ACK can't be sent without any dialog established\n"));
+		  return OSIP_NOTFOUND;
+	  }
+	  i = _eXosip_build_request_within_dialog(excontext, &ack, "ACK", d_dialog);
+	  osip_dialog_free(d_dialog);
   }
-
-  i = _eXosip_build_request_within_dialog (excontext, &ack, "ACK", jd->d_dialog);
-
+  else {
+	  i = _eXosip_build_request_within_dialog(excontext, &ack, "ACK", jd->d_dialog);
+  }
   if (i != 0) {
     return i;
   }
@@ -382,12 +393,12 @@ eXosip_call_send_ack (struct eXosip_t *excontext, int tid, osip_message_t * ack)
   if (tid > 0) {
     _eXosip_call_transaction_find (excontext, tid, &jc, &jd, &tr);
   }
-  if (jc == NULL || jd == NULL) {
+  if (jc == NULL) {
     /* For old API, did was used here. So use it for backward compatibility */
     _eXosip_call_dialog_find (excontext, tid, &jc, &jd);
   }
 
-  if (jc == NULL || jd == NULL) {
+  if (jc == NULL) {
     OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "eXosip: No call here?\n"));
     if (ack != NULL)
       osip_message_free (ack);
@@ -437,9 +448,12 @@ eXosip_call_send_ack (struct eXosip_t *excontext, int tid, osip_message_t * ack)
 
   i = _eXosip_snd_message (excontext, NULL, ack, host, port, -1);
 
-  if (jd->d_ack != NULL)
-    osip_message_free (jd->d_ack);
-  jd->d_ack = ack;
+  if (jd != NULL) {
+	  /* if the call is already closed, the ACK was rebuilt with a temporary dialog, and jd==NULL */
+	  if (jd->d_ack != NULL)
+		  osip_message_free(jd->d_ack);
+	  jd->d_ack = ack;
+  }
   if (i < 0)
     return i;
 
