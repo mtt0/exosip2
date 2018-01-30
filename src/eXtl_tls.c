@@ -131,6 +131,90 @@
 #define MULTITASKING_ENABLED
 #endif
 
+#if OPENSSL_VERSION_NUMBER < 0x10100000L
+
+static void SSL_set0_rbio(SSL *s, BIO *rbio)
+{
+  BIO_free_all(s->rbio);
+  s->rbio = rbio;
+}
+
+#define X509_STORE_get0_param(store) (store->param)
+#define RSA_F_RSA_OSSL_PRIVATE_ENCRYPT RSA_F_RSA_EAY_PRIVATE_ENCRYPT
+
+#define RSA_meth_get0_app_data(rsa_method) (rsa_method->app_data)
+
+static RSA_METHOD *RSA_meth_new(const char *name, int flags)
+{
+  RSA_METHOD *meth = OPENSSL_malloc(sizeof(RSA_METHOD));
+
+  if (meth != NULL) {
+    memset(meth, 0, sizeof(RSA_METHOD));
+    meth->name = OPENSSL_strdup(name);
+    meth->flags = flags;
+  }
+
+  return meth;
+}
+
+static void RSA_meth_free(RSA_METHOD *meth)
+{
+  if (meth != NULL) {
+    if (meth->name != NULL)
+      OPENSSL_free((void *)meth->name);
+    OPENSSL_free(meth);
+  }
+}
+
+#define RSA_meth_set_pub_enc(meth, A) meth->rsa_pub_enc=A
+#define RSA_meth_set_pub_dec(meth, A) meth->rsa_pub_dec=A
+#define RSA_meth_set_priv_enc(meth, A) meth->rsa_priv_enc=A
+#define RSA_meth_set_priv_dec(meth, A) meth->rsa_priv_dec=A
+#define RSA_meth_set_init(meth, A) meth->init=A
+#define RSA_meth_set_finish(meth, A) meth->finish=A
+#define RSA_meth_set0_app_data(meth, A) meth->app_data=(char*)A
+#define X509_get0_pubkey(___mX509) (___mX509->cert_info->key->pkey)
+#define EVP_PKEY_get0_RSA(__mPKEY) (__mPKEY->pkey.rsa)
+
+static int RSA_set0_key(RSA *r, BIGNUM *n, BIGNUM *e, BIGNUM *d)
+{
+  /* If the fields n and e in r are NULL, the corresponding input
+  * parameters MUST be non-NULL for n and e.  d may be
+  * left NULL (in case only the public key is used).
+  */
+  if ((r->n == NULL && n == NULL)
+    || (r->e == NULL && e == NULL))
+    return 0;
+
+  if (n != NULL) {
+    BN_free(r->n);
+    r->n = n;
+    }
+  if (e != NULL) {
+    BN_free(r->e);
+    r->e = e;
+  }
+  if (d != NULL) {
+    BN_free(r->d);
+    r->d = d;
+  }
+
+  return 1;
+ }
+
+static void RSA_get0_key(const RSA *r,
+  const BIGNUM **n, const BIGNUM **e, const BIGNUM **d)
+{
+  if (n != NULL)
+    *n = r->n;
+  if (e != NULL)
+    *e = r->e;
+  if (d != NULL)
+    *d = r->d;
+}
+
+#endif
+
 SSL_CTX *initialize_client_ctx (struct eXosip_t *excontext, const char *certif_client_local_cn_name, eXosip_tls_ctx_t * client_ctx, int transport, const char *sni_servernameindication);
 
 SSL_CTX *initialize_server_ctx (struct eXosip_t *excontext, const char *certif_local_cn_name, eXosip_tls_ctx_t * srv_ctx, int transport);
@@ -319,7 +403,7 @@ _tls_add_certificates (SSL_CTX * ctx)
   PCCERT_CONTEXT pCertCtx;
   X509 *cert = NULL;
   HCERTSTORE hStore = CertOpenSystemStore (0, L"CA");
-
+  X509_STORE *x509_store;
   for (pCertCtx = CertEnumCertificatesInStore (hStore, NULL); pCertCtx != NULL; pCertCtx = CertEnumCertificatesInStore (hStore, pCertCtx)) {
     cert = d2i_X509 (NULL, (const unsigned char **) &pCertCtx->pbCertEncoded, pCertCtx->cbCertEncoded);
     if (cert == NULL) {
@@ -327,7 +411,13 @@ _tls_add_certificates (SSL_CTX * ctx)
     }
     /*tls_dump_cert_info("CA", cert); */
 
-    if (!X509_STORE_add_cert (ctx->cert_store, cert)) {
+    x509_store = SSL_CTX_get_cert_store(ctx);
+    if (x509_store==NULL) {
+      X509_free(cert);
+      continue;
+    }
+
+    if (!X509_STORE_add_cert (x509_store, cert)) {
       X509_free (cert);
       continue;
     }
@@ -345,8 +435,13 @@ _tls_add_certificates (SSL_CTX * ctx)
       continue;
     }
     /*tls_dump_cert_info("ROOT", cert); */
+    x509_store = SSL_CTX_get_cert_store(ctx);
+    if (x509_store == NULL) {
+      X509_free(cert);
+      continue;
+    }
 
-    if (!X509_STORE_add_cert (ctx->cert_store, cert)) {
+    if (!X509_STORE_add_cert (x509_store, cert)) {
       X509_free (cert);
       continue;
     }
@@ -364,8 +459,13 @@ _tls_add_certificates (SSL_CTX * ctx)
       continue;
     }
     /*tls_dump_cert_info("MY", cert); */
+    x509_store = SSL_CTX_get_cert_store(ctx);
+    if (x509_store == NULL) {
+      X509_free(cert);
+      continue;
+    }
 
-    if (!X509_STORE_add_cert (ctx->cert_store, cert)) {
+    if (!X509_STORE_add_cert (x509_store, cert)) {
       X509_free (cert);
       continue;
     }
@@ -383,8 +483,13 @@ _tls_add_certificates (SSL_CTX * ctx)
       continue;
     }
     /*tls_dump_cert_info("Trustedpublisher", cert); */
+    x509_store = SSL_CTX_get_cert_store(ctx);
+    if (x509_store == NULL) {
+      X509_free(cert);
+      continue;
+    }
 
-    if (!X509_STORE_add_cert (ctx->cert_store, cert)) {
+    if (!X509_STORE_add_cert (x509_store, cert)) {
       X509_free (cert);
       continue;
     }
@@ -399,6 +504,7 @@ _tls_add_certificates (SSL_CTX * ctx)
   OSStatus status = noErr;
   X509 *cert = NULL;
   SInt32 osx_version = 0;
+  X509_STORE *x509_store;
 
   if (Gestalt (gestaltSystemVersion, &osx_version) != noErr) {
     OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "macosx certificate store: can't get osx version"));
@@ -441,8 +547,13 @@ _tls_add_certificates (SSL_CTX * ctx)
           continue;
         }
         /*tls_dump_cert_info("ROOT", cert); */
+        x509_store = SSL_CTX_get_cert_store(ctx);
+        if (x509_store == NULL) {
+          X509_free(cert);
+          continue;
+        }
 
-        if (!X509_STORE_add_cert (ctx->cert_store, cert)) {
+        if (!X509_STORE_add_cert (x509_store, cert)) {
           X509_free (cert);
           continue;
         }
@@ -495,26 +606,29 @@ rsa_pub_dec (int flen, const unsigned char *from, unsigned char *to, RSA * rsa, 
 static int
 rsa_priv_enc (int flen, const unsigned char *from, unsigned char *to, RSA * rsa, int padding)
 {
-  struct rsa_ctx *priv = (struct rsa_ctx *) rsa->meth->app_data;
+  struct rsa_ctx *priv;
   HCRYPTHASH hash;
   DWORD hash_size, len, i;
   unsigned char *buf = NULL;
   int ret = 0;
 
+  const RSA_METHOD *rsa_method = RSA_get_method(rsa);
+  priv = (struct rsa_ctx *)RSA_meth_get0_app_data(rsa_method);
+  
   if (priv == NULL) {
-    RSAerr (RSA_F_RSA_EAY_PRIVATE_ENCRYPT, ERR_R_PASSED_NULL_PARAMETER);
+    RSAerr (RSA_F_RSA_OSSL_PRIVATE_ENCRYPT, ERR_R_PASSED_NULL_PARAMETER);
     return 0;
   }
 
   if (padding != RSA_PKCS1_PADDING) {
-    RSAerr (RSA_F_RSA_EAY_PRIVATE_ENCRYPT, RSA_R_UNKNOWN_PADDING_TYPE);
+    RSAerr (RSA_F_RSA_OSSL_PRIVATE_ENCRYPT, RSA_R_UNKNOWN_PADDING_TYPE);
     return 0;
   }
 
   if (flen != 16 /* MD5 */  + 20 /* SHA-1 */ ) {
 
     OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "rsa_priv_enc - only MD5-SHA1 hash supported"));
-    RSAerr (RSA_F_RSA_EAY_PRIVATE_ENCRYPT, RSA_R_INVALID_MESSAGE_LENGTH);
+    RSAerr (RSA_F_RSA_OSSL_PRIVATE_ENCRYPT, RSA_R_INVALID_MESSAGE_LENGTH);
     return 0;
   }
 
@@ -531,7 +645,7 @@ rsa_priv_enc (int flen, const unsigned char *from, unsigned char *to, RSA * rsa,
 
   if (hash_size != flen) {
     OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "CryptoAPI: Invalid hash size (%u != %d)", (unsigned) hash_size, flen));
-    RSAerr (RSA_F_RSA_EAY_PRIVATE_ENCRYPT, RSA_R_INVALID_MESSAGE_LENGTH);
+    RSAerr (RSA_F_RSA_OSSL_PRIVATE_ENCRYPT, RSA_R_INVALID_MESSAGE_LENGTH);
     goto err;
   }
   if (!CryptSetHashParam (hash, HP_HASHVAL, (BYTE *) from, 0)) {
@@ -542,7 +656,7 @@ rsa_priv_enc (int flen, const unsigned char *from, unsigned char *to, RSA * rsa,
   len = RSA_size (rsa);
   buf = osip_malloc (len);
   if (buf == NULL) {
-    RSAerr (RSA_F_RSA_EAY_PRIVATE_ENCRYPT, ERR_R_MALLOC_FAILURE);
+    RSAerr (RSA_F_RSA_OSSL_PRIVATE_ENCRYPT, ERR_R_MALLOC_FAILURE);
     goto err;
   }
 
@@ -565,11 +679,14 @@ err:
 static int
 rsa_priv_dec (int flen, const unsigned char *from, unsigned char *to, RSA * rsa, int padding)
 {
-  struct rsa_ctx *priv = (struct rsa_ctx *) rsa->meth->app_data;
+  struct rsa_ctx *priv;
   BOOL ret;
   DWORD cbData = flen;
   int i;
   unsigned char *buf = NULL;
+
+  const RSA_METHOD *rsa_method = RSA_get_method(rsa);
+  priv = (struct rsa_ctx *)RSA_meth_get0_app_data(rsa_method);
 
   if (padding != RSA_PKCS1_PADDING)
     return -1;
@@ -607,9 +724,13 @@ rsa_free_data (struct rsa_ctx *priv)
 static int
 rsa_finish (RSA * rsa)
 {
-  rsa_free_data ((struct rsa_ctx *) rsa->meth->app_data);
-  osip_free ((void *) rsa->meth);
-  rsa->meth = NULL;
+  struct rsa_ctx *priv;
+  const RSA_METHOD *rsa_method = RSA_get_method(rsa);
+  priv = (struct rsa_ctx *)RSA_meth_get0_app_data(rsa_method);
+
+  rsa_free_data ((struct rsa_ctx *) priv);
+  RSA_meth_free((RSA_METHOD*)rsa_method); /* is this needed ? */
+  //RSA_free(rsa); /* seems not needed ? */
   return 1;
 }
 
@@ -719,24 +840,15 @@ _tls_set_certificate (SSL_CTX * ctx, const char *cn)
     RSA_METHOD *rsa_meth;
 
     priv = osip_malloc (sizeof (*priv));
-    rsa_meth = osip_malloc (sizeof (*rsa_meth));
-    if (priv == NULL || rsa_meth == NULL) {
-      CertFreeCertificateContext (pCertCtx);
-      osip_free (priv);
-      osip_free (rsa_meth);
-      X509_free (cert);
-      return NULL;
-    }
     memset (priv, 0, sizeof (*priv));
-    memset (rsa_meth, 0, sizeof (*rsa_meth));
 
     priv->cert = pCertCtx;
 
     if (CryptAcquireCertificatePrivateKey (pCertCtx, CRYPT_ACQUIRE_COMPARE_KEY_FLAG, NULL, &priv->crypt_prov, &priv->key_spec, &priv->free_crypt_prov) == 0) {
       CertFreeCertificateContext (priv->cert);
       osip_free (priv);
-      osip_free (rsa_meth);
-      X509_free (cert);
+      /* we don't have private key, but we have a certificate: use it */
+      X509_free(cert);
       return NULL;
     }
 
@@ -745,19 +857,29 @@ _tls_set_certificate (SSL_CTX * ctx, const char *cn)
       if (priv->crypt_prov && priv->free_crypt_prov)
         CryptReleaseContext (priv->crypt_prov, 0);
       osip_free (priv);
-      osip_free (rsa_meth);
       X509_free (cert);
       return NULL;
     }
 
-    rsa_meth->name = "Microsoft CryptoAPI RSA Method";
-    rsa_meth->rsa_pub_enc = rsa_pub_enc;
-    rsa_meth->rsa_pub_dec = rsa_pub_dec;
-    rsa_meth->rsa_priv_enc = rsa_priv_enc;
-    rsa_meth->rsa_priv_dec = rsa_priv_dec;
-    rsa_meth->finish = rsa_finish;
-    rsa_meth->flags = RSA_METHOD_FLAG_NO_CHECK;
-    rsa_meth->app_data = (char *) priv;
+    rsa_meth = RSA_meth_new("Microsoft Cryptography API RSA Method", RSA_METHOD_FLAG_NO_CHECK);
+    if (priv == NULL || rsa_meth == NULL) {
+      CertFreeCertificateContext(pCertCtx);
+      if (priv->crypt_prov && priv->free_crypt_prov)
+        CryptReleaseContext(priv->crypt_prov, 0);
+      osip_free(priv);
+      if (rsa_meth != NULL)
+        RSA_meth_free(rsa_meth);
+      X509_free(cert);
+      return NULL;
+    }
+
+    RSA_meth_set_pub_enc(rsa_meth, rsa_pub_enc);
+    RSA_meth_set_pub_dec(rsa_meth, rsa_pub_dec);
+    RSA_meth_set_priv_enc(rsa_meth, rsa_priv_enc);
+    RSA_meth_set_priv_dec(rsa_meth, rsa_priv_dec);
+    RSA_meth_set_init(rsa_meth, NULL);
+    RSA_meth_set_finish(rsa_meth, rsa_finish);
+    RSA_meth_set0_app_data(rsa_meth, priv);
 
     rsa = RSA_new ();
     if (rsa == NULL) {
@@ -765,7 +887,8 @@ _tls_set_certificate (SSL_CTX * ctx, const char *cn)
       if (priv->crypt_prov && priv->free_crypt_prov)
         CryptReleaseContext (priv->crypt_prov, 0);
       osip_free (priv);
-      osip_free (rsa_meth);
+      if (rsa_meth != NULL)
+        RSA_meth_free(rsa_meth);
       X509_free (cert);
       RSA_free (rsa);
       return NULL;
@@ -776,30 +899,55 @@ _tls_set_certificate (SSL_CTX * ctx, const char *cn)
       if (priv->crypt_prov && priv->free_crypt_prov)
         CryptReleaseContext (priv->crypt_prov, 0);
       osip_free (priv);
-      osip_free (rsa_meth);
+      if (rsa_meth != NULL)
+        RSA_meth_free(rsa_meth);
       X509_free (cert);
       return NULL;
     }
 
-    pub_rsa = cert->cert_info->key->pkey->pkey.rsa;
+    EVP_PKEY *pkey = X509_get0_pubkey(cert);
 
-    rsa->n = BN_dup (pub_rsa->n);
-    rsa->e = BN_dup (pub_rsa->e);
+    //pub_rsa = cert->cert_info->key->pkey->pkey.rsa;
+    if (!(pub_rsa = EVP_PKEY_get0_RSA(pkey)))
+    {
+      CertFreeCertificateContext(priv->cert);
+      if (priv->crypt_prov && priv->free_crypt_prov)
+        CryptReleaseContext(priv->crypt_prov, 0);
+      osip_free(priv);
+      if (rsa_meth != NULL)
+        RSA_meth_free(rsa_meth);
+      return NULL;
+    }
+
+    const BIGNUM *n = NULL;
+    const BIGNUM *e = NULL;
+    RSA_get0_key(pub_rsa, &n, &e, NULL);
+    if (!RSA_set0_key(rsa, BN_dup(n), BN_dup(e), NULL))
+    {
+      CertFreeCertificateContext(priv->cert);
+      if (priv->crypt_prov && priv->free_crypt_prov)
+        CryptReleaseContext(priv->crypt_prov, 0);
+      osip_free(priv);
+      if (rsa_meth != NULL)
+        RSA_meth_free(rsa_meth);
+      return NULL;
+    }
+    //RSA_set_flags(rsa, RSA_flags(rsa) | RSA_FLAG_EXT_PKEY);
+
     if (!RSA_set_method (rsa, rsa_meth)) {
       CertFreeCertificateContext (priv->cert);
       if (priv->crypt_prov && priv->free_crypt_prov)
         CryptReleaseContext (priv->crypt_prov, 0);
       osip_free (priv);
-      osip_free (rsa_meth);
+      if (rsa_meth != NULL)
+        RSA_meth_free(rsa_meth);
       RSA_free (rsa);
-      X509_free (cert);
       SSL_CTX_free (ctx);
       return NULL;
     }
 
     if (!SSL_CTX_use_RSAPrivateKey (ctx, rsa)) {
       RSA_free (rsa);
-      X509_free (cert);
       SSL_CTX_free (ctx);
       return NULL;
     }
@@ -841,7 +989,8 @@ verify_cb (int preverify_ok, X509_STORE_CTX * store)
    * it for something special
    */
   if (!preverify_ok && (err == X509_V_ERR_UNABLE_TO_GET_ISSUER_CERT)) {
-    X509_NAME_oneline (X509_get_issuer_name (store->current_cert), buf, 256);
+    X509 *current_cert = X509_STORE_CTX_get_current_cert(store);
+    X509_NAME_oneline (X509_get_issuer_name (current_cert), buf, 256);
     OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "issuer= %s\n", buf));
   }
 
@@ -935,11 +1084,14 @@ build_dh_params (SSL_CTX * ctx)
     OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "eXosip: DH_new failed!\n"));
     return;
   }
-  if (!DH_generate_parameters_ex (dh, 2, DH_GENERATOR_2, 0)) {
+
+  OSIP_TRACE(osip_trace(__FILE__, __LINE__, OSIP_ERROR, NULL, "eXosip: building DH params!\n"));
+  if (!DH_generate_parameters_ex (dh, 128, DH_GENERATOR_2, 0)) {
     OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "eXosip: DH_generate_parameters_ex failed!\n"));
     DH_free (dh);
     return;
   }
+  OSIP_TRACE(osip_trace(__FILE__, __LINE__, OSIP_ERROR, NULL, "eXosip: DH params built!\n"));
 
   if (!DH_check (dh, &codes)) {
     OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "eXosip: DH_check failed!\n"));
@@ -1103,7 +1255,6 @@ SSL_CTX *
 initialize_client_ctx (struct eXosip_t * excontext, const char *certif_client_local_cn_name, eXosip_tls_ctx_t * client_ctx, int transport, const char *sni_servernameindication)
 {
   const SSL_METHOD *meth = NULL;
-  X509 *cert = NULL;
   SSL_CTX *ctx;
 
   if (transport == IPPROTO_UDP) {
@@ -1132,13 +1283,17 @@ initialize_client_ctx (struct eXosip_t * excontext, const char *certif_client_lo
     SSL_CTX_set_default_passwd_cb (ctx, password_cb);
   }
 
+  /* load from store */
   if (certif_client_local_cn_name[0] != '\0') {
+    X509 *cert = NULL;
     cert = _tls_set_certificate (ctx, certif_client_local_cn_name);
+    X509_free(cert);
   }
 
-  if (cert == NULL && client_ctx->client.cert[0] != '\0') {
+  /* load from file name in PEM files */
+  if (client_ctx->client.cert[0] != '\0') {
     /* Load our keys and certificates */
-    if (client_ctx->root_ca_cert[0] != '\0') {
+    if (client_ctx->client.cert[0] != '\0') {
       if (!(SSL_CTX_use_certificate_file (ctx, client_ctx->client.cert, SSL_FILETYPE_PEM))) {
         OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "eXosip: Couldn't read client certificate file %s!\n", client_ctx->client.cert));
       }
@@ -1150,25 +1305,25 @@ initialize_client_ctx (struct eXosip_t * excontext, const char *certif_client_lo
         OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "eXosip: Couldn't read client RSA key file %s!\n", client_ctx->client.priv_key));
     }
   }
-  else {
+  
+  /* load from buffer in PEM format */
+  if (client_ctx->client.cert[0] != '\0') {
     BIO *bio = BIO_new_file (client_ctx->client.cert, "r");
 
     if (bio != NULL) {
+      X509 *cert = NULL;
       PEM_read_bio_X509 (bio, &cert, 0, NULL);
       if (cert == NULL) {
         OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "eXosip: Couldn't read client certificate file %s!\n", client_ctx->client.cert));
       }
       else {
         /* this is used to add a trusted certificate */
-        X509_STORE_add_cert (ctx->cert_store, cert);
+        X509_STORE *cert_store = SSL_CTX_get_cert_store(ctx);
+        X509_STORE_add_cert (cert_store, cert);
+        X509_free(cert);
       }
       BIO_free (bio);
     }
-  }
-
-  if (cert != NULL) {
-    X509_free (cert);
-    cert = NULL;
   }
 
   /* Load the CAs we trust */
@@ -1229,24 +1384,28 @@ initialize_client_ctx (struct eXosip_t * excontext, const char *certif_client_lo
       int verify_mode = SSL_VERIFY_NONE;
 
       if (excontext->tls_verify_client_certificate > 0 && sni_servernameindication!=NULL) {
-	X509_STORE *pkix_validation_store = SSL_CTX_get_cert_store (ctx);
-	const X509_VERIFY_PARAM *param = X509_VERIFY_PARAM_lookup ("ssl_server");
-	
-	if (param != NULL) { /* const value, we have to copy (inherit) */
-	  if (X509_VERIFY_PARAM_inherit (pkix_validation_store->param, param)) {
-	    X509_STORE_set_flags (pkix_validation_store, X509_V_FLAG_TRUSTED_FIRST);
-	    X509_STORE_set_flags (pkix_validation_store, X509_V_FLAG_PARTIAL_CHAIN);
-	  } else {
-	    OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "PARAM_inherit: failed for ssl_server\n"));
-	  }
-	  if (X509_VERIFY_PARAM_set1_host (pkix_validation_store->param, sni_servernameindication, 0)) {
-	    X509_VERIFY_PARAM_set_hostflags (pkix_validation_store->param, X509_CHECK_FLAG_NO_WILDCARDS);
-	  } else {
-	    OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "PARAM_set1_host: %s failed\n", sni_servernameindication));
-	  }
-	} else {
-	  OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "PARAM_lookup: failed for ssl_server\n"));
-	}
+        X509_STORE *pkix_validation_store = SSL_CTX_get_cert_store(ctx);
+        const X509_VERIFY_PARAM *param = X509_VERIFY_PARAM_lookup("ssl_server");
+
+        if (param != NULL) { /* const value, we have to copy (inherit) */
+          X509_VERIFY_PARAM *param_to = X509_STORE_get0_param(pkix_validation_store);
+          if (X509_VERIFY_PARAM_inherit(param_to, param)) {
+            X509_STORE_set_flags(pkix_validation_store, X509_V_FLAG_TRUSTED_FIRST);
+            X509_STORE_set_flags(pkix_validation_store, X509_V_FLAG_PARTIAL_CHAIN);
+          }
+          else {
+            OSIP_TRACE(osip_trace(__FILE__, __LINE__, OSIP_ERROR, NULL, "PARAM_inherit: failed for ssl_server\n"));
+          }
+          if (X509_VERIFY_PARAM_set1_host(param_to, sni_servernameindication, 0)) {
+            X509_VERIFY_PARAM_set_hostflags(param_to, X509_CHECK_FLAG_NO_WILDCARDS);
+          }
+          else {
+            OSIP_TRACE(osip_trace(__FILE__, __LINE__, OSIP_ERROR, NULL, "PARAM_set1_host: %s failed\n", sni_servernameindication));
+          }
+        }
+        else {
+          OSIP_TRACE(osip_trace(__FILE__, __LINE__, OSIP_ERROR, NULL, "PARAM_lookup: failed for ssl_server\n"));
+        }
       }
 
       if (excontext->tls_verify_client_certificate > 0)
@@ -1315,10 +1474,13 @@ initialize_server_ctx (struct eXosip_t * excontext, const char *certif_local_cn_
     SSL_CTX_set_read_ahead (ctx, 1);
   }
 
+  /* load from store */
   if (certif_local_cn_name[0] != '\0') {
     cert = _tls_set_certificate (ctx, certif_local_cn_name);
   }
-  if (cert == NULL && srv_ctx->server.cert[0] != '\0') {
+
+  /* load from file name in PEM files */
+  if (cert==NULL && srv_ctx->server.cert[0] != '\0') {
     if (!(SSL_CTX_use_certificate_file (ctx, srv_ctx->server.cert, SSL_FILETYPE_PEM))) {
       OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "eXosip: Couldn't read certificate file!\n"));
       SSL_CTX_free (ctx);
@@ -1337,7 +1499,7 @@ initialize_server_ctx (struct eXosip_t * excontext, const char *certif_local_cn_
 
   SSL_CTX_set_session_id_context (ctx, (void *) &s_server_session_id_context, sizeof s_server_session_id_context);
 
-  if (srv_ctx->server.priv_key_pw[0] != '\0') {
+  if (cert == NULL && srv_ctx->server.priv_key_pw[0] != '\0') {
     SSL_CTX_set_default_passwd_cb_userdata (ctx, (void *) srv_ctx->server.priv_key_pw);
     SSL_CTX_set_default_passwd_cb (ctx, password_cb);
   }
@@ -1348,6 +1510,31 @@ initialize_server_ctx (struct eXosip_t * excontext, const char *certif_local_cn_
       OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "eXosip: Couldn't read server root_ca_cert ('%s')\n", srv_ctx->root_ca_cert));
     }
   }
+
+  /* load from file in PEM format */
+  if (cert == NULL && srv_ctx->server.priv_key[0] != '\0') {
+    if (!(SSL_CTX_use_PrivateKey_file(ctx, srv_ctx->server.priv_key, SSL_FILETYPE_PEM))) {
+      OSIP_TRACE(osip_trace(__FILE__, __LINE__, OSIP_ERROR, NULL, "eXosip: Couldn't read key file: %s\n", srv_ctx->server.priv_key));
+      SSL_CTX_free(ctx);
+      return NULL;
+    }
+  }
+
+  if (cert != NULL || srv_ctx->server.cert[0] != '\0') {
+    if (!SSL_CTX_check_private_key(ctx)) {
+      OSIP_TRACE(osip_trace(__FILE__, __LINE__, OSIP_ERROR, NULL, "check_private_key: Key does not match the public key of the certificate\n"));
+      SSL_CTX_free(ctx);
+      X509_free(cert);
+      cert = NULL;
+      return NULL;
+    }
+  }
+
+  if (cert != NULL) {
+    X509_free(cert);
+    cert = NULL;
+  }
+
   {
     int verify_mode = SSL_VERIFY_NONE;
 
@@ -1363,36 +1550,17 @@ initialize_server_ctx (struct eXosip_t * excontext, const char *certif_local_cn_
     OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_WARNING, NULL, "set_cipher_list: using DEFAULT list now\n"));
   }
 
-  if (cert == NULL && srv_ctx->server.priv_key[0] != '\0') {
-    if (!(SSL_CTX_use_PrivateKey_file (ctx, srv_ctx->server.priv_key, SSL_FILETYPE_PEM))) {
-      OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "eXosip: Couldn't read key file: %s\n", srv_ctx->server.priv_key));
-      SSL_CTX_free (ctx);
-      return NULL;
-    }
-  }
-
-  if (cert != NULL || srv_ctx->server.cert[0] != '\0') {
-    if (!SSL_CTX_check_private_key (ctx)) {
-      OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "check_private_key: Key does not match the public key of the certificate\n"));
-      SSL_CTX_free (ctx);
-      return NULL;
-    }
-  }
-
-  if (cert == NULL && srv_ctx->server.cert[0] == '\0') {
+#if 0
+  if (certif_local_cn_name[0] == '\0' && srv_ctx->server.cert[0] == '\0') {
     if (!SSL_CTX_set_cipher_list (ctx, "ADH")) {
       OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "set_cipher_list: cannot set anonymous DH cipher\n"));
       SSL_CTX_free (ctx);
       return NULL;
     }
   }
+#endif
 
-  if (cert != NULL) {
-    X509_free (cert);
-    cert = NULL;
-  }
-
-  if (cert == NULL && srv_ctx->server.cert[0] == '\0')
+  if (srv_ctx->dh_param[0] == '\0')
     build_dh_params (ctx);
   else
     load_dh_params (ctx, srv_ctx->dh_param);
