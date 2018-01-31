@@ -838,6 +838,9 @@ _tls_set_certificate (SSL_CTX * ctx, const char *cn)
     RSA *rsa = NULL, *pub_rsa;
     struct rsa_ctx *priv;
     RSA_METHOD *rsa_meth;
+    EVP_PKEY *pkey;
+    const BIGNUM *n = NULL;
+    const BIGNUM *e = NULL;
 
     priv = osip_malloc (sizeof (*priv));
     memset (priv, 0, sizeof (*priv));
@@ -905,7 +908,7 @@ _tls_set_certificate (SSL_CTX * ctx, const char *cn)
       return NULL;
     }
 
-    EVP_PKEY *pkey = X509_get0_pubkey(cert);
+    pkey = X509_get0_pubkey(cert);
 
     //pub_rsa = cert->cert_info->key->pkey->pkey.rsa;
     if (!(pub_rsa = EVP_PKEY_get0_RSA(pkey)))
@@ -919,8 +922,6 @@ _tls_set_certificate (SSL_CTX * ctx, const char *cn)
       return NULL;
     }
 
-    const BIGNUM *n = NULL;
-    const BIGNUM *e = NULL;
     RSA_get0_key(pub_rsa, &n, &e, NULL);
     if (!RSA_set0_key(rsa, BN_dup(n), BN_dup(e), NULL))
     {

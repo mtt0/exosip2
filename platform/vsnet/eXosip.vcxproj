@@ -226,7 +226,6 @@
     <ClCompile Include="..\..\..\exosip\src\eXoptions_api.c" />
     <ClCompile Include="..\..\..\exosip\src\eXosip.c" />
     <ClCompile Include="..\..\..\exosip\src\eXpublish_api.c" />
-    <ClCompile Include="..\..\..\exosip\src\eXrefer_api.c" />
     <ClCompile Include="..\..\..\exosip\src\eXregister_api.c" />
     <ClCompile Include="..\..\..\exosip\src\eXsubscription_api.c" />
     <ClCompile Include="..\..\..\exosip\src\eXtl_dtls.c" />
