@@ -1717,14 +1717,26 @@ cb_rcvreq_retransmission (int type, osip_transaction_t * tr, osip_message_t * si
   OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO1, NULL, "cb_rcvreq_retransmission (id=%i)\r\n", tr->transactionid));
 }
 
+#endif
+
 static void
 cb_transport_error (int type, osip_transaction_t * tr, int error)
 {
   struct eXosip_t *excontext = (struct eXosip_t *) osip_transaction_get_reserved1 (tr);
-  eXosip_subscribe_t *js = (eXosip_subscribe_t *) osip_transaction_get_reserved5 (tr);
-  eXosip_notify_t *jn = (eXosip_notify_t *) osip_transaction_get_reserved4 (tr);
+#ifndef MINISIZE
+  eXosip_subscribe_t *js = (eXosip_subscribe_t *)osip_transaction_get_reserved5(tr);
+  eXosip_notify_t *jn = (eXosip_notify_t *)osip_transaction_get_reserved4(tr);
+#endif
 
-  OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO1, NULL, "cb_transport_error (id=%i)\r\n", tr->transactionid));
+  OSIP_TRACE(osip_trace(__FILE__, __LINE__, OSIP_INFO1, NULL, "cb_transport_error (id=%i)\r\n", tr->transactionid));
+  if (type == OSIP_ICT_TRANSPORT_ERROR) {
+    eXosip_call_t *jc = (eXosip_call_t *)osip_transaction_get_reserved2(tr);
+    eXosip_dialog_t *jd = (eXosip_dialog_t *)osip_transaction_get_reserved3(tr);
+    if (jc == NULL && jd == NULL)
+      return;
+    _eXosip_report_call_event(excontext, EXOSIP_CALL_NOANSWER, jc, jd, tr);
+  }
+#ifndef MINISIZE
 
   if (jn == NULL && js == NULL)
     return;
@@ -1742,9 +1754,9 @@ cb_transport_error (int type, osip_transaction_t * tr, int error)
     REMOVE_ELEMENT (excontext->j_subscribes, js);
     _eXosip_subscription_free (excontext, js);
   }
-}
-
 #endif
+
+}
 
 int
 _eXosip_set_callbacks (osip_t * osip)
@@ -1795,6 +1807,11 @@ _eXosip_set_callbacks (osip_t * osip)
   osip_set_message_callback (osip, OSIP_NIST_NOTIFY_RECEIVED, &cb_rcvrequest);
   osip_set_message_callback (osip, OSIP_NIST_UNKNOWN_REQUEST_RECEIVED, &cb_rcvrequest);
 
+  osip_set_transport_error_callback(osip, OSIP_ICT_TRANSPORT_ERROR, &cb_transport_error);
+  osip_set_transport_error_callback(osip, OSIP_IST_TRANSPORT_ERROR, &cb_transport_error);
+  osip_set_transport_error_callback(osip, OSIP_NICT_TRANSPORT_ERROR, &cb_transport_error);
+  osip_set_transport_error_callback(osip, OSIP_NIST_TRANSPORT_ERROR, &cb_transport_error);
+
 #ifndef MINISIZE
   /* those methods are only used for log purpose except cb_transport_error which only apply to complete version */
   osip_set_message_callback (osip, OSIP_ICT_STATUS_2XX_RECEIVED_AGAIN, &cb_rcvresp_retransmission);
@@ -1809,11 +1826,6 @@ _eXosip_set_callbacks (osip_t * osip)
   osip_set_message_callback (osip, OSIP_NIST_STATUS_2XX_SENT_AGAIN, &cb_sndresp_retransmission);
   osip_set_message_callback (osip, OSIP_NIST_STATUS_3456XX_SENT_AGAIN, &cb_sndresp_retransmission);
   osip_set_message_callback (osip, OSIP_NIST_REQUEST_RECEIVED_AGAIN, &cb_rcvreq_retransmission);
-
-  osip_set_transport_error_callback (osip, OSIP_ICT_TRANSPORT_ERROR, &cb_transport_error);
-  osip_set_transport_error_callback (osip, OSIP_IST_TRANSPORT_ERROR, &cb_transport_error);
-  osip_set_transport_error_callback (osip, OSIP_NICT_TRANSPORT_ERROR, &cb_transport_error);
-  osip_set_transport_error_callback (osip, OSIP_NIST_TRANSPORT_ERROR, &cb_transport_error);
 
   osip_set_message_callback (osip, OSIP_ICT_INVITE_SENT, &cb_sndinvite);
   osip_set_message_callback (osip, OSIP_ICT_ACK_SENT, &cb_sndack);
