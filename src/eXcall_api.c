@@ -975,11 +975,17 @@ eXosip_call_send_answer (struct eXosip_t *excontext, int tid, int status, osip_m
 
 int
 eXosip_call_terminate (struct eXosip_t *excontext, int cid, int did) {
-  return eXosip_call_terminate_with_reason(excontext, cid, did, NULL);
+  return eXosip_call_terminate_with_header(excontext, cid, did, NULL, NULL);
 }
 
 int
-eXosip_call_terminate_with_reason (struct eXosip_t *excontext, int cid, int did, const char *reason)
+eXosip_call_terminate_with_reason(struct eXosip_t *excontext, int cid, int did, const char *reason)
+{
+  return eXosip_call_terminate_with_header(excontext, cid, did, "Reason", reason);
+}
+
+int
+eXosip_call_terminate_with_header(struct eXosip_t *excontext, int cid, int did, const char *header_name, const char *header_value)
 {
   int i;
   osip_transaction_t *tr;
@@ -1014,8 +1020,8 @@ eXosip_call_terminate_with_reason (struct eXosip_t *excontext, int cid, int did,
       OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "eXosip: cannot terminate this call!\n"));
       return i;
     }
-    if (reason != NULL) {
-      osip_message_set_header(request, "Reason", reason);
+    if (header_name != NULL && header_value != NULL) {
+      osip_message_set_header(request, header_name, header_value);
     }
     i = eXosip_create_cancel_transaction (excontext, jc, jd, request);
     if (i != 0) {
@@ -1046,8 +1052,8 @@ eXosip_call_terminate_with_reason (struct eXosip_t *excontext, int cid, int did,
 
       i = eXosip_call_build_answer (excontext, tr->transactionid, 603, &request);
 
-      if (reason != NULL) {
-        osip_message_set_header(request, "Reason", reason);
+      if (header_name != NULL && header_value != NULL) {
+        osip_message_set_header(request, header_name, header_value);
       }
 
       i = eXosip_call_send_answer (excontext, tr->transactionid, 603, request);
@@ -1068,9 +1074,9 @@ eXosip_call_terminate_with_reason (struct eXosip_t *excontext, int cid, int did,
     return i;
   }
 
-	if (reason != NULL) {
-		osip_message_set_header(request, "Reason", reason);
-	}
+  if (header_name != NULL && header_value != NULL) {
+    osip_message_set_header(request, header_name, header_value);
+  }
 
   _eXosip_add_authentication_information (excontext, request, NULL);
 
