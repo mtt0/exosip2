@@ -1174,36 +1174,26 @@ eXosip_set_tls_ctx (struct eXosip_t *excontext, eXosip_tls_ctx_t * ctx)
     /* no, one is missing */
     return TLS_ERR_MISSING_AUTH_PART;
   }
-  /* check if a password is set, when a private key is present */
-  if (client->priv_key[0] != '\0' && client->priv_key_pw[0] == '\0') {
-    return TLS_ERR_NO_PW;
+  if (client->cert[0] != '\0' && client->priv_key[0] == '\0') {
+    /* no, one is missing */
+    return TLS_ERR_MISSING_AUTH_PART;
   }
   /* check if public AND private keys are valid */
   if (server->cert[0] == '\0' && server->priv_key[0] != '\0') {
     /* no, one is missing */
     return TLS_ERR_MISSING_AUTH_PART;
   }
-  /* check if a password is set, when a private key is present */
-  if (server->priv_key[0] != '\0' && server->priv_key_pw[0] == '\0') {
-    return TLS_ERR_NO_PW;
+  if (server->cert[0] != '\0' && server->priv_key[0] == '\0') {
+    /* no, one is missing */
+    return TLS_ERR_MISSING_AUTH_PART;
   }
-  /* check if the file for diffie hellman is present */
-  /*if(ctx->dh_param[0] == '\0') {
-     return TLS_ERR_NO_DH_PARAM;
-     } */
-
-  /* check if a file with random data is present --> will be verified when random file is needed (see tls_tl_open) */
-  /*if(ctx->random_file[0] == '\0') {
-     return TLS_ERR_NO_RAND;
-     } */
-
-  /* check if a file with the list of possible rootCAs is available */
-  /*if(ctx->root_ca_cert[0] == '\0') {
-     return TLS_ERR_NO_ROOT_CA;
-     } */
 
   /* clean up configuration */
   memset (&excontext->eXosip_tls_ctx_params, 0, sizeof (eXosip_tls_ctx_t));
+
+  if (client->public_key_pinned[0] != '\0') {
+    snprintf(ownClient->public_key_pinned, sizeof(ownClient->public_key_pinned), "%s", client->public_key_pinned);
+  }
 
   /* check if client has own certificate */
   if (client->cert[0] != '\0') {
@@ -1310,6 +1300,10 @@ initialize_client_ctx (struct eXosip_t * excontext, const char *certif_client_lo
       OSIP_TRACE(osip_trace(__FILE__, __LINE__, OSIP_INFO2, NULL, "eXosip: client private key PEM file loaded [%s]!\n", client_ctx->client.priv_key));
     } else {
       OSIP_TRACE(osip_trace(__FILE__, __LINE__, OSIP_ERROR, NULL, "eXosip: Couldn't read client private key file [%s]!\n", client_ctx->client.priv_key));
+    }
+
+    if (!SSL_CTX_check_private_key(ctx)) {
+      OSIP_TRACE(osip_trace(__FILE__, __LINE__, OSIP_ERROR, NULL, "eXosip: private key does not match the public key of your certificate\n"));
     }
   }
 
@@ -2008,6 +2002,100 @@ _tls_tl_check_connected (struct eXosip_t *excontext)
   return 0;
 }
 
+int pkp_pin_peer_pubkey(struct eXosip_t *excontext, SSL* ssl)
+{
+  X509* cert = NULL;
+  FILE* fp = NULL;
+
+  int len1 = 0, len2 = 0;
+  unsigned char *buff1 = NULL, *buff2 = NULL;
+
+  int ret = 0, result = -1;
+
+  if (NULL == ssl) return -1;
+
+  if (excontext->eXosip_tls_ctx_params.client.public_key_pinned[0] == '\0')
+    return 0;
+  OSIP_TRACE(osip_trace(__FILE__, __LINE__, OSIP_INFO1, NULL, "eXosip: checking pinned public key for certificate [%s]\n", excontext->eXosip_tls_ctx_params.client.public_key_pinned));
+
+  do
+  {
+    unsigned char* temp = NULL;
+    long size;
+
+    cert = SSL_get_peer_certificate(ssl);
+    if (!(cert != NULL))
+      break; /* failed */
+
+    /* Begin Gyrations to get the subjectPublicKeyInfo       */
+    /* Thanks to Viktor Dukhovni on the OpenSSL mailing list */
+
+    len1 = i2d_X509_PUBKEY(X509_get_X509_PUBKEY(cert), NULL);
+    if (!(len1 > 0))
+      break; /* failed */
+
+    buff1 = temp = OPENSSL_malloc(len1);
+    if (!(buff1 != NULL))
+      break; /* failed */
+
+    len2 = i2d_X509_PUBKEY(X509_get_X509_PUBKEY(cert), &temp);
+
+    if (!((len1 == len2) && (temp != NULL) && ((temp - buff1) == len1)))
+      break; /* failed */
+
+    /* in order to get your public key file in DER format: */
+    /* openssl x509 -in your-base64-certificate.pem -pubkey -noout | openssl enc -base64 -d > publickey.der */
+    fp = fopen(excontext->eXosip_tls_ctx_params.client.public_key_pinned, "rb");
+    if (NULL == fp)
+      fp = fopen(excontext->eXosip_tls_ctx_params.client.public_key_pinned, "r");
+
+    if (!(NULL != fp))
+      break; /* failed */
+
+    ret = fseek(fp, 0, SEEK_END);
+    if (!(0 == ret))
+      break; /* failed */
+
+    size = ftell(fp);
+
+    if (!(size != -1 && size > 0 && size < 4096))
+      break; /* failed */
+
+    ret = fseek(fp, 0, SEEK_SET);
+    if (!(0 == ret))
+      break; /* failed */
+
+    buff2 = NULL; len2 = (int)size;
+
+    buff2 = OPENSSL_malloc(len2);
+    if (!(buff2 != NULL))
+      break; /* failed */
+
+    ret = (int)fread(buff2, (size_t)len2, 1, fp);
+    if (!(ret == 1))
+      break; /* failed */
+
+    size = len1 < len2 ? len1 : len2;
+
+    if (len1 != (int)size || len2 != (int)size || 0 != memcmp(buff1, buff2, (size_t)size))
+      break; /* failed */
+
+    result = 0;
+
+  } while (0);
+
+  if (fp != NULL)
+    fclose(fp);
+  if (NULL != buff2)
+    OPENSSL_free(buff2);
+  if (NULL != buff1)
+    OPENSSL_free(buff1);
+  if (NULL != cert)
+    X509_free(cert);
+
+  return result;
+}
+
 static int
 _tls_tl_ssl_connect_socket (struct eXosip_t *excontext, struct _tls_stream *sockinfo)
 {
@@ -2106,9 +2194,13 @@ _tls_tl_ssl_connect_socket (struct eXosip_t *excontext, struct _tls_stream *sock
     if (cert_err != X509_V_OK) {
       OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_WARNING, NULL, "Failed to verify remote certificate\n"));
       tls_dump_verification_failure (cert_err);
-
     }
     X509_free (cert);
+
+    if (pkp_pin_peer_pubkey(excontext, sockinfo->ssl_conn)) {
+      OSIP_TRACE(osip_trace(__FILE__, __LINE__, OSIP_ERROR, NULL, "Failed to verify public key for certificate\n"));
+      return -1;
+    }
   }
   else {
     OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "No certificate received\n"));

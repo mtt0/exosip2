@@ -219,12 +219,19 @@ extern "C" {
   * If the server requires a certificate from the client, you must provide
   * the certificate, private key, and your private key password.
   *
+  * You can "pin" your public key certificate if you have received it.
+  * public_key_pinned must contains your public key file in DER format.
+  * To extract your public key from a PEM certificate in DER format, you
+  * can use the following command line:
+  * openssl x509 -in server-cert.pem -pubkey -noout | openssl enc -base64 -d > pub_key.der
+  *
   * @struct eXosip_tls_credentials_s
   */
   typedef struct eXosip_tls_credentials_s {
     char priv_key[1024];     /**< absolute path to a file with a private key */
     char priv_key_pw[1024];  /**< password to open private key */
     char cert[1024];         /**< absolute path to a file with a certificate for the private key */
+    char public_key_pinned[1024]; /**< absolute path to a file with the expected public key of server */
   } eXosip_tls_credentials_t;
 
  /**
