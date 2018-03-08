@@ -1279,10 +1279,6 @@ initialize_client_ctx (struct eXosip_t * excontext, const char *certif_client_lo
     return NULL;
   }
 
-  if (client_ctx->client.priv_key_pw[0] != '\0') {
-    SSL_CTX_set_default_passwd_cb_userdata (ctx, (void *) client_ctx->client.priv_key_pw);
-    SSL_CTX_set_default_passwd_cb (ctx, password_cb);
-  }
 
   /* load from store */
   if (certif_client_local_cn_name[0] != '\0') {
@@ -1292,136 +1288,121 @@ initialize_client_ctx (struct eXosip_t * excontext, const char *certif_client_lo
   }
 
   /* load from file name in PEM files */
-  if (client_ctx->client.cert[0] != '\0') {
-    /* Load our keys and certificates */
-    if (client_ctx->client.cert[0] != '\0') {
-      if (!(SSL_CTX_use_certificate_file (ctx, client_ctx->client.cert, SSL_FILETYPE_PEM))) {
-        OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "eXosip: Couldn't read client certificate file %s!\n", client_ctx->client.cert));
-      }
-
-      if (!(SSL_CTX_use_PrivateKey_file (ctx, client_ctx->client.priv_key, SSL_FILETYPE_PEM)))
-        OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "eXosip: Couldn't read client pkey file %s!\n", client_ctx->client.priv_key));
-
-      if (!(SSL_CTX_use_RSAPrivateKey_file (ctx, client_ctx->client.priv_key, SSL_FILETYPE_PEM)))
-        OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "eXosip: Couldn't read client RSA key file %s!\n", client_ctx->client.priv_key));
+  if (client_ctx->client.cert[0] != '\0' && client_ctx->client.priv_key[0] != '\0') {
+    if (client_ctx->client.priv_key_pw[0] != '\0') {
+      SSL_CTX_set_default_passwd_cb_userdata(ctx, (void *)client_ctx->client.priv_key_pw);
+      SSL_CTX_set_default_passwd_cb(ctx, password_cb);
     }
-  }
-  
-  /* load from buffer in PEM format */
-  if (client_ctx->client.cert[0] != '\0') {
-    BIO *bio = BIO_new_file (client_ctx->client.cert, "r");
 
-    if (bio != NULL) {
-      X509 *cert = NULL;
-      PEM_read_bio_X509 (bio, &cert, 0, NULL);
-      if (cert == NULL) {
-        OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "eXosip: Couldn't read client certificate file %s!\n", client_ctx->client.cert));
-      }
-      else {
-        /* this is used to add a trusted certificate */
-        X509_STORE *cert_store = SSL_CTX_get_cert_store(ctx);
-        X509_STORE_add_cert (cert_store, cert);
-        X509_free(cert);
-      }
-      BIO_free (bio);
+    /* Load our keys and certificates */
+    if (SSL_CTX_use_certificate_file(ctx, client_ctx->client.cert, SSL_FILETYPE_ASN1)) {
+      OSIP_TRACE(osip_trace(__FILE__, __LINE__, OSIP_INFO2, NULL, "eXosip: client certificate ASN1 file loaded [%s]!\n", client_ctx->client.cert));
+    } else if (SSL_CTX_use_certificate_file (ctx, client_ctx->client.cert, SSL_FILETYPE_PEM)) {
+      OSIP_TRACE(osip_trace(__FILE__, __LINE__, OSIP_INFO2, NULL, "eXosip: client certificate PEM file loaded [%s]!\n", client_ctx->client.cert));
+    } else {
+      OSIP_TRACE(osip_trace(__FILE__, __LINE__, OSIP_ERROR, NULL, "eXosip: Couldn't read client certificate file [%s]!\n", client_ctx->client.cert));
+    }
+
+    if (SSL_CTX_use_PrivateKey_file(ctx, client_ctx->client.priv_key, SSL_FILETYPE_ASN1)) {
+      OSIP_TRACE(osip_trace(__FILE__, __LINE__, OSIP_INFO2, NULL, "eXosip: client private key ASN1 file loaded [%s]!\n", client_ctx->client.priv_key));
+    }
+    else if (SSL_CTX_use_PrivateKey_file(ctx, client_ctx->client.priv_key, SSL_FILETYPE_PEM)) {
+      OSIP_TRACE(osip_trace(__FILE__, __LINE__, OSIP_INFO2, NULL, "eXosip: client private key PEM file loaded [%s]!\n", client_ctx->client.priv_key));
+    } else {
+      OSIP_TRACE(osip_trace(__FILE__, __LINE__, OSIP_ERROR, NULL, "eXosip: Couldn't read client private key file [%s]!\n", client_ctx->client.priv_key));
     }
   }
 
   /* Load the CAs we trust */
   {
     char *caFile = 0, *caFolder = 0;
+    int verify_mode = SSL_VERIFY_NONE;
 
+    if (client_ctx->root_ca_cert[0] != '\0') {
 #ifdef WIN32
-    WIN32_FIND_DATA FileData;
-    HANDLE hSearch;
-    char szDirPath[1024];
-    WCHAR wUnicodeDirPath[2048];
+      WIN32_FIND_DATA FileData;
+      HANDLE hSearch;
+      char szDirPath[1024];
+      WCHAR wUnicodeDirPath[2048];
 
-    snprintf (szDirPath, sizeof (szDirPath), "%s", client_ctx->root_ca_cert);
+      snprintf(szDirPath, sizeof(szDirPath), "%s", client_ctx->root_ca_cert);
 
-    MultiByteToWideChar (CP_UTF8, 0, szDirPath, -1, wUnicodeDirPath, 2048);
-    hSearch = FindFirstFileEx (wUnicodeDirPath, FindExInfoStandard, &FileData, FindExSearchNameMatch, NULL, 0);
-    if (hSearch != INVALID_HANDLE_VALUE) {
-      if ((FileData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) == FILE_ATTRIBUTE_DIRECTORY)
-        caFolder = client_ctx->root_ca_cert;
-      else
-        caFile = client_ctx->root_ca_cert;
-    }
-    else {
-      caFile = client_ctx->root_ca_cert;
-    }
-#else
-    int fd = open (client_ctx->root_ca_cert, O_RDONLY);
-
-    if (fd >= 0) {
-      struct stat fileStat;
-
-      if (fstat (fd, &fileStat) < 0) {
-
+      MultiByteToWideChar(CP_UTF8, 0, szDirPath, -1, wUnicodeDirPath, 2048);
+      hSearch = FindFirstFileEx(wUnicodeDirPath, FindExInfoStandard, &FileData, FindExSearchNameMatch, NULL, 0);
+      if (hSearch != INVALID_HANDLE_VALUE) {
+        if ((FileData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) == FILE_ATTRIBUTE_DIRECTORY)
+          caFolder = client_ctx->root_ca_cert;
+        else
+          caFile = client_ctx->root_ca_cert;
       }
       else {
-        if (S_ISDIR (fileStat.st_mode)) {
-          caFolder = client_ctx->root_ca_cert;
-        }
-        else {
-          caFile = client_ctx->root_ca_cert;
-        }
+        caFile = client_ctx->root_ca_cert;
       }
-      close (fd);
-    }
-#endif
-
-
-    OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO3, NULL, "eXosip: Trusted CA %s : '%s'\n", caFolder ? "folder" : "file", client_ctx->root_ca_cert));
-
-    if ((caFile!=NULL && caFile[0] != '\0') || (caFolder!=NULL && caFolder[0] != '\0')) {
-      if (!(SSL_CTX_load_verify_locations (ctx, caFile, caFolder))) {
-        OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "eXosip: Couldn't read client root_ca_cert list ('%s')\n", client_ctx->root_ca_cert));
-      }
-    }
-
-    {
-#if !(OPENSSL_VERSION_NUMBER < 0x10002000L)
-      int verify_mode = SSL_VERIFY_NONE;
-
-      if (excontext->tls_verify_client_certificate > 0 && sni_servernameindication!=NULL) {
-        X509_STORE *pkix_validation_store = SSL_CTX_get_cert_store(ctx);
-        const X509_VERIFY_PARAM *param = X509_VERIFY_PARAM_lookup("ssl_server");
-
-        if (param != NULL) { /* const value, we have to copy (inherit) */
-          X509_VERIFY_PARAM *param_to = X509_STORE_get0_param(pkix_validation_store);
-          if (X509_VERIFY_PARAM_inherit(param_to, param)) {
-            X509_STORE_set_flags(pkix_validation_store, X509_V_FLAG_TRUSTED_FIRST);
-            X509_STORE_set_flags(pkix_validation_store, X509_V_FLAG_PARTIAL_CHAIN);
-          }
-          else {
-            OSIP_TRACE(osip_trace(__FILE__, __LINE__, OSIP_ERROR, NULL, "PARAM_inherit: failed for ssl_server\n"));
-          }
-          if (X509_VERIFY_PARAM_set1_host(param_to, sni_servernameindication, 0)) {
-            X509_VERIFY_PARAM_set_hostflags(param_to, X509_CHECK_FLAG_NO_WILDCARDS);
-          }
-          else {
-            OSIP_TRACE(osip_trace(__FILE__, __LINE__, OSIP_ERROR, NULL, "PARAM_set1_host: %s failed\n", sni_servernameindication));
-          }
-        }
-        else {
-          OSIP_TRACE(osip_trace(__FILE__, __LINE__, OSIP_ERROR, NULL, "PARAM_lookup: failed for ssl_server\n"));
-        }
-      }
-
-      if (excontext->tls_verify_client_certificate > 0)
-        verify_mode = SSL_VERIFY_PEER;
-      SSL_CTX_set_verify (ctx, verify_mode, &verify_cb);
 #else
-      int verify_mode = SSL_VERIFY_NONE;
+      int fd = open(client_ctx->root_ca_cert, O_RDONLY);
 
-      if (excontext->tls_verify_client_certificate > 0)
-        verify_mode = SSL_VERIFY_PEER;
+      if (fd >= 0) {
+        struct stat fileStat;
 
-      SSL_CTX_set_verify (ctx, verify_mode, &verify_cb);
+        if (fstat(fd, &fileStat) < 0) {
+
+        }
+        else {
+          if (S_ISDIR(fileStat.st_mode)) {
+            caFolder = client_ctx->root_ca_cert;
+          }
+          else {
+            caFile = client_ctx->root_ca_cert;
+          }
+        }
+        close(fd);
+      }
 #endif
-      SSL_CTX_set_verify_depth (ctx, ex_verify_depth + 1);
     }
+
+    if (client_ctx->root_ca_cert[0] == '\0') {
+    }
+    else {
+      if (SSL_CTX_load_verify_locations(ctx, caFile, caFolder)) {
+        OSIP_TRACE(osip_trace(__FILE__, __LINE__, OSIP_ERROR, NULL, "eXosip: trusted CA PEM file loaded [%s]\n", client_ctx->root_ca_cert));
+      }
+      else {
+        OSIP_TRACE(osip_trace(__FILE__, __LINE__, OSIP_ERROR, NULL, "eXosip: Couldn't read trusted CA list [%s]\n", client_ctx->root_ca_cert));
+      }
+    }
+
+#if !(OPENSSL_VERSION_NUMBER < 0x10002000L)
+
+    if (excontext->tls_verify_client_certificate > 0 && sni_servernameindication != NULL) {
+      X509_STORE *pkix_validation_store = SSL_CTX_get_cert_store(ctx);
+      const X509_VERIFY_PARAM *param = X509_VERIFY_PARAM_lookup("ssl_server");
+
+      if (param != NULL) { /* const value, we have to copy (inherit) */
+        X509_VERIFY_PARAM *param_to = X509_STORE_get0_param(pkix_validation_store);
+        if (X509_VERIFY_PARAM_inherit(param_to, param)) {
+          X509_STORE_set_flags(pkix_validation_store, X509_V_FLAG_TRUSTED_FIRST);
+          X509_STORE_set_flags(pkix_validation_store, X509_V_FLAG_PARTIAL_CHAIN);
+        }
+        else {
+          OSIP_TRACE(osip_trace(__FILE__, __LINE__, OSIP_ERROR, NULL, "PARAM_inherit: failed for ssl_server\n"));
+        }
+        if (X509_VERIFY_PARAM_set1_host(param_to, sni_servernameindication, 0)) {
+          X509_VERIFY_PARAM_set_hostflags(param_to, X509_CHECK_FLAG_NO_WILDCARDS);
+        }
+        else {
+          OSIP_TRACE(osip_trace(__FILE__, __LINE__, OSIP_ERROR, NULL, "PARAM_set1_host: %s failed\n", sni_servernameindication));
+        }
+      }
+      else {
+        OSIP_TRACE(osip_trace(__FILE__, __LINE__, OSIP_ERROR, NULL, "PARAM_lookup: failed for ssl_server\n"));
+      }
+    }
+#endif
+
+    if (excontext->tls_verify_client_certificate > 0)
+      verify_mode = SSL_VERIFY_PEER;
+    SSL_CTX_set_verify(ctx, verify_mode, &verify_cb);
+    SSL_CTX_set_verify_depth(ctx, ex_verify_depth + 1);
   }
 
   SSL_CTX_set_options (ctx, SSL_OP_NO_SSLv2 | SSL_OP_NO_SSLv3);
@@ -3296,7 +3277,7 @@ tls_tl_send_message (struct eXosip_t *excontext, osip_transaction_t * tr, osip_m
     return -1;
   }
 
-  OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO1, NULL, "Message sent: (to dest=%s:%i) \n%s\n", host, port, message));
+  OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO1, NULL, "Message sent: ([length=%d] to dest=%s:%i) \n%s\n", length, host, port, message));
 
   if (pos >= 0 && excontext->enable_dns_cache == 1 && osip_strcasecmp (host, reserved->socket_tab[pos].remote_ip) != 0 && MSG_IS_REQUEST (sip)) {
     if (MSG_IS_REGISTER (sip)) {

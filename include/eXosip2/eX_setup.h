@@ -215,17 +215,28 @@ extern "C" {
  /**
   * structure used to describe credentials for a client or server
   * consists of a certificate, a corresponding private key and its password
+  *
+  * If the server requires a certificate from the client, you must provide
+  * the certificate, private key, and your private key password.
+  *
   * @struct eXosip_tls_credentials_s
   */
   typedef struct eXosip_tls_credentials_s {
-    char priv_key[1024];
-    char priv_key_pw[1024];
-    char cert[1024];
+    char priv_key[1024];     /**< absolute path to a file with a private key */
+    char priv_key_pw[1024];  /**< password to open private key */
+    char cert[1024];         /**< absolute path to a file with a certificate for the private key */
   } eXosip_tls_credentials_t;
 
  /**
   * structure to describe the whole TLS-context for eXosip
   * consists of a certificate, a corresponding private key and its password
+  *
+  * When a client connects to a server, if you wish to verify certificate, you
+  * just have to configure the root_ca_cert parameter to a file with all your
+  * trusted CA. (example file at https://pki.google.com/roots.pem)
+  *
+  * On Windows & Macosx, the trusted certificates from the store are loaded automatically.
+  *
   * @struct eXosip_tls_ctx_s
   */
   typedef struct eXosip_tls_ctx_s {
