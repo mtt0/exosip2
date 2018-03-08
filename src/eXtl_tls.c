@@ -1242,6 +1242,114 @@ eXosip_tls_verify_certificate (struct eXosip_t * excontext, int _tls_verify_clie
   return TLS_OK;
 }
 
+static void _tls_load_trusted_certificates(eXosip_tls_ctx_t *exosip_tls_cfg, SSL_CTX *ctx)
+{
+  char *caFile = 0, *caFolder = 0;
+
+  if (_tls_add_certificates(ctx) <= 0) {
+    OSIP_TRACE(osip_trace(__FILE__, __LINE__, OSIP_WARNING, NULL, "no system certificate loaded\n"));
+  }
+
+  if (exosip_tls_cfg->root_ca_cert[0] == '\0')
+    return;
+
+#ifdef WIN32
+  {
+    WIN32_FIND_DATA FileData;
+    HANDLE hSearch;
+    char szDirPath[1024];
+    WCHAR wUnicodeDirPath[2048];
+
+    snprintf(szDirPath, sizeof(szDirPath), "%s", exosip_tls_cfg->root_ca_cert);
+
+    MultiByteToWideChar(CP_UTF8, 0, szDirPath, -1, wUnicodeDirPath, 2048);
+    hSearch = FindFirstFileEx(wUnicodeDirPath, FindExInfoStandard, &FileData, FindExSearchNameMatch, NULL, 0);
+    if (hSearch != INVALID_HANDLE_VALUE) {
+      if ((FileData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) == FILE_ATTRIBUTE_DIRECTORY)
+        caFolder = exosip_tls_cfg->root_ca_cert;
+      else
+        caFile = exosip_tls_cfg->root_ca_cert;
+    }
+    else {
+      caFile = exosip_tls_cfg->root_ca_cert;
+    }
+#else
+    int fd = open(exosip_tls_cfg->root_ca_cert, O_RDONLY);
+
+    if (fd >= 0) {
+      struct stat fileStat;
+
+      if (fstat(fd, &fileStat) < 0) {
+
+      }
+      else {
+        if (S_ISDIR(fileStat.st_mode)) {
+          caFolder = exosip_tls_cfg->root_ca_cert;
+        }
+        else {
+          caFile = exosip_tls_cfg->root_ca_cert;
+        }
+      }
+      close(fd);
+    }
+#endif
+  }
+
+  if (exosip_tls_cfg->root_ca_cert[0] == '\0') {
+  }
+  else {
+    if (SSL_CTX_load_verify_locations(ctx, caFile, caFolder)) {
+      OSIP_TRACE(osip_trace(__FILE__, __LINE__, OSIP_ERROR, NULL, "eXosip: trusted CA PEM file loaded [%s]\n", exosip_tls_cfg->root_ca_cert));
+    }
+    else {
+      OSIP_TRACE(osip_trace(__FILE__, __LINE__, OSIP_ERROR, NULL, "eXosip: Couldn't read trusted CA list [%s]\n", exosip_tls_cfg->root_ca_cert));
+    }
+  }
+}
+
+static void _tls_use_certificate_private_key(const char *log, const char *certificate_cn_name, eXosip_tls_credentials_t *xtc, SSL_CTX *ctx)
+{
+  /* load from store */
+  if (certificate_cn_name[0] != '\0') {
+    X509 *cert = NULL;
+    cert = _tls_set_certificate(ctx, certificate_cn_name);
+    X509_free(cert);
+  }
+
+  /* load from file name in PEM files */
+  if (xtc->cert[0] != '\0' && xtc->priv_key[0] != '\0') {
+    if (xtc->priv_key_pw[0] != '\0') {
+      SSL_CTX_set_default_passwd_cb_userdata(ctx, (void *)xtc->priv_key_pw);
+      SSL_CTX_set_default_passwd_cb(ctx, password_cb);
+    }
+
+    /* Load our keys and certificates */
+    if (SSL_CTX_use_certificate_file(ctx, xtc->cert, SSL_FILETYPE_ASN1)) {
+      OSIP_TRACE(osip_trace(__FILE__, __LINE__, OSIP_INFO2, NULL, "eXosip: %s certificate ASN1 file loaded [%s]!\n", log, xtc->cert));
+    }
+    else if (SSL_CTX_use_certificate_file(ctx, xtc->cert, SSL_FILETYPE_PEM)) {
+      OSIP_TRACE(osip_trace(__FILE__, __LINE__, OSIP_INFO2, NULL, "eXosip: %s certificate PEM file loaded [%s]!\n", log, xtc->cert));
+    }
+    else {
+      OSIP_TRACE(osip_trace(__FILE__, __LINE__, OSIP_ERROR, NULL, "eXosip: Couldn't read %s certificate file [%s]!\n", log, xtc->cert));
+    }
+
+    if (SSL_CTX_use_PrivateKey_file(ctx, xtc->priv_key, SSL_FILETYPE_ASN1)) {
+      OSIP_TRACE(osip_trace(__FILE__, __LINE__, OSIP_INFO2, NULL, "eXosip: %s private key ASN1 file loaded [%s]!\n", log, xtc->priv_key));
+    }
+    else if (SSL_CTX_use_PrivateKey_file(ctx, xtc->priv_key, SSL_FILETYPE_PEM)) {
+      OSIP_TRACE(osip_trace(__FILE__, __LINE__, OSIP_INFO2, NULL, "eXosip: %s private key PEM file loaded [%s]!\n", log, xtc->priv_key));
+    }
+    else {
+      OSIP_TRACE(osip_trace(__FILE__, __LINE__, OSIP_ERROR, NULL, "eXosip: Couldn't read %s private key file [%s]!\n", log, xtc->priv_key));
+    }
+
+    if (!SSL_CTX_check_private_key(ctx)) {
+      OSIP_TRACE(osip_trace(__FILE__, __LINE__, OSIP_ERROR, NULL, "eXosip: %s private key does not match the public key of your certificate\n", log));
+    }
+  }
+}
+
 SSL_CTX *
 initialize_client_ctx (struct eXosip_t * excontext, const char *certif_client_local_cn_name, eXosip_tls_ctx_t * client_ctx, int transport, const char *sni_servernameindication)
 {
@@ -1269,101 +1377,13 @@ initialize_client_ctx (struct eXosip_t * excontext, const char *certif_client_lo
     return NULL;
   }
 
-
-  /* load from store */
-  if (certif_client_local_cn_name[0] != '\0') {
-    X509 *cert = NULL;
-    cert = _tls_set_certificate (ctx, certif_client_local_cn_name);
-    X509_free(cert);
-  }
-
-  /* load from file name in PEM files */
-  if (client_ctx->client.cert[0] != '\0' && client_ctx->client.priv_key[0] != '\0') {
-    if (client_ctx->client.priv_key_pw[0] != '\0') {
-      SSL_CTX_set_default_passwd_cb_userdata(ctx, (void *)client_ctx->client.priv_key_pw);
-      SSL_CTX_set_default_passwd_cb(ctx, password_cb);
-    }
-
-    /* Load our keys and certificates */
-    if (SSL_CTX_use_certificate_file(ctx, client_ctx->client.cert, SSL_FILETYPE_ASN1)) {
-      OSIP_TRACE(osip_trace(__FILE__, __LINE__, OSIP_INFO2, NULL, "eXosip: client certificate ASN1 file loaded [%s]!\n", client_ctx->client.cert));
-    } else if (SSL_CTX_use_certificate_file (ctx, client_ctx->client.cert, SSL_FILETYPE_PEM)) {
-      OSIP_TRACE(osip_trace(__FILE__, __LINE__, OSIP_INFO2, NULL, "eXosip: client certificate PEM file loaded [%s]!\n", client_ctx->client.cert));
-    } else {
-      OSIP_TRACE(osip_trace(__FILE__, __LINE__, OSIP_ERROR, NULL, "eXosip: Couldn't read client certificate file [%s]!\n", client_ctx->client.cert));
-    }
-
-    if (SSL_CTX_use_PrivateKey_file(ctx, client_ctx->client.priv_key, SSL_FILETYPE_ASN1)) {
-      OSIP_TRACE(osip_trace(__FILE__, __LINE__, OSIP_INFO2, NULL, "eXosip: client private key ASN1 file loaded [%s]!\n", client_ctx->client.priv_key));
-    }
-    else if (SSL_CTX_use_PrivateKey_file(ctx, client_ctx->client.priv_key, SSL_FILETYPE_PEM)) {
-      OSIP_TRACE(osip_trace(__FILE__, __LINE__, OSIP_INFO2, NULL, "eXosip: client private key PEM file loaded [%s]!\n", client_ctx->client.priv_key));
-    } else {
-      OSIP_TRACE(osip_trace(__FILE__, __LINE__, OSIP_ERROR, NULL, "eXosip: Couldn't read client private key file [%s]!\n", client_ctx->client.priv_key));
-    }
-
-    if (!SSL_CTX_check_private_key(ctx)) {
-      OSIP_TRACE(osip_trace(__FILE__, __LINE__, OSIP_ERROR, NULL, "eXosip: private key does not match the public key of your certificate\n"));
-    }
-  }
+  _tls_use_certificate_private_key("client", certif_client_local_cn_name, &client_ctx->client, ctx);
 
   /* Load the CAs we trust */
+  _tls_load_trusted_certificates(client_ctx, ctx);
+
   {
-    char *caFile = 0, *caFolder = 0;
     int verify_mode = SSL_VERIFY_NONE;
-
-    if (client_ctx->root_ca_cert[0] != '\0') {
-#ifdef WIN32
-      WIN32_FIND_DATA FileData;
-      HANDLE hSearch;
-      char szDirPath[1024];
-      WCHAR wUnicodeDirPath[2048];
-
-      snprintf(szDirPath, sizeof(szDirPath), "%s", client_ctx->root_ca_cert);
-
-      MultiByteToWideChar(CP_UTF8, 0, szDirPath, -1, wUnicodeDirPath, 2048);
-      hSearch = FindFirstFileEx(wUnicodeDirPath, FindExInfoStandard, &FileData, FindExSearchNameMatch, NULL, 0);
-      if (hSearch != INVALID_HANDLE_VALUE) {
-        if ((FileData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) == FILE_ATTRIBUTE_DIRECTORY)
-          caFolder = client_ctx->root_ca_cert;
-        else
-          caFile = client_ctx->root_ca_cert;
-      }
-      else {
-        caFile = client_ctx->root_ca_cert;
-      }
-#else
-      int fd = open(client_ctx->root_ca_cert, O_RDONLY);
-
-      if (fd >= 0) {
-        struct stat fileStat;
-
-        if (fstat(fd, &fileStat) < 0) {
-
-        }
-        else {
-          if (S_ISDIR(fileStat.st_mode)) {
-            caFolder = client_ctx->root_ca_cert;
-          }
-          else {
-            caFile = client_ctx->root_ca_cert;
-          }
-        }
-        close(fd);
-      }
-#endif
-    }
-
-    if (client_ctx->root_ca_cert[0] == '\0') {
-    }
-    else {
-      if (SSL_CTX_load_verify_locations(ctx, caFile, caFolder)) {
-        OSIP_TRACE(osip_trace(__FILE__, __LINE__, OSIP_ERROR, NULL, "eXosip: trusted CA PEM file loaded [%s]\n", client_ctx->root_ca_cert));
-      }
-      else {
-        OSIP_TRACE(osip_trace(__FILE__, __LINE__, OSIP_ERROR, NULL, "eXosip: Couldn't read trusted CA list [%s]\n", client_ctx->root_ca_cert));
-      }
-    }
 
 #if !(OPENSSL_VERSION_NUMBER < 0x10002000L)
 
@@ -1405,10 +1425,6 @@ initialize_client_ctx (struct eXosip_t * excontext, const char *certif_client_lo
     OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_WARNING, NULL, "set_cipher_list: using DEFAULT list now\n"));
   }
 
-  if (_tls_add_certificates (ctx) <= 0) {
-    OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_WARNING, NULL, "no system certificate loaded\n"));
-  }
-
   return ctx;
 }
 
@@ -1417,7 +1433,6 @@ initialize_server_ctx (struct eXosip_t * excontext, const char *certif_local_cn_
 {
   const SSL_METHOD *meth = NULL;
   SSL_CTX *ctx;
-  X509 *cert = NULL;
 
   int s_server_session_id_context = 1;
 
@@ -1450,65 +1465,15 @@ initialize_server_ctx (struct eXosip_t * excontext, const char *certif_local_cn_
     SSL_CTX_set_read_ahead (ctx, 1);
   }
 
-  /* load from store */
-  if (certif_local_cn_name[0] != '\0') {
-    cert = _tls_set_certificate (ctx, certif_local_cn_name);
-  }
-
-  /* load from file name in PEM files */
-  if (cert==NULL && srv_ctx->server.cert[0] != '\0') {
-    if (!(SSL_CTX_use_certificate_file (ctx, srv_ctx->server.cert, SSL_FILETYPE_PEM))) {
-      OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "eXosip: Couldn't read certificate file!\n"));
-      SSL_CTX_free (ctx);
-      return NULL;
-    }
-    /* THIS CODE IS WRONG??? */
-    /* SSL_CTX_free(ctx); */
-    /* return NULL; */
-  }
-
-  if (_tls_add_certificates (ctx) <= 0) {
-    OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_WARNING, NULL, "no system certificate loaded\n"));
-  }
-
-  generate_eph_rsa_key (ctx);
-
-  SSL_CTX_set_session_id_context (ctx, (void *) &s_server_session_id_context, sizeof s_server_session_id_context);
-
-  if (cert == NULL && srv_ctx->server.priv_key_pw[0] != '\0') {
-    SSL_CTX_set_default_passwd_cb_userdata (ctx, (void *) srv_ctx->server.priv_key_pw);
-    SSL_CTX_set_default_passwd_cb (ctx, password_cb);
-  }
+  _tls_use_certificate_private_key("server", certif_local_cn_name, &srv_ctx->server, ctx);
 
   /* Load the CAs we trust */
-  if (srv_ctx->root_ca_cert[0]!='\0') {
-    if (!(SSL_CTX_load_verify_locations (ctx, srv_ctx->root_ca_cert, 0))) {
-      OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "eXosip: Couldn't read server root_ca_cert ('%s')\n", srv_ctx->root_ca_cert));
-    }
-  }
+  _tls_load_trusted_certificates(srv_ctx, ctx);
 
-  /* load from file in PEM format */
-  if (cert == NULL && srv_ctx->server.priv_key[0] != '\0') {
-    if (!(SSL_CTX_use_PrivateKey_file(ctx, srv_ctx->server.priv_key, SSL_FILETYPE_PEM))) {
-      OSIP_TRACE(osip_trace(__FILE__, __LINE__, OSIP_ERROR, NULL, "eXosip: Couldn't read key file: %s\n", srv_ctx->server.priv_key));
-      SSL_CTX_free(ctx);
-      return NULL;
-    }
-  }
-
-  if (cert != NULL || srv_ctx->server.cert[0] != '\0') {
-    if (!SSL_CTX_check_private_key(ctx)) {
-      OSIP_TRACE(osip_trace(__FILE__, __LINE__, OSIP_ERROR, NULL, "check_private_key: Key does not match the public key of the certificate\n"));
-      SSL_CTX_free(ctx);
-      X509_free(cert);
-      cert = NULL;
-      return NULL;
-    }
-  }
-
-  if (cert != NULL) {
-    X509_free(cert);
-    cert = NULL;
+  if (!SSL_CTX_check_private_key(ctx)) {
+    OSIP_TRACE(osip_trace(__FILE__, __LINE__, OSIP_ERROR, NULL, "check_private_key: Key does not match the public key of the certificate\n"));
+    SSL_CTX_free(ctx);
+    return NULL;
   }
 
   {
@@ -1636,7 +1601,9 @@ tls_tl_open (struct eXosip_t *excontext)
     return -1;
 
   for (curinfo = addrinfo; curinfo; curinfo = curinfo->ai_next) {
+#ifdef ENABLE_MAIN_SOCKET
     socklen_t len;
+#endif
     int type;
 
     if (curinfo->ai_protocol && curinfo->ai_protocol != excontext->eXtl_transport.proto_num) {
