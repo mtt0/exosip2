@@ -1253,8 +1253,8 @@ static void _tls_load_trusted_certificates(eXosip_tls_ctx_t *exosip_tls_cfg, SSL
   if (exosip_tls_cfg->root_ca_cert[0] == '\0')
     return;
 
-#ifdef WIN32
   {
+#ifdef WIN32
     WIN32_FIND_DATA FileData;
     HANDLE hSearch;
     char szDirPath[1024];
