@@ -1350,6 +1350,34 @@ static void _tls_use_certificate_private_key(const char *log, const char *certif
   }
 }
 
+static void _tls_common_setup(eXosip_tls_ctx_t *exosip_tls_cfg, SSL_CTX *ctx)
+{
+#ifndef SSL_CTRL_SET_ECDH_AUTO
+#define SSL_CTRL_SET_ECDH_AUTO 94
+#endif
+  if (exosip_tls_cfg->dh_param[0] == '\0')
+    build_dh_params(ctx);
+  else
+    load_dh_params(ctx, exosip_tls_cfg->dh_param);
+
+  /* SSL_CTX_set_ecdh_auto (ctx, on) requires OpenSSL 1.0.2 which wraps: */
+  if (SSL_CTX_ctrl(ctx, SSL_CTRL_SET_ECDH_AUTO, 1, NULL)) {
+    OSIP_TRACE(osip_trace(__FILE__, __LINE__, OSIP_INFO2, NULL, "ctrl_set_ecdh_auto: faster PFS ciphers enabled\n"));
+#if !defined(OPENSSL_NO_ECDH) && !(OPENSSL_VERSION_NUMBER < 0x10000000L)
+  }
+  else {
+    /* enables AES-128 ciphers, to get AES-256 use NID_secp384r1 */
+    EC_KEY *ecdh = EC_KEY_new_by_curve_name(NID_X9_62_prime256v1);
+    if (ecdh != NULL) {
+      if (SSL_CTX_set_tmp_ecdh(ctx, ecdh)) {
+        OSIP_TRACE(osip_trace(__FILE__, __LINE__, OSIP_INFO2, NULL, "set_tmp_ecdh: faster PFS ciphers enabled (secp256r1)\n"));
+      }
+      EC_KEY_free(ecdh);
+    }
+#endif
+  }
+}
+
 SSL_CTX *
 initialize_client_ctx (struct eXosip_t * excontext, const char *certif_client_local_cn_name, eXosip_tls_ctx_t * client_ctx, int transport, const char *sni_servernameindication)
 {
@@ -1419,11 +1447,13 @@ initialize_client_ctx (struct eXosip_t * excontext, const char *certif_client_lo
     SSL_CTX_set_verify_depth(ctx, ex_verify_depth + 1);
   }
 
-  SSL_CTX_set_options (ctx, SSL_OP_NO_SSLv2 | SSL_OP_NO_SSLv3);
+  SSL_CTX_set_options (ctx, SSL_OP_NO_SSLv2 | SSL_OP_NO_SSLv3 | SSL_OP_SINGLE_ECDH_USE | SSL_OP_SINGLE_DH_USE);
 
   if (!SSL_CTX_set_cipher_list (ctx, "HIGH:-COMPLEMENTOFDEFAULT")) {
     OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_WARNING, NULL, "set_cipher_list: using DEFAULT list now\n"));
   }
+
+  _tls_common_setup(client_ctx, ctx);
 
   return ctx;
 }
@@ -1501,30 +1531,7 @@ initialize_server_ctx (struct eXosip_t * excontext, const char *certif_local_cn_
   }
 #endif
 
-  if (srv_ctx->dh_param[0] == '\0')
-    build_dh_params (ctx);
-  else
-    load_dh_params (ctx, srv_ctx->dh_param);
-
-#ifndef SSL_CTRL_SET_ECDH_AUTO
-  #define SSL_CTRL_SET_ECDH_AUTO 94
-#endif
-
-  /* SSL_CTX_set_ecdh_auto (ctx, on) requires OpenSSL 1.0.2 which wraps: */
-  if (SSL_CTX_ctrl (ctx, SSL_CTRL_SET_ECDH_AUTO, 1, NULL)) {
-    OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO2, NULL, "ctrl_set_ecdh_auto: faster PFS ciphers enabled\n"));
-#if !defined(OPENSSL_NO_ECDH) && !(OPENSSL_VERSION_NUMBER < 0x10000000L)
-  } else {
-    /* enables AES-128 ciphers, to get AES-256 use NID_secp384r1 */
-    EC_KEY *ecdh = EC_KEY_new_by_curve_name (NID_X9_62_prime256v1);
-    if (ecdh != NULL) {
-      if (SSL_CTX_set_tmp_ecdh (ctx, ecdh)) {
-        OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO2, NULL, "set_tmp_ecdh: faster PFS ciphers enabled (secp256r1)\n"));
-      }
-      EC_KEY_free(ecdh);
-    }
-#endif
-  }
+  _tls_common_setup(srv_ctx, ctx);
 
   generate_eph_rsa_key (ctx);
 
