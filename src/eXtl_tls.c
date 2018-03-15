@@ -1086,13 +1086,13 @@ build_dh_params (SSL_CTX * ctx)
     return;
   }
 
-  OSIP_TRACE(osip_trace(__FILE__, __LINE__, OSIP_ERROR, NULL, "eXosip: building DH params!\n"));
+  OSIP_TRACE(osip_trace(__FILE__, __LINE__, OSIP_INFO3, NULL, "eXosip: building DH params!\n"));
   if (!DH_generate_parameters_ex (dh, 128, DH_GENERATOR_2, 0)) {
     OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "eXosip: DH_generate_parameters_ex failed!\n"));
     DH_free (dh);
     return;
   }
-  OSIP_TRACE(osip_trace(__FILE__, __LINE__, OSIP_ERROR, NULL, "eXosip: DH params built!\n"));
+  OSIP_TRACE(osip_trace(__FILE__, __LINE__, OSIP_INFO3, NULL, "eXosip: DH params built!\n"));
 
   if (!DH_check (dh, &codes)) {
     OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "eXosip: DH_check failed!\n"));
@@ -1299,7 +1299,7 @@ static void _tls_load_trusted_certificates(eXosip_tls_ctx_t *exosip_tls_cfg, SSL
   }
   else {
     if (SSL_CTX_load_verify_locations(ctx, caFile, caFolder)) {
-      OSIP_TRACE(osip_trace(__FILE__, __LINE__, OSIP_ERROR, NULL, "eXosip: trusted CA PEM file loaded [%s]\n", exosip_tls_cfg->root_ca_cert));
+      OSIP_TRACE(osip_trace(__FILE__, __LINE__, OSIP_INFO2, NULL, "eXosip: trusted CA PEM file loaded [%s]\n", exosip_tls_cfg->root_ca_cert));
     }
     else {
       OSIP_TRACE(osip_trace(__FILE__, __LINE__, OSIP_ERROR, NULL, "eXosip: Couldn't read trusted CA list [%s]\n", exosip_tls_cfg->root_ca_cert));
@@ -1501,7 +1501,7 @@ initialize_server_ctx (struct eXosip_t * excontext, const char *certif_local_cn_
   _tls_load_trusted_certificates(srv_ctx, ctx);
 
   if (!SSL_CTX_check_private_key(ctx)) {
-    OSIP_TRACE(osip_trace(__FILE__, __LINE__, OSIP_ERROR, NULL, "check_private_key: Key does not match the public key of the certificate\n"));
+    OSIP_TRACE(osip_trace(__FILE__, __LINE__, OSIP_WARNING, NULL, "check_private_key: either no match, or no cert/key: disable incoming TLS connection\n"));
     SSL_CTX_free(ctx);
     return NULL;
   }
