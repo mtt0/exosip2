@@ -1048,7 +1048,6 @@ udp_tl_send_message (struct eXosip_t *excontext, osip_transaction_t * tr, osip_m
   int sock;
   struct sockaddr_storage *local_ai_addr;
   int local_port;
-  int af_family;
 
   if (reserved == NULL) {
     OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "wrong state: create transport layer first\n"));
@@ -1268,7 +1267,6 @@ udp_tl_send_message (struct eXosip_t *excontext, osip_transaction_t * tr, osip_m
   sock = reserved->udp_socket;
   local_port = excontext->eXtl_transport.proto_local_port;
   local_ai_addr = &reserved->ai_addr;
-  af_family = reserved->udp_socket_family;
 
   /* if we have a second socket for outbound connection, re-use the incoming socket (udp_socket) for any message sent there */
   if (reserved->udp_socket_oc > 0)
@@ -1278,7 +1276,6 @@ udp_tl_send_message (struct eXosip_t *excontext, osip_transaction_t * tr, osip_m
     sock = reserved->udp_socket_oc;
     local_port = excontext->oc_local_port_range[0];
     local_ai_addr = &reserved->ai_addr_oc;
-    af_family = reserved->udp_socket_oc_family;
     
     for (pos = 0; pos < EXOSIP_MAX_SOCKETS; pos++) {
       if (reserved->socket_tab[pos].out_socket == 0)
@@ -1288,7 +1285,6 @@ udp_tl_send_message (struct eXosip_t *excontext, osip_transaction_t * tr, osip_m
         sock = reserved->socket_tab[pos].out_socket;
         local_port = excontext->eXtl_transport.proto_local_port;
         local_ai_addr = &reserved->ai_addr;
-        af_family = reserved->udp_socket_family;
         break;
       }
     }

@@ -346,8 +346,10 @@ tls_tl_free (struct eXosip_t *excontext)
     _tls_tl_close_sockinfo (&reserved->socket_tab[pos]);
   }
 
+#if OPENSSL_VERSION_NUMBER < 0x10100000L
   ERR_remove_state (0);
-
+#endif
+  
   memset (&reserved->socket_tab, 0, sizeof (struct _tls_stream) * EXOSIP_MAX_SOCKETS);
 
   memset (&reserved->ai_addr, 0, sizeof (struct sockaddr_storage));
@@ -1110,11 +1112,9 @@ build_dh_params (SSL_CTX * ctx)
   return;
 }
 
-#if (OPENSSL_VERSION_NUMBER < 0x00908000l || defined(ANDROID))
-RSA *
-RSA_generate_key (int bits, unsigned long e_value, void (*callback) (int, int, void *), void *cb_arg)
+static RSA *
+__RSA_generate_key (int bits, unsigned long e_value, void (*callback) (int, int, void *), void *cb_arg)
 {
-  BN_GENCB cb;
   int i;
   RSA *rsa = RSA_new ();
   BIGNUM *e = BN_new ();
@@ -1122,35 +1122,28 @@ RSA_generate_key (int bits, unsigned long e_value, void (*callback) (int, int, v
   if (!rsa || !e)
     goto err;
 
-  /* The problem is when building with 8, 16, or 32 BN_ULONG,                                                                                                  
-   * unsigned long can be larger */
-  for (i = 0; i < (int) sizeof (unsigned long) * 8; i++) {
-    if (e_value & (1UL << i))
-      if (BN_set_bit (e, i) == 0)
-        goto err;
-  }
+  i = BN_set_word(e, e_value);
+  if (i!=1)
+    goto err;
 
-  BN_GENCB_set_old (&cb, callback, cb_arg);
-
-  if (RSA_generate_key_ex (rsa, bits, e, &cb)) {
+  if (RSA_generate_key_ex (rsa, bits, e, NULL)) {
     BN_free (e);
     return rsa;
   }
-err:
+ err:
   if (e)
     BN_free (e);
   if (rsa)
     RSA_free (rsa);
   return 0;
 }
-#endif
 
 static void
 generate_eph_rsa_key (SSL_CTX * ctx)
 {
   RSA *rsa;
 
-  rsa = RSA_generate_key (512, RSA_F4, NULL, NULL);
+  rsa = __RSA_generate_key (512, RSA_F4, NULL, NULL);
 
   if (rsa != NULL) {
     if (!SSL_CTX_set_tmp_rsa (ctx, rsa))
@@ -1976,7 +1969,7 @@ _tls_tl_check_connected (struct eXosip_t *excontext)
   return 0;
 }
 
-int pkp_pin_peer_pubkey(struct eXosip_t *excontext, SSL* ssl)
+static int pkp_pin_peer_pubkey(struct eXosip_t *excontext, SSL* ssl)
 {
   X509* cert = NULL;
   FILE* fp = NULL;

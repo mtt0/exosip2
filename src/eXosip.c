@@ -1445,8 +1445,7 @@ _eXosip_mark_registration_ready (struct eXosip_t *excontext, const char *call_id
     if (jr->r_last_tr->orig_request==NULL || jr->r_last_tr->orig_request->call_id==NULL || jr->r_last_tr->orig_request->call_id->number==NULL)
       continue;
     if (osip_strcasecmp(jr->r_last_tr->orig_request->call_id->number, call_id)==0) {
-      time_t now;
-      now = osip_getsystemtime (NULL);
+      osip_getsystemtime (NULL);
       if (jr->r_last_tr->state == NICT_TRYING) {
         osip_gettimeofday (&jr->r_last_tr->nict_context->timer_e_start, NULL);
         add_gettimeofday (&jr->r_last_tr->nict_context->timer_e_start, 1);

@@ -215,7 +215,9 @@ tcp_tl_open (struct eXosip_t *excontext)
     return -1;
   
   for (curinfo = addrinfo; curinfo; curinfo = curinfo->ai_next) {
+#ifdef ENABLE_MAIN_SOCKET
     socklen_t len;
+#endif
     int type;
     
     if (curinfo->ai_protocol && curinfo->ai_protocol != excontext->eXtl_transport.proto_num) {

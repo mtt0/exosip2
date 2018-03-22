@@ -304,8 +304,10 @@ dtls_tl_free (struct eXosip_t *excontext)
     }
   }
   
+#if OPENSSL_VERSION_NUMBER < 0x10100000L
   ERR_remove_state (0);
-
+#endif
+  
   memset (&reserved->socket_tab, 0, sizeof (struct _dtls_stream) * EXOSIP_MAX_SOCKETS);
 
   memset (&reserved->ai_addr, 0, sizeof (struct sockaddr_storage));
