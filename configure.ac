@@ -18,6 +18,7 @@ dnl Initialize automake stuff
 AC_CONFIG_AUX_DIR(scripts)
 AC_CONFIG_HEADERS(exosip-config.h)
 AM_INIT_AUTOMAKE
+m4_ifdef([AM_SILENT_RULES], [AM_SILENT_RULES([yes])],)
 AC_CONFIG_MACRO_DIR([scripts])
 
 AC_CANONICAL_HOST
