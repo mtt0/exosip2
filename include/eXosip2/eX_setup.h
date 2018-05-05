@@ -270,13 +270,29 @@ extern "C" {
  * Start and return osip_naptr context.
  * Note that DNS results might not yet be available.
  * 
- * @param excontext    eXosip_t instance.
- * @param domain         domain name for NAPTR record
+ * If you provide a FQDN, a NAPTR query will be done on it.
+ * For example: "antisip.com"
+ *
+ * If you wish to do a ENUM query, you need to specify both the domain to query
+ * and the AUS (ie, the number dialed). You will use a "!" separator between them.
+ * For example, to query "+123456789" on "e164.org",  please use: "e164.org!+123456789"
+ *
+ * @param excontext      eXosip_t instance.
+ * @param domain         domain name for NAPTR record OR ENUM query (such as e164.org!+123456789)
  * @param protocol       protocol to use ("SIP")
  * @param transport      transport to use ("UDP")
  * @param keep_in_cache  keep result in cache if >0
  */
   struct osip_naptr *eXosip_dnsutils_naptr (struct eXosip_t *excontext, const char *domain, const char *protocol, const char *transport, int keep_in_cache);
+
+  /**
+  * For every eXosip_dnsutils_naptr query you make
+  * you must call eXosip_dnsutils_release to release
+  * the memory.
+  *
+  * @param naptr_record  the naptr structure to release.
+  */
+  void eXosip_dnsutils_release(struct osip_naptr *naptr_record);
 
 /**
  * Continue to process asynchronous DNS request (if implemented).

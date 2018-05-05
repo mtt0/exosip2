@@ -129,7 +129,7 @@ void
 _eXosip_transaction_free (struct eXosip_t *excontext, osip_transaction_t *transaction)
 {
   _eXosip_delete_reserved (transaction);
-  _eXosip_dnsutils_release (transaction->naptr_record);
+  eXosip_dnsutils_release (transaction->naptr_record);
   transaction->naptr_record = NULL;
   osip_transaction_free (transaction);
 #ifndef MINISIZE

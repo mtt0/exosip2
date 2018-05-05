@@ -632,8 +632,6 @@ struct eXosip_counters {
 
   int _eXosip_srv_lookup (struct eXosip_t *excontext, osip_message_t * sip, osip_naptr_t ** naptr_record);
 
-  void _eXosip_dnsutils_release (osip_naptr_t * naptr_record);
-
   int _eXosip_handle_incoming_message (struct eXosip_t *excontext, char *buf, size_t len, int socket, char *host, int port, char *received_host, int *rport_port);
 
   int _eXosip_transport_set_dscp (struct eXosip_t *excontext, int family, int sock);
