@@ -2416,6 +2416,10 @@ eXosip_dnsutils_naptr (struct eXosip_t *excontext, const char *_domain, const ch
   char domain[NI_MAXHOST*2];
   char AUS[64]; /* number with + prefix and only digits */
   char *delim_aus;
+
+  if (_domain == NULL)
+    return NULL;
+
   memset(domain, 0, sizeof(domain));
   memset(AUS, 0, sizeof(AUS));
   delim_aus = strchr(_domain, '!');
@@ -2538,9 +2542,6 @@ eXosip_dnsutils_naptr (struct eXosip_t *excontext, const char *_domain, const ch
       break;
     naptr_record = (osip_naptr_t *)osip_list_get_next(&it);
   }
-
-  if (domain == NULL)
-    return NULL;
 
   it.pos=0;
   naptr_record = (osip_naptr_t *)osip_list_get_first(dnsutils_list, &it);
