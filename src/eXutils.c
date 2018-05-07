@@ -2243,6 +2243,10 @@ eXosip_dnsutils_srv_lookup (struct osip_naptr *output_record)
       output_record->naptr_state = OSIP_NAPTR_STATE_RETRYLATER;
       return OSIP_BADPARAMETER;
     }
+#ifdef ANDROID
+    OSIP_TRACE(osip_trace(__FILE__, __LINE__, OSIP_INFO1, NULL, "eXosip_dnsutils_naptr_lookup: revert t 8.8.8.8,8.8.4.4\n"));
+    i = ares_set_servers_csv(channel, "8.8.8.8,8.8.4.4");
+#endif
     output_record->arg = channel;
   }
   else {
@@ -2355,6 +2359,11 @@ eXosip_dnsutils_naptr_lookup (osip_naptr_t * output_record, const char *domain)
     OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "eXosip_dnsutils_naptr_lookup: ares_init_options failed ('%s NAPTR')\n", domain));
     return OSIP_BADPARAMETER;
   }
+#ifdef ANDROID
+  OSIP_TRACE(osip_trace(__FILE__, __LINE__, OSIP_INFO1, NULL, "eXosip_dnsutils_naptr_lookup: revert t 8.8.8.8,8.8.4.4\n"));
+  i = ares_set_servers_csv(channel, "8.8.8.8,8.8.4.4");
+#endif
+
   output_record->arg = channel;
   output_record->naptr_state = OSIP_NAPTR_STATE_INPROGRESS;
   ares_query (channel, domain, C_IN, T_NAPTR, _naptr_callback, (void *) output_record);
