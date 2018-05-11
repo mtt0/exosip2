@@ -2153,7 +2153,7 @@ _naptr_callback (void *arg, int status, int timeouts, unsigned char *abuf, int a
 }
 
 static int
-eXosip_dnsutils_srv_lookup (struct osip_naptr *output_record)
+eXosip_dnsutils_srv_lookup (struct osip_naptr *output_record, const char *dnsserver)
 {
   ares_channel channel = NULL;
   struct ares_options options;
@@ -2243,10 +2243,15 @@ eXosip_dnsutils_srv_lookup (struct osip_naptr *output_record)
       output_record->naptr_state = OSIP_NAPTR_STATE_RETRYLATER;
       return OSIP_BADPARAMETER;
     }
+    if (dnsserver != NULL && dnsserver[0] != '\0') {
+      OSIP_TRACE(osip_trace(__FILE__, __LINE__, OSIP_INFO1, NULL, "eXosip_dnsutils_srv_lookup: use dnsserver: %s\n", dnsserver));
+      i = ares_set_servers_csv(channel, dnsserver);
+    } else {
 #ifdef ANDROID
-    OSIP_TRACE(osip_trace(__FILE__, __LINE__, OSIP_INFO1, NULL, "eXosip_dnsutils_naptr_lookup: revert t 8.8.8.8,8.8.4.4\n"));
-    i = ares_set_servers_csv(channel, "8.8.8.8,8.8.4.4");
+      OSIP_TRACE(osip_trace(__FILE__, __LINE__, OSIP_INFO1, NULL, "eXosip_dnsutils_srv_lookup: revert to 8.8.8.8,8.8.4.4\n"));
+      i = ares_set_servers_csv(channel, "8.8.8.8,8.8.4.4");
 #endif
+    }
     output_record->arg = channel;
   }
   else {
@@ -2331,7 +2336,7 @@ eXosip_dnsutils_srv_lookup (struct osip_naptr *output_record)
 }
 
 static int
-eXosip_dnsutils_naptr_lookup (osip_naptr_t * output_record, const char *domain)
+eXosip_dnsutils_naptr_lookup (osip_naptr_t * output_record, const char *domain, const char *dnsserver)
 {
   ares_channel channel = NULL;
   struct ares_options options;
@@ -2359,11 +2364,15 @@ eXosip_dnsutils_naptr_lookup (osip_naptr_t * output_record, const char *domain)
     OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "eXosip_dnsutils_naptr_lookup: ares_init_options failed ('%s NAPTR')\n", domain));
     return OSIP_BADPARAMETER;
   }
+  if (dnsserver != NULL && dnsserver[0] != '\0') {
+    OSIP_TRACE(osip_trace(__FILE__, __LINE__, OSIP_INFO1, NULL, "eXosip_dnsutils_naptr_lookup: use dnsserver: %s\n", dnsserver));
+    i = ares_set_servers_csv(channel, dnsserver);
+  } else {
 #ifdef ANDROID
-  OSIP_TRACE(osip_trace(__FILE__, __LINE__, OSIP_INFO1, NULL, "eXosip_dnsutils_naptr_lookup: revert t 8.8.8.8,8.8.4.4\n"));
-  i = ares_set_servers_csv(channel, "8.8.8.8,8.8.4.4");
+    OSIP_TRACE(osip_trace(__FILE__, __LINE__, OSIP_INFO1, NULL, "eXosip_dnsutils_naptr_lookup: revert to 8.8.8.8,8.8.4.4\n"));
+    i = ares_set_servers_csv(channel, "8.8.8.8,8.8.4.4");
 #endif
-
+  }
   output_record->arg = channel;
   output_record->naptr_state = OSIP_NAPTR_STATE_INPROGRESS;
   ares_query (channel, domain, C_IN, T_NAPTR, _naptr_callback, (void *) output_record);
@@ -2426,13 +2435,16 @@ eXosip_dnsutils_naptr (struct eXosip_t *excontext, const char *_domain, const ch
 
   char domain[NI_MAXHOST*2];
   char AUS[64]; /* number with + prefix and only digits */
+  char dnsserver[NI_MAXHOST];
   char *delim_aus;
+  char *delim_dnsserver;
 
   if (_domain == NULL)
     return NULL;
 
   memset(domain, 0, sizeof(domain));
   memset(AUS, 0, sizeof(AUS));
+  memset(dnsserver, 0, sizeof(dnsserver));
   delim_aus = strchr(_domain, '!');
   if (delim_aus != NULL && delim_aus[1]!='\0') {
     /* this is an enum NAPTR with AUS after '!' */
@@ -2442,7 +2454,14 @@ eXosip_dnsutils_naptr (struct eXosip_t *excontext, const char *_domain, const ch
     size_t idx_AUS = 0;
     size_t aus_length;
     delim_aus++;
+    delim_dnsserver = strchr(delim_aus, '!');
     aus_length = strlen(delim_aus);
+    if (delim_dnsserver != NULL)
+      aus_length = delim_dnsserver - delim_aus;
+    if (delim_dnsserver != NULL && delim_dnsserver[1] != '\0') {
+      delim_dnsserver++;
+      snprintf(dnsserver, sizeof(dnsserver), "%s", delim_dnsserver);
+    }
     for (idx = 0; idx <= aus_length - 1; idx++)
     {
       if (delim_aus[idx] == '+' || isdigit(delim_aus[idx])) {
@@ -2546,7 +2565,7 @@ eXosip_dnsutils_naptr (struct eXosip_t *excontext, const char *_domain, const ch
 
     /* process all */
     if (naptr_record->naptr_state == OSIP_NAPTR_STATE_NAPTRDONE || naptr_record->naptr_state == OSIP_NAPTR_STATE_SRVINPROGRESS)
-      eXosip_dnsutils_srv_lookup (naptr_record);
+      eXosip_dnsutils_srv_lookup (naptr_record, dnsserver);
 
     naptr_record = NULL;
     if (it.pos == 9)
@@ -2562,7 +2581,7 @@ eXosip_dnsutils_naptr (struct eXosip_t *excontext, const char *_domain, const ch
         break;
 
       if (naptr_record->naptr_state == OSIP_NAPTR_STATE_NAPTRDONE || naptr_record->naptr_state == OSIP_NAPTR_STATE_SRVINPROGRESS)
-        eXosip_dnsutils_srv_lookup (naptr_record);
+        eXosip_dnsutils_srv_lookup (naptr_record, dnsserver);
 
       return naptr_record;
     }
@@ -2610,7 +2629,7 @@ eXosip_dnsutils_naptr (struct eXosip_t *excontext, const char *_domain, const ch
     naptr_record->keep_in_cache = 1;
     snprintf(naptr_record->AUS, sizeof(naptr_record->AUS), "%s", AUS);
   }
-  i = eXosip_dnsutils_naptr_lookup (naptr_record, domain);
+  i = eXosip_dnsutils_naptr_lookup (naptr_record, domain, dnsserver);
   if (i < 0) {
     if (keep_in_cache <= 0) {
       return naptr_record;
@@ -2622,7 +2641,7 @@ eXosip_dnsutils_naptr (struct eXosip_t *excontext, const char *_domain, const ch
   }
 
   if (naptr_record->naptr_state == OSIP_NAPTR_STATE_NAPTRDONE || naptr_record->naptr_state == OSIP_NAPTR_STATE_SRVINPROGRESS)
-    eXosip_dnsutils_srv_lookup (naptr_record);
+    eXosip_dnsutils_srv_lookup (naptr_record, dnsserver);
 
   if (keep_in_cache <= 0) {
     return naptr_record;
@@ -2638,7 +2657,7 @@ eXosip_dnsutils_dns_process (osip_naptr_t * naptr_record, int force)
   ares_channel channel = NULL;
 
   if (naptr_record->naptr_state == OSIP_NAPTR_STATE_NAPTRDONE || naptr_record->naptr_state == OSIP_NAPTR_STATE_SRVINPROGRESS)
-    eXosip_dnsutils_srv_lookup (naptr_record);
+    eXosip_dnsutils_srv_lookup (naptr_record, NULL);
 
   if (naptr_record->arg != NULL)
     channel = naptr_record->arg;
@@ -2676,7 +2695,7 @@ eXosip_dnsutils_dns_process (osip_naptr_t * naptr_record, int force)
     if (nfds == 0) {
       if (naptr_record->naptr_state == OSIP_NAPTR_STATE_NAPTRDONE || naptr_record->naptr_state == OSIP_NAPTR_STATE_SRVINPROGRESS) {
         /* missing SRV */
-        eXosip_dnsutils_srv_lookup (naptr_record);
+        eXosip_dnsutils_srv_lookup (naptr_record, NULL);
         if (naptr_record->arg == NULL) /* FIX: success: eXosip_dnsutils_srv_lookup has destroyed channel already. */
           return OSIP_SUCCESS;
       }
@@ -2746,7 +2765,7 @@ _eXosip_dnsutils_srv_lookup (struct osip_srv_record *output_srv)
     return OSIP_SUCCESS;
   }
 
-  if (DnsQuery (output_srv->name, DNS_TYPE_SRV, DNS_QUERY_STANDARD, NULL, &answer, NULL) != 0) {
+  if (DnsQuery_UTF8 (output_srv->name, DNS_TYPE_SRV, DNS_QUERY_STANDARD, NULL, &answer, NULL) != 0) {
     return OSIP_UNKNOWN_HOST;
   }
 
@@ -2788,7 +2807,7 @@ _eXosip_dnsutils_srv_lookup (struct osip_srv_record *output_srv)
 }
 
 int
-eXosip_dnsutils_srv_lookup (struct osip_naptr *output_record)
+eXosip_dnsutils_srv_lookup (struct osip_naptr *output_record, const char *dnsserver)
 {
   if (output_record->naptr_state == OSIP_NAPTR_STATE_SRVDONE)
     return OSIP_SUCCESS;
@@ -2885,11 +2904,12 @@ _eX_dn_expand (unsigned char *msg, unsigned char *eomorig, unsigned char *comp_d
   return len;
 }
 
-int
-eXosip_dnsutils_naptr_lookup (osip_naptr_t * output_record, const char *domain)
+static int
+eXosip_dnsutils_naptr_lookup (osip_naptr_t * output_record, const char *domain, const char *dnsserver)
 {
   PDNS_RECORD answer, tmp;      /* answer buffer from nameserver */
   DNS_STATUS ret;
+  int size;
 
   if (domain == NULL)
     return OSIP_BADPARAMETER;
@@ -2901,7 +2921,7 @@ eXosip_dnsutils_naptr_lookup (osip_naptr_t * output_record, const char *domain)
 
   OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO2, NULL, "eXosip_dnsutils_naptr_lookup: About to ask for '%s NAPTR'\n", domain));
 
-  ret = DnsQuery (domain, DNS_TYPE_NAPTR, DNS_QUERY_STANDARD, NULL, &answer, NULL);
+  ret = DnsQuery_UTF8(domain, DNS_TYPE_NAPTR, DNS_QUERY_STANDARD, NULL, &answer, NULL);
   if (ret == DNS_ERROR_NO_DNS_SERVERS)
     return OSIP_NO_NETWORK;
   if (ret == ERROR_TIMEOUT)
@@ -2921,21 +2941,12 @@ eXosip_dnsutils_naptr_lookup (osip_naptr_t * output_record, const char *domain)
 
     int len;
     OSVERSIONINFOEX ovi;
-    typedef struct {
-      unsigned short order;
-      unsigned short pref;
-      char flag[256];
-      char service[1024];
-      char regexp[1024];
-      char replacement[1024];
-    } osip_naptr_t;
-
-    osip_naptr_t anaptr;
+    osip_srv_record_t srvrecord;
 
     if (tmp->wType != DNS_TYPE_NAPTR)
       continue;
 
-    memset (&anaptr, 0, sizeof (osip_naptr_t));
+    memset(&srvrecord, 0, sizeof(osip_srv_record_t));
     memset (&ovi, 0, sizeof (ovi));
     ovi.dwOSVersionInfoSize = sizeof (ovi);
     GetVersionEx ((LPOSVERSIONINFO) & ovi);
@@ -2948,76 +2959,90 @@ eXosip_dnsutils_naptr_lookup (osip_naptr_t * output_record, const char *domain)
 #if (_WIN32_WINNT >= 0x0600)
       /* RUN only on Vista? */
       /* compile starting from SDK 6.0A? even on XP... */
-      anaptr.order = tmp->Data.NAPTR.wOrder;
-      anaptr.pref = tmp->Data.NAPTR.wPreference;
-      strncpy (anaptr.flag, tmp->Data.NAPTR.pFlags, sizeof (anaptr.flag) - 1);
-      strncpy (anaptr.service, tmp->Data.NAPTR.pService, sizeof (anaptr.service) - 1);
-      strncpy (anaptr.regexp, tmp->Data.NAPTR.pRegularExpression, sizeof (anaptr.regexp) - 1);
-      strncpy (anaptr.replacement, tmp->Data.NAPTR.pReplacement, sizeof (anaptr.replacement) - 1);
-
+      srvrecord.order = tmp->Data.NAPTR.wOrder;
+      srvrecord.preference = tmp->Data.NAPTR.wPreference;
+      strncpy(srvrecord.flag, tmp->Data.NAPTR.pFlags, sizeof(srvrecord.flag) - 1);
+      strncpy(srvrecord.protocol, tmp->Data.NAPTR.pService, sizeof(srvrecord.protocol) - 1);
+      strncpy(srvrecord.regexp, tmp->Data.NAPTR.pRegularExpression, sizeof(srvrecord.regexp) - 1);
+      strncpy(srvrecord.replacement, tmp->Data.NAPTR.pReplacement, sizeof(srvrecord.replacement) - 1);
 #endif
-    }
-
-    else {
-      memcpy ((void *) &anaptr.order, buf, 2);
-      anaptr.order = ntohs (anaptr.order);      /* ((unsigned short)buf[0] << 8) | ((unsigned short)buf[1]); */
+    } else {
+      memcpy ((void *) &srvrecord.order, buf, 2);
+      srvrecord.order = ntohs (srvrecord.order);      /* ((unsigned short)buf[0] << 8) | ((unsigned short)buf[1]); */
       buf += sizeof (unsigned short);
-      memcpy ((void *) &anaptr.pref, buf, 2);
-      anaptr.pref = ntohs (anaptr.pref);        /* ((unsigned short)buf[0] << 8) | ((unsigned short)buf[1]); */
+      memcpy ((void *) &srvrecord.preference, buf, 2);
+      srvrecord.preference = ntohs (srvrecord.preference);        /* ((unsigned short)buf[0] << 8) | ((unsigned short)buf[1]); */
       buf += sizeof (unsigned short);
 
       len = *buf;
       if (len < 0 || len > 255)
         break;
       buf++;
-      strncpy (anaptr.flag, buf, len);
-      anaptr.flag[len] = '\0';
+      strncpy (srvrecord.flag, buf, len);
+      srvrecord.flag[len] = '\0';
       buf += len;
 
       len = *buf;
       if (len < 0 || len > 1023)
         break;
       buf++;
-      strncpy (anaptr.service, buf, len);
-      anaptr.service[len] = '\0';
+      strncpy (srvrecord.protocol, buf, len);
+      srvrecord.protocol[len] = '\0';
       buf += len;
 
       len = *buf;
       if (len < 0 || len > 1023)
         break;
       buf++;
-      strncpy (anaptr.regexp, buf, len);
-      anaptr.regexp[len] = '\0';
+      strncpy (srvrecord.regexp, buf, len);
+      srvrecord.regexp[len] = '\0';
       buf += len;
 
-      len = _eX_dn_expand ((char *) &tmp->Data, ((char *) &tmp->Data) + tmp->wDataLength, buf, anaptr.replacement, 1024 - 1);
+      len = _eX_dn_expand ((char *) &tmp->Data, ((char *) &tmp->Data) + tmp->wDataLength, buf, srvrecord.replacement, 1024 - 1);
 
       if (len < 0)
         break;
       buf += len;
     }
 
-    OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO2, NULL, "eXosip_dnsutils_naptr_lookup: NAPTR %s ->%i/%i/%s/%s/%s/%s\n", domain, anaptr.order, anaptr.pref, anaptr.flag, anaptr.service, anaptr.regexp, anaptr.replacement));
+    if (srvrecord.flag[0] == 's' || srvrecord.flag[0] == 'S') {
+      snprintf(srvrecord.name, sizeof(srvrecord.name), "%s", srvrecord.replacement);
+    }
+    if (srvrecord.flag[0] == 'a' || srvrecord.flag[0] == 'A') {
+      snprintf(srvrecord.name, sizeof(srvrecord.name), "%s", srvrecord.replacement);
+    }
+    if (srvrecord.flag[0] == 'u' || srvrecord.flag[0] == 'U') {
+      naptr_enum_match_and_replace(output_record, &srvrecord);
+    }
 
-    if (osip_strncasecmp (anaptr.service, "SIP+D2U", 8) == 0) { /* udp */
-      snprintf (output_record->sipudp_record.name, sizeof (output_record->sipudp_record.name), "%s", anaptr.replacement);
+    srvrecord.srv_state = OSIP_SRV_STATE_UNKNOWN;
+    if (osip_strncasecmp(srvrecord.name, "_sip._udp.", 10) == 0 || osip_strncasecmp(srvrecord.protocol, "SIP+D2U", 8) == 0) {   /* udp */
+      memcpy(&output_record->sipudp_record, &srvrecord, sizeof(osip_srv_record_t));
       output_record->naptr_state = OSIP_NAPTR_STATE_NAPTRDONE;
     }
-    else if (osip_strncasecmp (anaptr.service, "SIP+D2T", 8) == 0) {    /* tcp */
-      snprintf (output_record->siptcp_record.name, sizeof (output_record->siptcp_record.name), "%s", anaptr.replacement);
+    else if (osip_strncasecmp(srvrecord.name, "_sip._tcp.", 10) == 0 || osip_strncasecmp(srvrecord.protocol, "SIP+D2T", 8) == 0) {      /* tcp */
+      memcpy(&output_record->siptcp_record, &srvrecord, sizeof(osip_srv_record_t));
       output_record->naptr_state = OSIP_NAPTR_STATE_NAPTRDONE;
     }
-    else if (osip_strncasecmp (anaptr.service, "SIPS+D2T", 9) == 0) {   /* tls */
-      snprintf (output_record->siptls_record.name, sizeof (output_record->siptls_record.name), "%s", anaptr.replacement);
+    else if (osip_strncasecmp(srvrecord.protocol, "SIPS+D2T", 9) == 0) {     /* tls */
+      memcpy(&output_record->siptls_record, &srvrecord, sizeof(osip_srv_record_t));
       output_record->naptr_state = OSIP_NAPTR_STATE_NAPTRDONE;
     }
-    else if (osip_strncasecmp (anaptr.service, "SIPS+D2U", 9) == 0) {   /* dtls-udp */
-      snprintf (output_record->sipdtls_record.name, sizeof (output_record->sipdtls_record.name), "%s", anaptr.replacement);
+    else if (osip_strncasecmp(srvrecord.protocol, "SIPS+D2U", 9) == 0) {     /* dtls-udp */
+      memcpy(&output_record->sipdtls_record, &srvrecord, sizeof(osip_srv_record_t));
       output_record->naptr_state = OSIP_NAPTR_STATE_NAPTRDONE;
     }
-    else if (osip_strncasecmp (anaptr.service, "SIP+D2S", 8) == 0) {    /* sctp */
-      snprintf (output_record->sipsctp_record.name, sizeof (output_record->sipsctp_record.name), "%s", anaptr.replacement);
+    else if (osip_strncasecmp(srvrecord.protocol, "SIP+D2S", 8) == 0) {      /* sctp */
+      memcpy(&output_record->sipsctp_record, &srvrecord, sizeof(osip_srv_record_t));
+      output_record->naptr_state = OSIP_NAPTR_STATE_NAPTRDONE;
     }
+    else if (osip_strncasecmp(srvrecord.protocol, "E2U+SIP", 8) == 0 || osip_strncasecmp(srvrecord.protocol, "SIP+E2U", 8) == 0) {      /* enum result // SIP+E2U is from rfc2916 and obsolete */
+      srvrecord.srv_state = OSIP_SRV_STATE_COMPLETED;
+      memcpy(&output_record->sipenum_record, &srvrecord, sizeof(osip_srv_record_t));
+      output_record->naptr_state = OSIP_NAPTR_STATE_SRVDONE;
+    }
+
+    OSIP_TRACE(osip_trace(__FILE__, __LINE__, OSIP_INFO2, NULL, "save_NAPTR: NAPTR [%s] ->[%i][%i][%s][%s][%s]\n", output_record->domain, srvrecord.order, srvrecord.preference, srvrecord.protocol, srvrecord.regexp, srvrecord.name));
   }
 
   for (tmp = answer; tmp != NULL; tmp = tmp->pNext) {
@@ -3097,7 +3122,6 @@ eXosip_dnsutils_naptr_lookup (osip_naptr_t * output_record, const char *domain)
     }
 
     OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO2, NULL, "A record %s -> %d.%d.%d.%d\n", tmp->pName, (val >> 0) & 0x000000FF, (val >> 8) & 0x000000FF, (val >> 16) & 0x000000FF, (val >> 24) & 0x000000FF));
-
   }
 
   DnsRecordListFree (answer, DnsFreeRecordList);
@@ -3106,7 +3130,7 @@ eXosip_dnsutils_naptr_lookup (osip_naptr_t * output_record, const char *domain)
 }
 
 struct osip_naptr *
-eXosip_dnsutils_naptr (struct eXosip_t *excontext, const char *domain, const char *protocol, const char *transport, int keep_in_cache)
+eXosip_dnsutils_naptr (struct eXosip_t *excontext, const char *_domain, const char *protocol, const char *transport, int keep_in_cache)
 {
   osip_list_iterator_t it;
   struct osip_naptr *naptr_record;
@@ -3116,8 +3140,65 @@ eXosip_dnsutils_naptr (struct eXosip_t *excontext, const char *domain, const cha
   IP4_ARRAY *dns_servers;
   int not_in_list = 0;
 
-  if (excontext->dns_capabilities <= 0)
+  char domain[NI_MAXHOST*2];
+  char AUS[64]; /* number with + prefix and only digits */
+  char dnsserver[NI_MAXHOST];
+  char *delim_aus;
+  char *delim_dnsserver;
+
+  if (_domain == NULL)
     return NULL;
+
+  memset(domain, 0, sizeof(domain));
+  memset(AUS, 0, sizeof(AUS));
+  memset(dnsserver, 0, sizeof(dnsserver));
+  delim_aus = strchr(_domain, '!');
+  if (delim_aus != NULL && delim_aus[1] != '\0') {
+    /* this is an enum NAPTR with AUS after '!' */
+    /* example: enum.enumer.org!+123456789 */
+    size_t idx;
+    size_t idx_domain = 0;
+    size_t idx_AUS = 0;
+    size_t aus_length;
+    delim_aus++;
+    delim_dnsserver = strchr(delim_aus, '!');
+    aus_length = strlen(delim_aus);
+    if (delim_dnsserver != NULL)
+      aus_length = delim_dnsserver - delim_aus;
+    if (delim_dnsserver != NULL && delim_dnsserver[1] != '\0') {
+      delim_dnsserver++;
+      snprintf(dnsserver, sizeof(dnsserver), "%s", delim_dnsserver);
+    }
+    for (idx = 0; idx <= aus_length - 1; idx++)
+    {
+      if (delim_aus[idx] == '+' || isdigit(delim_aus[idx])) {
+        AUS[idx_AUS] = delim_aus[idx];
+        idx_AUS++;
+      }
+    }
+    AUS[idx_AUS] = '\0';
+    for (idx = 0; idx <= aus_length - 1; idx++)
+    {
+      if (isdigit(delim_aus[aus_length - idx - 1])) {
+        domain[idx_domain] = delim_aus[aus_length - idx - 1];
+        idx_domain++;
+        domain[idx_domain] = '.';
+        idx_domain++;
+      }
+    }
+    domain[idx_domain] = '\0';
+    if (idx_domain > 0) {
+      snprintf(domain + idx_domain, delim_aus - _domain, "%s", _domain);
+    }
+    else {
+      delim_aus = NULL;
+      snprintf(domain, sizeof(domain), "%s", _domain);
+    }
+  }
+  else {
+    delim_aus = NULL;
+    snprintf(domain, sizeof(domain), "%s", _domain);
+  }
 
   if (dnsutils_list == NULL) {
     dnsutils_list = (osip_list_t *) osip_malloc (sizeof (osip_list_t));
@@ -3183,16 +3264,13 @@ eXosip_dnsutils_naptr (struct eXosip_t *excontext, const char *domain, const cha
 
     /* process all */
     if (naptr_record->naptr_state == OSIP_NAPTR_STATE_NAPTRDONE || naptr_record->naptr_state == OSIP_NAPTR_STATE_SRVINPROGRESS)
-      eXosip_dnsutils_srv_lookup (naptr_record);
+      eXosip_dnsutils_srv_lookup (naptr_record, dnsserver);
 
     naptr_record = NULL;
     if (it.pos == 9)
       break;
     naptr_record = (osip_naptr_t *)osip_list_get_next(&it);
   }
-
-  if (domain == NULL)
-    return NULL;
 
   it.pos=0;
   naptr_record = (osip_naptr_t *)osip_list_get_first(dnsutils_list, &it);
@@ -3202,7 +3280,7 @@ eXosip_dnsutils_naptr (struct eXosip_t *excontext, const char *domain, const cha
         break;
 
       if (naptr_record->naptr_state == OSIP_NAPTR_STATE_NAPTRDONE || naptr_record->naptr_state == OSIP_NAPTR_STATE_SRVINPROGRESS)
-        eXosip_dnsutils_srv_lookup (naptr_record);
+        eXosip_dnsutils_srv_lookup (naptr_record, dnsserver);
 
       return naptr_record;
     }
@@ -3235,20 +3313,23 @@ eXosip_dnsutils_naptr (struct eXosip_t *excontext, const char *domain, const cha
     naptr_record = (osip_naptr_t *) osip_malloc (sizeof (osip_naptr_t));
     memset (naptr_record, 0, sizeof (osip_naptr_t));
     naptr_record->keep_in_cache = keep_in_cache;
+    snprintf(naptr_record->AUS, sizeof(naptr_record->AUS), "%s", AUS);
   }
   else if (naptr_record == NULL) {
     naptr_record = (osip_naptr_t *) osip_malloc (sizeof (osip_naptr_t));
     memset (naptr_record, 0, sizeof (osip_naptr_t));
     naptr_record->keep_in_cache = keep_in_cache;
     not_in_list = 1;
+    snprintf(naptr_record->AUS, sizeof(naptr_record->AUS), "%s", AUS);
   }
   else {
     /* it was found, so it WAS in cache before, but we were in "retry" state */
     memset (naptr_record, 0, sizeof (osip_naptr_t));
     naptr_record->keep_in_cache = 1;
+    snprintf(naptr_record->AUS, sizeof(naptr_record->AUS), "%s", AUS);
   }
 
-  i = eXosip_dnsutils_naptr_lookup (naptr_record, domain);
+  i = eXosip_dnsutils_naptr_lookup (naptr_record, domain, dnsserver);
   if (i < 0) {
     if (keep_in_cache <= 0) {
       return naptr_record;
@@ -3260,7 +3341,7 @@ eXosip_dnsutils_naptr (struct eXosip_t *excontext, const char *domain, const cha
   }
 
   if (naptr_record->naptr_state == OSIP_NAPTR_STATE_NAPTRDONE || naptr_record->naptr_state == OSIP_NAPTR_STATE_SRVINPROGRESS)
-    eXosip_dnsutils_srv_lookup (naptr_record);
+    eXosip_dnsutils_srv_lookup (naptr_record, dnsserver);
 
   if (keep_in_cache <= 0) {
     return naptr_record;
@@ -3486,7 +3567,7 @@ defined(OLD_NAMESER) || defined(__FreeBSD__)
 }
 
 static int
-eXosip_dnsutils_srv_lookup (struct osip_naptr *output_record)
+eXosip_dnsutils_srv_lookup (struct osip_naptr *output_record, const char *dnsserver)
 {
   if (output_record->naptr_state == OSIP_NAPTR_STATE_SRVDONE)
     return OSIP_SUCCESS;
@@ -3520,7 +3601,7 @@ eXosip_dnsutils_srv_lookup (struct osip_naptr *output_record)
 }
 
 static int
-eXosip_dnsutils_naptr_lookup (osip_naptr_t * output_record, const char *domain)
+eXosip_dnsutils_naptr_lookup (osip_naptr_t * output_record, const char *domain, const char *dnsserver)
 {
   querybuf answer;              /* answer buffer from nameserver */
   int n;
@@ -3750,13 +3831,16 @@ eXosip_dnsutils_naptr (struct eXosip_t *excontext, const char *_domain, const ch
 
   char domain[NI_MAXHOST*2];
   char AUS[64]; /* number with + prefix and only digits */
+  char dnsserver[NI_MAXHOST];
   char *delim_aus;
-  
+  char *delim_dnsserver;
+
   if (_domain == NULL)
     return NULL;
   
   memset(domain, 0, sizeof(domain));
   memset(AUS, 0, sizeof(AUS));
+  memset(dnsserver, 0, sizeof(dnsserver));
   delim_aus = strchr(_domain, '!');
   if (delim_aus != NULL && delim_aus[1]!='\0') {
     /* this is an enum NAPTR with AUS after '!' */
@@ -3766,7 +3850,14 @@ eXosip_dnsutils_naptr (struct eXosip_t *excontext, const char *_domain, const ch
     size_t idx_AUS = 0;
     size_t aus_length;
     delim_aus++;
+    delim_dnsserver = strchr(delim_aus, '!');
     aus_length = strlen(delim_aus);
+    if (delim_dnsserver != NULL)
+      aus_length = delim_dnsserver - delim_aus;
+    if (delim_dnsserver != NULL && delim_dnsserver[1] != '\0') {
+      delim_dnsserver++;
+      snprintf(dnsserver, sizeof(dnsserver), "%s", delim_dnsserver);
+    }
     for (idx = 0; idx <= aus_length - 1; idx++)
     {
       if (delim_aus[idx] == '+' || isdigit(delim_aus[idx])) {
@@ -3828,7 +3919,7 @@ eXosip_dnsutils_naptr (struct eXosip_t *excontext, const char *_domain, const ch
 
     /* process all */
     if (naptr_record->naptr_state == OSIP_NAPTR_STATE_NAPTRDONE || naptr_record->naptr_state == OSIP_NAPTR_STATE_SRVINPROGRESS)
-      eXosip_dnsutils_srv_lookup (naptr_record);
+      eXosip_dnsutils_srv_lookup (naptr_record, dnsserver);
 
     naptr_record = NULL;
     if (it.pos == 9)
@@ -3844,7 +3935,7 @@ eXosip_dnsutils_naptr (struct eXosip_t *excontext, const char *_domain, const ch
         break;
 
       if (naptr_record->naptr_state == OSIP_NAPTR_STATE_NAPTRDONE || naptr_record->naptr_state == OSIP_NAPTR_STATE_SRVINPROGRESS)
-        eXosip_dnsutils_srv_lookup (naptr_record);
+        eXosip_dnsutils_srv_lookup (naptr_record, dnsserver);
 
       return naptr_record;
     }
@@ -3893,7 +3984,7 @@ eXosip_dnsutils_naptr (struct eXosip_t *excontext, const char *_domain, const ch
     snprintf(naptr_record->AUS, sizeof(naptr_record->AUS), "%s", AUS);
   }
 
-  i = eXosip_dnsutils_naptr_lookup (naptr_record, domain);
+  i = eXosip_dnsutils_naptr_lookup (naptr_record, domain, dnsserver);
   if (i < 0) {
     if (keep_in_cache <= 0) {
       return naptr_record;
@@ -3905,7 +3996,7 @@ eXosip_dnsutils_naptr (struct eXosip_t *excontext, const char *_domain, const ch
   }
 
   if (naptr_record->naptr_state == OSIP_NAPTR_STATE_NAPTRDONE || naptr_record->naptr_state == OSIP_NAPTR_STATE_SRVINPROGRESS)
-    eXosip_dnsutils_srv_lookup (naptr_record);
+    eXosip_dnsutils_srv_lookup (naptr_record, dnsserver);
 
   if (keep_in_cache <= 0) {
     return naptr_record;
