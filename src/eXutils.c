@@ -2462,7 +2462,7 @@ eXosip_dnsutils_naptr (struct eXosip_t *excontext, const char *_domain, const ch
       delim_dnsserver++;
       snprintf(dnsserver, sizeof(dnsserver), "%s", delim_dnsserver);
     }
-    for (idx = 0; idx <= aus_length - 1; idx++)
+    for (idx = 0; idx + 1 <= aus_length; idx++)
     {
       if (delim_aus[idx] == '+' || isdigit(delim_aus[idx])) {
         AUS[idx_AUS] = delim_aus[idx];
@@ -2470,7 +2470,7 @@ eXosip_dnsutils_naptr (struct eXosip_t *excontext, const char *_domain, const ch
       }
     }
     AUS[idx_AUS] = '\0';
-    for (idx = 0; idx <= aus_length - 1; idx++)
+    for (idx = 0; idx + 1 <= aus_length; idx++)
     {
       if (isdigit(delim_aus[aus_length - idx -1])) {
         domain[idx_domain] = delim_aus[aus_length - idx - 1];
@@ -2480,13 +2480,10 @@ eXosip_dnsutils_naptr (struct eXosip_t *excontext, const char *_domain, const ch
       }
     }
     domain[idx_domain] = '\0';
-    if (idx_domain > 0) {
-      snprintf(domain+idx_domain, delim_aus - _domain, "%s", _domain);
-    }
-    else {
-      delim_aus = NULL;
-      snprintf(domain, sizeof(domain), "%s", _domain);
-    }
+    snprintf(domain+idx_domain, delim_aus - _domain, "%s", _domain);
+  }
+  else if (delim_aus != NULL && delim_aus[1] == '\0') {
+    snprintf(domain, delim_aus - _domain, "%s", _domain);
   }
   else {
     delim_aus = NULL;
@@ -3140,7 +3137,7 @@ eXosip_dnsutils_naptr (struct eXosip_t *excontext, const char *_domain, const ch
   IP4_ARRAY *dns_servers;
   int not_in_list = 0;
 
-  char domain[NI_MAXHOST*2];
+  char domain[NI_MAXHOST * 2];
   char AUS[64]; /* number with + prefix and only digits */
   char dnsserver[NI_MAXHOST];
   char *delim_aus;
@@ -3169,7 +3166,7 @@ eXosip_dnsutils_naptr (struct eXosip_t *excontext, const char *_domain, const ch
       delim_dnsserver++;
       snprintf(dnsserver, sizeof(dnsserver), "%s", delim_dnsserver);
     }
-    for (idx = 0; idx <= aus_length - 1; idx++)
+    for (idx = 0; idx + 1 <= aus_length; idx++)
     {
       if (delim_aus[idx] == '+' || isdigit(delim_aus[idx])) {
         AUS[idx_AUS] = delim_aus[idx];
@@ -3177,7 +3174,7 @@ eXosip_dnsutils_naptr (struct eXosip_t *excontext, const char *_domain, const ch
       }
     }
     AUS[idx_AUS] = '\0';
-    for (idx = 0; idx <= aus_length - 1; idx++)
+    for (idx = 0; idx + 1 <= aus_length; idx++)
     {
       if (isdigit(delim_aus[aus_length - idx - 1])) {
         domain[idx_domain] = delim_aus[aus_length - idx - 1];
@@ -3187,16 +3184,12 @@ eXosip_dnsutils_naptr (struct eXosip_t *excontext, const char *_domain, const ch
       }
     }
     domain[idx_domain] = '\0';
-    if (idx_domain > 0) {
-      snprintf(domain + idx_domain, delim_aus - _domain, "%s", _domain);
-    }
-    else {
-      delim_aus = NULL;
-      snprintf(domain, sizeof(domain), "%s", _domain);
-    }
+    snprintf(domain + idx_domain, delim_aus - _domain, "%s", _domain);
+  }
+  else if (delim_aus != NULL && delim_aus[1] == '\0') {
+    snprintf(domain, delim_aus - _domain, "%s", _domain);
   }
   else {
-    delim_aus = NULL;
     snprintf(domain, sizeof(domain), "%s", _domain);
   }
 
@@ -3829,7 +3822,7 @@ eXosip_dnsutils_naptr (struct eXosip_t *excontext, const char *_domain, const ch
   int i;
   int not_in_list = 0;
 
-  char domain[NI_MAXHOST*2];
+  char domain[NI_MAXHOST * 2];
   char AUS[64]; /* number with + prefix and only digits */
   char dnsserver[NI_MAXHOST];
   char *delim_aus;
@@ -3837,12 +3830,12 @@ eXosip_dnsutils_naptr (struct eXosip_t *excontext, const char *_domain, const ch
 
   if (_domain == NULL)
     return NULL;
-  
+
   memset(domain, 0, sizeof(domain));
   memset(AUS, 0, sizeof(AUS));
   memset(dnsserver, 0, sizeof(dnsserver));
   delim_aus = strchr(_domain, '!');
-  if (delim_aus != NULL && delim_aus[1]!='\0') {
+  if (delim_aus != NULL && delim_aus[1] != '\0') {
     /* this is an enum NAPTR with AUS after '!' */
     /* example: enum.enumer.org!+123456789 */
     size_t idx;
@@ -3858,7 +3851,7 @@ eXosip_dnsutils_naptr (struct eXosip_t *excontext, const char *_domain, const ch
       delim_dnsserver++;
       snprintf(dnsserver, sizeof(dnsserver), "%s", delim_dnsserver);
     }
-    for (idx = 0; idx <= aus_length - 1; idx++)
+    for (idx = 0; idx + 1 <= aus_length; idx++)
     {
       if (delim_aus[idx] == '+' || isdigit(delim_aus[idx])) {
         AUS[idx_AUS] = delim_aus[idx];
@@ -3866,9 +3859,9 @@ eXosip_dnsutils_naptr (struct eXosip_t *excontext, const char *_domain, const ch
       }
     }
     AUS[idx_AUS] = '\0';
-    for (idx = 0; idx <= aus_length - 1; idx++)
+    for (idx = 0; idx + 1 <= aus_length; idx++)
     {
-      if (isdigit(delim_aus[aus_length - idx -1])) {
+      if (isdigit(delim_aus[aus_length - idx - 1])) {
         domain[idx_domain] = delim_aus[aus_length - idx - 1];
         idx_domain++;
         domain[idx_domain] = '.';
@@ -3876,13 +3869,10 @@ eXosip_dnsutils_naptr (struct eXosip_t *excontext, const char *_domain, const ch
       }
     }
     domain[idx_domain] = '\0';
-    if (idx_domain > 0) {
-      snprintf(domain+idx_domain, delim_aus - _domain, "%s", _domain);
-    }
-    else {
-      delim_aus = NULL;
-      snprintf(domain, sizeof(domain), "%s", _domain);
-    }
+    snprintf(domain + idx_domain, delim_aus - _domain, "%s", _domain);
+  }
+  else if (delim_aus != NULL && delim_aus[1] == '\0') {
+    snprintf(domain, delim_aus - _domain, "%s", _domain);
   }
   else {
     delim_aus = NULL;
