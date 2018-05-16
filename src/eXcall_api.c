@@ -81,7 +81,16 @@ eXosip_create_cancel_transaction (struct eXosip_t *excontext, eXosip_call_t * jc
     return i;
   }
 
-  osip_list_add (&excontext->j_transactions, tr, 0);
+  if (jd == NULL) {
+    /* EXOSIP_MESSAGE_ANSWERED will be generated when receiving the answer */
+    /* TODO: this is wrong, but otherwise, accessing jc or jd when receiving the answer may crash? */
+    osip_list_add(&excontext->j_transactions, tr, 0);
+  } else {
+    /* EXOSIP_CALL_MESSAGE_ANSWERED will be generated when receiving the answer */
+    osip_list_add(jd->d_out_trs, tr, 0);
+    osip_transaction_set_reserved2(tr, jc);
+    osip_transaction_set_reserved3(tr, jd);
+  }
 
   sipevent = osip_new_outgoing_sipmessage (request);
   sipevent->transactionid = tr->transactionid;
