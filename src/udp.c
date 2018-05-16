@@ -1294,7 +1294,8 @@ _eXosip_process_response_out_of_transaction (struct eXosip_t *excontext, osip_ev
   }
 
   if (jc == NULL) {
-    OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO1, NULL, "Incoming 2xx has no relations with current calls: Message discarded.\r\n"));
+    /* TODO: a ACK and a BYE should be sent for 2xx */
+    OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO1, NULL, "Incoming answer has no relations with current calls: Message discarded.\r\n"));
     osip_event_free (evt);
     return;
   }
@@ -2121,7 +2122,7 @@ _eXosip_release_terminated_calls (struct eXosip_t *excontext)
       }
       else if (jc->c_out_tr != NULL && jc->c_out_tr->state != ICT_TERMINATED) {
       }
-      else if (jc->c_out_tr != NULL && jc->c_out_tr->state == ICT_TERMINATED && jc->c_out_tr->completed_time + 10 > now) {
+      else if (jc->c_out_tr != NULL && jc->c_out_tr->state == ICT_TERMINATED && jc->c_out_tr->completed_time + 5 > now) {
         /* With unreliable protocol, the transaction enter the terminated
            state right after the ACK is sent: In this case, we really want
            to wait for additionnal user/automatic action to be processed

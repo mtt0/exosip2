@@ -246,6 +246,7 @@ extern "C" {
     eXosip_dialog_t *c_dialogs;
     osip_transaction_t *c_inc_tr;
     osip_transaction_t *c_out_tr;
+    osip_transaction_t *c_cancel_tr;
     int c_retry;                /* avoid too many unsuccessful retry */
     void *external_reference;
 
