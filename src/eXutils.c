@@ -2234,8 +2234,12 @@ eXosip_dnsutils_srv_lookup (struct osip_naptr *output_record, const char *dnsser
   }
 
   if (output_record->arg == NULL) {
-    options.timeout = 3000;
-    options.tries = 1;
+    options.timeout = 1500;
+    options.tries = 2;
+    if (dnsserver != NULL && dnsserver[0] != '\0' && strchr(dnsserver, ',')) {
+      options.timeout = 750;
+      options.tries = 2;
+    }
     options.flags = ARES_FLAG_NOALIASES;
     i = ares_init_options (&channel, &options, ARES_OPT_TIMEOUTMS | ARES_OPT_TRIES | ARES_OPT_FLAGS);
     if (i != ARES_SUCCESS) {
@@ -2356,8 +2360,12 @@ eXosip_dnsutils_naptr_lookup (osip_naptr_t * output_record, const char *domain, 
 
   snprintf (output_record->domain, sizeof (output_record->domain), "%s", domain);
 
-  options.timeout = 3000;
-  options.tries = 1;
+  options.timeout = 1500;
+  options.tries = 2;
+  if (dnsserver != NULL && dnsserver[0] != '\0' && strchr(dnsserver, ',')) {
+    options.timeout = 750;
+    options.tries = 2;
+  }
   options.flags = ARES_FLAG_NOALIASES;
   i = ares_init_options (&channel, &options, ARES_OPT_TIMEOUTMS | ARES_OPT_TRIES | ARES_OPT_FLAGS);
   if (i != ARES_SUCCESS) {
