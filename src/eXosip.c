@@ -1417,14 +1417,21 @@ _eXosip_mark_registration_expired (struct eXosip_t *excontext, const char *call_
       continue;
     if (osip_strcasecmp(jr->r_last_tr->orig_request->call_id->number, call_id)==0) {
       time_t now;
+      if (jr->r_reg_period <= 0)
+        break; /* no need for a retry */
       now = osip_getsystemtime (NULL);
-      if (jr->r_reg_period - (jr->r_reg_period / 10)>TRANSACTION_TIMEOUT_RETRY)
-        jr->r_last_tr->birth_time = now-120;
-      else
-        jr->r_last_tr->birth_time = jr->r_reg_period - (jr->r_reg_period / 10);
+      if (jr->r_last_tr->last_response == NULL || (!MSG_IS_STATUS_2XX(jr->r_last_tr->last_response))) {
+        jr->r_last_tr->birth_time = now - 120; /* after a failure, always make it exactly now-120 */
+      }
+      else if (jr->r_reg_period>900) {
+        jr->r_last_tr->birth_time = now - 900; /* after a success, a new REGISTER is always sent after 900 sec */
+      }
+      else { /* after a success, a new REGISTER is always sent after 90% of the duration has elapsed */
+        jr->r_last_tr->birth_time = now - jr->r_reg_period + (jr->r_reg_period / 10);
+      }
       if (jr->r_retryfailover<60)
         jr->r_retryfailover++;
-      jr->r_last_tr->birth_time+=+jr->r_retryfailover; /* wait "RETRY" (counter) seconds before retrying: avoid flooding */
+      jr->r_last_tr->birth_time+=jr->r_retryfailover; /* wait "RETRY" (counter) seconds before retrying: avoid flooding */
       wakeup = 1;
     }
   }
