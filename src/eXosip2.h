@@ -499,8 +499,6 @@ struct eXosip_counters {
     char tls_firewall_port[10];
     int tls_verify_client_certificate;
     eXosip_tls_ctx_t eXosip_tls_ctx_params;
-    char tls_local_cn_name[128];
-    char tls_client_local_cn_name[128];
 
     /* dtls pre-config */
     char dtls_firewall_ip[64];

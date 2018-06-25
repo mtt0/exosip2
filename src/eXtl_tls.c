@@ -1,6 +1,6 @@
 /*
   eXosip - This is the eXtended osip library.
-  Copyright (C) 2001-2015 Aymeric MOIZARD amoizard@antisip.com
+  Copyright (C) 2001-2018 Aymeric MOIZARD amoizard@antisip.com
   
   eXosip is free software; you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -92,16 +92,26 @@
 
 #ifdef HAVE_OPENSSL_SSL_H
 
+#include <openssl/opensslconf.h>
+#include <openssl/opensslv.h>
+
 #define ex_verify_depth 10
+#include <openssl/bn.h>
+#ifndef OPENSSL_NO_DH
+#include <openssl/dh.h>
+#endif
 #include <openssl/ssl.h>
 #include <openssl/err.h>
 #include <openssl/pem.h>
+#include <openssl/rand.h>
+#ifndef OPENSSL_NO_RSA
+#include <openssl/rsa.h>
+#endif
+#include <openssl/tls1.h>
 #include <openssl/x509.h>
 #if !(OPENSSL_VERSION_NUMBER < 0x10002000L)
 #include <openssl/x509v3.h>
 #endif
-#include <openssl/rand.h>
-#include <openssl/tls1.h>
 
 #define SSLDEBUG 1
 /*#define PATH "D:/conf/"
@@ -132,92 +142,12 @@
 #endif
 
 #if OPENSSL_VERSION_NUMBER < 0x10100000L
-
-static void SSL_set0_rbio(SSL *s, BIO *rbio)
-{
-  BIO_free_all(s->rbio);
-  s->rbio = rbio;
-}
-
 #define X509_STORE_get0_param(store) (store->param)
-#define RSA_F_RSA_OSSL_PRIVATE_ENCRYPT RSA_F_RSA_EAY_PRIVATE_ENCRYPT
-
-#define RSA_meth_get0_app_data(rsa_method) (rsa_method->app_data)
-
-static RSA_METHOD *RSA_meth_new(const char *name, int flags)
-{
-  RSA_METHOD *meth = OPENSSL_malloc(sizeof(RSA_METHOD));
-
-  if (meth != NULL) {
-    memset(meth, 0, sizeof(RSA_METHOD));
-    meth->name = OPENSSL_strdup(name);
-    meth->flags = flags;
-  }
-
-  return meth;
-}
-
-static void RSA_meth_free(RSA_METHOD *meth)
-{
-  if (meth != NULL) {
-    if (meth->name != NULL)
-      OPENSSL_free((void *)meth->name);
-    OPENSSL_free(meth);
-  }
-}
-
-#define RSA_meth_set_pub_enc(meth, A) meth->rsa_pub_enc=A
-#define RSA_meth_set_pub_dec(meth, A) meth->rsa_pub_dec=A
-#define RSA_meth_set_priv_enc(meth, A) meth->rsa_priv_enc=A
-#define RSA_meth_set_priv_dec(meth, A) meth->rsa_priv_dec=A
-#define RSA_meth_set_init(meth, A) meth->init=A
-#define RSA_meth_set_finish(meth, A) meth->finish=A
-#define RSA_meth_set0_app_data(meth, A) meth->app_data=(char*)A
-#define X509_get0_pubkey(___mX509) (___mX509->cert_info->key->pkey)
-#define EVP_PKEY_get0_RSA(__mPKEY) (__mPKEY->pkey.rsa)
-
-static int RSA_set0_key(RSA *r, BIGNUM *n, BIGNUM *e, BIGNUM *d)
-{
-  /* If the fields n and e in r are NULL, the corresponding input
-  * parameters MUST be non-NULL for n and e.  d may be
-  * left NULL (in case only the public key is used).
-  */
-  if ((r->n == NULL && n == NULL)
-    || (r->e == NULL && e == NULL))
-    return 0;
-
-  if (n != NULL) {
-    BN_free(r->n);
-    r->n = n;
-    }
-  if (e != NULL) {
-    BN_free(r->e);
-    r->e = e;
-  }
-  if (d != NULL) {
-    BN_free(r->d);
-    r->d = d;
-  }
-
-  return 1;
- }
-
-static void RSA_get0_key(const RSA *r,
-  const BIGNUM **n, const BIGNUM **e, const BIGNUM **d)
-{
-  if (n != NULL)
-    *n = r->n;
-  if (e != NULL)
-    *e = r->e;
-  if (d != NULL)
-    *d = r->d;
-}
-
 #endif
 
-SSL_CTX *initialize_client_ctx (struct eXosip_t *excontext, const char *certif_client_local_cn_name, eXosip_tls_ctx_t * client_ctx, int transport, const char *sni_servernameindication);
+SSL_CTX *initialize_client_ctx (struct eXosip_t *excontext, eXosip_tls_ctx_t * client_ctx, int transport, const char *sni_servernameindication);
 
-SSL_CTX *initialize_server_ctx (struct eXosip_t *excontext, const char *certif_local_cn_name, eXosip_tls_ctx_t * srv_ctx, int transport);
+SSL_CTX *initialize_server_ctx (struct eXosip_t *excontext, eXosip_tls_ctx_t * srv_ctx, int transport);
 
 int verify_cb (int preverify_ok, X509_STORE_CTX * store);
 
@@ -347,7 +277,11 @@ tls_tl_free (struct eXosip_t *excontext)
   }
 
 #if OPENSSL_VERSION_NUMBER < 0x10100000L
+#if OPENSSL_VERSION_NUMBER >= 0x10000000L
+  ERR_remove_thread_state (NULL);
+#else
   ERR_remove_state (0);
+#endif
 #endif
   
   memset (&reserved->socket_tab, 0, sizeof (struct _tls_stream) * EXOSIP_MAX_SOCKETS);
@@ -581,388 +515,6 @@ _tls_add_certificates (SSL_CTX * ctx)
   return count;
 }
 
-#ifdef HAVE_WINCRYPT_H
-
-struct rsa_ctx {
-  const CERT_CONTEXT *cert;
-  HCRYPTPROV crypt_prov;
-  DWORD key_spec;
-  BOOL free_crypt_prov;
-  HCRYPTKEY hCryptKey;
-};
-
-static int
-rsa_pub_enc (int flen, const unsigned char *from, unsigned char *to, RSA * rsa, int padding)
-{
-  OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "rsa_pub_enc - not implemented"));
-  return 0;
-}
-
-static int
-rsa_pub_dec (int flen, const unsigned char *from, unsigned char *to, RSA * rsa, int padding)
-{
-  OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "rsa_pub_dec - not implemented"));
-  return 0;
-}
-
-static int
-rsa_priv_enc (int flen, const unsigned char *from, unsigned char *to, RSA * rsa, int padding)
-{
-  struct rsa_ctx *priv;
-  HCRYPTHASH hash;
-  DWORD hash_size, len, i;
-  unsigned char *buf = NULL;
-  int ret = 0;
-
-  const RSA_METHOD *rsa_method = RSA_get_method(rsa);
-  priv = (struct rsa_ctx *)RSA_meth_get0_app_data(rsa_method);
-  
-  if (priv == NULL) {
-    RSAerr (RSA_F_RSA_OSSL_PRIVATE_ENCRYPT, ERR_R_PASSED_NULL_PARAMETER);
-    return 0;
-  }
-
-  if (padding != RSA_PKCS1_PADDING) {
-    RSAerr (RSA_F_RSA_OSSL_PRIVATE_ENCRYPT, RSA_R_UNKNOWN_PADDING_TYPE);
-    return 0;
-  }
-
-  if (flen != 16 /* MD5 */  + 20 /* SHA-1 */ ) {
-
-    OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "rsa_priv_enc - only MD5-SHA1 hash supported"));
-    RSAerr (RSA_F_RSA_OSSL_PRIVATE_ENCRYPT, RSA_R_INVALID_MESSAGE_LENGTH);
-    return 0;
-  }
-
-  if (!CryptCreateHash (priv->crypt_prov, CALG_SSL3_SHAMD5, 0, 0, &hash)) {
-    OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "CryptCreateHash failed"));
-    return 0;
-  }
-
-  len = sizeof (hash_size);
-  if (!CryptGetHashParam (hash, HP_HASHSIZE, (BYTE *) & hash_size, &len, 0)) {
-    OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "CryptGetHashParam failed"));
-    goto err;
-  }
-
-  if (hash_size != flen) {
-    OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "CryptoAPI: Invalid hash size (%u != %d)", (unsigned) hash_size, flen));
-    RSAerr (RSA_F_RSA_OSSL_PRIVATE_ENCRYPT, RSA_R_INVALID_MESSAGE_LENGTH);
-    goto err;
-  }
-  if (!CryptSetHashParam (hash, HP_HASHVAL, (BYTE *) from, 0)) {
-    OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "CryptSetHashParam failed"));
-    goto err;
-  }
-
-  len = RSA_size (rsa);
-  buf = osip_malloc (len);
-  if (buf == NULL) {
-    RSAerr (RSA_F_RSA_OSSL_PRIVATE_ENCRYPT, ERR_R_MALLOC_FAILURE);
-    goto err;
-  }
-
-  if (!CryptSignHash (hash, priv->key_spec, NULL, 0, buf, &len)) {
-    OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "CryptSignHash failed"));
-    goto err;
-  }
-
-  for (i = 0; i < len; i++)
-    to[i] = buf[len - i - 1];
-  ret = len;
-
-err:
-  osip_free (buf);
-  CryptDestroyHash (hash);
-
-  return ret;
-}
-
-static int
-rsa_priv_dec (int flen, const unsigned char *from, unsigned char *to, RSA * rsa, int padding)
-{
-  struct rsa_ctx *priv;
-  BOOL ret;
-  DWORD cbData = flen;
-  int i;
-  unsigned char *buf = NULL;
-
-  const RSA_METHOD *rsa_method = RSA_get_method(rsa);
-  priv = (struct rsa_ctx *)RSA_meth_get0_app_data(rsa_method);
-
-  if (padding != RSA_PKCS1_PADDING)
-    return -1;
-  if (priv->hCryptKey == 0)
-    return -1;
-
-  buf = osip_malloc (cbData * 4);
-  for (i = 0; i < flen; i++)
-    buf[flen - i - 1] = from[i];
-
-  ret = CryptDecrypt (priv->hCryptKey, 0, TRUE, 0, buf, &flen);
-  if (!ret)
-    return -1;
-
-  memcpy (to, buf, flen);
-
-  osip_free (buf);
-  return flen;
-}
-
-static void
-rsa_free_data (struct rsa_ctx *priv)
-{
-  if (priv == NULL)
-    return;
-  if (priv->hCryptKey)
-    CryptDestroyKey (priv->hCryptKey);
-  if (priv->crypt_prov && priv->free_crypt_prov)
-    CryptReleaseContext (priv->crypt_prov, 0);
-  if (priv->cert)
-    CertFreeCertificateContext (priv->cert);
-  osip_free (priv);
-}
-
-static int
-rsa_finish (RSA * rsa)
-{
-  struct rsa_ctx *priv;
-  const RSA_METHOD *rsa_method = RSA_get_method(rsa);
-  priv = (struct rsa_ctx *)RSA_meth_get0_app_data(rsa_method);
-
-  rsa_free_data ((struct rsa_ctx *) priv);
-  RSA_meth_free((RSA_METHOD*)rsa_method); /* is this needed ? */
-  //RSA_free(rsa); /* seems not needed ? */
-  return 1;
-}
-
-#endif
-
-static X509 *
-_tls_set_certificate (SSL_CTX * ctx, const char *cn)
-{
-#ifdef HAVE_WINCRYPT_H
-  PCCERT_CONTEXT pCertCtx;
-  X509 *cert = NULL;
-  HCERTSTORE hStore = CertOpenSystemStore (0, L"CA");
-
-  for (pCertCtx = CertEnumCertificatesInStore (hStore, NULL); pCertCtx != NULL; pCertCtx = CertEnumCertificatesInStore (hStore, pCertCtx)) {
-    char peer_CN[65];
-
-    cert = d2i_X509 (NULL, (const unsigned char **) &pCertCtx->pbCertEncoded, pCertCtx->cbCertEncoded);
-    if (cert == NULL) {
-      continue;
-    }
-
-    memset (peer_CN, 0, sizeof (peer_CN));
-    X509_NAME_get_text_by_NID (X509_get_subject_name (cert), NID_commonName, peer_CN, sizeof (peer_CN));
-    if (osip_strcasecmp (cn, peer_CN) == 0) {
-      break;
-    }
-    X509_free (cert);
-    cert = NULL;
-  }
-
-  CertCloseStore (hStore, 0);
-
-  if (cert == NULL) {
-    hStore = CertOpenSystemStore (0, L"ROOT");
-    for (pCertCtx = CertEnumCertificatesInStore (hStore, NULL); pCertCtx != NULL; pCertCtx = CertEnumCertificatesInStore (hStore, pCertCtx)) {
-      char peer_CN[65];
-
-      cert = d2i_X509 (NULL, (const unsigned char **) &pCertCtx->pbCertEncoded, pCertCtx->cbCertEncoded);
-      if (cert == NULL) {
-        continue;
-      }
-
-      memset (peer_CN, 0, sizeof (peer_CN));
-      X509_NAME_get_text_by_NID (X509_get_subject_name (cert), NID_commonName, peer_CN, sizeof (peer_CN));
-      if (osip_strcasecmp (cn, peer_CN) == 0) {
-        break;
-      }
-      X509_free (cert);
-      cert = NULL;
-    }
-
-    CertCloseStore (hStore, 0);
-  }
-
-  if (cert == NULL) {
-    hStore = CertOpenSystemStore (0, L"MY");
-
-    for (pCertCtx = CertEnumCertificatesInStore (hStore, NULL); pCertCtx != NULL; pCertCtx = CertEnumCertificatesInStore (hStore, pCertCtx)) {
-      char peer_CN[65];
-
-      cert = d2i_X509 (NULL, (const unsigned char **) &pCertCtx->pbCertEncoded, pCertCtx->cbCertEncoded);
-      if (cert == NULL) {
-        continue;
-      }
-
-      memset (peer_CN, 0, sizeof (peer_CN));
-      X509_NAME_get_text_by_NID (X509_get_subject_name (cert), NID_commonName, peer_CN, sizeof (peer_CN));
-      if (osip_strcasecmp (cn, peer_CN) == 0) {
-        break;
-      }
-      X509_free (cert);
-      cert = NULL;
-    }
-
-    CertCloseStore (hStore, 0);
-  }
-
-  if (cert == NULL) {
-    hStore = CertOpenSystemStore (0, L"Trustedpublisher");
-
-    for (pCertCtx = CertEnumCertificatesInStore (hStore, NULL); pCertCtx != NULL; pCertCtx = CertEnumCertificatesInStore (hStore, pCertCtx)) {
-      char peer_CN[65];
-
-      cert = d2i_X509 (NULL, (const unsigned char **) &pCertCtx->pbCertEncoded, pCertCtx->cbCertEncoded);
-      if (cert == NULL) {
-        continue;
-      }
-
-      memset (peer_CN, 0, sizeof (peer_CN));
-      X509_NAME_get_text_by_NID (X509_get_subject_name (cert), NID_commonName, peer_CN, sizeof (peer_CN));
-      if (osip_strcasecmp (cn, peer_CN) == 0) {
-        break;
-      }
-      X509_free (cert);
-      cert = NULL;
-    }
-
-    CertCloseStore (hStore, 0);
-  }
-
-  if (cert == NULL)
-    return NULL;
-
-  {
-    RSA *rsa = NULL, *pub_rsa;
-    struct rsa_ctx *priv;
-    RSA_METHOD *rsa_meth;
-    EVP_PKEY *pkey;
-    const BIGNUM *n = NULL;
-    const BIGNUM *e = NULL;
-
-    priv = osip_malloc (sizeof (*priv));
-    memset (priv, 0, sizeof (*priv));
-
-    priv->cert = pCertCtx;
-
-    if (CryptAcquireCertificatePrivateKey (pCertCtx, CRYPT_ACQUIRE_COMPARE_KEY_FLAG, NULL, &priv->crypt_prov, &priv->key_spec, &priv->free_crypt_prov) == 0) {
-      CertFreeCertificateContext (priv->cert);
-      osip_free (priv);
-      /* we don't have private key, but we have a certificate: use it */
-      X509_free(cert);
-      return NULL;
-    }
-
-    if (!CryptGetUserKey (priv->crypt_prov, priv->key_spec, &priv->hCryptKey)) {
-      CertFreeCertificateContext (priv->cert);
-      if (priv->crypt_prov && priv->free_crypt_prov)
-        CryptReleaseContext (priv->crypt_prov, 0);
-      osip_free (priv);
-      X509_free (cert);
-      return NULL;
-    }
-
-    rsa_meth = RSA_meth_new("Microsoft Cryptography API RSA Method", RSA_METHOD_FLAG_NO_CHECK);
-    if (priv == NULL || rsa_meth == NULL) {
-      CertFreeCertificateContext(pCertCtx);
-      if (priv->crypt_prov && priv->free_crypt_prov)
-        CryptReleaseContext(priv->crypt_prov, 0);
-      osip_free(priv);
-      if (rsa_meth != NULL)
-        RSA_meth_free(rsa_meth);
-      X509_free(cert);
-      return NULL;
-    }
-
-    RSA_meth_set_pub_enc(rsa_meth, rsa_pub_enc);
-    RSA_meth_set_pub_dec(rsa_meth, rsa_pub_dec);
-    RSA_meth_set_priv_enc(rsa_meth, rsa_priv_enc);
-    RSA_meth_set_priv_dec(rsa_meth, rsa_priv_dec);
-    RSA_meth_set_init(rsa_meth, NULL);
-    RSA_meth_set_finish(rsa_meth, rsa_finish);
-    RSA_meth_set0_app_data(rsa_meth, priv);
-
-    rsa = RSA_new ();
-    if (rsa == NULL) {
-      CertFreeCertificateContext (priv->cert);
-      if (priv->crypt_prov && priv->free_crypt_prov)
-        CryptReleaseContext (priv->crypt_prov, 0);
-      osip_free (priv);
-      if (rsa_meth != NULL)
-        RSA_meth_free(rsa_meth);
-      X509_free (cert);
-      RSA_free (rsa);
-      return NULL;
-    }
-
-    if (!SSL_CTX_use_certificate (ctx, cert)) {
-      CertFreeCertificateContext (priv->cert);
-      if (priv->crypt_prov && priv->free_crypt_prov)
-        CryptReleaseContext (priv->crypt_prov, 0);
-      osip_free (priv);
-      if (rsa_meth != NULL)
-        RSA_meth_free(rsa_meth);
-      X509_free (cert);
-      return NULL;
-    }
-
-    pkey = X509_get0_pubkey(cert);
-
-    //pub_rsa = cert->cert_info->key->pkey->pkey.rsa;
-    if (!(pub_rsa = EVP_PKEY_get0_RSA(pkey)))
-    {
-      CertFreeCertificateContext(priv->cert);
-      if (priv->crypt_prov && priv->free_crypt_prov)
-        CryptReleaseContext(priv->crypt_prov, 0);
-      osip_free(priv);
-      if (rsa_meth != NULL)
-        RSA_meth_free(rsa_meth);
-      return NULL;
-    }
-
-    RSA_get0_key(pub_rsa, &n, &e, NULL);
-    if (!RSA_set0_key(rsa, BN_dup(n), BN_dup(e), NULL))
-    {
-      CertFreeCertificateContext(priv->cert);
-      if (priv->crypt_prov && priv->free_crypt_prov)
-        CryptReleaseContext(priv->crypt_prov, 0);
-      osip_free(priv);
-      if (rsa_meth != NULL)
-        RSA_meth_free(rsa_meth);
-      return NULL;
-    }
-    //RSA_set_flags(rsa, RSA_flags(rsa) | RSA_FLAG_EXT_PKEY);
-
-    if (!RSA_set_method (rsa, rsa_meth)) {
-      CertFreeCertificateContext (priv->cert);
-      if (priv->crypt_prov && priv->free_crypt_prov)
-        CryptReleaseContext (priv->crypt_prov, 0);
-      osip_free (priv);
-      if (rsa_meth != NULL)
-        RSA_meth_free(rsa_meth);
-      RSA_free (rsa);
-      SSL_CTX_free (ctx);
-      return NULL;
-    }
-
-    if (!SSL_CTX_use_RSAPrivateKey (ctx, rsa)) {
-      RSA_free (rsa);
-      SSL_CTX_free (ctx);
-      return NULL;
-    }
-    RSA_free (rsa);
-
-    return cert;
-  }
-
-#endif
-  return NULL;
-}
-
 int
 verify_cb (int preverify_ok, X509_STORE_CTX * store)
 {
@@ -1063,6 +615,7 @@ password_cb (char *buf, int num, int rwflag, void *userdata)
 static void
 load_dh_params (SSL_CTX * ctx, char *file)
 {
+#ifndef OPENSSL_NO_DH
   DH *ret = 0;
   BIO *bio;
 
@@ -1075,11 +628,13 @@ load_dh_params (SSL_CTX * ctx, char *file)
     if (SSL_CTX_set_tmp_dh (ctx, ret) < 0)
       OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "eXosip: Couldn't set DH param!\n"));
   }
+#endif
 }
 
 static void
 build_dh_params (SSL_CTX * ctx)
 {
+#ifndef OPENSSL_NO_DH
   int codes = 0;
   DH *dh = DH_new ();
 
@@ -1110,8 +665,10 @@ build_dh_params (SSL_CTX * ctx)
   DH_free (dh);
 
   return;
+#endif
 }
 
+#ifndef OPENSSL_NO_RSA
 static RSA *
 __RSA_generate_key (int bits, unsigned long e_value, void (*callback) (int, int, void *), void *cb_arg)
 {
@@ -1146,12 +703,15 @@ generate_eph_rsa_key (SSL_CTX * ctx)
   rsa = __RSA_generate_key (512, RSA_F4, NULL, NULL);
 
   if (rsa != NULL) {
+#if OPENSSL_VERSION_NUMBER < 0x10100000L
     if (!SSL_CTX_set_tmp_rsa (ctx, rsa))
       OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "eXosip: Couldn't set RSA key!\n"));
+#endif
 
     RSA_free (rsa);
   }
 }
+#endif
 
 eXosip_tls_ctx_error
 eXosip_set_tls_ctx (struct eXosip_t *excontext, eXosip_tls_ctx_t * ctx)
@@ -1211,21 +771,13 @@ eXosip_set_tls_ctx (struct eXosip_t *excontext, eXosip_tls_ctx_t * ctx)
 eXosip_tls_ctx_error
 eXosip_tls_use_server_certificate (struct eXosip_t * excontext, const char *local_certificate_cn)
 {
-  memset (&excontext->tls_local_cn_name, 0, sizeof (excontext->tls_local_cn_name));
-  if (local_certificate_cn == NULL)
-    return TLS_OK;
-  osip_strncpy (excontext->tls_local_cn_name, local_certificate_cn, sizeof (excontext->tls_local_cn_name) - 1);
-  return TLS_OK;
+  return -1; /* obsolete */
 }
 
 eXosip_tls_ctx_error
 eXosip_tls_use_client_certificate (struct eXosip_t * excontext, const char *local_certificate_cn)
 {
-  memset (&excontext->tls_client_local_cn_name, 0, sizeof (excontext->tls_client_local_cn_name));
-  if (local_certificate_cn == NULL)
-    return TLS_OK;
-  osip_strncpy (excontext->tls_client_local_cn_name, local_certificate_cn, sizeof (excontext->tls_client_local_cn_name) - 1);
-  return TLS_OK;
+  return -1; /* obsolete */
 }
 
 eXosip_tls_ctx_error
@@ -1300,15 +852,8 @@ static void _tls_load_trusted_certificates(eXosip_tls_ctx_t *exosip_tls_cfg, SSL
   }
 }
 
-static void _tls_use_certificate_private_key(const char *log, const char *certificate_cn_name, eXosip_tls_credentials_t *xtc, SSL_CTX *ctx)
+static void _tls_use_certificate_private_key(const char *log, eXosip_tls_credentials_t *xtc, SSL_CTX *ctx)
 {
-  /* load from store */
-  if (certificate_cn_name[0] != '\0') {
-    X509 *cert = NULL;
-    cert = _tls_set_certificate(ctx, certificate_cn_name);
-    X509_free(cert);
-  }
-
   /* load from file name in PEM files */
   if (xtc->cert[0] != '\0' && xtc->priv_key[0] != '\0') {
     if (xtc->priv_key_pw[0] != '\0') {
@@ -1356,7 +901,7 @@ static void _tls_common_setup(eXosip_tls_ctx_t *exosip_tls_cfg, SSL_CTX *ctx)
   /* SSL_CTX_set_ecdh_auto (ctx, on) requires OpenSSL 1.0.2 which wraps: */
   if (SSL_CTX_ctrl(ctx, SSL_CTRL_SET_ECDH_AUTO, 1, NULL)) {
     OSIP_TRACE(osip_trace(__FILE__, __LINE__, OSIP_INFO2, NULL, "ctrl_set_ecdh_auto: faster PFS ciphers enabled\n"));
-#if !defined(OPENSSL_NO_ECDH) && !(OPENSSL_VERSION_NUMBER < 0x10000000L)
+#if !defined(OPENSSL_NO_ECDH) && !(OPENSSL_VERSION_NUMBER < 0x10000000L) && (OPENSSL_VERSION_NUMBER < 0x10100000L)
   }
   else {
     /* enables AES-128 ciphers, to get AES-256 use NID_secp384r1 */
@@ -1372,7 +917,7 @@ static void _tls_common_setup(eXosip_tls_ctx_t *exosip_tls_cfg, SSL_CTX *ctx)
 }
 
 SSL_CTX *
-initialize_client_ctx (struct eXosip_t * excontext, const char *certif_client_local_cn_name, eXosip_tls_ctx_t * client_ctx, int transport, const char *sni_servernameindication)
+initialize_client_ctx (struct eXosip_t * excontext, eXosip_tls_ctx_t * client_ctx, int transport, const char *sni_servernameindication)
 {
   const SSL_METHOD *meth = NULL;
   SSL_CTX *ctx;
@@ -1398,7 +943,7 @@ initialize_client_ctx (struct eXosip_t * excontext, const char *certif_client_lo
     return NULL;
   }
 
-  _tls_use_certificate_private_key("client", certif_client_local_cn_name, &client_ctx->client, ctx);
+  _tls_use_certificate_private_key("client", &client_ctx->client, ctx);
 
   /* Load the CAs we trust */
   _tls_load_trusted_certificates(client_ctx, ctx);
@@ -1452,7 +997,7 @@ initialize_client_ctx (struct eXosip_t * excontext, const char *certif_client_lo
 }
 
 SSL_CTX *
-initialize_server_ctx (struct eXosip_t * excontext, const char *certif_local_cn_name, eXosip_tls_ctx_t * srv_ctx, int transport)
+initialize_server_ctx (struct eXosip_t * excontext, eXosip_tls_ctx_t * srv_ctx, int transport)
 {
   const SSL_METHOD *meth = NULL;
   SSL_CTX *ctx;
@@ -1488,7 +1033,7 @@ initialize_server_ctx (struct eXosip_t * excontext, const char *certif_local_cn_
     SSL_CTX_set_read_ahead (ctx, 1);
   }
 
-  _tls_use_certificate_private_key("server", certif_local_cn_name, &srv_ctx->server, ctx);
+  _tls_use_certificate_private_key("server", &srv_ctx->server, ctx);
 
   /* Load the CAs we trust */
   _tls_load_trusted_certificates(srv_ctx, ctx);
@@ -1526,7 +1071,9 @@ initialize_server_ctx (struct eXosip_t * excontext, const char *certif_local_cn_
 
   _tls_common_setup(srv_ctx, ctx);
 
+#ifndef OPENSSL_NO_RSA
   generate_eph_rsa_key (ctx);
+#endif
 
   SSL_CTX_set_session_id_context (ctx, (void *) &s_server_session_id_context, sizeof s_server_session_id_context);
 
@@ -1570,13 +1117,17 @@ tls_tl_open (struct eXosip_t *excontext)
     excontext->eXtl_transport.proto_local_port = 5061;
 
   /* initialization (outside initialize_server_ctx) */
+#if OPENSSL_VERSION_NUMBER < 0x10100000L
   SSL_library_init ();
   SSL_load_error_strings ();
+#else
+  OPENSSL_init_ssl (OPENSSL_INIT_LOAD_SSL_STRINGS | OPENSSL_INIT_LOAD_CRYPTO_STRINGS, NULL);
+#endif
 
-  reserved->server_ctx = initialize_server_ctx (excontext, excontext->tls_local_cn_name, &excontext->eXosip_tls_ctx_params, IPPROTO_TCP);
+  reserved->server_ctx = initialize_server_ctx (excontext, &excontext->eXosip_tls_ctx_params, IPPROTO_TCP);
 
   /* always initialize the client */
-  reserved->client_ctx = initialize_client_ctx (excontext, excontext->tls_client_local_cn_name, &excontext->eXosip_tls_ctx_params, IPPROTO_TCP, NULL);
+  reserved->client_ctx = initialize_client_ctx (excontext, &excontext->eXosip_tls_ctx_params, IPPROTO_TCP, NULL);
 
 /*only necessary under Windows-based OS, unix-like systems use /dev/random or /dev/urandom */
 #if defined(WIN32) || defined(_WINDOWS)
@@ -2072,7 +1623,7 @@ _tls_tl_ssl_connect_socket (struct eXosip_t *excontext, struct _tls_stream *sock
   int tries_left = 100;
 
   if (sockinfo->ssl_ctx == NULL) {
-    sockinfo->ssl_ctx = initialize_client_ctx (excontext, excontext->tls_client_local_cn_name, &excontext->eXosip_tls_ctx_params, IPPROTO_TCP, sockinfo->sni_servernameindication);
+    sockinfo->ssl_ctx = initialize_client_ctx (excontext, &excontext->eXosip_tls_ctx_params, IPPROTO_TCP, sockinfo->sni_servernameindication);
 
     /* FIXME: changed parameter from ctx to client_ctx -> works now */
     sockinfo->ssl_conn = SSL_new (sockinfo->ssl_ctx);
@@ -3593,3 +3144,120 @@ eXosip_set_tls_ctx (struct eXosip_t * excontext, eXosip_tls_ctx_t * ctx)
 }
 
 #endif
+
+/**
+  Various explanation on using openssl with eXosip2. (Written on June 26, 2018)
+
+  First, you should understand that it is unlikely that you need to configure
+  the "server" side of eXosip. eXosip2 is a User-Agent and will receive in 99%
+  of use-case incoming message on "client initiated connection". It should even
+  be in 100% of use-case. Thus, I advise you to compile eXosip2 without
+  #define ENABLE_MAIN_SOCKET. This will prevent people connecting to your User-Agent
+  via unsecured TLS connection. I also don't maintain this server side socket code
+  security, so if you want to use it, you should really make sure you do things
+  correctly. (may be with code modifications?)
+
+  CAUTIOUS: Please understand that if you use an old version of openssl, we will get unsecure
+  cipher, vulnerabilities, etc...
+  Configuration of client side sockets:
+
+1/ default configuration.
+   By default, eXosip2 will load certificates from WINDOWS STORE on WINDOWS ONLY.
+   By default, eXosip2 will load certificates from MACOSX STORE on MACOSX ONLY.
+   By default, eXosip2 won't verify certificates
+
+2/ on WINDOWS and MACOSX, to enable certificate verification:
+   int optval = 1;
+   eXosip_set_option (exosip_context, EXOSIP_OPT_SET_TLS_VERIFY_CERTIFICATE, &optval);
+
+3/ on OTHER platforms, you need to add either ONE or a full list of ROOT CERTIFICATES
+   and configure to require certificate verification:
+
+   Google is providing a file containing a list of known trusted root certificates. This
+   is the easiest way you can retreive an up-to-date file.
+   https://pki.google.com/roots.pem
+   SIDENOTE: you need to download this file REGULARLY. Because some of the root certificates may
+   be revoked.
+
+   eXosip_tls_ctx_t _tls_description;
+   memset(&_tls_description, 0, sizeof(eXosip_tls_ctx_t));
+   snprintf(_tls_description.root_ca_cert, sizeof(_tls_description.root_ca_cert), "%s", "roots.pem");
+   eXosip_set_option(exosip_context, EXOSIP_OPT_SET_TLS_CERTIFICATES_INFO, (void*)&_tls_description);
+
+   int optval = 1;
+   eXosip_set_option (exosip_context, EXOSIP_OPT_SET_TLS_VERIFY_CERTIFICATE, &optval);
+
+4/ If your service(server) request a client certificate from you, you will need to configure one
+   by configuring your certificate, private key and password.
+
+   eXosip_tls_ctx_t _tls_description;
+   memset(&_tls_description, 0, sizeof(eXosip_tls_ctx_t));
+   snprintf(_tls_description.root_ca_cert, sizeof(_tls_description.root_ca_cert), "%s", "roots.pem");
+
+   snprintf(_tls_description.client.priv_key_pw, sizeof(_tls_description.client.priv_key_pw), "%s", "hello");
+   snprintf(_tls_description.client.priv_key, sizeof(_tls_description.client.priv_key), "%s", "selfsigned-key.pem");
+   snprintf(_tls_description.client.cert, sizeof(_tls_description.client.cert), "%s", "selfsigned-cert.pem");
+
+   eXosip_set_option(exosip_context, EXOSIP_OPT_SET_TLS_CERTIFICATES_INFO, (void*)&_tls_description);
+
+5/ Today, I have removed the ability to use a client certificate from windows store: the feature was limited
+   to RSA with SHA1 which is never negociated if you wish to have correct security. This makes the feature obsolete
+   and mostly not working. So... just removed. API has been kept, but returns -1 only.
+
+   eXosip_tls_use_client_certificate (struct eXosip_t * excontext, const char *local_certificate_cn)
+   eXosip_tls_use_server_certificate (struct eXosip_t * excontext, const char *local_certificate_cn)
+
+6/ A recent feature has been introduced: Certificate pinning.
+
+   In order to get your public key file in DER format, which is required for eXosip2 code, you
+   can use the following command line to retreive the publickey from your certificate and encode
+   it into base64:
+
+   $> openssl x509 -in your-base64-certificate.pem -pubkey -noout | openssl enc -base64 -d > publickey.der
+
+   In order to activate the check, you need to configure the "public_key_pinned" parameter:
+
+   eXosip_tls_ctx_t _tls_description;
+   memset(&_tls_description, 0, sizeof(eXosip_tls_ctx_t));
+   snprintf(_tls_description.root_ca_cert, sizeof(_tls_description.root_ca_cert), "%s", "roots.pem");
+
+   snprintf(_tls_description.client.priv_key_pw, sizeof(_tls_description.client.priv_key_pw), "%s", "hello");
+   snprintf(_tls_description.client.priv_key, sizeof(_tls_description.client.priv_key), "%s", "selfsigned-key.pem");
+   snprintf(_tls_description.client.cert, sizeof(_tls_description.client.cert), "%s", "selfsigned-cert.pem");
+
+   snprintf(_tls_description.client.cert, sizeof(_tls_description.client.public_key_pinned), "%s", "pub_key.der");
+
+   eXosip_set_option(exosip_context, EXOSIP_OPT_SET_TLS_CERTIFICATES_INFO, (void*)&_tls_description);
+
+7/ Depending on the openssl version you use, you will NOT have the same behavior and features.
+   I advise you to use the LATEST openssl version. This is for security purpose (openssl vulnerabilities)
+   as well as to use the latest secured cipher list.
+
+   There are other features only enabled or disabled with recent versions of openssl. Among them:
+   * SNI server verification: v1.0.2 -> OPENSSL_VERSION_NUMBER >= 0x10002000L
+   * RSA is removed since v1.1.0 OPENSSL_VERSION_NUMBER < 0x10100000L
+   * ECDHE based cipher suites faster than DHE since 1.0.0 OPENSSL_VERSION_NUMBER > 0x10000000L
+   * ...
+
+   If your app accept old/deprecated/unsecure ciphers, please: update your openssl version. If you
+   have no choice, you can update the internal code to specify, or remove ciphers. The default in
+   eXosip is always the "HIGH:-COMPLEMENTOFDEFAULT" which is expected to be the most secure configuration
+   known by openssl upon releasing the openssl version.
+
+     SSL_CTX_set_cipher_list (ctx, "HIGH:-COMPLEMENTOFDEFAULT")
+
+  SIDEINFO for testing purpose: If you wish to test client certifiate with
+  kamailio, here is a possible configuration on a specific port number. The
+  ca_list contains the selfsigned certificate that is configured on client
+  side in eXosip2. (server-key and server-certificate are the server side info)
+
+  [server:91.121.30.149:29091]
+  method = TLSv1+
+  verify_certificate = no
+  require_certificate = yes
+  private_key = /etc/kamailio/server-key.key
+  certificate = /etc/kamailio/server-certificate.pem
+  ca_list = /etc/kamailio/client-selfsigned-cert-aymeric.pem
+  cipher_list = HIGH:-COMPLEMENTOFDEFAULT
+
+  */

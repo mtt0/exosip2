@@ -82,8 +82,8 @@ static void SSL_set0_rbio(SSL *s, BIO *rbio)
 
 #endif
 
-SSL_CTX *initialize_client_ctx (struct eXosip_t * excontext, const char *certif_client_local_cn_name, eXosip_tls_ctx_t * client_ctx, int transport);
-SSL_CTX *initialize_server_ctx (struct eXosip_t *excontext, const char *certif_local_cn_name, eXosip_tls_ctx_t * srv_ctx, int transport);
+SSL_CTX *initialize_client_ctx (struct eXosip_t * excontext, eXosip_tls_ctx_t * client_ctx, int transport);
+SSL_CTX *initialize_server_ctx (struct eXosip_t *excontext, eXosip_tls_ctx_t * srv_ctx, int transport);
 
 /* persistent connection */
 struct _dtls_stream {
@@ -101,8 +101,6 @@ struct _dtls_stream {
 
 struct eXtldtls {
   eXosip_tls_ctx_t eXosip_dtls_ctx_params;
-  char dtls_local_cn_name[128];
-  char dtls_client_local_cn_name[128];
 
   int dtls_socket;
   struct sockaddr_storage ai_addr;
@@ -126,8 +124,6 @@ dtls_tl_init (struct eXosip_t *excontext)
   memset (&reserved->socket_tab, 0, sizeof (struct _dtls_stream) * EXOSIP_MAX_SOCKETS);
 
   memset (&reserved->eXosip_dtls_ctx_params, 0, sizeof (eXosip_tls_ctx_t));
-  memset (&reserved->dtls_local_cn_name, 0, sizeof (reserved->dtls_local_cn_name));
-  memset (&reserved->dtls_client_local_cn_name, 0, sizeof (reserved->dtls_client_local_cn_name));
 
   /* TODO: make it configurable (as for TLS) */
   osip_strncpy (reserved->eXosip_dtls_ctx_params.client.priv_key, CLIENT_KEYFILE, sizeof (reserved->eXosip_dtls_ctx_params.client.priv_key) - 1);
@@ -305,7 +301,11 @@ dtls_tl_free (struct eXosip_t *excontext)
   }
   
 #if OPENSSL_VERSION_NUMBER < 0x10100000L
+#if OPENSSL_VERSION_NUMBER >= 0x10000000L
+  ERR_remove_thread_state (NULL);
+#else
   ERR_remove_state (0);
+#endif
 #endif
   
   memset (&reserved->socket_tab, 0, sizeof (struct _dtls_stream) * EXOSIP_MAX_SOCKETS);
@@ -340,8 +340,8 @@ dtls_tl_open (struct eXosip_t *excontext)
     excontext->eXtl_transport.proto_local_port = 5061;
 
   /* TODO: allow parameters for DTLS */
-  reserved->server_ctx = initialize_server_ctx (excontext, reserved->dtls_local_cn_name, &reserved->eXosip_dtls_ctx_params, IPPROTO_UDP);
-  reserved->client_ctx = initialize_client_ctx (excontext, reserved->dtls_client_local_cn_name, &reserved->eXosip_dtls_ctx_params, IPPROTO_UDP);
+  reserved->server_ctx = initialize_server_ctx (excontext, &reserved->eXosip_dtls_ctx_params, IPPROTO_UDP);
+  reserved->client_ctx = initialize_client_ctx (excontext, &reserved->eXosip_dtls_ctx_params, IPPROTO_UDP);
 
   res = _eXosip_get_addrinfo (excontext, &addrinfo, excontext->eXtl_transport.proto_ifs, excontext->eXtl_transport.proto_local_port, excontext->eXtl_transport.proto_num);
   if (res)
