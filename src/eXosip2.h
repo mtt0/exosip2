@@ -172,10 +172,15 @@ extern "C" {
 
 #define PF_INET6        AF_INET6
 
+#define _SS_MAXSIZE 128
+#define _SS_ALIGNSIZE (sizeof (int64_t))
+#define _SS_PAD1SIZE (_SS_ALIGNSIZE - sizeof (unsigned short))
+#define _SS_PAD2SIZE (_SS_MAXSIZE - (sizeof (unsigned short)+ _SS_PAD1SIZE + _SS_ALIGNSIZE))
   struct sockaddr_storage {
-    unsigned char sa_len;
-    unsigned char sa_family;    /* Address family AF_XXX */
-    char sa_data[14];           /* Protocol specific address */
+    unsigned short  ss_family;
+    char _ss_pad1[_SS_PAD1SIZE];
+    int64_t _ss_align;
+    char _ss_pad2[_SS_PAD2SIZE];
   };
 
   struct addrinfo {
@@ -203,10 +208,15 @@ extern "C" {
 #ifndef DEFINE_SOCKADDR_STORAGE
 #define __eXosip_sockaddr sockaddr_storage
 #else
-  struct __eXosip_sockaddr {
-    u_char ss_len;
-    u_char ss_family;
-    u_char padding[128 - 2];
+#define _SS_MAXSIZE 128
+#define _SS_ALIGNSIZE (sizeof (int64_t))
+#define _SS_PAD1SIZE (_SS_ALIGNSIZE - sizeof (unsigned short))
+#define _SS_PAD2SIZE (_SS_MAXSIZE - (sizeof (unsigned short)+ _SS_PAD1SIZE + _SS_ALIGNSIZE))
+  struct sockaddr_storage {
+    unsigned short  ss_family;
+    char _ss_pad1[_SS_PAD1SIZE];
+    int64_t _ss_align;
+    char _ss_pad2[_SS_PAD2SIZE];
   };
 #endif
 
