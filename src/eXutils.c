@@ -738,7 +738,7 @@ _eXosip_guess_ip_for_destinationsock (struct eXosip_t *excontext, int family, in
 
   _eXosip_freeaddrinfo (addrf);
 
-  if (getnameinfo ((const struct sockaddr *) &local_addr, (socklen_t)local_addr_len, address, size, NULL, 0, NI_NUMERICHOST)) {
+  if (_eXosip_getnameinfo((const struct sockaddr *) &local_addr, (socklen_t)local_addr_len, address, size, NULL, 0, NI_NUMERICHOST)) {
     snprintf (address, size, (family == AF_INET) ? "127.0.0.1" : "::1");
     return OSIP_NO_NETWORK;
   }
@@ -780,7 +780,7 @@ _eXosip_default_gateway_with_getifaddrs (int type, char *address, int size)
 
   for (ifp = ifpstart; ifp != NULL; ifp = ifp->ifa_next) {
     if (ifp->ifa_addr && ifp->ifa_addr->sa_family == type && (ifp->ifa_flags & IFF_RUNNING) && !(ifp->ifa_flags & IFF_LOOPBACK)) {
-      getnameinfo (ifp->ifa_addr, (type == AF_INET6) ? sizeof (struct sockaddr_in6) : sizeof (struct sockaddr_in), address, size, NULL, 0, NI_NUMERICHOST);
+      _eXosip_getnameinfo(ifp->ifa_addr, (type == AF_INET6) ? sizeof (struct sockaddr_in6) : sizeof (struct sockaddr_in), address, size, NULL, 0, NI_NUMERICHOST);
       if (strchr (address, '%') == NULL) {      /*avoid ipv6 link-local addresses */
         OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO2, NULL, "_eXosip_default_gateway_with_getifaddrs(): found %s\n", address));
         ret = 0;
@@ -1200,7 +1200,7 @@ _eXosip_get_addrinfo (struct eXosip_t *excontext, struct addrinfo **addrinfo, co
     char porttmp[10];
 
     for (elem = *addrinfo; elem != NULL; elem = elem->ai_next) {
-      getnameinfo (elem->ai_addr, (socklen_t)elem->ai_addrlen, tmp, sizeof (tmp), porttmp, sizeof (porttmp), NI_NUMERICHOST | NI_NUMERICSERV);
+      _eXosip_getnameinfo(elem->ai_addr, (socklen_t)elem->ai_addrlen, tmp, sizeof (tmp), porttmp, sizeof (porttmp), NI_NUMERICHOST | NI_NUMERICSERV);
       OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO2, NULL, "getaddrinfo returned: %s port %s\n", tmp, porttmp));
     }
   }
