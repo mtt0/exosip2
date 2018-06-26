@@ -115,6 +115,8 @@ udp_tl_init (struct eXosip_t *excontext)
   if (reserved == NULL)
     return OSIP_NOMEM;
   memset (reserved, 0, sizeof (struct eXtludp));
+  reserved->udp_socket = -1;
+  reserved->udp_socket_oc = -1;
 
   excontext->eXtludp_reserved = reserved;
   return OSIP_SUCCESS;
@@ -175,16 +177,16 @@ udp_tl_free (struct eXosip_t *excontext)
 
   memset (&reserved->ai_addr, 0, sizeof (struct sockaddr_storage));
 #ifdef TSC_SUPPORT
-  if (reserved->udp_socket > 0) {
+  if (reserved->udp_socket >= 0) {
     if (excontext->tunnel_handle) {
       tsc_close (reserved->udp_socket);
-      reserved->udp_socket = 0;
+      reserved->udp_socket = -1;
     }
   }
 #endif
-  if (reserved->udp_socket > 0)
+  if (reserved->udp_socket >= 0)
     _eXosip_closesocket (reserved->udp_socket);
-  if (reserved->udp_socket_oc > 0)
+  if (reserved->udp_socket_oc >= 0)
     _eXosip_closesocket (reserved->udp_socket_oc);
 
   if (reserved->buf != NULL)
@@ -299,6 +301,7 @@ _udp_tl_transport_set_dscp_qos (struct eXosip_t *excontext, struct sockaddr *rem
 int
 _eXosip_transport_set_dscp (struct eXosip_t *excontext, int family, int sock)
 {
+#ifdef IPPROTO_IP
   int res;
 
   if (excontext->tunnel_handle)
@@ -319,6 +322,9 @@ _eXosip_transport_set_dscp (struct eXosip_t *excontext, int family, int sock)
 #endif
   }
   return res;
+#else
+  return 0;
+#endif
 }
 
 static int
@@ -462,15 +468,6 @@ _udp_tl_open (struct eXosip_t *excontext, int force_family)
       memcpy (&reserved->ai_addr, curinfo->ai_addr, curinfo->ai_addrlen);
     }
 #endif
-    if (excontext->eXtl_transport.proto_num != IPPROTO_UDP) {
-      res = listen (sock, SOMAXCONN);
-      if (res < 0) {
-        OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "eXosip: Cannot bind socket node:%s family:%d %s\n", excontext->eXtl_transport.proto_ifs, curinfo->ai_family, strerror (errno)));
-        _eXosip_closesocket (sock);
-        sock = -1;
-        continue;
-      }
-    }
     reserved->udp_socket_family = curinfo->ai_family;
     break;
   }
@@ -629,15 +626,6 @@ _udp_tl_open_oc (struct eXosip_t *excontext, int force_family)
       memcpy (&reserved->ai_addr_oc, curinfo->ai_addr, curinfo->ai_addrlen);
     }
 #endif
-    if (excontext->eXtl_transport.proto_num != IPPROTO_UDP) {
-      res = listen (sock, SOMAXCONN);
-      if (res < 0) {
-        OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "eXosip: Cannot bind socket node:%s family:%d %s\n", excontext->eXtl_transport.proto_ifs, curinfo->ai_family, strerror (errno)));
-        _eXosip_closesocket (sock);
-        sock = -1;
-        continue;
-      }
-    }
 
     reserved->udp_socket_oc_family = curinfo->ai_family;
     break;
@@ -678,9 +666,9 @@ _udp_tl_reset (struct eXosip_t *excontext, int af_family)
 {
   struct eXtludp *reserved = (struct eXtludp *) excontext->eXtludp_reserved;
 
-  if (reserved->udp_socket > 0)
+  if (reserved->udp_socket >= 0)
     _eXosip_closesocket (reserved->udp_socket);
-  reserved->udp_socket=0;
+  reserved->udp_socket=-1;
   return _udp_tl_open (excontext, af_family);
   }
 
@@ -689,9 +677,9 @@ _udp_tl_reset_oc (struct eXosip_t *excontext, int af_family)
 {
   struct eXtludp *reserved = (struct eXtludp *) excontext->eXtludp_reserved;
   
-  if (reserved->udp_socket_oc > 0)
+  if (reserved->udp_socket_oc >= 0)
     _eXosip_closesocket (reserved->udp_socket_oc);
-  reserved->udp_socket_oc=0;
+  reserved->udp_socket_oc=-1;
   return _udp_tl_open_oc (excontext, af_family);
 }
 
@@ -705,7 +693,7 @@ udp_tl_set_fdset (struct eXosip_t *excontext, fd_set * osip_fdset, fd_set * osip
     return OSIP_WRONG_STATE;
   }
 
-  if (reserved->udp_socket <= 0)
+  if (reserved->udp_socket < 0)
     return -1;
 
 #ifdef TSC_SUPPORT
@@ -719,7 +707,7 @@ udp_tl_set_fdset (struct eXosip_t *excontext, fd_set * osip_fdset, fd_set * osip
   if (reserved->udp_socket > *fd_max)
     *fd_max = reserved->udp_socket;
 
-  if (reserved->udp_socket_oc > 0)
+  if (reserved->udp_socket_oc >= 0)
   {
 #ifdef TSC_SUPPORT
     if (!excontext->tunnel_handle) {
@@ -748,7 +736,7 @@ udp_tl_read_message (struct eXosip_t *excontext, fd_set * osip_fdset, fd_set * o
     return OSIP_WRONG_STATE;
   }
 
-  if (reserved->udp_socket <= 0)
+  if (reserved->udp_socket < 0)
     return -1;
 
   if (reserved->udp_socket_family == AF_INET)
@@ -789,7 +777,7 @@ udp_tl_read_message (struct eXosip_t *excontext, fd_set * osip_fdset, fd_set * o
       _eXosip_handle_incoming_message (excontext, reserved->buf, i, reserved->udp_socket, src6host, recvport, NULL, NULL);
 
       /* if we have a second socket for outbound connection, save information about inbound traffic initiated by receiving data on udp_socket */
-      if (reserved->udp_socket_oc > 0)
+      if (reserved->udp_socket_oc >= 0)
       {
         int pos;
         for (pos = 0; pos < EXOSIP_MAX_SOCKETS; pos++) {
@@ -802,7 +790,7 @@ udp_tl_read_message (struct eXosip_t *excontext, fd_set * osip_fdset, fd_set * o
         if (pos == EXOSIP_MAX_SOCKETS) {
           OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO1, NULL, "inbound traffic/new connection detected (%s:%i\n", src6host, recvport));
           for (pos = 0; pos < EXOSIP_MAX_SOCKETS; pos++) {
-            if (reserved->socket_tab[pos].out_socket ==0) {
+            if (reserved->socket_tab[pos].out_socket == -1) {
               reserved->socket_tab[pos].out_socket=reserved->udp_socket;
               snprintf(reserved->socket_tab[pos].remote_ip, sizeof(reserved->socket_tab[pos].remote_ip), "%s", src6host);
               reserved->socket_tab[pos].remote_port=recvport;
@@ -835,7 +823,7 @@ udp_tl_read_message (struct eXosip_t *excontext, fd_set * osip_fdset, fd_set * o
     }
   }
 
-  if (reserved->udp_socket_oc > 0 && FD_ISSET (reserved->udp_socket_oc, osip_fdset)) {
+  if (reserved->udp_socket_oc >= 0 && FD_ISSET (reserved->udp_socket_oc, osip_fdset)) {
     struct sockaddr_storage sa;
     
     if (reserved->buf == NULL)
@@ -1054,7 +1042,7 @@ udp_tl_send_message (struct eXosip_t *excontext, osip_transaction_t * tr, osip_m
     return OSIP_WRONG_STATE;
   }
 
-  if (reserved->udp_socket <= 0)
+  if (reserved->udp_socket < 0)
     return -1;
 
   if (host == NULL) {
@@ -1268,8 +1256,20 @@ udp_tl_send_message (struct eXosip_t *excontext, osip_transaction_t * tr, osip_m
   local_port = excontext->eXtl_transport.proto_local_port;
   local_ai_addr = &reserved->ai_addr;
 
+  switch (((struct sockaddr *) &addr)->sa_family) {
+  case AF_INET:
+    inet_ntop(((struct sockaddr *) &addr)->sa_family, &(((struct sockaddr_in *) &addr)->sin_addr), ipbuf, sizeof(ipbuf));
+    break;
+  case AF_INET6:
+    inet_ntop(((struct sockaddr *) &addr)->sa_family, &(((struct sockaddr_in6 *) &addr)->sin6_addr), ipbuf, sizeof(ipbuf));
+    break;
+  default:
+    strncpy(ipbuf, "(unknown)", sizeof(ipbuf));
+    break;
+  }
+
   /* if we have a second socket for outbound connection, re-use the incoming socket (udp_socket) for any message sent there */
-  if (reserved->udp_socket_oc > 0)
+  if (reserved->udp_socket_oc >= 0)
   {
     int pos;
     
@@ -1278,7 +1278,7 @@ udp_tl_send_message (struct eXosip_t *excontext, osip_transaction_t * tr, osip_m
     local_ai_addr = &reserved->ai_addr_oc;
     
     for (pos = 0; pos < EXOSIP_MAX_SOCKETS; pos++) {
-      if (reserved->socket_tab[pos].out_socket == 0)
+      if (reserved->socket_tab[pos].out_socket == -1)
         continue;
       /* we insert in table ONLY incoming transaction that we want to remember: so any entry in the table refer to incoming udp_socket */
       if (reserved->socket_tab[pos].remote_port == port && osip_strcasecmp(reserved->socket_tab[pos].remote_ip, ipbuf)==0) {
@@ -1288,18 +1288,6 @@ udp_tl_send_message (struct eXosip_t *excontext, osip_transaction_t * tr, osip_m
         break;
       }
     }
-  }
-
-  switch (((struct sockaddr *) &addr)->sa_family) {
-    case AF_INET:
-      inet_ntop (((struct sockaddr *) &addr)->sa_family, &(((struct sockaddr_in *) &addr)->sin_addr), ipbuf, sizeof (ipbuf));
-      break;
-    case AF_INET6:
-      inet_ntop (((struct sockaddr *) &addr)->sa_family, &(((struct sockaddr_in6 *) &addr)->sin6_addr), ipbuf, sizeof (ipbuf));
-      break;
-    default:
-      strncpy (ipbuf, "(unknown)", sizeof (ipbuf));
-      break;
   }
   
   _eXosip_request_viamanager(excontext, tr, sip, addr.ss_family, IPPROTO_UDP, local_ai_addr, local_port, sock, ipbuf);
@@ -1435,7 +1423,7 @@ udp_tl_keepalive (struct eXosip_t *excontext)
     return 0;
   }
 
-  if (reserved->udp_socket <= 0)
+  if (reserved->udp_socket < 0)
     return OSIP_UNDEFINED_ERROR;
 
   for (jr = excontext->j_reg; jr != NULL; jr = jr->next) {
