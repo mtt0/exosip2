@@ -818,7 +818,7 @@ _tcp_tl_is_connected (int sock)
       if (curinfo->ai_protocol && curinfo->ai_protocol != IPPROTO_TCP)
         continue;
       
-      res = getnameinfo ((struct sockaddr *) curinfo->ai_addr, (socklen_t)curinfo->ai_addrlen, src6host, NI_MAXHOST, NULL, 0, NI_NUMERICHOST);
+      res = _eXosip_getnameinfo((struct sockaddr *) curinfo->ai_addr, (socklen_t)curinfo->ai_addrlen, src6host, NI_MAXHOST, NULL, 0, NI_NUMERICHOST);
       if (res != 0)
         continue;
       
@@ -836,7 +836,7 @@ _tcp_tl_is_connected (int sock)
         continue;
       }
       
-      res = getnameinfo ((struct sockaddr *) curinfo->ai_addr, (socklen_t)curinfo->ai_addrlen, src6host, NI_MAXHOST, NULL, 0, NI_NUMERICHOST);
+      res = _eXosip_getnameinfo((struct sockaddr *) curinfo->ai_addr, (socklen_t)curinfo->ai_addrlen, src6host, NI_MAXHOST, NULL, 0, NI_NUMERICHOST);
       
       if (res == 0) {
         OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO1, NULL, "New binding with %s:%i\n", src6host, port));
@@ -971,10 +971,7 @@ _tcp_tl_is_connected (int sock)
         
         val = 1;
         if (setsockopt (sock, SOL_SOCKET, SO_KEEPALIVE, (char *) &val, sizeof (val)) == -1) {
-          _eXosip_closesocket (sock);
-          sock = -1;
-          OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO2, NULL, "Cannot get socket flag!\n"));
-          continue;
+          OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO2, NULL, "Cannot set socket SO_KEEPALIVE!\n"));
         }
       }
 #ifdef HAVE_MSTCPIP_H
@@ -1566,7 +1563,7 @@ _tcp_tl_is_connected (int sock)
         return OSIP_UNDEFINED_ERROR;
       }
       else {
-        ret = getnameinfo ((struct sockaddr *) &addr, nameLen, host, hostsize, NULL, 0, NI_NUMERICHOST);
+        ret = _eXosip_getnameinfo((struct sockaddr *) &addr, nameLen, host, hostsize, NULL, 0, NI_NUMERICHOST);
         if (ret != 0)
           return OSIP_UNDEFINED_ERROR;
         

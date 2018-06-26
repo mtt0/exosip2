@@ -2186,7 +2186,7 @@ _tls_tl_connect_socket (struct eXosip_t *excontext, char *host, int port, int re
     if (curinfo->ai_protocol && curinfo->ai_protocol != IPPROTO_TCP)
       continue;
 
-    res = getnameinfo ((struct sockaddr *) curinfo->ai_addr, (socklen_t)curinfo->ai_addrlen, src6host, NI_MAXHOST, NULL, 0, NI_NUMERICHOST);
+    res = _eXosip_getnameinfo((struct sockaddr *) curinfo->ai_addr, (socklen_t)curinfo->ai_addrlen, src6host, NI_MAXHOST, NULL, 0, NI_NUMERICHOST);
     if (res != 0)
       continue;
 
@@ -2207,7 +2207,7 @@ _tls_tl_connect_socket (struct eXosip_t *excontext, char *host, int port, int re
       continue;
     }
 
-    res = getnameinfo ((struct sockaddr *) curinfo->ai_addr, (socklen_t)curinfo->ai_addrlen, src6host, NI_MAXHOST, NULL, 0, NI_NUMERICHOST);
+    res = _eXosip_getnameinfo((struct sockaddr *) curinfo->ai_addr, (socklen_t)curinfo->ai_addrlen, src6host, NI_MAXHOST, NULL, 0, NI_NUMERICHOST);
 
     if (res == 0) {
       int i = _tls_tl_find_socket (excontext, src6host, port);
@@ -2355,10 +2355,7 @@ _tls_tl_connect_socket (struct eXosip_t *excontext, char *host, int port, int re
 
       val = 1;
       if (setsockopt (sock, SOL_SOCKET, SO_KEEPALIVE, (char *) &val, sizeof (val)) == -1) {
-        _eXosip_closesocket (sock);
-        sock = -1;
-        OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO2, NULL, "Cannot get socket flag!\n"));
-        continue;
+        OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO2, NULL, "Cannot set socket SO_KEEPALIVE!\n!\n"));
       }
     }
 #ifdef HAVE_MSTCPIP_H

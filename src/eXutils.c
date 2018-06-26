@@ -680,7 +680,7 @@ _eXosip_guess_ip_for_destination (struct eXosip_t *excontext, int family, char *
   _eXosip_closesocket (sock);
   _eXosip_freeaddrinfo (addrf);
 
-  if (getnameinfo ((const struct sockaddr *) &local_addr, local_addr_len, address, size, NULL, 0, NI_NUMERICHOST)) {
+  if (_eXosip_getnameinfo((const struct sockaddr *) &local_addr, local_addr_len, address, size, NULL, 0, NI_NUMERICHOST)) {
     snprintf (address, size, (family == AF_INET) ? "127.0.0.1" : "::1");
     return OSIP_NO_NETWORK;
   }
