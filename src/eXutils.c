@@ -394,14 +394,10 @@ _eXosip_get_addrinfo (struct eXosip_t *excontext, struct addrinfo **addrinfo, co
 
   struct hostent *buf = NULL;
 
-  char portbuf[10];
-
   *addrinfo = NULL;             /* default return */
 
   if (port < 0)                 /* -1 for SRV record */
     return OSIP_BADPARAMETER;
-
-  snprintf (portbuf, sizeof (portbuf), "%i", port);
 
   if (1 == eXosip_inet_pton (AF_INET, hostname, &in))
     /* This is a dotted IP address 123.123.123.123-style */
