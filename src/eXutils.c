@@ -533,7 +533,7 @@ _eXosip_get_addrinfo (struct eXosip_t *excontext, struct addrinfo **addrinfo, co
     else
 #endif /* HAVE_GETHOSTBYNAME_R_3 */
     {
-      OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO2, NULL, "gethostbyname failure. %s:%s (%s)\n", hostname, port));
+      OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO2, NULL, "gethostbyname failure. %s:%i\n", hostname, port));
       h = NULL;                 /* set return code to NULL */
       free (buf);
     }
@@ -548,7 +548,7 @@ _eXosip_get_addrinfo (struct eXosip_t *excontext, struct addrinfo **addrinfo, co
     h = gethostbyname (hostname);
 #endif
     if (!h) {
-      OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO2, NULL, "gethostbyname failure. %s:%s (%s)\n", hostname, port));
+      OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO2, NULL, "gethostbyname failure. %s:%i\n", hostname, port));
     }
 #endif /*HAVE_GETHOSTBYNAME_R */
   }
