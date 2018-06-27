@@ -734,15 +734,19 @@ _eXosip_guess_ip_for_destinationsock (struct eXosip_t *excontext, int family, in
 #else /* sun, *BSD, linux, and other? */
 
 
+#ifdef HAVE_SYS_IOCTL_H
 #include <sys/ioctl.h>
-#include <net/if.h>
+#endif
+#ifdef HAVE_UNISTD_H
 #include <unistd.h>
+#endif
+#ifdef HAVE_SYS_PARAM_H
 #include <sys/param.h>
-
-#include <stdio.h>
+#endif
 
 #ifdef HAVE_GETIFADDRS
 
+#include <net/if.h>
 #include <ifaddrs.h>
 static int
 _eXosip_default_gateway_with_getifaddrs (int type, char *address, int size)
