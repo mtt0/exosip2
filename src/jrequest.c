@@ -33,10 +33,6 @@
 #include "eXosip2.h"
 
 #ifndef WIN32
-#include <sys/types.h>
-#include <sys/socket.h>
-#include <netinet/in.h>
-#include <arpa/inet.h>
 #ifdef __APPLE_CC__
 #include <unistd.h>
 #endif

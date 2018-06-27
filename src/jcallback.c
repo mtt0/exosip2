@@ -43,17 +43,8 @@
 
 #else
 #include <sys/wait.h>
-#include <sys/types.h>
 #include <unistd.h>
 #include <assert.h>
-
-#include <sys/socket.h>
-#include <netinet/in.h>
-#include <arpa/inet.h>
-
-#include <sys/types.h>
-#include <sys/socket.h>
-#include <netdb.h>
 #endif
 
 #include <eXosip2/eXosip.h>

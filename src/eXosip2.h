@@ -44,6 +44,8 @@
 #define HAVE_SYS_TYPES_H 1
 #define HAVE_TIME_H 1
 #define HAVE_STDARG_H 1
+#define HAVE_MEMORY_H 1
+#define HAVE_GMTIME 1
 
 #elif defined(__VXWORKS_OS__) || defined(__rtems__)
 #define HAVE_STRING_H 1
@@ -51,8 +53,10 @@
 #define HAVE_SYS_TIME_H 1
 #define HAVE_SYS_TYPES_H 1
 #define HAVE_STDARG_H 1
+#define HAVE_MEMORY_H 1
+#define HAVE_GMTIME 1
 
-#elif defined _WIN32_WCE
+#elif defined(_WIN32_WCE)
 
 #define HAVE_CTYPE_H 1
 #define HAVE_STRING_H 1
@@ -79,6 +83,8 @@
 #if _MSC_VER >= 1300
 #define WIN32_USE_CRYPTO 1
 #endif
+
+#define HAVE_GMTIME 1
 
 #endif
 
@@ -136,11 +142,18 @@
 #elif WIN32
 #include <winsock2.h>
 #include <ws2tcpip.h>
-#else
-#include <sys/types.h>
+#endif
+
+#ifdef HAVE_SYS_SOCKET_H
 #include <sys/socket.h>
+#endif
+#ifdef HAVE_NETINET_IN_H
 #include <netinet/in.h>
+#endif
+#ifdef HAVE_ARPA_INET_H
 #include <arpa/inet.h>
+#endif
+#ifdef HAVE_NETDB_H
 #include <netdb.h>
 #endif
 
@@ -170,7 +183,9 @@ extern "C" {
 #define NI_MAXSERV      32
 #define NI_NUMERICHOST  1
 
+#ifndef PF_INET6
 #define PF_INET6        AF_INET6
+#endif
 
 #define _SS_MAXSIZE 128
 #define _SS_ALIGNSIZE (sizeof (int64_t))

@@ -141,12 +141,12 @@ jpipe ()
     return NULL;
 
   s = (int) socket (AF_INET, SOCK_STREAM, IPPROTO_TCP);
-  if (0 > s) {
+  if (s < 0) {
     osip_free (my_pipe);
     return NULL;
   }
   my_pipe->pipes[1] = (int) socket (PF_INET, SOCK_STREAM, IPPROTO_TCP);
-  if (0 > my_pipe->pipes[1]) {
+  if (my_pipe->pipes[1] < 0) {
     _eXosip_closesocket (s);
     osip_free (my_pipe);
     return NULL;
@@ -207,7 +207,7 @@ jpipe ()
 
   my_pipe->pipes[0] = (int)accept (s, NULL, NULL);
 
-  if (my_pipe->pipes[0] <= 0) {
+  if (my_pipe->pipes[0] < 0) {
     OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "udp plugin; Failed to call accept!\n"));
     _eXosip_closesocket (s);
     _eXosip_closesocket (my_pipe->pipes[1]);

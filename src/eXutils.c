@@ -66,10 +66,8 @@
 #include <windns.h>
 #include <malloc.h>
 #endif
-#else
-#include <netinet/in.h>
-#include <sys/socket.h>
-#include <arpa/inet.h>
+#endif
+
 #ifdef HAVE_ARPA_NAMESER_H
 #include <arpa/nameser.h>
 #endif
@@ -84,11 +82,6 @@
 #include <resolv.h>
 #endif
 
-#ifdef HAVE_NETDB_H
-#include <netdb.h>
-#endif
-#endif
-
 #include <ctype.h>
 
 #ifdef HAVE_REGEX_H
@@ -101,10 +94,6 @@
 #ifdef TSC_SUPPORT
 #include "tsc_socket_api.h"
 #include "tsc_control_api.h"
-#endif
-
-#if defined(__arc__)
-#define USE_GETHOSTBYNAME
 #endif
 
 int
@@ -745,12 +734,6 @@ _eXosip_guess_ip_for_destinationsock (struct eXosip_t *excontext, int family, in
 #else /* sun, *BSD, linux, and other? */
 
 
-#include <sys/types.h>
-#include <sys/socket.h>
-#include <netinet/in.h>
-#include <arpa/inet.h>
-#include <netdb.h>
-
 #include <sys/ioctl.h>
 #include <net/if.h>
 #include <unistd.h>
@@ -1367,18 +1350,6 @@ static osip_list_t *dnsutils_list = NULL;
 
 #if defined(HAVE_CARES_H) || defined(HAVE_ARES_H)
 
-#ifdef HAVE_SYS_SOCKET_H
-#include <sys/socket.h>
-#endif
-#ifdef HAVE_NETINET_IN_H
-#include <netinet/in.h>
-#endif
-#ifdef HAVE_ARPA_INET_H
-#include <arpa/inet.h>
-#endif
-#ifdef HAVE_NETDB_H
-#include <netdb.h>
-#endif
 #ifdef HAVE_ARPA_NAMESER_H
 #include <arpa/nameser.h>
 #else

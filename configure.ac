@@ -334,6 +334,8 @@ AC_CHECK_HEADERS([resolv.h], [], [],
 
 dnl check if we have the getifaddrs() sytem call
 AC_CHECK_FUNCS(getifaddrs)
+AC_CHECK_FUNCS(gmtime_r)
+AC_CHECK_FUNCS(gmtime)
 
 AS_IF([test "$enable_openssl" = "yes" -o "$enable_openssl" = "auto"],
       [PKG_CHECK_MODULES([SSL], [openssl],

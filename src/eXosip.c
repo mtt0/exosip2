@@ -39,14 +39,10 @@
 #include <eXosip2/eXosip.h>
 
 
-
-#ifndef  WIN32
-#if !defined(__arc__)
+#ifdef HAVE_MEMORY_H
 #include <memory.h>
 #endif
-#include <sys/types.h>
-#include <sys/socket.h>
-#include <netinet/in.h>
+#ifdef HAVE_UNISTD_H
 #include <unistd.h>
 #endif
 
