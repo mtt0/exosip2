@@ -88,6 +88,12 @@
 
 #endif
 
+#if defined(__arc__)
+#define HAVE_SYS_SOCKET_H
+#define HAVE_NETINET_IN_H
+#define HAVE_ARPA_INET_H
+#endif
+
 #if defined (HAVE_STRING_H)
 #include <string.h>
 #elif defined (HAVE_STRINGS_H)
