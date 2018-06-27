@@ -291,6 +291,7 @@ AC_SUBST(EXOSIP_LIB)
 
 dnl Checks for header files.
 AC_HEADER_STDC
+AC_CHECK_HEADERS(memory.h)
 AC_CHECK_HEADERS(ctype.h)
 AC_CHECK_HEADERS(string.h)
 AC_CHECK_HEADERS(strings.h)
@@ -307,6 +308,7 @@ AC_CHECK_HEADERS(sys/signal.h)
 AC_CHECK_HEADERS(malloc.h)
 AC_CHECK_HEADERS(sys/select.h)
 AC_CHECK_HEADERS(sys/types.h)
+AC_CHECK_HEADERS(sys/socket.h)
 AC_CHECK_HEADERS(fcntl.h)
 AC_CHECK_HEADERS(sys/soundcard.h)
 AC_CHECK_HEADERS(arpa/inet.h)
@@ -315,6 +317,7 @@ AC_CHECK_HEADERS(netdb.h)
 AC_CHECK_HEADERS(nameser8_compat.h)
 AC_CHECK_HEADERS(arpa/nameser_compat.h)
 AC_CHECK_HEADERS(netinet/tcp.h)
+AC_CHECK_HEADERS(netinet/in.h)
 AC_CHECK_HEADERS(regex.h)
 
 AC_CHECK_HEADERS([resolv.h], [], [],
