@@ -36,31 +36,6 @@
 
 #ifndef OSIP_MONOTHREAD
 
-#include <eXosip2/eXosip.h>
-
-#ifdef _WIN32_WCE
-#include <stdio.h>
-#include <stdlib.h>
-#include <winsock2.h>
-#include <osipparser2/osip_port.h>
-#endif
-
-#ifndef WIN32
-#ifdef HAVE_UNISTD_H
-#include <unistd.h>
-#endif
-#endif
-
-#if defined(__arc__)
-#include <netinet/in.h>
-#include <sys/socket.h>
-#include <arpa/inet.h>
-#endif
-
-#ifdef WIN32
-#include <windows.h>
-#endif
-
 /**
  * @file jpipe.h
  * @brief PPL Pipe Handling Routines

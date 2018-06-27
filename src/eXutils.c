@@ -96,6 +96,10 @@
 #include "tsc_control_api.h"
 #endif
 
+#ifdef HAVE_UNISTD_H
+#include <unistd.h>
+#endif
+
 int
 _eXosip_closesocket(SOCKET_TYPE sock) {
 #if	!defined(_WIN32) && !defined(_WIN32_WCE)
@@ -736,9 +740,6 @@ _eXosip_guess_ip_for_destinationsock (struct eXosip_t *excontext, int family, in
 
 #ifdef HAVE_SYS_IOCTL_H
 #include <sys/ioctl.h>
-#endif
-#ifdef HAVE_UNISTD_H
-#include <unistd.h>
 #endif
 #ifdef HAVE_SYS_PARAM_H
 #include <sys/param.h>
@@ -1395,9 +1396,6 @@ static osip_list_t *dnsutils_list = NULL;
 
 #ifdef HAVE_SYS_TIME_H
 #include <sys/time.h>
-#endif
-#ifdef HAVE_UNISTD_H
-#include <unistd.h>
 #endif
 #ifdef HAVE_STRINGS_H
 #include <strings.h>

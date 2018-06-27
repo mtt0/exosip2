@@ -77,6 +77,10 @@
 #include <netinet/tcp.h>
 #endif
 
+#ifdef HAVE_UNISTD_H
+#include <unistd.h>
+#endif
+
 #if defined(_WIN32_WCE) || defined(WIN32)
 #define strerror(X) "-1"
 #define ex_errno WSAGetLastError()
