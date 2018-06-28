@@ -32,11 +32,11 @@
 
 #include "eXosip2.h"
 
-#ifndef WIN32
-#ifdef __APPLE_CC__
+#ifdef HAVE_UNISTD_H
 #include <unistd.h>
 #endif
-#else
+
+#ifdef WIN32
 #include <windows.h>
 #endif
 
