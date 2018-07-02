@@ -38,6 +38,8 @@
 #include <exosip-config.h>
 #endif
 
+#define HAVE_INET_NTOP
+
 #if defined(__PALMOS__) && (__PALMOS__ >= 0x06000000)
 #define HAVE_CTYPE_H 1
 #define HAVE_STRING_H 1
@@ -58,6 +60,9 @@
 
 #elif defined(_WIN32_WCE)
 
+#define HAVE_WINDOWS_H 1
+#define HAVE_WINSOCK2_H 1
+#define HAVE_WS2TCPIP_H 1
 #define HAVE_CTYPE_H 1
 #define HAVE_STRING_H 1
 #define HAVE_TIME_H 1
@@ -65,8 +70,13 @@
 
 #define snprintf  _snprintf
 
+#undef HAVE_INET_NTOP
+
 #elif defined(WIN32)
 
+#define HAVE_WINDOWS_H 1
+#define HAVE_WINSOCK2_H 1
+#define HAVE_WS2TCPIP_H 1
 #define HAVE_CTYPE_H 1
 #define HAVE_STRING_H 1
 #define HAVE_SYS_TYPES_H 1
@@ -84,7 +94,39 @@
 #define WIN32_USE_CRYPTO 1
 #endif
 
+#if defined(_MSC_VER)
+#define HAVE_MSTCPIP_H
+#if defined(WINAPI_FAMILY) && (WINAPI_FAMILY == WINAPI_FAMILY_PHONE_APP)
+#undef HAVE_MSTCPIP_H
+#endif
+#endif
+
+#define HAVE_WINCRYPT_H
+#if defined(WINAPI_FAMILY) && (WINAPI_FAMILY == WINAPI_FAMILY_PHONE_APP)
+#undef HAVE_WINCRYPT_H
+#endif
+
+#if (_WIN32_WINNT >= 0x0600)
+#define ENABLE_SIP_QOS
+#if (_MSC_VER >= 1700) && !defined(_USING_V110_SDK71_)
+#if defined(WINAPI_FAMILY) && (WINAPI_FAMILY == WINAPI_FAMILY_PHONE_APP)
+#undef ENABLE_SIP_QOS
+#endif
+#endif
+#endif
+
+#define HAVE_WINDNS_H
+#if defined(WINAPI_FAMILY) && (WINAPI_FAMILY == WINAPI_FAMILY_PHONE_APP)
+#undef HAVE_WINDNS_H
+#endif
+
+#define HAVE_IPHLPAPI_H
+#if defined(WINAPI_FAMILY) && (WINAPI_FAMILY == WINAPI_FAMILY_PHONE_APP)
+#undef HAVE_IPHLPAPI_H
+#endif
+
 #define HAVE_GMTIME 1
+#undef HAVE_INET_NTOP
 
 #endif
 
@@ -141,12 +183,11 @@
 #endif
 #endif
 
-#ifdef _WIN32_WCE
+#ifdef HAVE_WINSOCK2_H
 #include <winsock2.h>
-#include <osipparser2/osip_port.h>
-#include <ws2tcpip.h>
-#elif WIN32
-#include <winsock2.h>
+#endif
+
+#ifdef HAVE_WS2TCPIP_H
 #include <ws2tcpip.h>
 #endif
 
@@ -173,7 +214,7 @@
 
 #define EXOSIP_VERSION	"5.0.0"
 
-#ifdef WIN32
+#ifdef HAVE_WINSOCK2_H
 #define SOCKET_TYPE SOCKET
 #else
 #define SOCKET_TYPE int

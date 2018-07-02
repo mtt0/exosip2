@@ -33,19 +33,12 @@
 #include "eXosip2.h"
 #include "eXtransport.h"
 
-#if defined(_MSC_VER) && defined(WIN32) && !defined(_WIN32_WCE)
-#define HAVE_MSTCPIP_H
-#if defined(WINAPI_FAMILY) && (WINAPI_FAMILY == WINAPI_FAMILY_PHONE_APP)
-#undef HAVE_MSTCPIP_H
-#endif
-#endif
-
 #ifdef HAVE_MSTCPIP_H
 #include <Mstcpip.h>
-#else
+#endif
+
 #ifdef HAVE_FCNTL_H
 #include <fcntl.h>
-#endif
 #endif
 
 #if !defined(_WIN32_WCE)
@@ -56,7 +49,7 @@
 #include <netinet/tcp.h>
 #endif
 
-#if defined(_WIN32_WCE) || defined(WIN32)
+#if defined(HAVE_WINSOCK2_H)
 #define strerror(X) "-1"
 #define ex_errno WSAGetLastError()
 #define is_wouldblock_error(r) ((r)==WSAEINTR||(r)==WSAEWOULDBLOCK)
@@ -676,7 +669,7 @@ _tcp_tl_is_connected (int sock)
     if (getsockopt (sock, SOL_SOCKET, SO_ERROR, (void *) (&valopt), &sock_len)
         == 0) {
       if (valopt) {
-#if defined(_WIN32_WCE) || defined(WIN32)
+#if defined(HAVE_WINSOCK2_H)
         if (ex_errno == WSAEWOULDBLOCK) {
 #else
           if (ex_errno == EINPROGRESS) {
@@ -962,7 +955,7 @@ _tcp_tl_is_connected (int sock)
       }
       
       /* set NON-BLOCKING MODE */
-#if defined(_WIN32_WCE) || defined(WIN32)
+#if defined(HAVE_WINSOCK2_H)
       {
         unsigned long nonBlock = 1;
         int val;
@@ -1046,7 +1039,7 @@ _tcp_tl_is_connected (int sock)
       if (res < 0) {
         int connect_err = ex_errno;
         OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO2, NULL, "connecting socket node:%s, socket %d [pos=%d], family:%d, %s[%d]\n", host, sock, pos, curinfo->ai_family, strerror (connect_err), connect_err));
-#if defined(_WIN32_WCE) || defined(WIN32)
+#if defined(HAVE_WINSOCK2_H)
         if (connect_err != WSAEWOULDBLOCK) {
 #else
           if (connect_err != EINPROGRESS) {

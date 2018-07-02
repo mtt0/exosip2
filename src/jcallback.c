@@ -33,25 +33,7 @@
 
 #include "eXosip2.h"
 
-#ifdef _WIN32_WCE
-#include <winsock2.h>
-#include "inet_ntop.h"
-#elif WIN32
-#include <winsock2.h>
-#include <ws2tcpip.h>
-#include "inet_ntop.h"
-
-#else
-#include <sys/wait.h>
-#include <unistd.h>
-#include <assert.h>
-#endif
-
 #include <eXosip2/eXosip.h>
-
-#ifdef HAVE_OPENSSL_SSL_H
-#include <openssl/ssl.h>
-#endif
 
 /* Private functions */
 static void rcvregister_failure (osip_transaction_t * tr, osip_message_t * sip);

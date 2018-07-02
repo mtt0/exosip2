@@ -33,9 +33,7 @@
 #include "eXosip2.h"
 #include "eXtransport.h"
 
-#ifdef _WIN32_WCE
-#include "inet_ntop.h"
-#elif WIN32
+#if !defined (HAVE_INET_NTOP)
 #include "inet_ntop.h"
 #endif
 
@@ -56,16 +54,6 @@
 #include "tsc_control_api.h"
 #endif
 
-#if (_WIN32_WINNT >= 0x0600)
-#define ENABLE_SIP_QOS
-#if (_MSC_VER >= 1700) && !defined(_USING_V110_SDK71_)
-#if defined(WINAPI_FAMILY) && (WINAPI_FAMILY == WINAPI_FAMILY_PHONE_APP)
-#undef ENABLE_SIP_QOS
-#endif
-#endif
-#endif
-
-
 #ifdef ENABLE_SIP_QOS
 #include <delayimp.h>
 #undef ExternC
@@ -84,7 +72,7 @@ struct _udp_stream {
 #endif
 
 /* recv on long message returns -1 with errno=0 */
-#if !defined(WIN32) && !defined(_WIN32_WCE)
+#if !defined(HAVE_WINSOCK2_H)
 #define SOCKET_OPTION_VALUE	void *
 static size_t udp_message_max_length = SIP_MESSAGE_MAX_LENGTH;
 #else
@@ -1344,7 +1332,7 @@ udp_tl_send_message (struct eXosip_t *excontext, osip_transaction_t * tr, osip_m
   _udp_tl_transport_set_dscp_qos(excontext, (struct sockaddr *) &addr, len);
 #endif
 
-#ifdef WIN32
+#ifdef HAVE_WINSOCK2_H
 #define CAST_RECV_LEN(L) ((int)(L))
 #else
 #define CAST_RECV_LEN(L) L

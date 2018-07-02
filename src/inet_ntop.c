@@ -51,7 +51,8 @@
 
 #include "eXosip2.h"
 
-#if defined(WIN32) || defined(_WIN32_WCE)
+#if !defined (HAVE_INET_NTOP)
+/* This is windows replacement for inet_ntop */
 
 #include "inet_ntop.h"
 

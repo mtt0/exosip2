@@ -33,9 +33,7 @@
 #include "eXosip2.h"
 #include "eXtransport.h"
 
-#ifdef _WIN32_WCE
-#include "inet_ntop.h"
-#elif WIN32
+#if !defined (HAVE_INET_NTOP)
 #include "inet_ntop.h"
 #endif
 

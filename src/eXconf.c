@@ -36,10 +36,12 @@
 #include <osip2/osip_mt.h>
 #include <osip2/osip_condv.h>
 
-#if defined (_WIN32_WCE)
+#if !defined (HAVE_INET_NTOP)
 #include "inet_ntop.h"
-#elif WIN32
-#include "inet_ntop.h"
+#endif
+
+#ifndef INET6_ADDRSTRLEN
+#define INET6_ADDRSTRLEN 65
 #endif
 
 #ifndef OSIP_MONOTHREAD
@@ -282,7 +284,7 @@ eXosip_quit (struct eXosip_t *excontext)
   memset (excontext, 0, sizeof (eXosip_t));
   excontext->j_stop_ua = -1;
 
-#ifdef WIN32
+#ifdef HAVE_WINSOCK2_H
   WSACleanup();
 #endif
   return;
@@ -665,7 +667,7 @@ eXosip_init (struct eXosip_t *excontext)
   snprintf (excontext->ipv4_for_gateway, 256, "%s", "217.12.3.11");
   snprintf (excontext->ipv6_for_gateway, 256, "%s", "2001:638:500:101:2e0:81ff:fe24:37c6");
 
-#ifdef WIN32
+#ifdef HAVE_WINSOCK2_H
   /* Initializing windows socket library */
   {
     WORD wVersionRequested;

@@ -37,7 +37,7 @@
 #include <unistd.h>
 #endif
 
-#ifdef WIN32
+#ifdef HAVE_WINDOWS_H
 #include <windows.h>
 #endif
 
@@ -1712,13 +1712,9 @@ _eXosip_read_message (struct eXosip_t *excontext, int max_message_nb, int sec_ma
       i = select (max + 1, &osip_fdset, &osip_wrset, NULL, &tv);
 #endif
 
-#if defined (_WIN32_WCE)
+#if !defined (_WIN32_WCE)
     /* TODO: fix me for wince */
-    /* if (i == -1)
-       continue; */
-#else
     if ((i == -1) && (errno == EINTR || errno == EAGAIN)) {
-
       if (excontext->cbsipWakeLock!=NULL && excontext->incoming_wake_lock_state>0) {
         int count = osip_list_size(&excontext->j_osip->osip_ist_transactions);
         count+=osip_list_size(&excontext->j_osip->osip_nist_transactions);

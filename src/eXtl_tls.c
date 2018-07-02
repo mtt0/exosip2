@@ -43,26 +43,12 @@
 #include <sys/stat.h>
 #endif
 
-#if defined(_MSC_VER) && defined(WIN32) && !defined(_WIN32_WCE)
-#define HAVE_MSTCPIP_H
-#if defined(WINAPI_FAMILY) && (WINAPI_FAMILY == WINAPI_FAMILY_PHONE_APP)
-#undef HAVE_MSTCPIP_H
-#endif
-#endif
-
-#if defined(WIN32)
-#define HAVE_WINCRYPT_H
-#if defined(WINAPI_FAMILY) && (WINAPI_FAMILY == WINAPI_FAMILY_PHONE_APP)
-#undef HAVE_WINCRYPT_H
-#endif
-#endif
-
 #ifdef HAVE_MSTCPIP_H
 #include <Mstcpip.h>
-#else
+#endif
+
 #ifdef HAVE_FCNTL_H
 #include <fcntl.h>
-#endif
 #endif
 
 #ifdef HAVE_WINCRYPT_H
@@ -81,7 +67,7 @@
 #include <unistd.h>
 #endif
 
-#if defined(_WIN32_WCE) || defined(WIN32)
+#if defined(HAVE_WINSOCK2_H)
 #define strerror(X) "-1"
 #define ex_errno WSAGetLastError()
 #define is_wouldblock_error(r) ((r)==WSAEINTR||(r)==WSAEWOULDBLOCK)
@@ -1134,7 +1120,7 @@ tls_tl_open (struct eXosip_t *excontext)
   reserved->client_ctx = initialize_client_ctx (excontext, &excontext->eXosip_tls_ctx_params, IPPROTO_TCP, NULL);
 
 /*only necessary under Windows-based OS, unix-like systems use /dev/random or /dev/urandom */
-#if defined(WIN32) || defined(_WINDOWS)
+#if defined(HAVE_WINSOCK2_H)
 
 #if 0
   /* check if a file with random data is present --> will be verified when random file is needed */
@@ -2229,11 +2215,7 @@ _tls_tl_connect_socket (struct eXosip_t *excontext, char *host, int port, int re
 #endif
     sock = (int) socket (curinfo->ai_family, type, curinfo->ai_protocol);
     if (sock < 0) {
-#if defined(OSIP_MONOTHREAD) || defined(_WIN32_WCE)
-      OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO2, NULL, "eXosip: Cannot create socket!\n"));
-#else
       OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO2, NULL, "eXosip: Cannot create socket %s!\n", strerror (ex_errno)));
-#endif
       continue;
     }
 
@@ -2242,11 +2224,7 @@ _tls_tl_connect_socket (struct eXosip_t *excontext, char *host, int port, int re
       if (setsockopt_ipv6only (sock)) {
         _eXosip_closesocket (sock);
         sock = -1;
-#if defined(OSIP_MONOTHREAD) || defined(_WIN32_WCE)
-        OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO2, NULL, "eXosip: Cannot set socket option!\n"));
-#else
         OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO2, NULL, "eXosip: Cannot set socket option %s!\n", strerror (ex_errno)));
-#endif
         continue;
       }
 #endif /* IPV6_V6ONLY */
@@ -2350,7 +2328,7 @@ _tls_tl_connect_socket (struct eXosip_t *excontext, char *host, int port, int re
     }
 
 
-#if defined(_WIN32_WCE) || defined(WIN32)
+#if defined(HAVE_WINSOCK2_H)
     {
       unsigned long nonBlock = 1;
       int val;
@@ -2427,7 +2405,7 @@ _tls_tl_connect_socket (struct eXosip_t *excontext, char *host, int port, int re
     OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO2, NULL, "eXosip: socket node:%s , socket %d, family:%d set to non blocking mode\n", host, sock, curinfo->ai_family));
     res = connect (sock, curinfo->ai_addr, (socklen_t)curinfo->ai_addrlen);
     if (res < 0) {
-#ifdef WIN32
+#ifdef HAVE_WINSOCK2_H
       if (ex_errno != WSAEWOULDBLOCK) {
 #else
       if (ex_errno != EINPROGRESS) {

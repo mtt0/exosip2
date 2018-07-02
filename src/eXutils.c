@@ -47,25 +47,9 @@
 
 #include <osipparser2/osip_port.h>
 
-#if defined(WIN32) && !defined(_WIN32_WCE)
-#define HAVE_WINDNS_H
-#if defined(WINAPI_FAMILY) && (WINAPI_FAMILY == WINAPI_FAMILY_PHONE_APP)
-#undef HAVE_WINDNS_H
-#endif
-#endif
-
-#if defined(WIN32)
-#define HAVE_IPHLPAPI_H
-#if defined(WINAPI_FAMILY) && (WINAPI_FAMILY == WINAPI_FAMILY_PHONE_APP)
-#undef HAVE_IPHLPAPI_H
-#endif
-#endif
-
-#if defined(WIN32)
 #if defined(HAVE_WINDNS_H)
 #include <windns.h>
 #include <malloc.h>
-#endif
 #endif
 
 #ifdef HAVE_ARPA_NAMESER_H
@@ -102,7 +86,7 @@
 
 int
 _eXosip_closesocket(SOCKET_TYPE sock) {
-#if	!defined(_WIN32) && !defined(_WIN32_WCE)
+#if	!defined(HAVE_WINSOCK2_H)
   return close (sock);
 #else
   return closesocket(sock);
@@ -605,7 +589,7 @@ _eXosip_guess_ip_for_via (struct eXosip_t *excontext, int family, char *address,
   return _eXosip_guess_ip_for_destination (excontext, family, excontext->ipv6_for_gateway, address, size);
 }
 
-#if defined(WIN32) || defined(_WIN32_WCE)
+#if defined(HAVE_WINSOCK2_H)
 
 int
 _eXosip_guess_ip_for_destination (struct eXosip_t *excontext, int family, char *destination, char *address, int size)
@@ -1410,9 +1394,7 @@ static osip_list_t *dnsutils_list = NULL;
 #include <ares.h>
 #include <ares_dns.h>
 
-#ifdef _WIN32_WCE
-#include "inet_ntop.h"
-#elif WIN32
+#if !defined (HAVE_INET_NTOP)
 #include "inet_ntop.h"
 #endif
 

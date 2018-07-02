@@ -36,7 +36,7 @@
 #include <unistd.h>
 #endif
 
-#ifdef WIN32
+#ifdef HAVE_WINDOWS_H
 #include <windows.h>
 #endif
 
