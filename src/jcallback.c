@@ -564,12 +564,14 @@ cb_rcv1xx (int type, osip_transaction_t * tr, osip_message_t * sip)
         else {
           /* the best thing is to replace the current dialog
              information... Much easier than creating a useless dialog! */
+          int current_local_cseq = jd->d_dialog->local_cseq;
           osip_dialog_free (jd->d_dialog);
           i = osip_dialog_init_as_uac (&(jd->d_dialog), sip);
           if (i != 0) {
             OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "Cannot replace the dialog.\r\n"));
           }
           else {
+            jd->d_dialog->local_cseq = current_local_cseq;
             OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_WARNING, NULL, "The dialog has been replaced with the new one from 1xx.\r\n"));
           }
         }
@@ -671,14 +673,14 @@ cb_rcv2xx_4invite (osip_transaction_t * tr, osip_message_t * sip)
     else {
       /* the best thing is to replace the current dialog
          information... Much easier than creating a useless dialog! */
+      int current_local_cseq = jd->d_dialog->local_cseq;
       osip_dialog_free (jd->d_dialog);
       i = osip_dialog_init_as_uac (&(jd->d_dialog), sip);
       if (i != 0) {
         OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "Cannot replace the dialog.\r\n"));
       }
       else {
-        jd->d_dialog->local_cseq = 20 + jd->d_mincseq;
-        jd->d_mincseq = 0;
+        jd->d_dialog->local_cseq = current_local_cseq;
         OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_WARNING, NULL, "The dialog has been replaced with the new one from 200ok.\r\n"));
       }
     }

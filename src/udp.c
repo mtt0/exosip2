@@ -976,7 +976,7 @@ _eXosip_process_newrequest (struct eXosip_t *excontext, osip_event_t * evt, int 
         jd->d_dialog->state = DIALOG_EARLY;
 
         if (old_cseq==-1) {
-          jd->d_dialog->local_cseq = 22 + jd->d_mincseq;
+          jd->d_dialog->local_cseq = 22; /* is this enough? */
         }
 #endif
         break;

@@ -1150,7 +1150,8 @@ eXosip_call_build_prack (struct eXosip_t *excontext, int tid, osip_message_t *re
 
   old_prack_tr = (osip_transaction_t*)osip_list_get_first(jd->d_out_trs, &it);
   while (old_prack_tr != NULL) {
-    if (old_prack_tr != NULL && old_prack_tr->orig_request != NULL && 0 == osip_strcasecmp (old_prack_tr->orig_request->sip_method, "PRACK")) {
+    if (old_prack_tr->orig_request != NULL && 0 == osip_strcasecmp (old_prack_tr->orig_request->sip_method, "PRACK")
+        && OSIP_SUCCESS == osip_to_tag_match(old_prack_tr->orig_request->to, response1xx->to)) {
       osip_header_t *rack_header = NULL;
 
       osip_message_header_get_byname (old_prack_tr->orig_request, "RAck", 0, &rack_header);
@@ -1170,6 +1171,8 @@ eXosip_call_build_prack (struct eXosip_t *excontext, int tid, osip_message_t *re
       return OSIP_WRONG_STATE;
     }
 
+	/* the newer code above use a temporary dialog: thus, we need to use the real current local_cseq (a global value) */
+	_1xxok_dialog->local_cseq = jd->d_dialog->local_cseq;
     i = _eXosip_build_request_within_dialog (excontext, prack, "PRACK", _1xxok_dialog);
 
     /* the newer code above use a temporary dialog: thus, we need to maintain the local_cseq on the in-memory dialog*/
@@ -1228,8 +1231,6 @@ eXosip_call_send_prack (struct eXosip_t *excontext, int tid, osip_message_t * pr
     osip_message_free (prack);
     return i;
   }
-
-  jd->d_mincseq++;
 
   osip_list_add (jd->d_out_trs, tr, 0);
 
