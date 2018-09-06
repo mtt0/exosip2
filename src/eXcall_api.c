@@ -1172,6 +1172,9 @@ eXosip_call_build_prack (struct eXosip_t *excontext, int tid, osip_message_t *re
 
     i = _eXosip_build_request_within_dialog (excontext, prack, "PRACK", _1xxok_dialog);
 
+    /* the newer code above use a temporary dialog: thus, we need to maintain the local_cseq on the in-memory dialog*/
+    jd->d_dialog->local_cseq++;
+
     osip_dialog_free(_1xxok_dialog);
 
     if (i != 0)
