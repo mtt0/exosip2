@@ -1257,10 +1257,15 @@ _eXosip_process_response_out_of_transaction (struct eXosip_t *excontext, osip_ev
     return;
   }
 
+  if (evt->sip->status_code<200 && evt->sip->status_code > 299) {
+    osip_event_free(evt);
+    return;
+  }
+
   /* search for existing dialog: match branch & to tag */
   for (jc = excontext->j_calls; jc != NULL; jc = jc->next) {
-    /* search for calls with only ONE outgoing transaction */
-    if (jc->c_id >= 1 && jc->c_dialogs != NULL && jc->c_out_tr != NULL) {
+    /* search for calls matching the to tag */
+    if (jc->c_id >= 1 && jc->c_dialogs != NULL) {
       for (jd = jc->c_dialogs; jd != NULL; jd = jd->next) {
         if (jd->d_id >= 1 && jd->d_dialog != NULL) {
           /* match answer with dialog */
@@ -1277,8 +1282,8 @@ _eXosip_process_response_out_of_transaction (struct eXosip_t *excontext, osip_ev
       if (jd != NULL)
         break;                  /* found a matching dialog! */
 
-      /* check if the transaction match this from tag */
-      if (jc->c_out_tr->orig_request != NULL && jc->c_out_tr->orig_request->from != NULL) {
+      /* check if the From tag of 2xx match the from tag of initial OUTGOING INVITE */
+	  if (jc->c_out_tr!=NULL && jc->c_out_tr->orig_request != NULL && jc->c_out_tr->orig_request->from != NULL) {
         osip_generic_param_t *tag_invite;
         osip_generic_param_t *tag;
 
@@ -1290,33 +1295,31 @@ _eXosip_process_response_out_of_transaction (struct eXosip_t *excontext, osip_ev
         if (tag_invite->gvalue != NULL && tag->gvalue != NULL && 0 == strcmp (tag_invite->gvalue, tag->gvalue))
           break;
       }
-    }
-  }
-
-  if (jc == NULL) {
-    /* TODO: a ACK and a BYE should be sent for 2xx */
-    OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO1, NULL, "Incoming answer has no relations with current calls: Message discarded.\r\n"));
-    osip_event_free (evt);
-    return;
+	}
   }
 
   if (jc != NULL && jd != NULL) {
     /* we have to restransmit the ACK (if already available) */
-    OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO1, NULL, "2xx restransmission receveid.\r\n"));
+    OSIP_TRACE(osip_trace(__FILE__, __LINE__, OSIP_INFO1, NULL, "2xx restransmission received for established dialog.\r\n"));
     /* check if the 2xx is for the same ACK */
     if (jd->d_ack != NULL && jd->d_ack->cseq != NULL && jd->d_ack->cseq->number != NULL) {
-      if (0 == osip_strcasecmp (jd->d_ack->cseq->number, evt->sip->cseq->number)) {
-        _eXosip_snd_message (excontext, NULL, jd->d_ack, NULL, 0, -1);
-        OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO1, NULL, "ACK restransmission sent.\r\n"));
-      }
+      if (0 == osip_strcasecmp(jd->d_ack->cseq->number, evt->sip->cseq->number)) {
+        _eXosip_snd_message(excontext, NULL, jd->d_ack, NULL, 0, -1);
+        OSIP_TRACE(osip_trace(__FILE__, __LINE__, OSIP_INFO1, NULL, "ACK restransmission sent.\r\n"));
+        osip_event_free(evt);
+        return;
+	  }
     }
-
-    osip_event_free (evt);
+    /* unfortunatly, we don't have an history of "d_ack", thus retransmission for old transaction is not done */
+    /* we could create it again, as if jd=NULL (see below) but we don't want to break the established call. (the ACK may contains SDP, headers...) */
+    OSIP_TRACE(osip_trace(__FILE__, __LINE__, OSIP_INFO1, NULL, "ACK for -old- restransmission not sent.\r\n"));
+    osip_event_free(evt);
     return;
   }
 
-  if (jc != NULL) {
-    /* match answer with dialog */
+  {
+    /* the following code will apply to any -non established call- jc==NULL OR jc!=NULL but with jd==NULL */
+    /* we create a temporary dialog and use it to send a ACK restransmission (always created the same way) and a BYE. */
     osip_dialog_t *dlg;
     osip_transaction_t *last_tr;
 
@@ -1342,8 +1345,11 @@ _eXosip_process_response_out_of_transaction (struct eXosip_t *excontext, osip_ev
         osip_event_free (evt);
         return;
       }
-      /* copy all credentials from INVITE! */
-      last_tr = jc->c_out_tr;
+
+      /* If the call exist, but no dialog which is true here, we are sure the 2xx is from a 2nd user (forking) */
+      /* In such case, it's no effort to copy all credentials from INVITE! */
+	  last_tr = NULL;
+      if (jc!=NULL) last_tr = jc->c_out_tr;
       if (last_tr != NULL) {
         int pos = 0;
         int i;
@@ -1380,11 +1386,9 @@ _eXosip_process_response_out_of_transaction (struct eXosip_t *excontext, osip_ev
     }
 
     osip_dialog_free (dlg);
-    osip_event_free (evt);
-    return;
   }
-
-  /* ...code not reachable... */
+  osip_event_free(evt);
+  return;
 }
 
 
