@@ -32,15 +32,11 @@
 
 #include "eXosip2.h"
 
-#ifndef WIN32
-#include <sys/types.h>
-#include <sys/socket.h>
-#include <netinet/in.h>
-#include <arpa/inet.h>
-#ifdef __APPLE_CC__
+#ifdef HAVE_UNISTD_H
 #include <unistd.h>
 #endif
-#else
+
+#ifdef HAVE_WINDOWS_H
 #include <windows.h>
 #endif
 

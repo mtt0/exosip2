@@ -33,11 +33,11 @@
 #include "eXosip2.h"
 #include <eXosip2/eXosip.h>
 
-#ifndef WIN32
-#ifdef __APPLE_CC__
+#ifdef HAVE_UNISTD_H
 #include <unistd.h>
 #endif
-#else
+
+#ifdef HAVE_WINDOWS_H
 #include <windows.h>
 #endif
 
@@ -125,8 +125,11 @@ _eXosip_process_bye (struct eXosip_t *excontext, eXosip_call_t * jc, eXosip_dial
   osip_list_add (jd->d_inc_trs, transaction, 0);
 
   /* Release the eXosip_dialog */
-  osip_dialog_free (jd->d_dialog);
-  jd->d_dialog = NULL;
+  if (jd->implicit_subscription_expire_time == 0)
+  {
+    osip_dialog_free (jd->d_dialog);
+    jd->d_dialog = NULL;
+  }
 
   osip_transaction_add_event (transaction, evt_answer);
 
@@ -690,6 +693,55 @@ _eXosip_process_notify_within_dialog (struct eXosip_t *excontext, eXosip_subscri
 }
 
 static int
+_eXosip_match_update_for_invite (eXosip_call_t * jc, osip_message_t * update)
+{
+  osip_transaction_t *out_inv;
+
+  if (jc == NULL)
+    return OSIP_BADPARAMETER;
+  OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO1, NULL, "Trying to match update with invite\n"));
+
+  out_inv = _eXosip_find_last_out_invite (jc, NULL);
+  if (out_inv == NULL || out_inv->orig_request == NULL)
+    return OSIP_NOTFOUND;
+  OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO1, NULL, "invite transaction found\n"));
+
+  /* some checks to avoid crashing on bad requests */
+  if (update == NULL)
+    return OSIP_BADPARAMETER;
+
+  if (update->cseq == NULL || update->cseq->method == NULL || update->to == NULL)
+    return OSIP_SYNTAXERROR;
+
+  if (0 != osip_call_id_match (out_inv->callid, update->call_id))
+    return OSIP_UNDEFINED_ERROR;
+
+  {
+    /* The From tag of outgoing request must match
+       the To tag of incoming update:
+     */
+    osip_generic_param_t *tag_from;
+    osip_generic_param_t *tag_to;
+
+    osip_from_param_get_byname (out_inv->from, "tag", &tag_from);
+    osip_from_param_get_byname (update->to, "tag", &tag_to);
+    if (tag_from == NULL || tag_from->gvalue == NULL) {
+      OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "Uncompliant user agent: no tag in from of outgoing request\n"));
+      return OSIP_SYNTAXERROR;
+    }
+    if (tag_to == NULL || tag_to->gvalue == NULL) {
+      OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "Uncompliant user agent: no tag in to of incoming request\n"));
+      return OSIP_SYNTAXERROR;
+    }
+
+    if (0 != strcmp (tag_from->gvalue, tag_to->gvalue))
+      return OSIP_UNDEFINED_ERROR;
+  }
+
+  return OSIP_SUCCESS;
+}
+
+static int
 _eXosip_match_notify_for_subscribe (eXosip_subscribe_t * js, osip_message_t * notify)
 {
   osip_transaction_t *out_sub;
@@ -698,7 +750,7 @@ _eXosip_match_notify_for_subscribe (eXosip_subscribe_t * js, osip_message_t * no
     return OSIP_BADPARAMETER;
   OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO1, NULL, "Trying to match notify with subscribe\n"));
 
-  out_sub = _eXosip_find_last_out_subscribe (js, NULL);
+  out_sub = js->s_out_tr;
   if (out_sub == NULL || out_sub->orig_request == NULL)
     return OSIP_NOTFOUND;
   OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO1, NULL, "subscribe transaction found\n"));
@@ -722,11 +774,11 @@ _eXosip_match_notify_for_subscribe (eXosip_subscribe_t * js, osip_message_t * no
 
     osip_from_param_get_byname (out_sub->from, "tag", &tag_from);
     osip_from_param_get_byname (notify->to, "tag", &tag_to);
-    if (tag_to == NULL || tag_to->gvalue == NULL) {
+    if (tag_from == NULL || tag_from->gvalue == NULL) {
       OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "Uncompliant user agent: no tag in from of outgoing request\n"));
       return OSIP_SYNTAXERROR;
     }
-    if (tag_from == NULL || tag_to->gvalue == NULL) {
+    if (tag_to == NULL || tag_to->gvalue == NULL) {
       OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "Uncompliant user agent: no tag in to of incoming request\n"));
       return OSIP_SYNTAXERROR;
     }
@@ -894,6 +946,44 @@ _eXosip_process_newrequest (struct eXosip_t *excontext, osip_event_t * evt, int 
   }
 #endif
 
+  if (jc==NULL && jd==NULL && MSG_IS_UPDATE (evt->sip)) {
+    /* let's try to check if the UPDATE is related to an existing
+       call */
+    jc = NULL;
+    /* first, look for a Dialog in the map of element */
+    for (jc = excontext->j_calls; jc != NULL; jc = jc->next) {
+      if (_eXosip_match_update_for_invite (jc, evt->sip) == 0) {
+        int old_cseq = -1;
+        jd=jc->c_dialogs;
+        if (jd!=NULL && jd->d_dialog!=NULL && jd->d_dialog->state != DIALOG_EARLY) {
+          /* discard if dialog is not "early" */
+          osip_list_add (&excontext->j_transactions, transaction, 0);
+          _eXosip_send_default_answer (excontext, jd, transaction, evt, 481, NULL, "Call Does Not Exist", __LINE__);
+          return;
+        }
+#if 1
+        if (jd->d_dialog) {
+          old_cseq = jd->d_dialog->local_cseq;
+          osip_dialog_free (jd->d_dialog);
+        }
+        i = osip_dialog_init_as_uac_with_remote_request (&(jd->d_dialog), evt->sip, old_cseq);
+        if (i != 0) {
+          OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "eXosip: cannot establish a dialog with UPDATE\n"));
+          osip_list_add (&excontext->j_transactions, transaction, 0);
+          _eXosip_send_default_answer (excontext, jd, transaction, evt, 500, NULL, NULL, __LINE__);
+          break;
+        }
+        jd->d_dialog->state = DIALOG_EARLY;
+
+        if (old_cseq==-1) {
+          jd->d_dialog->local_cseq = 22; /* is this enough? */
+        }
+#endif
+        break;
+      }
+    }
+  }
+
   if (jd != NULL) {
     osip_transaction_t *old_trn;
 
@@ -907,8 +997,9 @@ _eXosip_process_newrequest (struct eXosip_t *excontext, osip_event_t * evt, int 
 
     if (transaction == NULL) {
       /* cannot answer ACK transaction */
-    }
-    else if (!MSG_IS_BYE (evt->sip)) {
+    } else if (MSG_IS_NOTIFY (evt->sip)) {
+      /* do not reject NOTIFY for a closed dialog */
+    } else if (!MSG_IS_BYE (evt->sip)) {
       /* reject all requests for a closed dialog */
       old_trn = _eXosip_find_last_inc_transaction (jc, jd, "BYE");
       if (old_trn == NULL)
@@ -1050,6 +1141,17 @@ _eXosip_process_newrequest (struct eXosip_t *excontext, osip_event_t * evt, int 
     /* first, look for a Dialog in the map of element */
     for (js = excontext->j_subscribes; js != NULL; js = js->next) {
       if (_eXosip_match_notify_for_subscribe (js, evt->sip) == 0) {
+        if (js->s_out_tr!=NULL) {
+          time_t now = osip_getsystemtime (NULL);
+          if (now-js->s_out_tr->birth_time>64) {
+            /* we are receiving a NOTIFY with different tag, but we don't expect newer dialogs to be initiated outside of forking */
+            OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_WARNING, NULL, "eXosip: outoftime NOTIFY no part of any established dialogs\n"));
+            osip_list_add (&excontext->j_transactions, transaction, 0);
+            _eXosip_send_default_answer (excontext, jd, transaction, evt, SIP_INTERNAL_SERVER_ERROR, NULL, "Outoftime Notification", __LINE__);
+            return;
+          }
+        }
+
         i = _eXosip_dialog_init_as_uac (&jd, evt->sip);
         if (i != 0) {
           OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "eXosip: cannot establish a dialog\n"));
@@ -1155,10 +1257,15 @@ _eXosip_process_response_out_of_transaction (struct eXosip_t *excontext, osip_ev
     return;
   }
 
+  if (evt->sip->status_code<200 && evt->sip->status_code > 299) {
+    osip_event_free(evt);
+    return;
+  }
+
   /* search for existing dialog: match branch & to tag */
   for (jc = excontext->j_calls; jc != NULL; jc = jc->next) {
-    /* search for calls with only ONE outgoing transaction */
-    if (jc->c_id >= 1 && jc->c_dialogs != NULL && jc->c_out_tr != NULL) {
+    /* search for calls matching the to tag */
+    if (jc->c_id >= 1 && jc->c_dialogs != NULL) {
       for (jd = jc->c_dialogs; jd != NULL; jd = jd->next) {
         if (jd->d_id >= 1 && jd->d_dialog != NULL) {
           /* match answer with dialog */
@@ -1175,8 +1282,8 @@ _eXosip_process_response_out_of_transaction (struct eXosip_t *excontext, osip_ev
       if (jd != NULL)
         break;                  /* found a matching dialog! */
 
-      /* check if the transaction match this from tag */
-      if (jc->c_out_tr->orig_request != NULL && jc->c_out_tr->orig_request->from != NULL) {
+      /* check if the From tag of 2xx match the from tag of initial OUTGOING INVITE */
+	  if (jc->c_out_tr!=NULL && jc->c_out_tr->orig_request != NULL && jc->c_out_tr->orig_request->from != NULL) {
         osip_generic_param_t *tag_invite;
         osip_generic_param_t *tag;
 
@@ -1188,32 +1295,31 @@ _eXosip_process_response_out_of_transaction (struct eXosip_t *excontext, osip_ev
         if (tag_invite->gvalue != NULL && tag->gvalue != NULL && 0 == strcmp (tag_invite->gvalue, tag->gvalue))
           break;
       }
-    }
-  }
-
-  if (jc == NULL) {
-    OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO1, NULL, "Incoming 2xx has no relations with current calls: Message discarded.\r\n"));
-    osip_event_free (evt);
-    return;
+	}
   }
 
   if (jc != NULL && jd != NULL) {
     /* we have to restransmit the ACK (if already available) */
-    OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO1, NULL, "2xx restransmission receveid.\r\n"));
+    OSIP_TRACE(osip_trace(__FILE__, __LINE__, OSIP_INFO1, NULL, "2xx restransmission received for established dialog.\r\n"));
     /* check if the 2xx is for the same ACK */
     if (jd->d_ack != NULL && jd->d_ack->cseq != NULL && jd->d_ack->cseq->number != NULL) {
-      if (0 == osip_strcasecmp (jd->d_ack->cseq->number, evt->sip->cseq->number)) {
-        _eXosip_snd_message (excontext, NULL, jd->d_ack, NULL, 0, -1);
-        OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO1, NULL, "ACK restransmission sent.\r\n"));
-      }
+      if (0 == osip_strcasecmp(jd->d_ack->cseq->number, evt->sip->cseq->number)) {
+        _eXosip_snd_message(excontext, NULL, jd->d_ack, NULL, 0, -1);
+        OSIP_TRACE(osip_trace(__FILE__, __LINE__, OSIP_INFO1, NULL, "ACK restransmission sent.\r\n"));
+        osip_event_free(evt);
+        return;
+	  }
     }
-
-    osip_event_free (evt);
+    /* unfortunatly, we don't have an history of "d_ack", thus retransmission for old transaction is not done */
+    /* we could create it again, as if jd=NULL (see below) but we don't want to break the established call. (the ACK may contains SDP, headers...) */
+    OSIP_TRACE(osip_trace(__FILE__, __LINE__, OSIP_INFO1, NULL, "ACK for -old- restransmission not sent.\r\n"));
+    osip_event_free(evt);
     return;
   }
 
-  if (jc != NULL) {
-    /* match answer with dialog */
+  {
+    /* the following code will apply to any -non established call- jc==NULL OR jc!=NULL but with jd==NULL */
+    /* we create a temporary dialog and use it to send a ACK restransmission (always created the same way) and a BYE. */
     osip_dialog_t *dlg;
     osip_transaction_t *last_tr;
 
@@ -1239,8 +1345,11 @@ _eXosip_process_response_out_of_transaction (struct eXosip_t *excontext, osip_ev
         osip_event_free (evt);
         return;
       }
-      /* copy all credentials from INVITE! */
-      last_tr = jc->c_out_tr;
+
+      /* If the call exist, but no dialog which is true here, we are sure the 2xx is from a 2nd user (forking) */
+      /* In such case, it's no effort to copy all credentials from INVITE! */
+	  last_tr = NULL;
+      if (jc!=NULL) last_tr = jc->c_out_tr;
       if (last_tr != NULL) {
         int pos = 0;
         int i;
@@ -1277,11 +1386,9 @@ _eXosip_process_response_out_of_transaction (struct eXosip_t *excontext, osip_ev
     }
 
     osip_dialog_free (dlg);
-    osip_event_free (evt);
-    return;
   }
-
-  /* ...code not reachable... */
+  osip_event_free(evt);
+  return;
 }
 
 
@@ -1598,24 +1705,20 @@ _eXosip_read_message (struct eXosip_t *excontext, int max_message_nb, int sec_ma
     }
     else {
       if ((sec_max == -1) || (usec_max == -1))
-        i = select (max + 1, &osip_fdset, NULL, NULL, NULL);
+        i = select (max + 1, &osip_fdset, &osip_wrset, NULL, NULL);
       else
-        i = select (max + 1, &osip_fdset, NULL, NULL, &tv);
+        i = select (max + 1, &osip_fdset, &osip_wrset, NULL, &tv);
     }
 #else
     if ((sec_max == -1) || (usec_max == -1))
-      i = select (max + 1, &osip_fdset, NULL, NULL, NULL);
+      i = select (max + 1, &osip_fdset, &osip_wrset, NULL, NULL);
     else
-      i = select (max + 1, &osip_fdset, NULL, NULL, &tv);
+      i = select (max + 1, &osip_fdset, &osip_wrset, NULL, &tv);
 #endif
 
-#if defined (_WIN32_WCE)
+#if !defined (_WIN32_WCE)
     /* TODO: fix me for wince */
-    /* if (i == -1)
-       continue; */
-#else
     if ((i == -1) && (errno == EINTR || errno == EAGAIN)) {
-
       if (excontext->cbsipWakeLock!=NULL && excontext->incoming_wake_lock_state>0) {
         int count = osip_list_size(&excontext->j_osip->osip_ist_transactions);
         count+=osip_list_size(&excontext->j_osip->osip_nist_transactions);
@@ -1748,6 +1851,20 @@ _eXosip_pendingosip_transaction_exist (struct eXosip_t *excontext, eXosip_call_t
 }
 
 static int
+_eXosip_pending_subscription_exist (struct eXosip_t *excontext, eXosip_call_t * jc, eXosip_dialog_t * jd)
+{
+  time_t now = osip_getsystemtime (NULL);
+
+  if (now < jd->implicit_subscription_expire_time)
+  {
+    /* keep this call & dialog, although it's terminated */
+    return OSIP_SUCCESS;
+  }
+
+  return OSIP_UNDEFINED_ERROR;
+}
+
+static int
 _eXosip_release_finished_transactions (struct eXosip_t *excontext, eXosip_call_t * jc, eXosip_dialog_t * jd)
 {
   osip_list_iterator_t it;
@@ -1766,7 +1883,9 @@ _eXosip_release_finished_transactions (struct eXosip_t *excontext, eXosip_call_t
     inc_tr = (osip_transaction_t*)osip_list_get_first(jd->d_inc_trs, &it);
     if (inc_tr!=NULL) inc_tr = (osip_transaction_t *)osip_list_get_next(&it); /* skip first one */
     while (inc_tr != OSIP_SUCCESS) {
-      if (0 != osip_strcasecmp (inc_tr->cseq->method, "INVITE")) {
+      if (0 == osip_strcasecmp (inc_tr->cseq->method, "BYE")) {
+        /* always keep BYE */
+      } else if (0 != osip_strcasecmp (inc_tr->cseq->method, "INVITE")) {
         /* remove, if transaction too old, independent of the state */
         if ((inc_tr->state == NIST_TERMINATED) && (inc_tr->birth_time + 30 < now)) {    /* Wait a max of 30 seconds */
           /* remove the transaction from oSIP */
@@ -1801,7 +1920,9 @@ _eXosip_release_finished_transactions (struct eXosip_t *excontext, eXosip_call_t
     out_tr = (osip_transaction_t*)osip_list_get_first(jd->d_out_trs, &it);
     if (out_tr!=NULL) out_tr = (osip_transaction_t *)osip_list_get_next(&it); /* skip first one */
     while (out_tr != OSIP_SUCCESS) {
-      if (0 != osip_strcasecmp (out_tr->cseq->method, "INVITE")) {
+      if (0 == osip_strcasecmp (out_tr->cseq->method, "BYE")) {
+        /* always keep BYE */
+      } else if (0 != osip_strcasecmp (out_tr->cseq->method, "INVITE")) {
         /* remove, if transaction too old, independent of the state */
         if ((out_tr->state == NICT_TERMINATED) && (out_tr->birth_time + 30 < now)) {    /* Wait a max of 30 seconds */
           /* remove the transaction from oSIP */
@@ -1848,7 +1969,9 @@ _eXosip_release_finished_calls (struct eXosip_t *excontext, eXosip_call_t * jc, 
 
     if (jd != NULL)
       did = jd->d_id;
+
     OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO2, NULL, "eXosip: _eXosip_release_finished_calls remove a dialog (cid=%i did=%i)\n", jc->c_id, did));
+
     /* Remove existing reference to the dialog from transactions! */
     _eXosip_call_remove_dialog_reference_in_call (jc, jd);
     REMOVE_ELEMENT (jc->c_dialogs, jd);
@@ -1962,6 +2085,8 @@ _eXosip_release_terminated_calls (struct eXosip_t *excontext)
       }
       else if (0 == _eXosip_release_finished_transactions (excontext, jc, jd)) {
       }
+      else if (0 == _eXosip_pending_subscription_exist (excontext, jc, jd)) {
+      }
       else if (0 == _eXosip_release_finished_calls (excontext, jc, jd)) {
         jd = jc->c_dialogs;
       }
@@ -1997,7 +2122,7 @@ _eXosip_release_terminated_calls (struct eXosip_t *excontext)
       }
       else if (jc->c_out_tr != NULL && jc->c_out_tr->state != ICT_TERMINATED) {
       }
-      else if (jc->c_out_tr != NULL && jc->c_out_tr->state == ICT_TERMINATED && jc->c_out_tr->completed_time + 10 > now) {
+      else if (jc->c_out_tr != NULL && jc->c_out_tr->state == ICT_TERMINATED && jc->c_out_tr->completed_time + 5 > now) {
         /* With unreliable protocol, the transaction enter the terminated
            state right after the ACK is sent: In this case, we really want
            to wait for additionnal user/automatic action to be processed
@@ -2027,7 +2152,7 @@ _eXosip_release_terminated_calls (struct eXosip_t *excontext)
       tr = (osip_transaction_t *)osip_list_iterator_remove(&it);
       continue;
     }
-    else if (tr->birth_time + 180 < now) {      /* Wait a max of 2 minutes */
+    else if (tr->birth_time + 180 < now) {      /* Wait a max of 3 minutes */
       _eXosip_transaction_free (excontext, tr);
       tr = (osip_transaction_t *)osip_list_iterator_remove(&it);
       continue;

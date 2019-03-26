@@ -36,10 +36,12 @@
 #include <osip2/osip_mt.h>
 #include <osip2/osip_condv.h>
 
-#if defined (_WIN32_WCE)
+#if !defined (HAVE_INET_NTOP)
 #include "inet_ntop.h"
-#elif WIN32
-#include "inet_ntop.h"
+#endif
+
+#ifndef INET6_ADDRSTRLEN
+#define INET6_ADDRSTRLEN 65
 #endif
 
 #ifndef OSIP_MONOTHREAD
@@ -282,7 +284,7 @@ eXosip_quit (struct eXosip_t *excontext)
   memset (excontext, 0, sizeof (eXosip_t));
   excontext->j_stop_ua = -1;
 
-#ifdef WIN32
+#ifdef HAVE_WINSOCK2_H
   WSACleanup();
 #endif
   return;
@@ -368,12 +370,16 @@ eXosip_find_free_port (struct eXosip_t *excontext, int free_port, int transport)
 
       sock = -1;
       for (curinfo_rtp = addrinfo_rtp; curinfo_rtp; curinfo_rtp = curinfo_rtp->ai_next) {
+        int type;
         if (curinfo_rtp->ai_protocol && curinfo_rtp->ai_protocol != transport) {
           OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO3, NULL, "eXosip: Skipping protocol %d\n", curinfo_rtp->ai_protocol));
           continue;
         }
-
-        sock = (int) socket (curinfo_rtp->ai_family, curinfo_rtp->ai_socktype, curinfo_rtp->ai_protocol);
+        type = curinfo_rtp->ai_socktype;
+#if defined(SOCK_CLOEXEC)
+        type = SOCK_CLOEXEC|type;
+#endif
+        sock = (int) socket (curinfo_rtp->ai_family, type, curinfo_rtp->ai_protocol);
         if (sock < 0) {
           OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "eXosip: Cannot create socket!\n"));
           continue;
@@ -410,12 +416,16 @@ eXosip_find_free_port (struct eXosip_t *excontext, int free_port, int transport)
       _eXosip_closesocket (sock);
       sock = -1;
       for (curinfo_rtcp = addrinfo_rtcp; curinfo_rtcp; curinfo_rtcp = curinfo_rtcp->ai_next) {
+        int type;
         if (curinfo_rtcp->ai_protocol && curinfo_rtcp->ai_protocol != transport) {
           OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO3, NULL, "eXosip: Skipping protocol %d\n", curinfo_rtcp->ai_protocol));
           continue;
         }
-
-        sock = (int) socket (curinfo_rtcp->ai_family, curinfo_rtcp->ai_socktype, curinfo_rtcp->ai_protocol);
+        type = curinfo_rtcp->ai_socktype;
+#if defined(SOCK_CLOEXEC)
+        type = SOCK_CLOEXEC|type;
+#endif
+        sock = (int) socket (curinfo_rtcp->ai_family, type, curinfo_rtcp->ai_protocol);
         if (sock < 0) {
           OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "eXosip: Cannot create socket!\n"));
           continue;
@@ -469,13 +479,16 @@ eXosip_find_free_port (struct eXosip_t *excontext, int free_port, int transport)
     for (curinfo_rtp = addrinfo_rtp; curinfo_rtp; curinfo_rtp = curinfo_rtp->ai_next) {
       socklen_t len;
       struct sockaddr_storage ai_addr;
-
+      int type;
       if (curinfo_rtp->ai_protocol && curinfo_rtp->ai_protocol != transport) {
         OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO3, NULL, "eXosip: Skipping protocol %d\n", curinfo_rtp->ai_protocol));
         continue;
       }
-
-      sock = (int) socket (curinfo_rtp->ai_family, curinfo_rtp->ai_socktype, curinfo_rtp->ai_protocol);
+      type = curinfo_rtp->ai_socktype;
+#if defined(SOCK_CLOEXEC)
+      type = SOCK_CLOEXEC|type;
+#endif
+      sock = (int) socket (curinfo_rtp->ai_family, type, curinfo_rtp->ai_protocol);
       if (sock < 0) {
         OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "eXosip: Cannot create socket!\n"));
         continue;
@@ -649,11 +662,12 @@ eXosip_init (struct eXosip_t *excontext)
 
   excontext->max_message_to_read=1;
   excontext->dscp = 0x1A;
+  excontext->implicit_subscription_expires = 60;
 
   snprintf (excontext->ipv4_for_gateway, 256, "%s", "217.12.3.11");
   snprintf (excontext->ipv6_for_gateway, 256, "%s", "2001:638:500:101:2e0:81ff:fe24:37c6");
 
-#ifdef WIN32
+#ifdef HAVE_WINSOCK2_H
   /* Initializing windows socket library */
   {
     WORD wVersionRequested;
@@ -1049,6 +1063,10 @@ eXosip_set_option (struct eXosip_t *excontext, int opt, const void *value)
     if (tmp != NULL && tmp[0] != '\0')
       osip_strncpy (excontext->default_contact_displayname, tmp, sizeof (excontext->default_contact_displayname) - 1);
     OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO1, NULL, "eXosip option set: default_contact_displayname:%s!\n", excontext->default_contact_displayname));
+    break;
+  case EXOSIP_OPT_SET_SESSIONTIMERS_FORCE:
+    val = *((int *) value);
+    excontext->opt_sessiontimers_force = val;
     break;
   case EXOSIP_OPT_SET_DSCP:
     val = *((int *) value);

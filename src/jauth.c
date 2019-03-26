@@ -54,31 +54,31 @@ typedef char HASHHEX[HASHHEXLEN + 1];
 /* AKA */
 #define MAX_HEADER_LEN  2049
 #define KLEN 16
-typedef u_char K[KLEN];
+typedef unsigned char K[KLEN];
 
 #define RANDLEN 16
-typedef u_char RAND[RANDLEN];
+typedef unsigned char RAND[RANDLEN];
 
 #define AUTNLEN 16
-typedef u_char AUTN[AUTNLEN];
+typedef unsigned char AUTN[AUTNLEN];
 
 #define AKLEN 6
-typedef u_char AK[AKLEN];
+typedef unsigned char AK[AKLEN];
 
 #define AMFLEN 2
-typedef u_char AMF[AMFLEN];
+typedef unsigned char AMF[AMFLEN];
 
 #define MACLEN 8
-typedef u_char MAC[MACLEN];
+typedef unsigned char MAC[MACLEN];
 
 #define CKLEN 16
-typedef u_char CK[CKLEN];
+typedef unsigned char CK[CKLEN];
 
 #define IKLEN 16
-typedef u_char IK[IKLEN];
+typedef unsigned char IK[IKLEN];
 
 #define SQNLEN 6
-typedef u_char SQN[SQNLEN];
+typedef unsigned char SQN[SQNLEN];
 
 #define AUTSLEN 14
 typedef char AUTS[AUTSLEN];

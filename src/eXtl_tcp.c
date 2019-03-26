@@ -33,19 +33,12 @@
 #include "eXosip2.h"
 #include "eXtransport.h"
 
-#if defined(_MSC_VER) && defined(WIN32) && !defined(_WIN32_WCE)
-#define HAVE_MSTCPIP_H
-#if defined(WINAPI_FAMILY) && (WINAPI_FAMILY == WINAPI_FAMILY_PHONE_APP)
-#undef HAVE_MSTCPIP_H
-#endif
-#endif
-
 #ifdef HAVE_MSTCPIP_H
 #include <Mstcpip.h>
-#else
+#endif
+
 #ifdef HAVE_FCNTL_H
 #include <fcntl.h>
-#endif
 #endif
 
 #if !defined(_WIN32_WCE)
@@ -56,7 +49,7 @@
 #include <netinet/tcp.h>
 #endif
 
-#if defined(_WIN32_WCE) || defined(WIN32)
+#if defined(HAVE_WINSOCK2_H)
 #define strerror(X) "-1"
 #define ex_errno WSAGetLastError()
 #define is_wouldblock_error(r) ((r)==WSAEINTR||(r)==WSAEWOULDBLOCK)
@@ -117,6 +110,7 @@ struct _tcp_stream {
 #endif
 
 static int _tcp_tl_send_sockinfo (struct _tcp_stream *sockinfo, const char *msg, int msglen);
+static int _tcp_tl_is_connected (int sock);
 
 struct eXtltcp {
   int tcp_socket;
@@ -214,14 +208,20 @@ tcp_tl_open (struct eXosip_t *excontext)
     return -1;
   
   for (curinfo = addrinfo; curinfo; curinfo = curinfo->ai_next) {
+#ifdef ENABLE_MAIN_SOCKET
     socklen_t len;
+#endif
+    int type;
     
     if (curinfo->ai_protocol && curinfo->ai_protocol != excontext->eXtl_transport.proto_num) {
       OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO3, NULL, "Skipping protocol %d\n", curinfo->ai_protocol));
       continue;
     }
-    
-    sock = (int) socket (curinfo->ai_family, curinfo->ai_socktype, curinfo->ai_protocol);
+    type = curinfo->ai_socktype;
+#if defined(SOCK_CLOEXEC)
+    type = SOCK_CLOEXEC|type;
+#endif
+    sock = (int) socket (curinfo->ai_family, type, curinfo->ai_protocol);
     if (sock < 0) {
       OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "Cannot create socket %s!\n", strerror (ex_errno)));
       continue;
@@ -244,7 +244,7 @@ tcp_tl_open (struct eXosip_t *excontext)
       setsockopt (sock, SOL_SOCKET, SO_REUSEADDR, (void *) &valopt, sizeof (valopt));
     }
     
-#ifndef DISABLE_MAIN_SOCKET
+#ifdef ENABLE_MAIN_SOCKET
     res = bind (sock, curinfo->ai_addr, (socklen_t)curinfo->ai_addrlen);
     if (res < 0) {
       OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "Cannot bind socket node:%s family:%d %s\n", excontext->eXtl_transport.proto_ifs, curinfo->ai_family, strerror (ex_errno)));
@@ -323,7 +323,7 @@ tcp_tl_set_fdset (struct eXosip_t *excontext, fd_set * osip_fdset, fd_set * osip
     return OSIP_WRONG_STATE;
   }
   
-#ifndef DISABLE_MAIN_SOCKET
+#ifdef ENABLE_MAIN_SOCKET
   if (reserved->tcp_socket <= 0)
     return -1;
   
@@ -339,6 +339,8 @@ tcp_tl_set_fdset (struct eXosip_t *excontext, fd_set * osip_fdset, fd_set * osip
       if (reserved->socket_tab[pos].socket > *fd_max)
         *fd_max = reserved->socket_tab[pos].socket;
       if (reserved->socket_tab[pos].sendbuflen > 0)
+        eXFD_SET (reserved->socket_tab[pos].socket, osip_wrset);
+      if (reserved->socket_tab[pos].tcp_inprogress_max_timeout > 0) /* wait for establishment */
         eXFD_SET (reserved->socket_tab[pos].socket, osip_wrset);
     }
   }
@@ -598,7 +600,15 @@ tcp_tl_read_message (struct eXosip_t *excontext, fd_set * osip_fdset, fd_set * o
   
   for (pos = 0; pos < EXOSIP_MAX_SOCKETS; pos++) {
     if (reserved->socket_tab[pos].socket > 0) {
-      if (FD_ISSET (reserved->socket_tab[pos].socket, osip_wrset))
+      if (FD_ISSET (reserved->socket_tab[pos].socket, osip_wrset) && reserved->socket_tab[pos].tcp_inprogress_max_timeout>0) {
+        int r = _tcp_tl_is_connected (reserved->socket_tab[pos].socket);
+        if (r == 0) {
+          OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO2, NULL, "socket node:%s , socket %d [pos=%d], connected\n", reserved->socket_tab[pos].remote_ip, reserved->socket_tab[pos].socket, pos));
+          reserved->socket_tab[pos].tcp_inprogress_max_timeout=0;
+          _eXosip_mark_registration_ready (excontext, reserved->socket_tab[pos].reg_call_id);
+        }
+      }
+      else if (FD_ISSET (reserved->socket_tab[pos].socket, osip_wrset))
         _tcp_tl_send_sockinfo (&reserved->socket_tab[pos], NULL, 0);
       if (reserved->socket_tab[pos].tcp_inprogress_max_timeout==0 && FD_ISSET (reserved->socket_tab[pos].socket, osip_fdset))
         _tcp_tl_recv (excontext, &reserved->socket_tab[pos]);
@@ -659,7 +669,7 @@ _tcp_tl_is_connected (int sock)
     if (getsockopt (sock, SOL_SOCKET, SO_ERROR, (void *) (&valopt), &sock_len)
         == 0) {
       if (valopt) {
-#if defined(_WIN32_WCE) || defined(WIN32)
+#if defined(HAVE_WINSOCK2_H)
         if (ex_errno == WSAEWOULDBLOCK) {
 #else
           if (ex_errno == EINPROGRESS) {
@@ -801,7 +811,7 @@ _tcp_tl_is_connected (int sock)
       if (curinfo->ai_protocol && curinfo->ai_protocol != IPPROTO_TCP)
         continue;
       
-      res = getnameinfo ((struct sockaddr *) curinfo->ai_addr, (socklen_t)curinfo->ai_addrlen, src6host, NI_MAXHOST, NULL, 0, NI_NUMERICHOST);
+      res = _eXosip_getnameinfo((struct sockaddr *) curinfo->ai_addr, (socklen_t)curinfo->ai_addrlen, src6host, NI_MAXHOST, NULL, 0, NI_NUMERICHOST);
       if (res != 0)
         continue;
       
@@ -813,18 +823,23 @@ _tcp_tl_is_connected (int sock)
     }
     
     for (curinfo = addrinfo; curinfo; curinfo = curinfo->ai_next) {
+      int type;
       if (curinfo->ai_protocol && curinfo->ai_protocol != IPPROTO_TCP) {
         OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO2, NULL, "Skipping protocol %d\n", curinfo->ai_protocol));
         continue;
       }
       
-      res = getnameinfo ((struct sockaddr *) curinfo->ai_addr, (socklen_t)curinfo->ai_addrlen, src6host, NI_MAXHOST, NULL, 0, NI_NUMERICHOST);
+      res = _eXosip_getnameinfo((struct sockaddr *) curinfo->ai_addr, (socklen_t)curinfo->ai_addrlen, src6host, NI_MAXHOST, NULL, 0, NI_NUMERICHOST);
       
       if (res == 0) {
         OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO1, NULL, "New binding with %s:%i\n", src6host, port));
       }
-      
-      sock = (int) socket (curinfo->ai_family, curinfo->ai_socktype, curinfo->ai_protocol);
+
+      type = curinfo->ai_socktype;
+  #if defined(SOCK_CLOEXEC)
+      type = SOCK_CLOEXEC|type;
+  #endif
+      sock = (int) socket (curinfo->ai_family, type, curinfo->ai_protocol);
       if (sock < 0) {
         OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO2, NULL, "Cannot create socket %s!\n", strerror (ex_errno)));
         continue;
@@ -940,7 +955,7 @@ _tcp_tl_is_connected (int sock)
       }
       
       /* set NON-BLOCKING MODE */
-#if defined(_WIN32_WCE) || defined(WIN32)
+#if defined(HAVE_WINSOCK2_H)
       {
         unsigned long nonBlock = 1;
         int val;
@@ -949,10 +964,7 @@ _tcp_tl_is_connected (int sock)
         
         val = 1;
         if (setsockopt (sock, SOL_SOCKET, SO_KEEPALIVE, (char *) &val, sizeof (val)) == -1) {
-          _eXosip_closesocket (sock);
-          sock = -1;
-          OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO2, NULL, "Cannot get socket flag!\n"));
-          continue;
+          OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO2, NULL, "Cannot set socket SO_KEEPALIVE!\n"));
         }
       }
 #ifdef HAVE_MSTCPIP_H
@@ -1027,7 +1039,7 @@ _tcp_tl_is_connected (int sock)
       if (res < 0) {
         int connect_err = ex_errno;
         OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO2, NULL, "connecting socket node:%s, socket %d [pos=%d], family:%d, %s[%d]\n", host, sock, pos, curinfo->ai_family, strerror (connect_err), connect_err));
-#if defined(_WIN32_WCE) || defined(WIN32)
+#if defined(HAVE_WINSOCK2_H)
         if (connect_err != WSAEWOULDBLOCK) {
 #else
           if (connect_err != EINPROGRESS) {
@@ -1544,7 +1556,7 @@ _tcp_tl_is_connected (int sock)
         return OSIP_UNDEFINED_ERROR;
       }
       else {
-        ret = getnameinfo ((struct sockaddr *) &addr, nameLen, host, hostsize, NULL, 0, NI_NUMERICHOST);
+        ret = _eXosip_getnameinfo((struct sockaddr *) &addr, nameLen, host, hostsize, NULL, 0, NI_NUMERICHOST);
         if (ret != 0)
           return OSIP_UNDEFINED_ERROR;
         

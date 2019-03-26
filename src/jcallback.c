@@ -33,34 +33,7 @@
 
 #include "eXosip2.h"
 
-#ifdef _WIN32_WCE
-#include <winsock2.h>
-#include "inet_ntop.h"
-#elif WIN32
-#include <winsock2.h>
-#include <ws2tcpip.h>
-#include "inet_ntop.h"
-
-#else
-#include <sys/wait.h>
-#include <sys/types.h>
-#include <unistd.h>
-#include <assert.h>
-
-#include <sys/socket.h>
-#include <netinet/in.h>
-#include <arpa/inet.h>
-
-#include <sys/types.h>
-#include <sys/socket.h>
-#include <netdb.h>
-#endif
-
 #include <eXosip2/eXosip.h>
-
-#ifdef HAVE_OPENSSL_SSL_H
-#include <openssl/ssl.h>
-#endif
 
 /* Private functions */
 static void rcvregister_failure (osip_transaction_t * tr, osip_message_t * sip);
@@ -591,12 +564,14 @@ cb_rcv1xx (int type, osip_transaction_t * tr, osip_message_t * sip)
         else {
           /* the best thing is to replace the current dialog
              information... Much easier than creating a useless dialog! */
+          int current_local_cseq = jd->d_dialog->local_cseq;
           osip_dialog_free (jd->d_dialog);
           i = osip_dialog_init_as_uac (&(jd->d_dialog), sip);
           if (i != 0) {
             OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "Cannot replace the dialog.\r\n"));
           }
           else {
+            jd->d_dialog->local_cseq = current_local_cseq;
             OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_WARNING, NULL, "The dialog has been replaced with the new one from 1xx.\r\n"));
           }
         }
@@ -698,14 +673,14 @@ cb_rcv2xx_4invite (osip_transaction_t * tr, osip_message_t * sip)
     else {
       /* the best thing is to replace the current dialog
          information... Much easier than creating a useless dialog! */
+      int current_local_cseq = jd->d_dialog->local_cseq;
       osip_dialog_free (jd->d_dialog);
       i = osip_dialog_init_as_uac (&(jd->d_dialog), sip);
       if (i != 0) {
         OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "Cannot replace the dialog.\r\n"));
       }
       else {
-        jd->d_dialog->local_cseq = jd->d_dialog->local_cseq + jd->d_mincseq;
-        jd->d_mincseq = 0;
+        jd->d_dialog->local_cseq = current_local_cseq;
         OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_WARNING, NULL, "The dialog has been replaced with the new one from 200ok.\r\n"));
       }
     }
@@ -744,6 +719,24 @@ cb_rcv2xx_4invite (osip_transaction_t * tr, osip_message_t * sip)
             else
               jd->d_refresher = 1;
           }
+          jd->d_session_timer_start = osip_getsystemtime (NULL);
+          jd->d_session_timer_length = atoi (exp_h->element);
+          if (jd->d_session_timer_length <= 90)
+            jd->d_session_timer_length = 90;
+        }
+        osip_content_disposition_free (exp_h);
+        exp_h = NULL;
+      }
+    } else if (se_exp != NULL && se_exp_answer == NULL && excontext->opt_sessiontimers_force>0) {
+      /* not supported on remote end, but we want timer at UAC with  */
+      osip_content_disposition_t *exp_h = NULL;
+
+      /* syntax of Session-Expires is equivalent to "Content-Disposition" */
+      osip_content_disposition_init (&exp_h);
+      if (exp_h != NULL) {
+        osip_content_disposition_parse (exp_h, se_exp->hvalue);
+        if (exp_h->element != NULL) {
+          jd->d_refresher = 0;
           jd->d_session_timer_start = osip_getsystemtime (NULL);
           jd->d_session_timer_length = atoi (exp_h->element);
           if (jd->d_session_timer_length <= 90)
@@ -916,6 +909,9 @@ cb_rcv2xx (int type, osip_transaction_t * tr, osip_message_t * sip)
   eXosip_subscribe_t *js = (eXosip_subscribe_t *) osip_transaction_get_reserved5 (tr);
   eXosip_notify_t *jn = (eXosip_notify_t *) osip_transaction_get_reserved4 (tr);
 #endif
+  osip_header_t *sub_state;
+  osip_header_t *refer_sub;
+  time_t now = osip_getsystemtime (NULL);
 
   OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO3, NULL, "cb_rcv2xx (id=%i)\r\n", tr->transactionid));
 
@@ -1063,9 +1059,67 @@ cb_rcv2xx (int type, osip_transaction_t * tr, osip_message_t * sip)
             osip_content_disposition_free (exp_h);
             exp_h = NULL;
           }
+        } else if (se_exp != NULL && se_exp_answer == NULL && excontext->opt_sessiontimers_force>0) {
+          /* not supported on remote end, but we want timer at UAC with  */
+          osip_content_disposition_t *exp_h = NULL;
+
+          /* syntax of Session-Expires is equivalent to "Content-Disposition" */
+          osip_content_disposition_init (&exp_h);
+          if (exp_h != NULL) {
+            osip_content_disposition_parse (exp_h, se_exp->hvalue);
+            if (exp_h->element != NULL) {
+              jd->d_refresher = 0;
+              jd->d_session_timer_start = osip_getsystemtime (NULL);
+              jd->d_session_timer_length = atoi (exp_h->element);
+              if (jd->d_session_timer_length <= 90)
+                jd->d_session_timer_length = 90;
+            }
+            osip_content_disposition_free (exp_h);
+            exp_h = NULL;
+          }
         }
       }
     }
+    else if (MSG_IS_RESPONSE_FOR (sip, "NOTIFY")) {
+      if (jd != NULL) {
+        /* get subscription-state */
+        jd->implicit_subscription_expire_time = 0;
+        osip_message_header_get_byname (tr->orig_request, "subscription-state", 0, &sub_state);
+        if (sub_state != NULL && sub_state->hvalue != NULL) {
+          if (0 == osip_strncasecmp (sub_state->hvalue, "active", 6) ||0 == osip_strncasecmp (sub_state->hvalue, "pending", 7)) {
+            const char *tmp = strstr(sub_state->hvalue+6, "expires");
+            const char *ss_expires = NULL;
+            if (tmp!=NULL) {
+              ss_expires = strchr(tmp+7, '=');
+              jd->implicit_subscription_expire_time = now + excontext->implicit_subscription_expires;
+              if (ss_expires!=NULL) {
+                int exp;
+                ss_expires++;
+                exp = osip_atoi(ss_expires);
+                if (exp>=0 && exp<600) {
+                  jd->implicit_subscription_expire_time = now + exp;
+                }
+              }
+            }
+            OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO3, NULL, "eXosip: dialog marked for ImplicitSubscription (did=%i)\n", jd->d_id));
+          }
+        }
+      }
+    }
+    else if (MSG_IS_RESPONSE_FOR (sip, "REFER")) {
+      if (jd != NULL) {
+        /* check for "Refer-Sub: false" */
+        osip_message_header_get_byname (tr->orig_request, "Refer-Sub", 0, &refer_sub);
+        jd->implicit_subscription_expire_time = now + excontext->implicit_subscription_expires;
+        if ((refer_sub != NULL) && (refer_sub->hvalue != NULL) && (0 == osip_strncasecmp (refer_sub->hvalue, "false", 5)) )
+        {
+           /* implicit subscription removed */
+           jd->implicit_subscription_expire_time = 0;
+           OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_WARNING, NULL, "eXosip: dialog un-marked for ImplicitSubscription (did=%i)\n", jd->d_id));
+        }
+      }
+    }
+
     _eXosip_report_call_event (excontext, EXOSIP_CALL_MESSAGE_ANSWERED, jc, jd, tr);
     return;
   }
@@ -1638,14 +1692,26 @@ cb_rcvreq_retransmission (int type, osip_transaction_t * tr, osip_message_t * si
   OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO1, NULL, "cb_rcvreq_retransmission (id=%i)\r\n", tr->transactionid));
 }
 
+#endif
+
 static void
 cb_transport_error (int type, osip_transaction_t * tr, int error)
 {
   struct eXosip_t *excontext = (struct eXosip_t *) osip_transaction_get_reserved1 (tr);
-  eXosip_subscribe_t *js = (eXosip_subscribe_t *) osip_transaction_get_reserved5 (tr);
-  eXosip_notify_t *jn = (eXosip_notify_t *) osip_transaction_get_reserved4 (tr);
+#ifndef MINISIZE
+  eXosip_subscribe_t *js = (eXosip_subscribe_t *)osip_transaction_get_reserved5(tr);
+  eXosip_notify_t *jn = (eXosip_notify_t *)osip_transaction_get_reserved4(tr);
+#endif
 
-  OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO1, NULL, "cb_transport_error (id=%i)\r\n", tr->transactionid));
+  OSIP_TRACE(osip_trace(__FILE__, __LINE__, OSIP_INFO1, NULL, "cb_transport_error (id=%i)\r\n", tr->transactionid));
+  if (type == OSIP_ICT_TRANSPORT_ERROR) {
+    eXosip_call_t *jc = (eXosip_call_t *)osip_transaction_get_reserved2(tr);
+    eXosip_dialog_t *jd = (eXosip_dialog_t *)osip_transaction_get_reserved3(tr);
+    if (jc == NULL && jd == NULL)
+      return;
+    _eXosip_report_call_event(excontext, EXOSIP_CALL_NOANSWER, jc, jd, tr);
+  }
+#ifndef MINISIZE
 
   if (jn == NULL && js == NULL)
     return;
@@ -1663,9 +1729,9 @@ cb_transport_error (int type, osip_transaction_t * tr, int error)
     REMOVE_ELEMENT (excontext->j_subscribes, js);
     _eXosip_subscription_free (excontext, js);
   }
-}
-
 #endif
+
+}
 
 int
 _eXosip_set_callbacks (osip_t * osip)
@@ -1716,6 +1782,11 @@ _eXosip_set_callbacks (osip_t * osip)
   osip_set_message_callback (osip, OSIP_NIST_NOTIFY_RECEIVED, &cb_rcvrequest);
   osip_set_message_callback (osip, OSIP_NIST_UNKNOWN_REQUEST_RECEIVED, &cb_rcvrequest);
 
+  osip_set_transport_error_callback(osip, OSIP_ICT_TRANSPORT_ERROR, &cb_transport_error);
+  osip_set_transport_error_callback(osip, OSIP_IST_TRANSPORT_ERROR, &cb_transport_error);
+  osip_set_transport_error_callback(osip, OSIP_NICT_TRANSPORT_ERROR, &cb_transport_error);
+  osip_set_transport_error_callback(osip, OSIP_NIST_TRANSPORT_ERROR, &cb_transport_error);
+
 #ifndef MINISIZE
   /* those methods are only used for log purpose except cb_transport_error which only apply to complete version */
   osip_set_message_callback (osip, OSIP_ICT_STATUS_2XX_RECEIVED_AGAIN, &cb_rcvresp_retransmission);
@@ -1730,11 +1801,6 @@ _eXosip_set_callbacks (osip_t * osip)
   osip_set_message_callback (osip, OSIP_NIST_STATUS_2XX_SENT_AGAIN, &cb_sndresp_retransmission);
   osip_set_message_callback (osip, OSIP_NIST_STATUS_3456XX_SENT_AGAIN, &cb_sndresp_retransmission);
   osip_set_message_callback (osip, OSIP_NIST_REQUEST_RECEIVED_AGAIN, &cb_rcvreq_retransmission);
-
-  osip_set_transport_error_callback (osip, OSIP_ICT_TRANSPORT_ERROR, &cb_transport_error);
-  osip_set_transport_error_callback (osip, OSIP_IST_TRANSPORT_ERROR, &cb_transport_error);
-  osip_set_transport_error_callback (osip, OSIP_NICT_TRANSPORT_ERROR, &cb_transport_error);
-  osip_set_transport_error_callback (osip, OSIP_NIST_TRANSPORT_ERROR, &cb_transport_error);
 
   osip_set_message_callback (osip, OSIP_ICT_INVITE_SENT, &cb_sndinvite);
   osip_set_message_callback (osip, OSIP_ICT_ACK_SENT, &cb_sndack);

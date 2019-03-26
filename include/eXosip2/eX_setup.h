@@ -136,6 +136,7 @@ extern "C" {
 #define EXOSIP_OPT_SET_MAX_MESSAGE_TO_READ (EXOSIP_OPT_BASE_OPTION+29) /**< int: set the number of message to read at once for each network processing (high load traffic use-case: DO NOT USE FOR COMMON USAGE) */
 #define EXOSIP_OPT_SET_MAX_READ_TIMEOUT (EXOSIP_OPT_BASE_OPTION+30) /**< long int: set the period in nano seconds during we read for sip message. (high load traffic use-case: DO NOT USE FOR COMMON USAGE)*/
 #define EXOSIP_OPT_SET_DEFAULT_CONTACT_DISPLAYNAME (EXOSIP_OPT_BASE_OPTION+31) /**< char *: define a display name to be added in Contact headers  (example: "john Doe") */
+#define EXOSIP_OPT_SET_SESSIONTIMERS_FORCE (EXOSIP_OPT_BASE_OPTION+32) /**< int *: 0 (default): activate "session timers" if supported on both side, 1: if remote side (UAS) do not indicate support for "session timers", activate feature on UAC (local) side */
 
 #define EXOSIP_OPT_SET_TLS_VERIFY_CERTIFICATE (EXOSIP_OPT_BASE_OPTION+500) /**< int *: enable verification of certificate for TLS connection */
 #define EXOSIP_OPT_SET_TLS_CERTIFICATES_INFO (EXOSIP_OPT_BASE_OPTION+501) /**< eXosip_tls_ctx_t *: client and/or server certificate/ca-root/key info */
@@ -214,17 +215,35 @@ extern "C" {
  /**
   * structure used to describe credentials for a client or server
   * consists of a certificate, a corresponding private key and its password
+  *
+  * If the server requires a certificate from the client, you must provide
+  * the certificate, private key, and your private key password.
+  *
+  * You can "pin" your public key certificate if you have received it.
+  * public_key_pinned must contains your public key file in DER format.
+  * To extract your public key from a PEM certificate in DER format, you
+  * can use the following command line:
+  * openssl x509 -in server-cert.pem -pubkey -noout | openssl enc -base64 -d > pub_key.der
+  *
   * @struct eXosip_tls_credentials_s
   */
   typedef struct eXosip_tls_credentials_s {
-    char priv_key[1024];
-    char priv_key_pw[1024];
-    char cert[1024];
+    char priv_key[1024];     /**< absolute path to a file with a private key */
+    char priv_key_pw[1024];  /**< password to open private key */
+    char cert[1024];         /**< absolute path to a file with a certificate for the private key */
+    char public_key_pinned[1024]; /**< absolute path to a file with the expected public key of server */
   } eXosip_tls_credentials_t;
 
  /**
   * structure to describe the whole TLS-context for eXosip
   * consists of a certificate, a corresponding private key and its password
+  *
+  * When a client connects to a server, if you wish to verify certificate, you
+  * just have to configure the root_ca_cert parameter to a file with all your
+  * trusted CA. (example file at https://pki.google.com/roots.pem)
+  *
+  * On Windows & Macosx, the trusted certificates from the store are loaded automatically.
+  *
   * @struct eXosip_tls_ctx_s
   */
   typedef struct eXosip_tls_ctx_s {
@@ -251,13 +270,29 @@ extern "C" {
  * Start and return osip_naptr context.
  * Note that DNS results might not yet be available.
  * 
- * @param excontext    eXosip_t instance.
- * @param domain         domain name for NAPTR record
+ * If you provide a FQDN, a NAPTR query will be done on it.
+ * For example: "antisip.com"
+ *
+ * If you wish to do a ENUM query, you need to specify both the domain to query
+ * and the AUS (ie, the number dialed). You will use a "!" separator between them.
+ * For example, to query "+123456789" on "e164.org",  please use: "e164.org!+123456789"
+ *
+ * @param excontext      eXosip_t instance.
+ * @param domain         domain name for NAPTR record OR ENUM query (such as e164.org!+123456789)
  * @param protocol       protocol to use ("SIP")
  * @param transport      transport to use ("UDP")
  * @param keep_in_cache  keep result in cache if >0
  */
   struct osip_naptr *eXosip_dnsutils_naptr (struct eXosip_t *excontext, const char *domain, const char *protocol, const char *transport, int keep_in_cache);
+
+  /**
+  * For every eXosip_dnsutils_naptr query you make
+  * you must call eXosip_dnsutils_release to release
+  * the memory.
+  *
+  * @param naptr_record  the naptr structure to release.
+  */
+  void eXosip_dnsutils_release(struct osip_naptr *naptr_record);
 
 /**
  * Continue to process asynchronous DNS request (if implemented).

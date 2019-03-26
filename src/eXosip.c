@@ -39,14 +39,10 @@
 #include <eXosip2/eXosip.h>
 
 
-
-#ifndef  WIN32
-#if !defined(__arc__)
+#ifdef HAVE_MEMORY_H
 #include <memory.h>
 #endif
-#include <sys/types.h>
-#include <sys/socket.h>
-#include <netinet/in.h>
+#ifdef HAVE_UNISTD_H
 #include <unistd.h>
 #endif
 
@@ -129,7 +125,7 @@ void
 _eXosip_transaction_free (struct eXosip_t *excontext, osip_transaction_t *transaction)
 {
   _eXosip_delete_reserved (transaction);
-  _eXosip_dnsutils_release (transaction->naptr_record);
+  eXosip_dnsutils_release (transaction->naptr_record);
   transaction->naptr_record = NULL;
   osip_transaction_free (transaction);
 #ifndef MINISIZE
@@ -1417,15 +1413,47 @@ _eXosip_mark_registration_expired (struct eXosip_t *excontext, const char *call_
       continue;
     if (osip_strcasecmp(jr->r_last_tr->orig_request->call_id->number, call_id)==0) {
       time_t now;
+      if (jr->r_reg_period <= 0)
+        break; /* no need for a retry */
       now = osip_getsystemtime (NULL);
-      if (jr->r_reg_period - (jr->r_reg_period / 10)>TRANSACTION_TIMEOUT_RETRY)
-        jr->r_last_tr->birth_time = now-120;
-      else
-        jr->r_last_tr->birth_time = jr->r_reg_period - (jr->r_reg_period / 10);
+      if (jr->r_last_tr->last_response == NULL || (!MSG_IS_STATUS_2XX(jr->r_last_tr->last_response))) {
+        jr->r_last_tr->birth_time = now - 120; /* after a failure, always make it exactly now-120 */
+      }
+      else if (jr->r_reg_period>900) {
+        jr->r_last_tr->birth_time = now - 900; /* after a success, a new REGISTER is always sent after 900 sec */
+      }
+      else { /* after a success, a new REGISTER is always sent after 90% of the duration has elapsed */
+        jr->r_last_tr->birth_time = now - jr->r_reg_period + (jr->r_reg_period / 10);
+      }
       if (jr->r_retryfailover<60)
         jr->r_retryfailover++;
-      jr->r_last_tr->birth_time+=+jr->r_retryfailover; /* wait "RETRY" (counter) seconds before retrying: avoid flooding */
+      jr->r_last_tr->birth_time+=jr->r_retryfailover; /* wait "RETRY" (counter) seconds before retrying: avoid flooding */
       wakeup = 1;
+    }
+  }
+  if (wakeup) {
+    _eXosip_wakeup (excontext);
+  }
+}
+
+void
+_eXosip_mark_registration_ready (struct eXosip_t *excontext, const char *call_id)
+{
+  eXosip_reg_t *jr;
+  int wakeup = 0;
+  
+  for (jr = excontext->j_reg; jr != NULL; jr = jr->next) {
+    if (jr->r_id < 1 || jr->r_last_tr == NULL)
+      continue;
+    if (jr->r_last_tr->orig_request==NULL || jr->r_last_tr->orig_request->call_id==NULL || jr->r_last_tr->orig_request->call_id->number==NULL)
+      continue;
+    if (osip_strcasecmp(jr->r_last_tr->orig_request->call_id->number, call_id)==0) {
+      osip_getsystemtime (NULL);
+      if (jr->r_last_tr->state == NICT_TRYING) {
+        osip_gettimeofday (&jr->r_last_tr->nict_context->timer_e_start, NULL);
+        add_gettimeofday (&jr->r_last_tr->nict_context->timer_e_start, 1);
+        wakeup = 1;
+      }
     }
   }
   if (wakeup) {

@@ -33,9 +33,7 @@
 #include "eXosip2.h"
 #include "eXtransport.h"
 
-#ifdef _WIN32_WCE
-#include "inet_ntop.h"
-#elif WIN32
+#if !defined (HAVE_INET_NTOP)
 #include "inet_ntop.h"
 #endif
 
@@ -72,8 +70,18 @@
 #define RANDOM  "random.pem"
 #define DHFILE "dh1024.pem"
 
-SSL_CTX *initialize_client_ctx (struct eXosip_t * excontext, const char *certif_client_local_cn_name, eXosip_tls_ctx_t * client_ctx, int transport);
-SSL_CTX *initialize_server_ctx (struct eXosip_t *excontext, const char *certif_local_cn_name, eXosip_tls_ctx_t * srv_ctx, int transport);
+#if OPENSSL_VERSION_NUMBER < 0x10100000L
+
+static void SSL_set0_rbio(SSL *s, BIO *rbio)
+{
+  BIO_free_all(s->rbio);
+  s->rbio = rbio;
+}
+
+#endif
+
+SSL_CTX *initialize_client_ctx (struct eXosip_t * excontext, eXosip_tls_ctx_t * client_ctx, int transport);
+SSL_CTX *initialize_server_ctx (struct eXosip_t *excontext, eXosip_tls_ctx_t * srv_ctx, int transport);
 
 /* persistent connection */
 struct _dtls_stream {
@@ -91,8 +99,6 @@ struct _dtls_stream {
 
 struct eXtldtls {
   eXosip_tls_ctx_t eXosip_dtls_ctx_params;
-  char dtls_local_cn_name[128];
-  char dtls_client_local_cn_name[128];
 
   int dtls_socket;
   struct sockaddr_storage ai_addr;
@@ -116,8 +122,6 @@ dtls_tl_init (struct eXosip_t *excontext)
   memset (&reserved->socket_tab, 0, sizeof (struct _dtls_stream) * EXOSIP_MAX_SOCKETS);
 
   memset (&reserved->eXosip_dtls_ctx_params, 0, sizeof (eXosip_tls_ctx_t));
-  memset (&reserved->dtls_local_cn_name, 0, sizeof (reserved->dtls_local_cn_name));
-  memset (&reserved->dtls_client_local_cn_name, 0, sizeof (reserved->dtls_client_local_cn_name));
 
   /* TODO: make it configurable (as for TLS) */
   osip_strncpy (reserved->eXosip_dtls_ctx_params.client.priv_key, CLIENT_KEYFILE, sizeof (reserved->eXosip_dtls_ctx_params.client.priv_key) - 1);
@@ -233,7 +237,7 @@ shutdown_free_client_dtls (struct eXosip_t *excontext, int pos)
 
       BIO_ctrl (rbio, BIO_CTRL_DGRAM_SET_PEER, 0, (char *) &addr);
 
-      (reserved->socket_tab[pos].ssl_conn)->rbio = rbio;
+      SSL_set0_rbio(reserved->socket_tab[pos].ssl_conn, rbio);
 
       i = SSL_shutdown (reserved->socket_tab[pos].ssl_conn);
 
@@ -294,8 +298,14 @@ dtls_tl_free (struct eXosip_t *excontext)
     }
   }
   
+#if OPENSSL_VERSION_NUMBER < 0x10100000L
+#if OPENSSL_VERSION_NUMBER >= 0x10000000L
+  ERR_remove_thread_state (NULL);
+#else
   ERR_remove_state (0);
-
+#endif
+#endif
+  
   memset (&reserved->socket_tab, 0, sizeof (struct _dtls_stream) * EXOSIP_MAX_SOCKETS);
 
   memset (&reserved->ai_addr, 0, sizeof (struct sockaddr_storage));
@@ -328,8 +338,8 @@ dtls_tl_open (struct eXosip_t *excontext)
     excontext->eXtl_transport.proto_local_port = 5061;
 
   /* TODO: allow parameters for DTLS */
-  reserved->server_ctx = initialize_server_ctx (excontext, reserved->dtls_local_cn_name, &reserved->eXosip_dtls_ctx_params, IPPROTO_UDP);
-  reserved->client_ctx = initialize_client_ctx (excontext, reserved->dtls_client_local_cn_name, &reserved->eXosip_dtls_ctx_params, IPPROTO_UDP);
+  reserved->server_ctx = initialize_server_ctx (excontext, &reserved->eXosip_dtls_ctx_params, IPPROTO_UDP);
+  reserved->client_ctx = initialize_client_ctx (excontext, &reserved->eXosip_dtls_ctx_params, IPPROTO_UDP);
 
   res = _eXosip_get_addrinfo (excontext, &addrinfo, excontext->eXtl_transport.proto_ifs, excontext->eXtl_transport.proto_local_port, excontext->eXtl_transport.proto_num);
   if (res)
@@ -337,13 +347,16 @@ dtls_tl_open (struct eXosip_t *excontext)
 
   for (curinfo = addrinfo; curinfo; curinfo = curinfo->ai_next) {
     socklen_t len;
-
+    int type;
     if (curinfo->ai_protocol && curinfo->ai_protocol != excontext->eXtl_transport.proto_num) {
       OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO3, NULL, "eXosip: Skipping protocol %d\n", curinfo->ai_protocol));
       continue;
     }
-
-    sock = (int) socket (curinfo->ai_family, curinfo->ai_socktype, curinfo->ai_protocol);
+    type = curinfo->ai_socktype;
+#if defined(SOCK_CLOEXEC)
+    type = SOCK_CLOEXEC|type;
+#endif
+    sock = (int) socket (curinfo->ai_family, type, curinfo->ai_protocol);
     if (sock < 0) {
       OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "eXosip: Cannot create socket %s!\n", strerror (errno)));
       continue;
@@ -562,12 +575,12 @@ dtls_tl_read_message (struct eXosip_t *excontext, fd_set * osip_fdset, fd_set * 
       rbio = BIO_new_mem_buf (enc_buf, enc_buf_len);
       BIO_set_mem_eof_return (rbio, -1);
 
-      reserved->socket_tab[pos].ssl_conn->rbio = rbio;
+      SSL_set0_rbio(reserved->socket_tab[pos].ssl_conn, rbio);
 
       i = SSL_read (reserved->socket_tab[pos].ssl_conn, dec_buf, SIP_MESSAGE_MAX_LENGTH);
       /* done with the rbio */
-      BIO_free (reserved->socket_tab[pos].ssl_conn->rbio);
-      reserved->socket_tab[pos].ssl_conn->rbio = BIO_new (BIO_s_mem ());
+      rbio = BIO_new(BIO_s_mem());
+      SSL_set0_rbio(reserved->socket_tab[pos].ssl_conn, rbio);
 
       if (i > 5) {
         dec_buf[i] = '\0';
@@ -947,7 +960,7 @@ dtls_tl_send_message (struct eXosip_t *excontext, osip_transaction_t * tr, osip_
         _dtls_stream_used = &reserved->socket_tab[pos];
         rbio = BIO_new_dgram (reserved->dtls_socket, BIO_NOCLOSE);
         BIO_ctrl (rbio, BIO_CTRL_DGRAM_SET_PEER, 0, (char *) &addr);
-        reserved->socket_tab[pos].ssl_conn->rbio = rbio;
+        SSL_set0_rbio(reserved->socket_tab[pos].ssl_conn, rbio);
         break;
       }
     }
@@ -961,7 +974,7 @@ dtls_tl_send_message (struct eXosip_t *excontext, osip_transaction_t * tr, osip_
           _dtls_stream_used = &reserved->socket_tab[pos];
           rbio = BIO_new_dgram (reserved->dtls_socket, BIO_NOCLOSE);
           BIO_ctrl (rbio, BIO_CTRL_DGRAM_SET_PEER, 0, (char *) &addr);
-          reserved->socket_tab[pos].ssl_conn->rbio = rbio;
+          SSL_set0_rbio(reserved->socket_tab[pos].ssl_conn, rbio);
           break;
         }
       }

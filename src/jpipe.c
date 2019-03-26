@@ -36,6 +36,10 @@
 
 #include "jpipe.h"
 
+#ifdef HAVE_UNISTD_H
+#include <unistd.h>
+#endif
+
 #if !defined(WIN32) && !defined(__arc__)
 
 #include <fcntl.h>
@@ -131,9 +135,9 @@ jpipe ()
 {
   int s = 0;
   int timeout = 0;
-  static int aport = 10500;
   struct sockaddr_in raddr;
   int j;
+  socklen_t len;
 
   jpipe_t *my_pipe = (jpipe_t *) osip_malloc (sizeof (jpipe_t));
 
@@ -141,12 +145,12 @@ jpipe ()
     return NULL;
 
   s = (int) socket (AF_INET, SOCK_STREAM, IPPROTO_TCP);
-  if (0 > s) {
+  if (s < 0) {
     osip_free (my_pipe);
     return NULL;
   }
   my_pipe->pipes[1] = (int) socket (PF_INET, SOCK_STREAM, IPPROTO_TCP);
-  if (0 > my_pipe->pipes[1]) {
+  if (my_pipe->pipes[1] < 0) {
     _eXosip_closesocket (s);
     osip_free (my_pipe);
     return NULL;
@@ -154,21 +158,19 @@ jpipe ()
 
   raddr.sin_addr.s_addr = inet_addr ("127.0.0.1");
   raddr.sin_family = AF_INET;
-
-  j = 50;
-  while (aport++ && j-- > 0) {
-    if (aport>65500)
-      aport = 10500;
-    raddr.sin_port = htons ((short) aport);
-    if (bind (s, (struct sockaddr *) &raddr, sizeof (raddr)) < 0) {
-      OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_WARNING, NULL, "Failed to bind one local socket %i!\n", aport));
-    }
-    else
-      break;
+  raddr.sin_port = 0;
+  if (bind (s, (struct sockaddr *) &raddr, sizeof (raddr)) < 0) {
+    OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "Failed to bind a local socket (port=0), aborting!\n"));
+    _eXosip_closesocket (s);
+    _eXosip_closesocket (my_pipe->pipes[1]);
+    osip_free (my_pipe);
+    return NULL;
   }
-
-  if (j == 0) {
-    OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "Failed to bind a local socket, aborting!\n"));
+  /* get port */
+  len = sizeof (raddr);
+  j = getsockname (s, (struct sockaddr *) &raddr, &len);
+  if (j != 0) {
+    OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "Failed to getsockname on a local socket, aborting!\n"));
     _eXosip_closesocket (s);
     _eXosip_closesocket (my_pipe->pipes[1]);
     osip_free (my_pipe);
@@ -209,7 +211,7 @@ jpipe ()
 
   my_pipe->pipes[0] = (int)accept (s, NULL, NULL);
 
-  if (my_pipe->pipes[0] <= 0) {
+  if (my_pipe->pipes[0] < 0) {
     OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "udp plugin; Failed to call accept!\n"));
     _eXosip_closesocket (s);
     _eXosip_closesocket (my_pipe->pipes[1]);

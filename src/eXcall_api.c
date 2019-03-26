@@ -73,6 +73,11 @@ eXosip_create_cancel_transaction (struct eXosip_t *excontext, eXosip_call_t * jc
   osip_transaction_t *tr;
   int i;
 
+  if (jc->c_cancel_tr != NULL) {
+    osip_message_free(request);
+    return OSIP_WRONG_STATE;
+  }
+
   i = _eXosip_transaction_init (excontext, &tr, NICT, excontext->j_osip, request);
   if (i != 0) {
     /* TODO: release the j_call.. */
@@ -81,7 +86,9 @@ eXosip_create_cancel_transaction (struct eXosip_t *excontext, eXosip_call_t * jc
     return i;
   }
 
-  osip_list_add (&excontext->j_transactions, tr, 0);
+  jc->c_cancel_tr = tr;
+  osip_transaction_set_reserved2(tr, jc);
+  osip_transaction_set_reserved3(tr, jd);
 
   sipevent = osip_new_outgoing_sipmessage (request);
   sipevent->transactionid = tr->transactionid;
@@ -278,7 +285,7 @@ eXosip_call_send_initial_invite (struct eXosip_t *excontext, osip_message_t * in
 }
 
 int
-eXosip_call_build_ack (struct eXosip_t *excontext, int did, osip_message_t ** _ack)
+eXosip_call_build_ack (struct eXosip_t *excontext, int tid, osip_message_t ** _ack)
 {
   eXosip_dialog_t *jd = NULL;
   eXosip_call_t *jc = NULL;
@@ -289,17 +296,22 @@ eXosip_call_build_ack (struct eXosip_t *excontext, int did, osip_message_t ** _a
 
   *_ack = NULL;
 
-  if (did <= 0)
+  if (tid <= 0)
     return OSIP_BADPARAMETER;
-  if (did > 0) {
-    _eXosip_call_dialog_find (excontext, did, &jc, &jd);
-  }
-  if (jc == NULL || jd == NULL || jd->d_dialog == NULL) {
-    OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "eXosip: No call here?\n"));
-    return OSIP_NOTFOUND;
-  }
 
-  tr = _eXosip_find_last_invite (jc, jd);
+  if (tid > 0) {
+    _eXosip_call_transaction_find (excontext, tid, &jc, &jd, &tr);
+  }
+  if (tr == NULL) {
+    /* For old API, did was used here. So use it for backward compatibility */
+    _eXosip_call_dialog_find (excontext, tid, &jc, &jd);
+    if (jc == NULL || jd == NULL || jd->d_dialog == NULL) {
+      OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "eXosip: No call here?\n"));
+      return OSIP_NOTFOUND;
+    }
+
+    tr = _eXosip_find_last_out_invite (jc, jd);
+  }
 
   if (tr == NULL || tr->orig_request == NULL) {
     OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "eXosip: No transaction for call?\n"));
@@ -311,8 +323,24 @@ eXosip_call_build_ack (struct eXosip_t *excontext, int did, osip_message_t ** _a
     return OSIP_BADPARAMETER;
   }
 
-  i = _eXosip_build_request_within_dialog (excontext, &ack, "ACK", jd->d_dialog);
-
+  if (jd==NULL) {
+	  osip_dialog_t *d_dialog=NULL;
+	  if (tr->last_response==NULL) {
+		  OSIP_TRACE(osip_trace(__FILE__, __LINE__, OSIP_ERROR, NULL, "eXosip: ACK can't be sent without any answer received\n"));
+		  return OSIP_NOTFOUND;
+	  }
+	  /* we need to re-build a temporary dialog, to rebuild ACK */
+	  i = osip_dialog_init_as_uac(&d_dialog, tr->last_response);
+	  if (i != 0) {
+		  OSIP_TRACE(osip_trace(__FILE__, __LINE__, OSIP_ERROR, NULL, "eXosip: ACK can't be sent without any dialog established\n"));
+		  return OSIP_NOTFOUND;
+	  }
+	  i = _eXosip_build_request_within_dialog(excontext, &ack, "ACK", d_dialog);
+	  osip_dialog_free(d_dialog);
+  }
+  else {
+	  i = _eXosip_build_request_within_dialog(excontext, &ack, "ACK", jd->d_dialog);
+  }
   if (i != 0) {
     return i;
   }
@@ -353,26 +381,31 @@ eXosip_call_build_ack (struct eXosip_t *excontext, int did, osip_message_t ** _a
 }
 
 int
-eXosip_call_send_ack (struct eXosip_t *excontext, int did, osip_message_t * ack)
+eXosip_call_send_ack (struct eXosip_t *excontext, int tid, osip_message_t * ack)
 {
   eXosip_dialog_t *jd = NULL;
   eXosip_call_t *jc = NULL;
+  osip_transaction_t *tr = NULL;
   int i;
 
   osip_route_t *route;
   char *host = NULL;
   int port;
 
-  if (did <= 0) {
+  if (tid <= 0) {
     if (ack != NULL)
       osip_message_free (ack);
     return OSIP_BADPARAMETER;
   }
-  if (did > 0) {
-    _eXosip_call_dialog_find (excontext, did, &jc, &jd);
+  if (tid > 0) {
+    _eXosip_call_transaction_find (excontext, tid, &jc, &jd, &tr);
+  }
+  if (jc == NULL) {
+    /* For old API, did was used here. So use it for backward compatibility */
+    _eXosip_call_dialog_find (excontext, tid, &jc, &jd);
   }
 
-  if (jc == NULL || jd == NULL) {
+  if (jc == NULL) {
     OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "eXosip: No call here?\n"));
     if (ack != NULL)
       osip_message_free (ack);
@@ -380,7 +413,7 @@ eXosip_call_send_ack (struct eXosip_t *excontext, int did, osip_message_t * ack)
   }
 
   if (ack == NULL) {
-    i = eXosip_call_build_ack (excontext, did, &ack);
+    i = eXosip_call_build_ack (excontext, tid, &ack);
     if (i != 0) {
       return i;
     }
@@ -422,9 +455,12 @@ eXosip_call_send_ack (struct eXosip_t *excontext, int did, osip_message_t * ack)
 
   i = _eXosip_snd_message (excontext, NULL, ack, host, port, -1);
 
-  if (jd->d_ack != NULL)
-    osip_message_free (jd->d_ack);
-  jd->d_ack = ack;
+  if (jd != NULL) {
+	  /* if the call is already closed, the ACK was rebuilt with a temporary dialog, and jd==NULL */
+	  if (jd->d_ack != NULL)
+		  osip_message_free(jd->d_ack);
+	  jd->d_ack = ack;
+  }
   if (i < 0)
     return i;
 
@@ -805,6 +841,51 @@ eXosip_call_send_answer (struct eXosip_t *excontext, int tid, int status, osip_m
     return OSIP_BADPARAMETER;
   }
 
+  /* check for implicit subscription */
+  if (MSG_IS_NOTIFY (tr->orig_request)) {
+    if (jd != NULL) {
+      osip_header_t *sub_state;
+      time_t now = osip_getsystemtime (NULL);
+      /* get subscription-state */
+      jd->implicit_subscription_expire_time = 0;
+      osip_message_header_get_byname (tr->orig_request, "subscription-state", 0, &sub_state);
+      if (sub_state != NULL && (sub_state->hvalue != NULL)) {
+        if (0 == osip_strncasecmp (sub_state->hvalue, "active", 6) || 0 == osip_strncasecmp (sub_state->hvalue, "pending", 7)) {
+          const char *tmp = strstr(sub_state->hvalue+6, "expires");
+          const char *ss_expires = NULL;
+          jd->implicit_subscription_expire_time = now + excontext->implicit_subscription_expires;
+          if (tmp!=NULL) {
+            ss_expires = strchr(tmp+7, '=');
+            if (ss_expires!=NULL) {
+              int exp;
+              ss_expires++;
+              exp = osip_atoi(ss_expires);
+              if (exp>=0 && exp<600) {
+                jd->implicit_subscription_expire_time = now + exp;
+              }
+            }
+          }
+          OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO3, NULL, "eXosip: dialog marked for ImplicitSubscription (did=%i)\n", jd->d_id));
+        }
+      }
+    }
+  }
+  else if (MSG_IS_REFER (tr->orig_request)) {
+    if (jd != NULL) {
+      /* check for "Refer-Sub: false" */
+      osip_header_t *refer_sub;
+      time_t now = osip_getsystemtime (NULL);
+      osip_message_header_get_byname (tr->orig_request, "Refer-Sub", 0, &refer_sub);
+      jd->implicit_subscription_expire_time = now + excontext->implicit_subscription_expires;
+      if ((refer_sub != NULL) && (refer_sub->hvalue != NULL) && (0 == osip_strncasecmp (refer_sub->hvalue, "false", 5)) )
+      {
+          /* implicit subscription removed */
+          jd->implicit_subscription_expire_time = 0;
+          OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_WARNING, NULL, "eXosip: dialog un-marked for ImplicitSubscription (did=%i)\n", jd->d_id));
+      }
+    }
+  }
+
   if (0 == osip_strcasecmp (tr->orig_request->sip_method, "INVITE")
       || 0 == osip_strcasecmp (tr->orig_request->sip_method, "UPDATE")) {
     if (MSG_IS_STATUS_2XX (answer) && jd != NULL) {
@@ -901,11 +982,17 @@ eXosip_call_send_answer (struct eXosip_t *excontext, int tid, int status, osip_m
 
 int
 eXosip_call_terminate (struct eXosip_t *excontext, int cid, int did) {
-  return eXosip_call_terminate_with_reason(excontext, cid, did, NULL);
+  return eXosip_call_terminate_with_header(excontext, cid, did, NULL, NULL);
 }
 
 int
-eXosip_call_terminate_with_reason (struct eXosip_t *excontext, int cid, int did, const char *reason)
+eXosip_call_terminate_with_reason(struct eXosip_t *excontext, int cid, int did, const char *reason)
+{
+  return eXosip_call_terminate_with_header(excontext, cid, did, "Reason", reason);
+}
+
+int
+eXosip_call_terminate_with_header(struct eXosip_t *excontext, int cid, int did, const char *header_name, const char *header_value)
 {
   int i;
   osip_transaction_t *tr;
@@ -940,8 +1027,8 @@ eXosip_call_terminate_with_reason (struct eXosip_t *excontext, int cid, int did,
       OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "eXosip: cannot terminate this call!\n"));
       return i;
     }
-    if (reason != NULL) {
-      osip_message_set_header(request, "Reason", reason);
+    if (header_name != NULL && header_value != NULL) {
+      osip_message_set_header(request, header_name, header_value);
     }
     i = eXosip_create_cancel_transaction (excontext, jc, jd, request);
     if (i != 0) {
@@ -972,8 +1059,8 @@ eXosip_call_terminate_with_reason (struct eXosip_t *excontext, int cid, int did,
 
       i = eXosip_call_build_answer (excontext, tr->transactionid, 603, &request);
 
-      if (reason != NULL) {
-        osip_message_set_header(request, "Reason", reason);
+      if (header_name != NULL && header_value != NULL) {
+        osip_message_set_header(request, header_name, header_value);
       }
 
       i = eXosip_call_send_answer (excontext, tr->transactionid, 603, request);
@@ -994,9 +1081,9 @@ eXosip_call_terminate_with_reason (struct eXosip_t *excontext, int cid, int did,
     return i;
   }
 
-	if (reason != NULL) {
-		osip_message_set_header(request, "Reason", reason);
-	}
+  if (header_name != NULL && header_value != NULL) {
+    osip_message_set_header(request, header_name, header_value);
+  }
 
   _eXosip_add_authentication_information (excontext, request, NULL);
 
@@ -1006,8 +1093,11 @@ eXosip_call_terminate_with_reason (struct eXosip_t *excontext, int cid, int did,
     return i;
   }
 
-  osip_dialog_free (jd->d_dialog);
-  jd->d_dialog = NULL;
+  if (jd->implicit_subscription_expire_time == 0)
+  {
+    osip_dialog_free (jd->d_dialog);
+    jd->d_dialog = NULL;
+  }
   _eXosip_update (excontext);   /* AMD 30/09/05 */
   return OSIP_SUCCESS;
 }
@@ -1060,7 +1150,8 @@ eXosip_call_build_prack (struct eXosip_t *excontext, int tid, osip_message_t *re
 
   old_prack_tr = (osip_transaction_t*)osip_list_get_first(jd->d_out_trs, &it);
   while (old_prack_tr != NULL) {
-    if (old_prack_tr != NULL && old_prack_tr->orig_request != NULL && 0 == osip_strcasecmp (old_prack_tr->orig_request->sip_method, "PRACK")) {
+    if (old_prack_tr->orig_request != NULL && 0 == osip_strcasecmp (old_prack_tr->orig_request->sip_method, "PRACK")
+        && OSIP_SUCCESS == osip_to_tag_match(old_prack_tr->orig_request->to, response1xx->to)) {
       osip_header_t *rack_header = NULL;
 
       osip_message_header_get_byname (old_prack_tr->orig_request, "RAck", 0, &rack_header);
@@ -1080,7 +1171,12 @@ eXosip_call_build_prack (struct eXosip_t *excontext, int tid, osip_message_t *re
       return OSIP_WRONG_STATE;
     }
 
+	/* the newer code above use a temporary dialog: thus, we need to use the real current local_cseq (a global value) */
+	_1xxok_dialog->local_cseq = jd->d_dialog->local_cseq;
     i = _eXosip_build_request_within_dialog (excontext, prack, "PRACK", _1xxok_dialog);
+
+    /* the newer code above use a temporary dialog: thus, we need to maintain the local_cseq on the in-memory dialog*/
+    jd->d_dialog->local_cseq++;
 
     osip_dialog_free(_1xxok_dialog);
 
@@ -1135,8 +1231,6 @@ eXosip_call_send_prack (struct eXosip_t *excontext, int tid, osip_message_t * pr
     osip_message_free (prack);
     return i;
   }
-
-  jd->d_mincseq++;
 
   osip_list_add (jd->d_out_trs, tr, 0);
 

@@ -18,6 +18,7 @@ dnl Initialize automake stuff
 AC_CONFIG_AUX_DIR(scripts)
 AC_CONFIG_HEADERS(exosip-config.h)
 AM_INIT_AUTOMAKE
+m4_ifdef([AM_SILENT_RULES], [AM_SILENT_RULES([yes])],)
 AC_CONFIG_MACRO_DIR([scripts])
 
 AC_CANONICAL_HOST
@@ -116,33 +117,24 @@ fi
 
 if test "x$host_cpu" = "x$build_cpu"; then
   case $OS in
-   linux*)
-     ;;
-   irix*)
-     ;;
-   hpux* | hp-ux*)
-     ;;
-   aix*)
-     ;;
    osf*)
      AC_CHECK_LIB(rt,sem_open,[EXOSIP_LIB="$EXOSIP_LIB -lrt"])
-     ;;
-   sunos*)
-     ;;
-   darwin*)
-     ;;
-   *mingw*)
-     EXOSIP_FLAGS="$EXOSIP_FLAGS  -D_WIN32_WINNT=0x0501"
-     EXOSIP_LIB="EXOSIP_LIB -lws2_32 -liphlpapi -ldnsapi"
-dnl tools are not ported to win32
-     enable_tools=no
      ;;
    *)
      ;;
  esac
-else
- AC_MSG_NOTICE([Cross compiling exosip.])
 fi
+
+case $OS in
+  *mingw*)
+    EXOSIP_FLAGS="$EXOSIP_FLAGS  -D_WIN32_WINNT=0x0501"
+    EXOSIP_LIB="EXOSIP_LIB -lws2_32 -liphlpapi -ldnsapi"
+    dnl tools are not ported to win32
+    enable_tools=no
+    ;;
+  *)
+    ;;
+esac
 
 if test "x$enable_trace" = "xyes"; then
   EXOSIP_FLAGS="$EXOSIP_FLAGS -DENABLE_TRACE"
@@ -299,6 +291,7 @@ AC_SUBST(EXOSIP_LIB)
 
 dnl Checks for header files.
 AC_HEADER_STDC
+AC_CHECK_HEADERS(memory.h)
 AC_CHECK_HEADERS(ctype.h)
 AC_CHECK_HEADERS(string.h)
 AC_CHECK_HEADERS(strings.h)
@@ -315,6 +308,9 @@ AC_CHECK_HEADERS(sys/signal.h)
 AC_CHECK_HEADERS(malloc.h)
 AC_CHECK_HEADERS(sys/select.h)
 AC_CHECK_HEADERS(sys/types.h)
+AC_CHECK_HEADERS(sys/socket.h)
+AC_CHECK_HEADERS(sys/ioctl.h)
+AC_CHECK_HEADERS(sys/param.h)
 AC_CHECK_HEADERS(fcntl.h)
 AC_CHECK_HEADERS(sys/soundcard.h)
 AC_CHECK_HEADERS(arpa/inet.h)
@@ -323,6 +319,8 @@ AC_CHECK_HEADERS(netdb.h)
 AC_CHECK_HEADERS(nameser8_compat.h)
 AC_CHECK_HEADERS(arpa/nameser_compat.h)
 AC_CHECK_HEADERS(netinet/tcp.h)
+AC_CHECK_HEADERS(netinet/in.h)
+AC_CHECK_HEADERS(regex.h)
 
 AC_CHECK_HEADERS([resolv.h], [], [],
 [#if HAVE_SYS_TYPES_H
@@ -338,6 +336,8 @@ AC_CHECK_HEADERS([resolv.h], [], [],
 
 dnl check if we have the getifaddrs() sytem call
 AC_CHECK_FUNCS(getifaddrs)
+AC_CHECK_FUNCS(gmtime_r)
+AC_CHECK_FUNCS(gmtime)
 
 AS_IF([test "$enable_openssl" = "yes" -o "$enable_openssl" = "auto"],
       [PKG_CHECK_MODULES([SSL], [openssl],

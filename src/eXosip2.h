@@ -38,12 +38,16 @@
 #include <exosip-config.h>
 #endif
 
+#define HAVE_INET_NTOP
+
 #if defined(__PALMOS__) && (__PALMOS__ >= 0x06000000)
 #define HAVE_CTYPE_H 1
 #define HAVE_STRING_H 1
 #define HAVE_SYS_TYPES_H 1
 #define HAVE_TIME_H 1
 #define HAVE_STDARG_H 1
+#define HAVE_MEMORY_H 1
+#define HAVE_GMTIME 1
 
 #elif defined(__VXWORKS_OS__) || defined(__rtems__)
 #define HAVE_STRING_H 1
@@ -51,9 +55,14 @@
 #define HAVE_SYS_TIME_H 1
 #define HAVE_SYS_TYPES_H 1
 #define HAVE_STDARG_H 1
+#define HAVE_MEMORY_H 1
+#define HAVE_GMTIME 1
 
-#elif defined _WIN32_WCE
+#elif defined(_WIN32_WCE)
 
+#define HAVE_WINDOWS_H 1
+#define HAVE_WINSOCK2_H 1
+#define HAVE_WS2TCPIP_H 1
 #define HAVE_CTYPE_H 1
 #define HAVE_STRING_H 1
 #define HAVE_TIME_H 1
@@ -61,8 +70,13 @@
 
 #define snprintf  _snprintf
 
+#undef HAVE_INET_NTOP
+
 #elif defined(WIN32)
 
+#define HAVE_WINDOWS_H 1
+#define HAVE_WINSOCK2_H 1
+#define HAVE_WS2TCPIP_H 1
 #define HAVE_CTYPE_H 1
 #define HAVE_STRING_H 1
 #define HAVE_SYS_TYPES_H 1
@@ -70,7 +84,9 @@
 #define HAVE_STDARG_H 1
 #define HAVE_SYS_STAT_H
 
+#if (_MSC_VER < 1900)
 #define snprintf _snprintf
+#endif
 
 /* use win32 crypto routines for random number generation */
 /* only use for vs .net (compiler v. 1300) or greater */
@@ -78,6 +94,46 @@
 #define WIN32_USE_CRYPTO 1
 #endif
 
+#if defined(_MSC_VER)
+#define HAVE_MSTCPIP_H
+#if defined(WINAPI_FAMILY) && (WINAPI_FAMILY == WINAPI_FAMILY_PHONE_APP)
+#undef HAVE_MSTCPIP_H
+#endif
+#endif
+
+#define HAVE_WINCRYPT_H
+#if defined(WINAPI_FAMILY) && (WINAPI_FAMILY == WINAPI_FAMILY_PHONE_APP)
+#undef HAVE_WINCRYPT_H
+#endif
+
+#if (_WIN32_WINNT >= 0x0600)
+#define ENABLE_SIP_QOS
+#if (_MSC_VER >= 1700) && !defined(_USING_V110_SDK71_)
+#if defined(WINAPI_FAMILY) && (WINAPI_FAMILY == WINAPI_FAMILY_PHONE_APP)
+#undef ENABLE_SIP_QOS
+#endif
+#endif
+#endif
+
+#define HAVE_WINDNS_H
+#if defined(WINAPI_FAMILY) && (WINAPI_FAMILY == WINAPI_FAMILY_PHONE_APP)
+#undef HAVE_WINDNS_H
+#endif
+
+#define HAVE_IPHLPAPI_H
+#if defined(WINAPI_FAMILY) && (WINAPI_FAMILY == WINAPI_FAMILY_PHONE_APP)
+#undef HAVE_IPHLPAPI_H
+#endif
+
+#define HAVE_GMTIME 1
+#undef HAVE_INET_NTOP
+
+#endif
+
+#if defined(__arc__)
+#define HAVE_SYS_SOCKET_H
+#define HAVE_NETINET_IN_H
+#define HAVE_ARPA_INET_H
 #endif
 
 #if defined (HAVE_STRING_H)
@@ -127,18 +183,24 @@
 #endif
 #endif
 
-#ifdef _WIN32_WCE
+#ifdef HAVE_WINSOCK2_H
 #include <winsock2.h>
-#include <osipparser2/osip_port.h>
+#endif
+
+#ifdef HAVE_WS2TCPIP_H
 #include <ws2tcpip.h>
-#elif WIN32
-#include <winsock2.h>
-#include <ws2tcpip.h>
-#else
-#include <sys/types.h>
+#endif
+
+#ifdef HAVE_SYS_SOCKET_H
 #include <sys/socket.h>
+#endif
+#ifdef HAVE_NETINET_IN_H
 #include <netinet/in.h>
+#endif
+#ifdef HAVE_ARPA_INET_H
 #include <arpa/inet.h>
+#endif
+#ifdef HAVE_NETDB_H
 #include <netdb.h>
 #endif
 
@@ -152,7 +214,7 @@
 
 #define EXOSIP_VERSION	"5.0.0"
 
-#ifdef WIN32
+#ifdef HAVE_WINSOCK2_H
 #define SOCKET_TYPE SOCKET
 #else
 #define SOCKET_TYPE int
@@ -168,12 +230,19 @@ extern "C" {
 #define NI_MAXSERV      32
 #define NI_NUMERICHOST  1
 
+#ifndef PF_INET6
 #define PF_INET6        AF_INET6
+#endif
 
+#define _SS_MAXSIZE 128
+#define _SS_ALIGNSIZE (sizeof (int64_t))
+#define _SS_PAD1SIZE (_SS_ALIGNSIZE - sizeof (unsigned short))
+#define _SS_PAD2SIZE (_SS_MAXSIZE - (sizeof (unsigned short)+ _SS_PAD1SIZE + _SS_ALIGNSIZE))
   struct sockaddr_storage {
-    unsigned char sa_len;
-    unsigned char sa_family;    /* Address family AF_XXX */
-    char sa_data[14];           /* Protocol specific address */
+    unsigned short  ss_family;
+    char _ss_pad1[_SS_PAD1SIZE];
+    int64_t _ss_align;
+    char _ss_pad2[_SS_PAD2SIZE];
   };
 
   struct addrinfo {
@@ -201,10 +270,15 @@ extern "C" {
 #ifndef DEFINE_SOCKADDR_STORAGE
 #define __eXosip_sockaddr sockaddr_storage
 #else
-  struct __eXosip_sockaddr {
-    u_char ss_len;
-    u_char ss_family;
-    u_char padding[128 - 2];
+#define _SS_MAXSIZE 128
+#define _SS_ALIGNSIZE (sizeof (int64_t))
+#define _SS_PAD1SIZE (_SS_ALIGNSIZE - sizeof (unsigned short))
+#define _SS_PAD2SIZE (_SS_MAXSIZE - (sizeof (unsigned short)+ _SS_PAD1SIZE + _SS_ALIGNSIZE))
+  struct sockaddr_storage {
+    unsigned short  ss_family;
+    char _ss_pad1[_SS_PAD1SIZE];
+    int64_t _ss_align;
+    char _ss_pad2[_SS_PAD2SIZE];
   };
 #endif
 
@@ -230,6 +304,8 @@ extern "C" {
     int d_retry;                /* avoid too many unsuccessful retry */
     int d_mincseq;              /* remember cseq after PRACK and UPDATE during setup */
 
+    time_t implicit_subscription_expire_time;
+
     eXosip_dialog_t *next;
     eXosip_dialog_t *parent;
   };
@@ -242,6 +318,7 @@ extern "C" {
     eXosip_dialog_t *c_dialogs;
     osip_transaction_t *c_inc_tr;
     osip_transaction_t *c_out_tr;
+    osip_transaction_t *c_cancel_tr;
     int c_retry;                /* avoid too many unsuccessful retry */
     void *external_reference;
 
@@ -471,6 +548,7 @@ struct eXosip_counters {
     int dns_capabilities;
     int enable_dns_cache;
     int dscp;
+    int implicit_subscription_expires;
     int register_with_date;
     int autoanswer_bye;
     int ipv6_enable;
@@ -493,8 +571,6 @@ struct eXosip_counters {
     char tls_firewall_port[10];
     int tls_verify_client_certificate;
     eXosip_tls_ctx_t eXosip_tls_ctx_params;
-    char tls_local_cn_name[128];
-    char tls_client_local_cn_name[128];
 
     /* dtls pre-config */
     char dtls_firewall_ip[64];
@@ -516,6 +592,7 @@ struct eXosip_counters {
 
     char sip_instance[37]; /* can only be used if ONE excontext is used for ONE registration only */
     char default_contact_displayname[256];
+    int opt_sessiontimers_force;
   };
 
   int _eXosip_guess_ip_for_via (struct eXosip_t *excontext, int family, char *address, int size);
@@ -548,6 +625,8 @@ struct eXosip_counters {
 
   void _eXosip_mark_all_registrations_expired (struct eXosip_t *excontext);
   void _eXosip_mark_registration_expired (struct eXosip_t *excontext, const char *call_id);
+  void _eXosip_mark_registration_ready (struct eXosip_t *excontext, const char *call_id);
+
   int _eXosip_check_allow_header (eXosip_dialog_t * jd, osip_message_t * message);
 
   int _eXosip_add_authentication_information (struct eXosip_t *excontext, osip_message_t * req, osip_message_t * last_response);
@@ -623,8 +702,6 @@ struct eXosip_counters {
   void _eXosip_transaction_free (struct eXosip_t *excontext, osip_transaction_t *transaction);
 
   int _eXosip_srv_lookup (struct eXosip_t *excontext, osip_message_t * sip, osip_naptr_t ** naptr_record);
-
-  void _eXosip_dnsutils_release (osip_naptr_t * naptr_record);
 
   int _eXosip_handle_incoming_message (struct eXosip_t *excontext, char *buf, size_t len, int socket, char *host, int port, char *received_host, int *rport_port);
 

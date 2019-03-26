@@ -30,7 +30,10 @@
   files in the program, then also delete it here.
 */
 
-#if defined(WIN32)
+#include "eXosip2.h"
+
+#if !defined (HAVE_INET_NTOP)
+/* This is windows replacement for inet_ntop */
 
 #if defined(__cplusplus)
 extern "C" {
@@ -43,4 +46,4 @@ extern "C" {
 #if defined(__cplusplus)
 }
 #endif
-#endif                          /* WIN32 */
+#endif
