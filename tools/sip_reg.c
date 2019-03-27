@@ -169,7 +169,7 @@ main (int argc, char *argv[])
 
 #else
   for (;;) {
-#define short_options "du:r:U:P:t:p:c:ef:l:h"
+#define short_options "du:r:U:P:t:p:c:e:f:l:h"
 #ifdef _GNU_SOURCE
     int option_index = 0;
 
