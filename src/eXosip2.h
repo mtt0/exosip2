@@ -212,7 +212,7 @@
 
 #include "jpipe.h"
 
-#define EXOSIP_VERSION	"5.0.0"
+#define EXOSIP_VERSION	"5.1.0"
 
 #ifdef HAVE_WINSOCK2_H
 #define SOCKET_TYPE SOCKET

@@ -1,5 +1,5 @@
 AC_PREREQ([2.69])
-AC_INIT([libeXosip2],[5.0.0])
+AC_INIT([libeXosip2],[5.1.0])
 AC_CONFIG_SRCDIR([include/eXosip2/eXosip.h])
 
 AC_MSG_NOTICE([libeXosip2              The Extended Open SIP library.])

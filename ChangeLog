@@ -1,3 +1,70 @@
+eXosip2 (5.1.0) - 2019-03-27
+	* minor API update:
+	  API parameter change: eXosip_call_build_ack/eXosip_call_send_ack API to use tid instead of did as parameter.
+
+	* new API: add an API to insert one extra header in BYE:
+	  int eXosip_call_terminate_with_header(struct eXosip_t *excontext, int cid, int did, const char *header_name, const char *header_value);
+	  void eXosip_dnsutils_release(struct osip_naptr *naptr_record); required after usage of eXosip_dnsutils_naptr.
+
+	* new OPTION:
+	EXOSIP_OPT_SET_SESSIONTIMERS_FORCE option to force session timer to be used when remote side does not support it.
+
+	* structure change:
+	new param in eXosip_tls_credentials_t for pinning: "public_key_pinned". A file with the expected public key of server.
+	If you use eXosip_tls_ctx_t/eXosip_tls_credentials_t/EXOSIP_OPT_SET_TLS_CERTIFICATES_INFO, you need to recompile.
+
+	* fix processing response out of transaction. (avoid incorrect logs and extra work)
+	* fix https://savannah.nongnu.org/bugs/?54628 where ACK was only retransmitted for initial outgoing INVITE.
+	  fix: retransmit ACK for both initial INVITE and re-INVITE.
+	  fix: retransmit ACK for 2xx from forking (with a BYE) even if call does not exist.
+	  ACK for "old transaction" within the established dialog won't be retransmitted because the parameter only hold the latest ACK.
+	* fix bug report: https://savannah.nongnu.org/bugs/index.php?54624
+	  another patch to fix more issue related to cseq & PRACK.
+	  The newer code better handle forking use-case with PRACK.
+	  The newer code better handle several 1xx from same user.
+	* fix bug report: https://savannah.nongnu.org/bugs/index.php?54624 cseq wasn't increasing after a PRACK.
+	* improve portability code, detection of headers, windows compilation detection, sockaddr_storage was not correctly defined.
+	* fix udp layer: set ipbuf before using it.
+	* fix: allow socket descriptor to be 0 (posix requirement).
+	* fix: compile with any openssl version.
+	* allow compilation with OPENSSL_NO_DH, OPENSSL_NO_RSA, OPENSSL_NO_ECDH and/or OPENSSL_NO_DEPRECATED.
+	* remove old windows specific RSA obsolete code.
+	* add in eXtl_tls.c some explanations on usage of TLS with eXosip2. READ THEM.
+	* improve reliability for naptr/srv lookup (but still a short time).
+	* fix/improve _eXosip_mark_registration_expired: it was working correctly only if registration had previously failed.
+	* fix: attach call/dialog to CANCEL transaction (so EXOSIP_CALL_MESSAGE_ANSWERED will be received instead of EXOSIP_MESSAGE_ANSWERED).
+	* windows: fix DnsQuery to use UTF8 even if compiled without UNICODE (not applicable if you use c-ares).
+	* windows: add ENUM capability and improve NAPTR/SRV record (not applicable if you use c-ares).
+	* windows: you should use c-ares AND you should compile with UNICODE. (much better).
+	* add ability to define a dnsserver when doing NAPTR and SRV record (c-ares only).
+	* format of domain string for "eXosip_dnsutils_naptr" is "domain.com!+AUS|IP_DNSSERVER".
+	* fix for on android, DNS are not available any more (restricted access) (c-ares only).
+	* add support ENUM and regex for res_query API (not applicable if you use c-ares).
+	* sync with newer osip: use newer osip_naptr & osip_srv_record structures to hold ENUM sip result and
+	  improvements to retreive (and release) it via eXosip_dnsutils_naptr and eXosip_dnsutils_release APIs.
+	* TLS improvments: simplify client and server config, add ECDH cipher suite if missing,
+	  password for private key is optional, add support for public key pinning.
+	* improve to report EXOSIP_CALL_NOANSWER upon transport error for INVITE for faster detection.
+	* fix possible memory leak for X509 server certificate.
+	* fix crash if dialog has been already closed between 200ok and a received BYE.
+	* improve windows pipe replacement (use a free allocated port automatically).
+	* fix to optimize detection of TCP or TLS establishement, fix to optimize sending REGISTER after establishement.
+	* patch for call transfer to keep dialog after BYE, in order to be able to handle incoming/outgoing NOTIFY within calls after BYE.
+	* handle incoming UPDATE from alternative dialogs in early dialog mode.
+	* fix to reject any NOTIFY without established dialog coming later than 64 seconds after initial SUBSCRIBE.
+	* After a NAPTR query, some DNS server returns SUCCESS without NAPTR answers. In such use-case, fallback to manual SRV records.
+	* add SOCK_CLOEXEC option to sockets // add missing SO_KEEPALIVE options on TLS socket.
+	* EXOSIP_OPT_ENABLE_IPV6 now support 0(ipv4 only), 1(ipv6 only) and 2(ipv4 OR ipv6).
+	  With option 2, choice is made based on DNS and the stack can fallback between IPv4 and IPv6.
+	* fix possible memory leak when using wrong tid for eXosip_insubscription_send_answer.
+	* fix possible memory leak upon allocation error.
+	* fix leak upon syntax error in parameters provided for PUBLISH.
+	* fix leak upon syntax error in parameters provided for REGISTER.
+	* increase size of proto_ifs for IPv6 local address.
+	* RFC 2617 erratum: Errata ID: 1649 (minor issue).
+	* _exosip_isipv4addr: fix checking IPv4 address (minor issue).
+	* other minor updates.
+
 eXosip2 (5.0.0)
 	* major API update: add a new parameter to eXosip_call_build_prack in order to create the PRACK
 	for this specific response and not for the latest.
