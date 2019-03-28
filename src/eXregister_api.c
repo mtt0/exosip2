@@ -79,6 +79,7 @@ _eXosip_register_set_date (osip_message_t * msg)
 
 #ifdef HAVE_GMTIME_R
   struct tm gmt;
+
   ret = gmtime_r (&curtime, &gmt);
 #else
   ret = gmtime (&curtime);
@@ -90,16 +91,16 @@ _eXosip_register_set_date (osip_message_t * msg)
 #endif
 
 static int
-_eXosip_register_add_contact(struct eXosip_t *excontext, eXosip_reg_t * jreg, osip_message_t *reg)
+_eXosip_register_add_contact (struct eXosip_t *excontext, eXosip_reg_t * jreg, osip_message_t * reg)
 {
   int i;
 
   osip_contact_t *new_contact;
   osip_uri_t *new_contact_url = NULL;
 
-  osip_message_get_contact(reg, 0, &new_contact);
-  if (new_contact!=NULL)
-    return OSIP_SUCCESS; /* already a contact header */
+  osip_message_get_contact (reg, 0, &new_contact);
+  if (new_contact != NULL)
+    return OSIP_SUCCESS;        /* already a contact header */
 
   i = osip_contact_init (&new_contact);
   if (i == 0)
@@ -111,7 +112,7 @@ _eXosip_register_add_contact(struct eXosip_t *excontext, eXosip_reg_t * jreg, os
     new_contact_url->username = osip_strdup (reg->from->url->username);
   }
 
-  if (excontext->default_contact_displayname[0]!='\0') {
+  if (excontext->default_contact_displayname[0] != '\0') {
     new_contact->displayname = osip_strdup (excontext->default_contact_displayname);
   }
 
@@ -121,8 +122,8 @@ _eXosip_register_add_contact(struct eXosip_t *excontext, eXosip_reg_t * jreg, os
   }
 
   /* special values to be replaced in transport layer (eXtl_*.c files) */
-  new_contact_url->host = osip_strdup("999.999.999.999");
-  new_contact_url->port = osip_strdup("99999");
+  new_contact_url->host = osip_strdup ("999.999.999.999");
+  new_contact_url->port = osip_strdup ("99999");
 
   if (osip_strcasecmp (excontext->transport, "UDP") != 0) {
     osip_uri_uparam_add (new_contact_url, osip_strdup ("transport"), osip_strdup (excontext->transport));
@@ -135,20 +136,21 @@ _eXosip_register_add_contact(struct eXosip_t *excontext, eXosip_reg_t * jreg, os
     osip_contact_param_add (new_contact, osip_strdup ("q"), osip_strdup (jreg->r_qvalue));
 
   if (excontext->sip_instance[0] != 0) {
-    char *sip_instance = (char *) osip_malloc(50); /* "<urn:uuid:f81d4fae-7dec-11d0-a765-00a0c91e6bf6>" */
-    if (sip_instance!=NULL) {
-      snprintf(sip_instance, 50, "\"<urn:uuid:%s>\"", excontext->sip_instance);
+    char *sip_instance = (char *) osip_malloc (50);     /* "<urn:uuid:f81d4fae-7dec-11d0-a765-00a0c91e6bf6>" */
+
+    if (sip_instance != NULL) {
+      snprintf (sip_instance, 50, "\"<urn:uuid:%s>\"", excontext->sip_instance);
       osip_contact_param_add (new_contact, osip_strdup ("+sip.instance"), sip_instance);
     }
   }
   /* If the address-of-record in the To header field of a REGISTER request
-   is a SIPS URI, then any Contact header field values in the request
-   SHOULD also be SIPS URIs.
+     is a SIPS URI, then any Contact header field values in the request
+     SHOULD also be SIPS URIs.
    */
-  if (reg->to!=NULL && reg->to->url!=NULL && reg->to->url->scheme!=NULL && osip_strcasecmp(reg->to->url->scheme, "sips")==0) {
-    if (new_contact->url->scheme!=NULL)
-      osip_free(new_contact->url->scheme);
-    new_contact->url->scheme = osip_strdup("sips");
+  if (reg->to != NULL && reg->to->url != NULL && reg->to->url->scheme != NULL && osip_strcasecmp (reg->to->url->scheme, "sips") == 0) {
+    if (new_contact->url->scheme != NULL)
+      osip_free (new_contact->url->scheme);
+    new_contact->url->scheme = osip_strdup ("sips");
   }
   osip_list_add (&reg->contacts, new_contact, -1);
   return OSIP_SUCCESS;
@@ -167,7 +169,7 @@ _eXosip_generating_register (struct eXosip_t *excontext, eXosip_reg_t * jreg, os
     return i;
 
   if (contact == NULL) {
-    _eXosip_register_add_contact(excontext, jreg, *reg);
+    _eXosip_register_add_contact (excontext, jreg, *reg);
   }
   else {
     osip_message_set_contact (*reg, contact);
@@ -226,9 +228,9 @@ _eXosip_register_build_register (struct eXosip_t *excontext, eXosip_reg_t * jr, 
 
 
       osip_list_special_free (&reg->authorizations, (void (*)(void *))
-        &osip_authorization_free);
+                              &osip_authorization_free);
       osip_list_special_free (&reg->proxy_authorizations, (void (*)(void *))
-        &osip_proxy_authorization_free);
+                              &osip_proxy_authorization_free);
 
 
       i = _eXosip_update_top_via (excontext, reg);
@@ -241,7 +243,7 @@ _eXosip_register_build_register (struct eXosip_t *excontext, eXosip_reg_t * jr, 
 
       osip_cseq_num++;
       osip_free (reg->cseq->number);
-      reg->cseq->number = (char *) osip_malloc (length + 2);  /* +2 like for 9 to 10 */
+      reg->cseq->number = (char *) osip_malloc (length + 2);    /* +2 like for 9 to 10 */
       if (reg->cseq->number == NULL) {
         osip_message_free (reg);
         if (last_response != NULL)
@@ -293,38 +295,44 @@ _eXosip_register_build_register (struct eXosip_t *excontext, eXosip_reg_t * jr, 
       osip_message_force_update (reg);
     }
 
-    if (jr->registration_step==RS_DELETIONPROCEEDING) {
+    if (jr->registration_step == RS_DELETIONPROCEEDING) {
       /* remove previous contact */
       osip_contact_t *contact;
-      osip_message_get_contact(reg, 0, &contact);
-      if (contact!=NULL) {
+
+      osip_message_get_contact (reg, 0, &contact);
+      if (contact != NULL) {
         osip_generic_param_t *exp_param = NULL;
-        osip_contact_param_get_byname(contact, "expires", &exp_param);
+
+        osip_contact_param_get_byname (contact, "expires", &exp_param);
         if (exp_param == NULL) {
           osip_contact_param_add (contact, osip_strdup ("expires"), osip_strdup ("0"));
         }
       }
-    } else if (jr->registration_step==RS_MASQUERADINGPROCEEDING) {
+    }
+    else if (jr->registration_step == RS_MASQUERADINGPROCEEDING) {
       osip_contact_t *contact;
-      osip_message_get_contact(reg, 0, &contact);
-      if (contact!=NULL) {
+
+      osip_message_get_contact (reg, 0, &contact);
+      if (contact != NULL) {
         osip_list_iterator_t it;
-        osip_generic_param_t* exp_param = (osip_generic_param_t*)osip_list_get_first(&contact->gen_params, &it);
+        osip_generic_param_t *exp_param = (osip_generic_param_t *) osip_list_get_first (&contact->gen_params, &it);
+
         while (exp_param != NULL) {
-          if (exp_param->gname!=NULL && osip_strcasecmp (exp_param->gname, "expires") == 0) {
-            osip_list_iterator_remove(&it);
-            osip_generic_param_free(exp_param);
+          if (exp_param->gname != NULL && osip_strcasecmp (exp_param->gname, "expires") == 0) {
+            osip_list_iterator_remove (&it);
+            osip_generic_param_free (exp_param);
             break;
           }
-          exp_param = (osip_generic_param_t *)osip_list_get_next(&it);
+          exp_param = (osip_generic_param_t *) osip_list_get_next (&it);
         }
       }
-      if (excontext->eXtl_transport._tl_update_contact!=NULL)
-        excontext->eXtl_transport._tl_update_contact(excontext, reg);
-      jr->registration_step=RS_MASQUERADINGPROCEEDING+1; /* do only once: keep previous one after */
-    } else if (jr->registration_step==0) {
-      if (excontext->eXtl_transport._tl_update_contact!=NULL)
-        excontext->eXtl_transport._tl_update_contact(excontext, reg);
+      if (excontext->eXtl_transport._tl_update_contact != NULL)
+        excontext->eXtl_transport._tl_update_contact (excontext, reg);
+      jr->registration_step = RS_MASQUERADINGPROCEEDING + 1;    /* do only once: keep previous one after */
+    }
+    else if (jr->registration_step == 0) {
+      if (excontext->eXtl_transport._tl_update_contact != NULL)
+        excontext->eXtl_transport._tl_update_contact (excontext, reg);
     }
 
     if (last_response != NULL) {
@@ -360,7 +368,7 @@ eXosip_register_build_initial_register_withqvalue (struct eXosip_t *excontext, c
 {
   eXosip_reg_t *jr = NULL;
   int i;
-  int lallocated=0;
+  int lallocated = 0;
 
   *reg = NULL;
 
@@ -387,7 +395,7 @@ eXosip_register_build_initial_register_withqvalue (struct eXosip_t *excontext, c
       return i;
     }
     ADD_ELEMENT (excontext->j_reg, jr);
-    lallocated=1;
+    lallocated = 1;
   }
 
   /* build register */
@@ -402,14 +410,14 @@ eXosip_register_build_initial_register_withqvalue (struct eXosip_t *excontext, c
   if (qvalue)
     osip_strncpy (jr->r_qvalue, qvalue, sizeof (jr->r_qvalue));
 
-  if (excontext->auto_masquerade_contact>0)
-    jr->registration_step=RS_MASQUERADINGPROCEEDING;
+  if (excontext->auto_masquerade_contact > 0)
+    jr->registration_step = RS_MASQUERADINGPROCEEDING;
 
   i = _eXosip_register_build_register (excontext, jr, reg);
   if (i != 0) {
     OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "eXosip: cannot build REGISTER!\n"));
     *reg = NULL;
-    if (lallocated==1) {
+    if (lallocated == 1) {
       REMOVE_ELEMENT (excontext->j_reg, jr);
       _eXosip_reg_free (excontext, jr);
     }
@@ -454,7 +462,7 @@ eXosip_register_build_register (struct eXosip_t *excontext, int rid, int expires
   }
 
   /* reset to allow automasquerading when user request a REGISTER refresh */
-  jr->r_last_deletion=0;
+  jr->r_last_deletion = 0;
 
   i = _eXosip_register_build_register (excontext, jr, reg);
   if (i != 0) {

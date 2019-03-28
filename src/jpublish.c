@@ -102,7 +102,7 @@ _eXosip_pub_init (struct eXosip_t *excontext, eXosip_pub_t ** pub, const char *a
   static int p_id = 0;
   eXosip_pub_t *jpub;
 
-  if (p_id == INT_MAX)            /* keep it non-negative */
+  if (p_id == INT_MAX)          /* keep it non-negative */
     p_id = 0;
 
   *pub = NULL;
@@ -121,9 +121,10 @@ _eXosip_pub_init (struct eXosip_t *excontext, eXosip_pub_t ** pub, const char *a
 #ifndef MINISIZE
   {
     struct timeval now;
+
     excontext->statistics.allocated_publications++;
-    osip_gettimeofday(&now, NULL);
-    _eXosip_counters_update(&excontext->average_publications, 1, &now);
+    osip_gettimeofday (&now, NULL);
+    _eXosip_counters_update (&excontext->average_publications, 1, &now);
   }
 #endif
   return OSIP_SUCCESS;

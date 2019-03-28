@@ -247,7 +247,7 @@ extern "C" {
   * @param header_name  header name.
   * @param header_value header value.
   */
-  int eXosip_call_terminate_with_header(struct eXosip_t *excontext, int cid, int did, const char *header_name, const char *header_value);
+  int eXosip_call_terminate_with_header (struct eXosip_t *excontext, int cid, int did, const char *header_name, const char *header_value);
 
 /**
  * Build a PRACK for invite.
@@ -257,7 +257,7 @@ extern "C" {
  * @param response1xx  The sip response for which we build a PRACK.
  * @param prack        The sip prack to build.
  */
-  int eXosip_call_build_prack (struct eXosip_t *excontext, int tid, osip_message_t *response1xx, osip_message_t ** prack);
+  int eXosip_call_build_prack (struct eXosip_t *excontext, int tid, osip_message_t * response1xx, osip_message_t ** prack);
 
 /**
  * Send a PRACK for invite.

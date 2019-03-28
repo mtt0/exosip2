@@ -149,12 +149,13 @@ _eXosip_get_remote_sdp (osip_transaction_t * invite_tr)
     return NULL;
   if (invite_tr->ctx_type == IST || invite_tr->ctx_type == NIST) {
     sdp_message_t *sdp;
+
     sdp = eXosip_get_sdp_info (invite_tr->orig_request);
-    if (sdp==NULL) {
+    if (sdp == NULL) {
       sdp = eXosip_get_sdp_info (invite_tr->ack);
     }
     return sdp;
-  } 
+  }
   if (invite_tr->ctx_type == ICT || invite_tr->ctx_type == NICT)
     return eXosip_get_sdp_info (invite_tr->last_response);
 
@@ -170,8 +171,9 @@ _eXosip_get_local_sdp (osip_transaction_t * invite_tr)
     return eXosip_get_sdp_info (invite_tr->last_response);
   if (invite_tr->ctx_type == ICT || invite_tr->ctx_type == NICT) {
     sdp_message_t *sdp;
+
     sdp = eXosip_get_sdp_info (invite_tr->orig_request);
-    if (sdp==NULL) {
+    if (sdp == NULL) {
       sdp = eXosip_get_sdp_info (invite_tr->ack);
     }
     return sdp;
@@ -204,16 +206,17 @@ eXosip_get_sdp_info (osip_message_t * message)
   else if (osip_strcasecmp (ctt->type, "application") != 0 || osip_strcasecmp (ctt->subtype, "sdp") != 0)
     return NULL;
 
-  oldbody = (osip_body_t *)osip_list_get_first(&message->bodies, &it);
+  oldbody = (osip_body_t *) osip_list_get_first (&message->bodies, &it);
   while (oldbody != NULL) {
     int i;
+
     sdp_message_init (&sdp);
     i = sdp_message_parse (sdp, oldbody->body);
     if (i == 0)
       return sdp;
     sdp_message_free (sdp);
     sdp = NULL;
-    oldbody = (osip_body_t *)osip_list_get_next(&it);
+    oldbody = (osip_body_t *) osip_list_get_next (&it);
   }
   return NULL;
 }

@@ -48,13 +48,14 @@ _eXosip_remove_transaction_from_call (osip_transaction_t * tr, eXosip_call_t * j
 
   for (jd = jc->c_dialogs; jd != NULL; jd = jd->next) {
     osip_list_iterator_t it;
-    inc_tr = (osip_transaction_t*)osip_list_get_first(jd->d_inc_trs, &it);
+
+    inc_tr = (osip_transaction_t *) osip_list_get_first (jd->d_inc_trs, &it);
     while (inc_tr != OSIP_SUCCESS) {
       if (inc_tr == tr) {
-        osip_list_iterator_remove(&it);
+        osip_list_iterator_remove (&it);
         return OSIP_SUCCESS;
       }
-      inc_tr = (osip_transaction_t *)osip_list_get_next(&it);
+      inc_tr = (osip_transaction_t *) osip_list_get_next (&it);
     }
   }
 
@@ -65,13 +66,14 @@ _eXosip_remove_transaction_from_call (osip_transaction_t * tr, eXosip_call_t * j
 
   for (jd = jc->c_dialogs; jd != NULL; jd = jd->next) {
     osip_list_iterator_t it;
-    out_tr = (osip_transaction_t*)osip_list_get_first(jd->d_out_trs, &it);
+
+    out_tr = (osip_transaction_t *) osip_list_get_first (jd->d_out_trs, &it);
     while (out_tr != OSIP_SUCCESS) {
       if (out_tr == tr) {
-        osip_list_iterator_remove(&it);
+        osip_list_iterator_remove (&it);
         return OSIP_SUCCESS;
       }
-      out_tr = (osip_transaction_t *)osip_list_get_next(&it);
+      out_tr = (osip_transaction_t *) osip_list_get_next (&it);
     }
   }
 
@@ -107,12 +109,13 @@ _eXosip_find_last_inc_transaction (eXosip_call_t * jc, eXosip_dialog_t * jd, con
     return NULL;
   if (jd != NULL) {
     osip_list_iterator_t it;
-    inc_tr = (osip_transaction_t*)osip_list_get_first(jd->d_inc_trs, &it);
+
+    inc_tr = (osip_transaction_t *) osip_list_get_first (jd->d_inc_trs, &it);
     while (inc_tr != OSIP_SUCCESS) {
       if (0 == osip_strcasecmp (inc_tr->cseq->method, method))
         break;
-      
-      inc_tr = (osip_transaction_t *)osip_list_get_next(&it);
+
+      inc_tr = (osip_transaction_t *) osip_list_get_next (&it);
     }
   }
 
@@ -132,11 +135,12 @@ _eXosip_find_last_out_transaction (eXosip_call_t * jc, eXosip_dialog_t * jd, con
 
   if (jd != NULL) {
     osip_list_iterator_t it;
-    out_tr = (osip_transaction_t*)osip_list_get_first(jd->d_out_trs, &it);
+
+    out_tr = (osip_transaction_t *) osip_list_get_first (jd->d_out_trs, &it);
     while (out_tr != OSIP_SUCCESS) {
       if (0 == osip_strcasecmp (out_tr->cseq->method, method))
         break;
-      out_tr = (osip_transaction_t *)osip_list_get_next(&it);
+      out_tr = (osip_transaction_t *) osip_list_get_next (&it);
     }
   }
 
@@ -169,11 +173,12 @@ _eXosip_find_last_inc_invite (eXosip_call_t * jc, eXosip_dialog_t * jd)
   inc_tr = NULL;
   if (jd != NULL) {
     osip_list_iterator_t it;
-    inc_tr = (osip_transaction_t*)osip_list_get_first(jd->d_inc_trs, &it);
+
+    inc_tr = (osip_transaction_t *) osip_list_get_first (jd->d_inc_trs, &it);
     while (inc_tr != OSIP_SUCCESS) {
       if (0 == strcmp (inc_tr->cseq->method, "INVITE"))
         break;
-      inc_tr = (osip_transaction_t *)osip_list_get_next(&it);
+      inc_tr = (osip_transaction_t *) osip_list_get_next (&it);
     }
   }
 
@@ -194,11 +199,12 @@ _eXosip_find_last_out_invite (eXosip_call_t * jc, eXosip_dialog_t * jd)
 
   if (jd != NULL) {
     osip_list_iterator_t it;
-    out_tr = (osip_transaction_t*)osip_list_get_first(jd->d_out_trs, &it);
+
+    out_tr = (osip_transaction_t *) osip_list_get_first (jd->d_out_trs, &it);
     while (out_tr != OSIP_SUCCESS) {
       if (0 == strcmp (out_tr->cseq->method, "INVITE"))
         break;
-      out_tr = (osip_transaction_t *)osip_list_get_next(&it);
+      out_tr = (osip_transaction_t *) osip_list_get_next (&it);
     }
   }
 
@@ -219,15 +225,16 @@ _eXosip_find_previous_invite (eXosip_call_t * jc, eXosip_dialog_t * jd, osip_tra
   inc_tr = NULL;
   if (jd != NULL) {
     osip_list_iterator_t it;
-    inc_tr = (osip_transaction_t*)osip_list_get_first(jd->d_inc_trs, &it);
+
+    inc_tr = (osip_transaction_t *) osip_list_get_first (jd->d_inc_trs, &it);
     while (inc_tr != OSIP_SUCCESS) {
       if (inc_tr != last_invite) {
         /* we don't want the current one */
         if (0 == strcmp (inc_tr->cseq->method, "INVITE"))
           break;
       }
-      
-      inc_tr = (osip_transaction_t *)osip_list_get_next(&it);
+
+      inc_tr = (osip_transaction_t *) osip_list_get_next (&it);
     }
   }
 
@@ -242,7 +249,8 @@ _eXosip_find_previous_invite (eXosip_call_t * jc, eXosip_dialog_t * jd, osip_tra
 
   if (jd != NULL) {
     osip_list_iterator_t it;
-    out_tr = (osip_transaction_t*)osip_list_get_first(jd->d_out_trs, &it);
+
+    out_tr = (osip_transaction_t *) osip_list_get_first (jd->d_out_trs, &it);
     while (out_tr != OSIP_SUCCESS) {
       if (out_tr == last_invite) {
         /* we don't want the current one */
@@ -250,8 +258,8 @@ _eXosip_find_previous_invite (eXosip_call_t * jc, eXosip_dialog_t * jd, osip_tra
       }
       else if (0 == strcmp (out_tr->cseq->method, "INVITE"))
         break;
-      
-      out_tr = (osip_transaction_t *)osip_list_get_next(&it);
+
+      out_tr = (osip_transaction_t *) osip_list_get_next (&it);
     }
   }
 

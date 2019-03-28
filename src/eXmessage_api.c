@@ -100,7 +100,7 @@ eXosip_message_build_answer (struct eXosip_t *excontext, int tid, int status, os
   }
 
   i = -1;
-  if (status < 300) {             /* 2xx answer */
+  if (status < 300) {           /* 2xx answer */
     i = _eXosip_build_response_default (excontext, answer, NULL, status, tr->orig_request);
 
   }
@@ -110,10 +110,11 @@ eXosip_message_build_answer (struct eXosip_t *excontext, int tid, int status, os
   if (i != 0)
     return i;
 
-  if (status < 300) {             /* 2xx answer */
+  if (status < 300) {           /* 2xx answer */
     osip_header_t *refer_sub;
+
     osip_message_header_get_byname (tr->orig_request, "Refer-Sub", 0, &refer_sub);
-    if (refer_sub!=NULL && refer_sub->hvalue!=NULL && osip_strncasecmp(refer_sub->hvalue, "false", 5)==0) {
+    if (refer_sub != NULL && refer_sub->hvalue != NULL && osip_strncasecmp (refer_sub->hvalue, "false", 5) == 0) {
       osip_message_set_header (*answer, "Refer-Sub", "false");
     }
   }
@@ -159,10 +160,11 @@ eXosip_message_send_answer (struct eXosip_t *excontext, int tid, int status, osi
     if (i != 0)
       return i;
 
-    if (status < 300) {             /* 2xx answer */
+    if (status < 300) {         /* 2xx answer */
       osip_header_t *refer_sub;
+
       osip_message_header_get_byname (tr->orig_request, "Refer-Sub", 0, &refer_sub);
-      if (refer_sub!=NULL && refer_sub->hvalue!=NULL && osip_strncasecmp(refer_sub->hvalue, "false", 5)==0) {
+      if (refer_sub != NULL && refer_sub->hvalue != NULL && osip_strncasecmp (refer_sub->hvalue, "false", 5) == 0) {
         osip_message_set_header (answer, "Refer-Sub", "false");
       }
     }

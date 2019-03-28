@@ -42,13 +42,14 @@ _eXosip_find_last_out_subscribe (eXosip_subscribe_t * js, eXosip_dialog_t * jd)
   out_tr = NULL;
   if (jd != NULL) {
     osip_list_iterator_t it;
-    out_tr = (osip_transaction_t*)osip_list_get_first(jd->d_out_trs, &it);
+
+    out_tr = (osip_transaction_t *) osip_list_get_first (jd->d_out_trs, &it);
     while (out_tr != OSIP_SUCCESS) {
       if (0 == strcmp (out_tr->cseq->method, "SUBSCRIBE"))
         break;
       else if (0 == strcmp (out_tr->cseq->method, "REFER"))
         break;
-      out_tr = (osip_transaction_t *)osip_list_get_next(&it);
+      out_tr = (osip_transaction_t *) osip_list_get_next (&it);
     }
   }
 
@@ -66,11 +67,12 @@ _eXosip_find_last_inc_notify (eXosip_subscribe_t * js, eXosip_dialog_t * jd)
   out_tr = NULL;
   if (jd != NULL) {
     osip_list_iterator_t it;
-    out_tr = (osip_transaction_t*)osip_list_get_first(jd->d_out_trs, &it);
+
+    out_tr = (osip_transaction_t *) osip_list_get_first (jd->d_out_trs, &it);
     while (out_tr != OSIP_SUCCESS) {
       if (0 == strcmp (out_tr->cseq->method, "NOTIFY"))
         return out_tr;
-      out_tr = (osip_transaction_t *)osip_list_get_next(&it);
+      out_tr = (osip_transaction_t *) osip_list_get_next (&it);
     }
   }
 
@@ -88,9 +90,10 @@ _eXosip_subscription_init (struct eXosip_t *excontext, eXosip_subscribe_t ** js)
 #ifndef MINISIZE
   {
     struct timeval now;
+
     excontext->statistics.allocated_subscriptions++;
-    osip_gettimeofday(&now, NULL);
-    _eXosip_counters_update(&excontext->average_subscriptions, 1, &now);
+    osip_gettimeofday (&now, NULL);
+    _eXosip_counters_update (&excontext->average_subscriptions, 1, &now);
   }
 #endif
   return OSIP_SUCCESS;

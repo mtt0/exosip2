@@ -181,8 +181,7 @@ extern "C" {
    *
    * @struct eXosip_stats
    */
-  struct eXosip_stats
-  {
+  struct eXosip_stats {
     int allocated_transactions;        /**< current number of allocated transactions. */
     float average_transactions;     /**< average number of new transactions/hour.  (default period: 1 hour) */
     int allocated_registrations;       /**< current number of allocated registrations. (should remains 1 in standard usage) */
@@ -199,7 +198,7 @@ extern "C" {
     int reserved1[20];               /**< reserved for future usage without breaking ABI */
   };
 #endif
-  
+
 /**
  * Set eXosip options.
  * See eXosip_option for available options.
@@ -292,7 +291,7 @@ extern "C" {
   *
   * @param naptr_record  the naptr structure to release.
   */
-  void eXosip_dnsutils_release(struct osip_naptr *naptr_record);
+  void eXosip_dnsutils_release (struct osip_naptr *naptr_record);
 
 /**
  * Continue to process asynchronous DNS request (if implemented).
@@ -354,8 +353,8 @@ extern "C" {
   const char *eXosip_get_version (void);
 
 #ifdef WIN32
-  typedef void (__stdcall *CbSipCallback) (osip_message_t * msg, int received);
-  typedef void (__stdcall *CbSipWakeLock) (int state);
+  typedef void (__stdcall * CbSipCallback) (osip_message_t * msg, int received);
+  typedef void (__stdcall * CbSipWakeLock) (int state);
 #else
   typedef void (*CbSipCallback) (osip_message_t * msg, int received);
   typedef void (*CbSipWakeLock) (int state);

@@ -77,6 +77,7 @@ struct _udp_stream {
 static size_t udp_message_max_length = SIP_MESSAGE_MAX_LENGTH;
 #else
 static int udp_message_max_length = SIP_MESSAGE_MAX_LENGTH;
+
 #define SOCKET_OPTION_VALUE char *
 #endif
 
@@ -87,11 +88,11 @@ struct eXtludp {
   char *buf;
   void *QoSHandle;
   unsigned long QoSFlowID;
-  
+
   int udp_socket_oc;
   struct sockaddr_storage ai_addr_oc;
   int udp_socket_oc_family;
-  
+
   struct _udp_stream socket_tab[EXOSIP_MAX_SOCKETS];
 };
 
@@ -119,47 +120,43 @@ udp_tl_free (struct eXosip_t *excontext)
     return OSIP_SUCCESS;
 
 #ifdef ENABLE_SIP_QOS
-  if (reserved->QoSFlowID != 0)
-  {
+  if (reserved->QoSFlowID != 0) {
     OSVERSIONINFOEX ovi;
-    memset(&ovi, 0, sizeof(ovi));
-    ovi.dwOSVersionInfoSize = sizeof(ovi);
-    GetVersionEx((LPOSVERSIONINFO) & ovi);
 
-    OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO2, NULL, "QOS: check OS support for qwave.lib: %i %i %i\n",
-      ovi.dwMajorVersion, ovi.dwMinorVersion, ovi.dwBuildNumber));
+    memset (&ovi, 0, sizeof (ovi));
+    ovi.dwOSVersionInfoSize = sizeof (ovi);
+    GetVersionEx ((LPOSVERSIONINFO) & ovi);
+
+    OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO2, NULL, "QOS: check OS support for qwave.lib: %i %i %i\n", ovi.dwMajorVersion, ovi.dwMinorVersion, ovi.dwBuildNumber));
     if (ovi.dwMajorVersion > 5) {
       HRESULT hr = E_FAIL;
+
       __try {
-        hr = __HrLoadAllImportsForDll("qwave.dll");
+        hr = __HrLoadAllImportsForDll ("qwave.dll");
       }
-      __except(EXCEPTION_EXECUTE_HANDLER) {
+      __except (EXCEPTION_EXECUTE_HANDLER) {
         hr = E_FAIL;
       }
-      if (! SUCCEEDED(hr)) {
+      if (!SUCCEEDED (hr)) {
         OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_WARNING, NULL, "QOS: Failed to load qwave.dll: no QoS available\n"));
       }
-      else
-      {
+      else {
         BOOL QoSResult;
-        OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO2, NULL, "QOS: QoS API detected\n"));
-        QoSResult = QOSRemoveSocketFromFlow(reserved->QoSHandle, 
-          0, 
-          reserved->QoSFlowID, 
-          0);
 
-        if (QoSResult != TRUE){
+        OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO2, NULL, "QOS: QoS API detected\n"));
+        QoSResult = QOSRemoveSocketFromFlow (reserved->QoSHandle, 0, reserved->QoSFlowID, 0);
+
+        if (QoSResult != TRUE) {
           OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "QOS: QOSRemoveSocketFromFlow failed to end a flow with error\n"));
         }
-        reserved->QoSFlowID=0;
+        reserved->QoSFlowID = 0;
       }
     }
   }
 
-  if (reserved->QoSHandle != NULL)
-  {
-    QOSCloseHandle(reserved->QoSHandle);
-    reserved->QoSHandle=NULL;
+  if (reserved->QoSHandle != NULL) {
+    QOSCloseHandle (reserved->QoSHandle);
+    reserved->QoSHandle = NULL;
   }
 #endif
 
@@ -178,7 +175,7 @@ udp_tl_free (struct eXosip_t *excontext)
     _eXosip_closesocket (reserved->udp_socket_oc);
 
   if (reserved->buf != NULL)
-    osip_free(reserved->buf);
+    osip_free (reserved->buf);
 
   osip_free (reserved);
   excontext->eXtludp_reserved = NULL;
@@ -189,7 +186,7 @@ udp_tl_free (struct eXosip_t *excontext)
 static int
 _udp_tl_transport_set_dscp_qos (struct eXosip_t *excontext, struct sockaddr *rem_addr, int rem_addrlen)
 {
-  int res=0;
+  int res = 0;
   QOS_TRAFFIC_TYPE tos;
   OSVERSIONINFOEX ovi;
 
@@ -203,85 +200,78 @@ _udp_tl_transport_set_dscp_qos (struct eXosip_t *excontext, struct sockaddr *rem
   if (excontext->tunnel_handle)
     return 0;
 
-  if (excontext->dscp<=0)
+  if (excontext->dscp <= 0)
     return 0;
 
-  memset(&ovi, 0, sizeof(ovi));
-  ovi.dwOSVersionInfoSize = sizeof(ovi);
-  GetVersionEx((LPOSVERSIONINFO) & ovi);
+  memset (&ovi, 0, sizeof (ovi));
+  ovi.dwOSVersionInfoSize = sizeof (ovi);
+  GetVersionEx ((LPOSVERSIONINFO) & ovi);
 
   if (ovi.dwMajorVersion > 5) {
     HRESULT hr = E_FAIL;
 
-    if (excontext->dscp<=0x8)
-      tos=QOSTrafficTypeBackground;
-    else if (excontext->dscp<=0x28)
-      tos=QOSTrafficTypeAudioVideo;
-    else if (excontext->dscp<=0x38)
-      tos=QOSTrafficTypeVoice;
+    if (excontext->dscp <= 0x8)
+      tos = QOSTrafficTypeBackground;
+    else if (excontext->dscp <= 0x28)
+      tos = QOSTrafficTypeAudioVideo;
+    else if (excontext->dscp <= 0x38)
+      tos = QOSTrafficTypeVoice;
     else
-      tos=QOSTrafficTypeExcellentEffort; /* 0x28 */
+      tos = QOSTrafficTypeExcellentEffort;      /* 0x28 */
 
-    OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO2, NULL, "QOS: Check OS support for qwave.lib: %i %i %i\n",
-      ovi.dwMajorVersion, ovi.dwMinorVersion, ovi.dwBuildNumber));
+    OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO2, NULL, "QOS: Check OS support for qwave.lib: %i %i %i\n", ovi.dwMajorVersion, ovi.dwMinorVersion, ovi.dwBuildNumber));
 
     __try {
-      hr = __HrLoadAllImportsForDll("qwave.dll");
+      hr = __HrLoadAllImportsForDll ("qwave.dll");
     }
-    __except(EXCEPTION_EXECUTE_HANDLER) {
+    __except (EXCEPTION_EXECUTE_HANDLER) {
       hr = E_FAIL;
     }
-    if (! SUCCEEDED(hr)) {
+    if (!SUCCEEDED (hr)) {
       OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_WARNING, NULL, "QOS: Failed to load qwave.dll: no QoS available\n"));
-		}
-		else
-		{
+    }
+    else {
       OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO2, NULL, "QoS API detected\n"));
-			if (excontext->dscp==0)
-				tos=QOSTrafficTypeBestEffort;
-			else if (excontext->dscp<=0x8)
-				tos=QOSTrafficTypeBackground;
-			else if (excontext->dscp<=0x28)
-				tos=QOSTrafficTypeAudioVideo;
-			else if (excontext->dscp<=0x38)
-				tos=QOSTrafficTypeVoice;
-			else
-				tos=QOSTrafficTypeExcellentEffort; /* 0x28 */
+      if (excontext->dscp == 0)
+        tos = QOSTrafficTypeBestEffort;
+      else if (excontext->dscp <= 0x8)
+        tos = QOSTrafficTypeBackground;
+      else if (excontext->dscp <= 0x28)
+        tos = QOSTrafficTypeAudioVideo;
+      else if (excontext->dscp <= 0x38)
+        tos = QOSTrafficTypeVoice;
+      else
+        tos = QOSTrafficTypeExcellentEffort;    /* 0x28 */
 
-			if (reserved->QoSHandle==NULL) {
-				QOS_VERSION version;
-				BOOL QoSResult;
+      if (reserved->QoSHandle == NULL) {
+        QOS_VERSION version;
+        BOOL QoSResult;
 
-				version.MajorVersion = 1;
-				version.MinorVersion = 0;
+        version.MajorVersion = 1;
+        version.MinorVersion = 0;
 
-				QoSResult = QOSCreateHandle(&version, &reserved->QoSHandle);
+        QoSResult = QOSCreateHandle (&version, &reserved->QoSHandle);
 
-				if (QoSResult != TRUE){
+        if (QoSResult != TRUE) {
           OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "QOS: QOSCreateHandle failed to create handle with error\n"));
-					res=-1;
-				}
-			}
-			if (reserved->QoSHandle!=NULL && rem_addrlen>0) {
-				BOOL QoSResult;
-				QoSResult = QOSAddSocketToFlow(
-					reserved->QoSHandle, 
-					reserved->udp_socket,
-					rem_addr,
-					tos, 
-					QOS_NON_ADAPTIVE_FLOW, 
-					&reserved->QoSFlowID);
+          res = -1;
+        }
+      }
+      if (reserved->QoSHandle != NULL && rem_addrlen > 0) {
+        BOOL QoSResult;
 
-				if (QoSResult != TRUE){
+        QoSResult = QOSAddSocketToFlow (reserved->QoSHandle, reserved->udp_socket, rem_addr, tos, QOS_NON_ADAPTIVE_FLOW, &reserved->QoSFlowID);
+
+        if (QoSResult != TRUE) {
           OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "QOS: QOSAddSocketToFlow failed to add a flow with error\n"));
-					res=-1;
-				}
-			}
-		}
-	  if (res<0)
+          res = -1;
+        }
+      }
+    }
+    if (res < 0)
       OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "QOS: Failed to set DSCP value on socket\n"));
     return res;
-	}
+  }
   return OSIP_SUCCESS;
 }
 #endif
@@ -334,7 +324,7 @@ _udp_tl_open (struct eXosip_t *excontext, int force_family)
   if (excontext->eXtl_transport.proto_local_port < 0)
     excontext->eXtl_transport.proto_local_port = 5060;
 
-  if (osip_strcasecmp(excontext->eXtl_transport.proto_ifs, "0.0.0.0")!=0 && osip_strcasecmp(excontext->eXtl_transport.proto_ifs, "::")!=0)
+  if (osip_strcasecmp (excontext->eXtl_transport.proto_ifs, "0.0.0.0") != 0 && osip_strcasecmp (excontext->eXtl_transport.proto_ifs, "::") != 0)
     node = excontext->eXtl_transport.proto_ifs;
   res = _eXosip_get_addrinfo (excontext, &addrinfo, node, excontext->eXtl_transport.proto_local_port, excontext->eXtl_transport.proto_num);
   if (res)
@@ -349,12 +339,12 @@ _udp_tl_open (struct eXosip_t *excontext, int force_family)
       continue;
     }
 
-    if (force_family>0 && force_family!=curinfo->ai_family)
+    if (force_family > 0 && force_family != curinfo->ai_family)
       continue;
 
     type = curinfo->ai_socktype;
 #if defined(SOCK_CLOEXEC)
-    type = SOCK_CLOEXEC|type;
+    type = SOCK_CLOEXEC | type;
 #endif
 #ifdef TSC_SUPPORT
     if (excontext->tunnel_handle) {
@@ -406,13 +396,13 @@ _udp_tl_open (struct eXosip_t *excontext, int force_family)
 
       addr = (struct sockaddr_in *) (curinfo->ai_addr);
       addr->sin_addr.s_addr = htonl (config.internal_address.address);
-      res = tsc_bind (sock, curinfo->ai_addr, (int)curinfo->ai_addrlen);
+      res = tsc_bind (sock, curinfo->ai_addr, (int) curinfo->ai_addrlen);
     }
     else {
-      res = bind (sock, curinfo->ai_addr, (socklen_t)curinfo->ai_addrlen);
+      res = bind (sock, curinfo->ai_addr, (socklen_t) curinfo->ai_addrlen);
     }
 #else
-    res = bind (sock, curinfo->ai_addr, (socklen_t)curinfo->ai_addrlen);
+    res = bind (sock, curinfo->ai_addr, (socklen_t) curinfo->ai_addrlen);
 #endif
 
     if (res < 0) {
@@ -490,14 +480,14 @@ _udp_tl_open_oc (struct eXosip_t *excontext, int force_family)
   struct addrinfo *addrinfo = NULL;
   struct addrinfo *curinfo;
   int sock = -1;
-  
-  if (excontext->oc_local_address[0]=='\0')
+
+  if (excontext->oc_local_address[0] == '\0')
     return OSIP_SUCCESS;
-    
+
   res = _eXosip_get_addrinfo (excontext, &addrinfo, excontext->oc_local_address, excontext->oc_local_port_range[0], excontext->eXtl_transport.proto_num);
   if (res)
     return -1;
-  
+
   for (curinfo = addrinfo; curinfo; curinfo = curinfo->ai_next) {
     socklen_t len;
     int type;
@@ -506,13 +496,13 @@ _udp_tl_open_oc (struct eXosip_t *excontext, int force_family)
       OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO3, NULL, "eXosip: Skipping protocol %d\n", curinfo->ai_protocol));
       continue;
     }
-    
-    if (force_family>0 && force_family==curinfo->ai_family)
+
+    if (force_family > 0 && force_family == curinfo->ai_family)
       continue;
 
     type = curinfo->ai_socktype;
 #if defined(SOCK_CLOEXEC)
-    type = SOCK_CLOEXEC|type;
+    type = SOCK_CLOEXEC | type;
 #endif
 #ifdef TSC_SUPPORT
     if (excontext->tunnel_handle) {
@@ -528,7 +518,7 @@ _udp_tl_open_oc (struct eXosip_t *excontext, int force_family)
       OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "eXosip: Cannot create socket %s!\n", strerror (errno)));
       continue;
     }
-    
+
     if (curinfo->ai_family == AF_INET6) {
 #ifdef IPV6_V6ONLY
       if (setsockopt_ipv6only (sock)) {
@@ -539,40 +529,40 @@ _udp_tl_open_oc (struct eXosip_t *excontext, int force_family)
       }
 #endif /* IPV6_V6ONLY */
     }
-    
+
     {
       int valopt = 1;
-      
+
       setsockopt (sock, SOL_SOCKET, SO_REUSEADDR, (void *) &valopt, sizeof (valopt));
     }
-    
+
 #if SO_NOSIGPIPE
     {
       int val;
-      
+
       val = 1;
       setsockopt (sock, SOL_SOCKET, SO_NOSIGPIPE, (void *) &val, sizeof (int));
     }
 #endif
-    
+
 #ifdef TSC_SUPPORT
     if (excontext->tunnel_handle) {
       tsc_config config;
       struct sockaddr_in *addr;
-      
+
       tsc_get_config (excontext->tunnel_handle, &config);
-      
+
       addr = (struct sockaddr_in *) (curinfo->ai_addr);
       addr->sin_addr.s_addr = htonl (config.internal_address.address);
-      res = tsc_bind (sock, curinfo->ai_addr, (int)curinfo->ai_addrlen);
+      res = tsc_bind (sock, curinfo->ai_addr, (int) curinfo->ai_addrlen);
     }
     else {
-      res = bind (sock, curinfo->ai_addr, (socklen_t)curinfo->ai_addrlen);
+      res = bind (sock, curinfo->ai_addr, (socklen_t) curinfo->ai_addrlen);
     }
 #else
-    res = bind (sock, curinfo->ai_addr, (socklen_t)curinfo->ai_addrlen);
+    res = bind (sock, curinfo->ai_addr, (socklen_t) curinfo->ai_addrlen);
 #endif
-    
+
     if (res < 0) {
       OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "eXosip: Cannot bind socket node:%s family:%d %s\n", excontext->eXtl_transport.proto_ifs, curinfo->ai_family, strerror (errno)));
 #ifdef TSC_SUPPORT
@@ -588,7 +578,7 @@ _udp_tl_open_oc (struct eXosip_t *excontext, int force_family)
       sock = -1;
       continue;
     }
-    
+
 #ifdef TSC_SUPPORT
     if (excontext->tunnel_handle) {
       len = sizeof (reserved->ai_addr_oc);
@@ -618,18 +608,18 @@ _udp_tl_open_oc (struct eXosip_t *excontext, int force_family)
     reserved->udp_socket_oc_family = curinfo->ai_family;
     break;
   }
-  
+
   _eXosip_freeaddrinfo (addrinfo);
-  
+
   if (sock < 0) {
     OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "eXosip: Cannot bind on port: %i\n", excontext->oc_local_port_range[0]));
     return -1;
   }
-  
+
   reserved->udp_socket_oc = sock;
-  
+
   _eXosip_transport_set_dscp (excontext, reserved->udp_socket_oc_family, sock);
-  
+
   return OSIP_SUCCESS;
 }
 
@@ -638,14 +628,14 @@ udp_tl_open (struct eXosip_t *excontext)
 {
   struct eXtludp *reserved = (struct eXtludp *) excontext->eXtludp_reserved;
   int res;
-  
+
   if (reserved == NULL) {
     OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "wrong state: create transport layer first\n"));
     return OSIP_WRONG_STATE;
   }
-  
-  res = _udp_tl_open(excontext, 0);
-  _udp_tl_open_oc(excontext, 0);
+
+  res = _udp_tl_open (excontext, 0);
+  _udp_tl_open_oc (excontext, 0);
   return res;
 }
 
@@ -656,18 +646,18 @@ _udp_tl_reset (struct eXosip_t *excontext, int af_family)
 
   if (reserved->udp_socket >= 0)
     _eXosip_closesocket (reserved->udp_socket);
-  reserved->udp_socket=-1;
+  reserved->udp_socket = -1;
   return _udp_tl_open (excontext, af_family);
-  }
+}
 
 static int
 _udp_tl_reset_oc (struct eXosip_t *excontext, int af_family)
 {
   struct eXtludp *reserved = (struct eXtludp *) excontext->eXtludp_reserved;
-  
+
   if (reserved->udp_socket_oc >= 0)
     _eXosip_closesocket (reserved->udp_socket_oc);
-  reserved->udp_socket_oc=-1;
+  reserved->udp_socket_oc = -1;
   return _udp_tl_open_oc (excontext, af_family);
 }
 
@@ -695,8 +685,7 @@ udp_tl_set_fdset (struct eXosip_t *excontext, fd_set * osip_fdset, fd_set * osip
   if (reserved->udp_socket > *fd_max)
     *fd_max = reserved->udp_socket;
 
-  if (reserved->udp_socket_oc >= 0)
-  {
+  if (reserved->udp_socket_oc >= 0) {
 #ifdef TSC_SUPPORT
     if (!excontext->tunnel_handle) {
       eXFD_SET (reserved->udp_socket_oc, osip_fdset);
@@ -704,11 +693,11 @@ udp_tl_set_fdset (struct eXosip_t *excontext, fd_set * osip_fdset, fd_set * osip
 #else
     eXFD_SET (reserved->udp_socket_oc, osip_fdset);
 #endif
-    
+
     if (reserved->udp_socket_oc > *fd_max)
       *fd_max = reserved->udp_socket_oc;
   }
-  
+
   return OSIP_SUCCESS;
 }
 
@@ -758,19 +747,19 @@ udp_tl_read_message (struct eXosip_t *excontext, fd_set * osip_fdset, fd_set * o
       reserved->buf[i] = '\0';
 
       memset (src6host, 0, NI_MAXHOST);
-      recvport = _eXosip_getport((struct sockaddr *) &sa, slen);
-      _eXosip_getnameinfo((struct sockaddr *) &sa, slen, src6host, NI_MAXHOST, NULL, 0, NI_NUMERICHOST);
+      recvport = _eXosip_getport ((struct sockaddr *) &sa, slen);
+      _eXosip_getnameinfo ((struct sockaddr *) &sa, slen, src6host, NI_MAXHOST, NULL, 0, NI_NUMERICHOST);
       OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO1, NULL, "Message received from: %s:%i\n", src6host, recvport));
 
       _eXosip_handle_incoming_message (excontext, reserved->buf, i, reserved->udp_socket, src6host, recvport, NULL, NULL);
 
       /* if we have a second socket for outbound connection, save information about inbound traffic initiated by receiving data on udp_socket */
-      if (reserved->udp_socket_oc >= 0)
-      {
+      if (reserved->udp_socket_oc >= 0) {
         int pos;
+
         for (pos = 0; pos < EXOSIP_MAX_SOCKETS; pos++) {
           /* does the entry already exist? */
-          if (reserved->socket_tab[pos].remote_port == recvport && osip_strcasecmp(reserved->socket_tab[pos].remote_ip, src6host)==0) {
+          if (reserved->socket_tab[pos].remote_port == recvport && osip_strcasecmp (reserved->socket_tab[pos].remote_ip, src6host) == 0) {
             OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO1, NULL, "inbound traffic/connection already in table\n"));
             break;
           }
@@ -779,16 +768,16 @@ udp_tl_read_message (struct eXosip_t *excontext, fd_set * osip_fdset, fd_set * o
           OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO1, NULL, "inbound traffic/new connection detected (%s:%i\n", src6host, recvport));
           for (pos = 0; pos < EXOSIP_MAX_SOCKETS; pos++) {
             if (reserved->socket_tab[pos].out_socket == -1) {
-              reserved->socket_tab[pos].out_socket=reserved->udp_socket;
-              snprintf(reserved->socket_tab[pos].remote_ip, sizeof(reserved->socket_tab[pos].remote_ip), "%s", src6host);
-              reserved->socket_tab[pos].remote_port=recvport;
+              reserved->socket_tab[pos].out_socket = reserved->udp_socket;
+              snprintf (reserved->socket_tab[pos].remote_ip, sizeof (reserved->socket_tab[pos].remote_ip), "%s", src6host);
+              reserved->socket_tab[pos].remote_port = recvport;
               OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO1, NULL, "inbound traffic/new connection added in table\n"));
               break;
             }
           }
         }
       }
-      
+
     }
     else if (i < 0) {
 #ifdef _WIN32_WCE
@@ -797,9 +786,9 @@ udp_tl_read_message (struct eXosip_t *excontext, fd_set * osip_fdset, fd_set * o
       int my_errno = errno;
 #endif
       OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "Could not read socket (%i) (%i) (%s)\n", i, my_errno, strerror (my_errno)));
-      if (errno==0 || errno==34) {
-        udp_message_max_length = udp_message_max_length*2;
-        osip_free(reserved->buf);
+      if (errno == 0 || errno == 34) {
+        udp_message_max_length = udp_message_max_length * 2;
+        osip_free (reserved->buf);
         reserved->buf = (char *) osip_malloc (udp_message_max_length * sizeof (char) + 1);
       }
       if (my_errno == 57) {
@@ -813,12 +802,12 @@ udp_tl_read_message (struct eXosip_t *excontext, fd_set * osip_fdset, fd_set * o
 
   if (reserved->udp_socket_oc >= 0 && FD_ISSET (reserved->udp_socket_oc, osip_fdset)) {
     struct sockaddr_storage sa;
-    
+
     if (reserved->buf == NULL)
       reserved->buf = (char *) osip_malloc (udp_message_max_length * sizeof (char) + 1);
     if (reserved->buf == NULL)
       return OSIP_NOMEM;
-    
+
     if (reserved->udp_socket_oc_family == AF_INET)
       slen = sizeof (struct sockaddr_in);
     else
@@ -830,24 +819,24 @@ udp_tl_read_message (struct eXosip_t *excontext, fd_set * osip_fdset, fd_set * o
     }
     else {
       i = recvfrom (reserved->udp_socket_oc, reserved->buf, udp_message_max_length, 0, (struct sockaddr *) &sa, &slen);
-	}
+    }
 #else
     i = (int) recvfrom (reserved->udp_socket_oc, reserved->buf, udp_message_max_length, 0, (struct sockaddr *) &sa, &slen);
 #endif
-    
+
     if (i > 32) {
       char src6host[NI_MAXHOST];
       int recvport = 0;
-      
+
       reserved->buf[i] = '\0';
-      
+
       memset (src6host, 0, NI_MAXHOST);
-      recvport = _eXosip_getport((struct sockaddr *) &sa, slen);
-      _eXosip_getnameinfo((struct sockaddr *) &sa, slen, src6host, NI_MAXHOST, NULL, 0, NI_NUMERICHOST);
+      recvport = _eXosip_getport ((struct sockaddr *) &sa, slen);
+      _eXosip_getnameinfo ((struct sockaddr *) &sa, slen, src6host, NI_MAXHOST, NULL, 0, NI_NUMERICHOST);
       OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO1, NULL, "Message received from: %s:%i\n", src6host, recvport));
-      
+
       _eXosip_handle_incoming_message (excontext, reserved->buf, i, reserved->udp_socket_oc, src6host, recvport, NULL, NULL);
-      
+
     }
     else if (i < 0) {
 #ifdef _WIN32_WCE
@@ -856,9 +845,9 @@ udp_tl_read_message (struct eXosip_t *excontext, fd_set * osip_fdset, fd_set * o
       int my_errno = errno;
 #endif
       OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "Could not read socket (%i) (%i) (%s)\n", i, my_errno, strerror (my_errno)));
-      if (errno==0 || errno==34) {
-        udp_message_max_length = udp_message_max_length*2;
-        osip_free(reserved->buf);
+      if (errno == 0 || errno == 34) {
+        udp_message_max_length = udp_message_max_length * 2;
+        osip_free (reserved->buf);
         reserved->buf = (char *) osip_malloc (udp_message_max_length * sizeof (char) + 1);
       }
       if (my_errno == 57) {
@@ -869,14 +858,14 @@ udp_tl_read_message (struct eXosip_t *excontext, fd_set * osip_fdset, fd_set * o
       OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO1, NULL, "Dummy SIP message received\n"));
     }
   }
-  
+
   return OSIP_SUCCESS;
 }
 
 static int
 udp_tl_update_contact (struct eXosip_t *excontext, osip_message_t * req)
 {
-  req->application_data = (void*) 0x1; /* request for masquerading */
+  req->application_data = (void *) 0x1; /* request for masquerading */
   return OSIP_SUCCESS;
 }
 
@@ -886,11 +875,11 @@ _udp_tl_update_contact (struct eXosip_t *excontext, osip_message_t * req)
   struct eXosip_account_info *ainfo = NULL;
   char *proxy = NULL;
   int i;
-  osip_via_t *via=NULL;
+  osip_via_t *via = NULL;
 
-  if (req->application_data != (void*) 0x1)
+  if (req->application_data != (void *) 0x1)
     return OSIP_SUCCESS;
-  req->application_data = (void*) 0x0; /* avoid doing twice */
+  req->application_data = (void *) 0x0; /* avoid doing twice */
 
   if (MSG_IS_REQUEST (req)) {
     if (req->from != NULL && req->from->url != NULL && req->from->url->host != NULL)
@@ -918,12 +907,14 @@ _udp_tl_update_contact (struct eXosip_t *excontext, osip_message_t * req)
 
   if (excontext->udp_firewall_ip[0] != '\0' || excontext->auto_masquerade_contact > 0) {
     osip_list_iterator_t it;
-    osip_contact_t* co = (osip_contact_t *)osip_list_get_first(&req->contacts, &it);
+    osip_contact_t *co = (osip_contact_t *) osip_list_get_first (&req->contacts, &it);
+
     while (co != NULL) {
       if (co != NULL && co->url != NULL && co->url->host != NULL) {
         if (ainfo == NULL) {
-          if (excontext->udp_firewall_port[0]=='\0') {
-          } else if (co->url->port == NULL && 0 != osip_strcasecmp (excontext->udp_firewall_port, "5060")) {
+          if (excontext->udp_firewall_port[0] == '\0') {
+          }
+          else if (co->url->port == NULL && 0 != osip_strcasecmp (excontext->udp_firewall_port, "5060")) {
             co->url->port = osip_strdup (excontext->udp_firewall_port);
             osip_message_force_update (req);
           }
@@ -958,48 +949,49 @@ _udp_tl_update_contact (struct eXosip_t *excontext, osip_message_t * req)
 #endif
         }
       }
-      co = (osip_contact_t *)osip_list_get_next(&it);
+      co = (osip_contact_t *) osip_list_get_next (&it);
     }
   }
 
   if (excontext->masquerade_via)
-    if (via!=NULL) {
-        if (ainfo == NULL) {
-          if (excontext->udp_firewall_port[0]=='\0') {
-          } else if (via->port == NULL && 0 != osip_strcasecmp (excontext->udp_firewall_port, "5060")) {
-            via->port = osip_strdup (excontext->udp_firewall_port);
-            osip_message_force_update (req);
-          }
-          else if (via->port != NULL && 0 != osip_strcasecmp (excontext->udp_firewall_port, via->port)) {
-            osip_free (via->port);
-            via->port = osip_strdup (excontext->udp_firewall_port);
-            osip_message_force_update (req);
-          }
+    if (via != NULL) {
+      if (ainfo == NULL) {
+        if (excontext->udp_firewall_port[0] == '\0') {
         }
-        else {
-          if (via->port == NULL && ainfo->nat_port != 5060) {
-            via->port = osip_malloc (10);
-            if (via->port == NULL)
-              return OSIP_NOMEM;
-            snprintf (via->port, 9, "%i", ainfo->nat_port);
-            osip_message_force_update (req);
-          }
-          else if (via->port != NULL && ainfo->nat_port != atoi (via->port)) {
-            osip_free (via->port);
-            via->port = osip_malloc (10);
-            if (via->port == NULL)
-              return OSIP_NOMEM;
-            snprintf (via->port, 9, "%i", ainfo->nat_port);
-            osip_message_force_update (req);
-          }
+        else if (via->port == NULL && 0 != osip_strcasecmp (excontext->udp_firewall_port, "5060")) {
+          via->port = osip_strdup (excontext->udp_firewall_port);
+          osip_message_force_update (req);
+        }
+        else if (via->port != NULL && 0 != osip_strcasecmp (excontext->udp_firewall_port, via->port)) {
+          osip_free (via->port);
+          via->port = osip_strdup (excontext->udp_firewall_port);
+          osip_message_force_update (req);
+        }
+      }
+      else {
+        if (via->port == NULL && ainfo->nat_port != 5060) {
+          via->port = osip_malloc (10);
+          if (via->port == NULL)
+            return OSIP_NOMEM;
+          snprintf (via->port, 9, "%i", ainfo->nat_port);
+          osip_message_force_update (req);
+        }
+        else if (via->port != NULL && ainfo->nat_port != atoi (via->port)) {
+          osip_free (via->port);
+          via->port = osip_malloc (10);
+          if (via->port == NULL)
+            return OSIP_NOMEM;
+          snprintf (via->port, 9, "%i", ainfo->nat_port);
+          osip_message_force_update (req);
+        }
 #if 1
-          if (ainfo->nat_ip[0] != '\0') {
-            osip_free (via->host);
-            via->host = osip_strdup (ainfo->nat_ip);
-            osip_message_force_update (req);
-          }
-#endif
+        if (ainfo->nat_ip[0] != '\0') {
+          osip_free (via->host);
+          via->host = osip_strdup (ainfo->nat_ip);
+          osip_message_force_update (req);
         }
+#endif
+      }
     }
   return OSIP_SUCCESS;
 }
@@ -1134,16 +1126,16 @@ udp_tl_send_message (struct eXosip_t *excontext, osip_transaction_t * tr, osip_m
 
         if (MSG_IS_REGISTER (sip) || MSG_IS_OPTIONS (sip)) {
           /* activate the failover capability: for no answer OR 503 */
-          if (naptr_record->sipudp_record.srventry[tr->naptr_record->sipudp_record.index].srv_is_broken.tv_sec>0) {
-            naptr_record->sipudp_record.srventry[naptr_record->sipudp_record.index].srv_is_broken.tv_sec=0;
-            naptr_record->sipudp_record.srventry[naptr_record->sipudp_record.index].srv_is_broken.tv_usec=0;
+          if (naptr_record->sipudp_record.srventry[tr->naptr_record->sipudp_record.index].srv_is_broken.tv_sec > 0) {
+            naptr_record->sipudp_record.srventry[naptr_record->sipudp_record.index].srv_is_broken.tv_sec = 0;
+            naptr_record->sipudp_record.srventry[naptr_record->sipudp_record.index].srv_is_broken.tv_usec = 0;
             if (eXosip_dnsutils_rotate_srv (&naptr_record->sipudp_record) > 0) {
               OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO1, NULL,
                                       "Doing UDP failover: ->%s:%i\n", naptr_record->sipudp_record.srventry[naptr_record->sipudp_record.index].srv, naptr_record->sipudp_record.srventry[naptr_record->sipudp_record.index].port));
             }
           }
         }
-        
+
         for (srv = &naptr_record->sipudp_record.srventry[naptr_record->sipudp_record.index];
              n < 10 && naptr_record->sipudp_record.srventry[naptr_record->sipudp_record.index].srv[0]; srv = &naptr_record->sipudp_record.srventry[naptr_record->sipudp_record.index]) {
           if (srv->ipaddress[0])
@@ -1193,7 +1185,7 @@ udp_tl_send_message (struct eXosip_t *excontext, osip_transaction_t * tr, osip_m
         if (eXosip_dnsutils_rotate_srv (&naptr_record->sipudp_record) > 0) {
           OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO1, NULL,
                                   "Doing UDP failover: %s:%i->%s:%i\n", host, port, naptr_record->sipudp_record.srventry[naptr_record->sipudp_record.index].srv, naptr_record->sipudp_record.srventry[naptr_record->sipudp_record.index].port));
-          _eXosip_mark_registration_expired(excontext, sip->call_id->number);
+          _eXosip_mark_registration_expired (excontext, sip->call_id->number);
         }
       }
     }
@@ -1202,14 +1194,15 @@ udp_tl_send_message (struct eXosip_t *excontext, osip_transaction_t * tr, osip_m
 
   /* search for an IP similar to reserved->udp_socket_family */
   {
-    struct addrinfo *curinfo=NULL;
+    struct addrinfo *curinfo = NULL;
+
     for (curinfo = addrinfo; curinfo; curinfo = curinfo->ai_next) {
       if (curinfo->ai_family == reserved->udp_socket_family) {
         break;
       }
     }
 
-    if (excontext->ipv6_enable>1 && curinfo==NULL) {
+    if (excontext->ipv6_enable > 1 && curinfo == NULL) {
       /* search for an IP similar to reserved->udp_socket_family */
       for (curinfo = addrinfo; curinfo; curinfo = curinfo->ai_next) {
         if (curinfo->ai_family == AF_INET && reserved->udp_socket_family == AF_INET6) {
@@ -1228,13 +1221,13 @@ udp_tl_send_message (struct eXosip_t *excontext, osip_transaction_t * tr, osip_m
       }
     }
 
-    if (curinfo==NULL) {
+    if (curinfo == NULL) {
       OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_BUG, NULL, "eXosip: missing matching family\n"));
       return -1;
     }
 
     memcpy (&addr, curinfo->ai_addr, curinfo->ai_addrlen);
-    len = (socklen_t)curinfo->ai_addrlen;
+    len = (socklen_t) curinfo->ai_addrlen;
   }
 
   _eXosip_freeaddrinfo (addrinfo);
@@ -1246,30 +1239,29 @@ udp_tl_send_message (struct eXosip_t *excontext, osip_transaction_t * tr, osip_m
 
   switch (((struct sockaddr *) &addr)->sa_family) {
   case AF_INET:
-    inet_ntop(((struct sockaddr *) &addr)->sa_family, &(((struct sockaddr_in *) &addr)->sin_addr), ipbuf, sizeof(ipbuf));
+    inet_ntop (((struct sockaddr *) &addr)->sa_family, &(((struct sockaddr_in *) &addr)->sin_addr), ipbuf, sizeof (ipbuf));
     break;
   case AF_INET6:
-    inet_ntop(((struct sockaddr *) &addr)->sa_family, &(((struct sockaddr_in6 *) &addr)->sin6_addr), ipbuf, sizeof(ipbuf));
+    inet_ntop (((struct sockaddr *) &addr)->sa_family, &(((struct sockaddr_in6 *) &addr)->sin6_addr), ipbuf, sizeof (ipbuf));
     break;
   default:
-    strncpy(ipbuf, "(unknown)", sizeof(ipbuf));
+    strncpy (ipbuf, "(unknown)", sizeof (ipbuf));
     break;
   }
 
   /* if we have a second socket for outbound connection, re-use the incoming socket (udp_socket) for any message sent there */
-  if (reserved->udp_socket_oc >= 0)
-  {
+  if (reserved->udp_socket_oc >= 0) {
     int pos;
-    
+
     sock = reserved->udp_socket_oc;
     local_port = excontext->oc_local_port_range[0];
     local_ai_addr = &reserved->ai_addr_oc;
-    
+
     for (pos = 0; pos < EXOSIP_MAX_SOCKETS; pos++) {
       if (reserved->socket_tab[pos].out_socket == -1)
         continue;
       /* we insert in table ONLY incoming transaction that we want to remember: so any entry in the table refer to incoming udp_socket */
-      if (reserved->socket_tab[pos].remote_port == port && osip_strcasecmp(reserved->socket_tab[pos].remote_ip, ipbuf)==0) {
+      if (reserved->socket_tab[pos].remote_port == port && osip_strcasecmp (reserved->socket_tab[pos].remote_ip, ipbuf) == 0) {
         sock = reserved->socket_tab[pos].out_socket;
         local_port = excontext->eXtl_transport.proto_local_port;
         local_ai_addr = &reserved->ai_addr;
@@ -1277,10 +1269,10 @@ udp_tl_send_message (struct eXosip_t *excontext, osip_transaction_t * tr, osip_m
       }
     }
   }
-  
-  _eXosip_request_viamanager(excontext, tr, sip, addr.ss_family, IPPROTO_UDP, local_ai_addr, local_port, sock, ipbuf);
-  _eXosip_message_contactmanager(excontext, tr, sip, addr.ss_family, IPPROTO_UDP, local_ai_addr, local_port, sock, ipbuf);
-  _udp_tl_update_contact(excontext, sip);
+
+  _eXosip_request_viamanager (excontext, tr, sip, addr.ss_family, IPPROTO_UDP, local_ai_addr, local_port, sock, ipbuf);
+  _eXosip_message_contactmanager (excontext, tr, sip, addr.ss_family, IPPROTO_UDP, local_ai_addr, local_port, sock, ipbuf);
+  _udp_tl_update_contact (excontext, sip);
 
   /* remove preloaded route if there is no tag in the To header
    */
@@ -1288,12 +1280,12 @@ udp_tl_send_message (struct eXosip_t *excontext, osip_transaction_t * tr, osip_m
     osip_route_t *route = NULL;
     osip_generic_param_t *tag = NULL;
 
-    if (excontext->remove_prerouteset>0) {
+    if (excontext->remove_prerouteset > 0) {
       osip_message_get_route (sip, 0, &route);
       osip_to_get_tag (sip->to, &tag);
       if (tag == NULL && route != NULL && route->url != NULL) {
         osip_list_remove (&sip->routes, 0);
-        osip_message_force_update(sip);
+        osip_message_force_update (sip);
       }
     }
     i = osip_message_to_str (sip, &message, &length);
@@ -1309,7 +1301,7 @@ udp_tl_send_message (struct eXosip_t *excontext, osip_transaction_t * tr, osip_m
 
 
   OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO1, NULL, "Message sent: (to dest=%s:%i)\n%s\n", ipbuf, port, message));
-  
+
   if (excontext->enable_dns_cache == 1 && osip_strcasecmp (host, ipbuf) != 0 && MSG_IS_REQUEST (sip)) {
     if (MSG_IS_REGISTER (sip)) {
       struct eXosip_dns_cache entry;
@@ -1329,7 +1321,7 @@ udp_tl_send_message (struct eXosip_t *excontext, osip_transaction_t * tr, osip_m
   }
 
 #ifdef ENABLE_SIP_QOS
-  _udp_tl_transport_set_dscp_qos(excontext, (struct sockaddr *) &addr, len);
+  _udp_tl_transport_set_dscp_qos (excontext, (struct sockaddr *) &addr, len);
 #endif
 
 #ifdef HAVE_WINSOCK2_H
@@ -1340,11 +1332,11 @@ udp_tl_send_message (struct eXosip_t *excontext, osip_transaction_t * tr, osip_m
 
 #ifdef TSC_SUPPORT
   if (excontext->tunnel_handle)
-    i = tsc_sendto (reserved->udp_socket, message, CAST_RECV_LEN(length), 0, (struct sockaddr *) &addr, len);
+    i = tsc_sendto (reserved->udp_socket, message, CAST_RECV_LEN (length), 0, (struct sockaddr *) &addr, len);
   else
-    i = sendto (sock, (const void *) message, CAST_RECV_LEN(length), 0, (struct sockaddr *) &addr, len);
+    i = sendto (sock, (const void *) message, CAST_RECV_LEN (length), 0, (struct sockaddr *) &addr, len);
 #else
-  i = sendto (sock, (const void *) message, CAST_RECV_LEN(length), 0, (struct sockaddr *) &addr, len);
+  i = sendto (sock, (const void *) message, CAST_RECV_LEN (length), 0, (struct sockaddr *) &addr, len);
 #endif
   if (0 > i) {
     if (naptr_record != NULL) {
@@ -1353,7 +1345,7 @@ udp_tl_send_message (struct eXosip_t *excontext, osip_transaction_t * tr, osip_m
         if (eXosip_dnsutils_rotate_srv (&naptr_record->sipudp_record) > 0) {
           OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO1, NULL,
                                   "Doing UDP failover: %s:%i->%s:%i\n", host, port, naptr_record->sipudp_record.srventry[naptr_record->sipudp_record.index].srv, naptr_record->sipudp_record.srventry[naptr_record->sipudp_record.index].port));
-          _eXosip_mark_registration_expired(excontext, sip->call_id->number);
+          _eXosip_mark_registration_expired (excontext, sip->call_id->number);
         }
       }
     }
@@ -1385,7 +1377,7 @@ udp_tl_send_message (struct eXosip_t *excontext, osip_transaction_t * tr, osip_m
           OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO1, NULL,
                                   "Doing UDP failover: %s:%i->%s:%i\n", host, port, naptr_record->sipudp_record.srventry[naptr_record->sipudp_record.index].srv, naptr_record->sipudp_record.srventry[naptr_record->sipudp_record.index].port));
           osip_free (message);
-          _eXosip_mark_registration_expired(excontext, sip->call_id->number);
+          _eXosip_mark_registration_expired (excontext, sip->call_id->number);
           return -1;
         }
       }

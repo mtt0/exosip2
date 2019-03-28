@@ -50,24 +50,24 @@ _eXosip_subscription_transaction_find (struct eXosip_t *excontext, int tid, eXos
     }
     for (*jd = (*js)->s_dialogs; *jd != NULL; *jd = (*jd)->next) {
       osip_list_iterator_t it;
-      osip_transaction_t* transaction;
+      osip_transaction_t *transaction;
 
-      transaction = (osip_transaction_t*)osip_list_get_first((*jd)->d_inc_trs, &it);
+      transaction = (osip_transaction_t *) osip_list_get_first ((*jd)->d_inc_trs, &it);
       while (transaction != OSIP_SUCCESS) {
         if (transaction != NULL && transaction->transactionid == tid) {
           *tr = transaction;
           return OSIP_SUCCESS;
         }
-        transaction = (osip_transaction_t *)osip_list_get_next(&it);
+        transaction = (osip_transaction_t *) osip_list_get_next (&it);
       }
 
-      transaction = (osip_transaction_t*)osip_list_get_first((*jd)->d_out_trs, &it);
+      transaction = (osip_transaction_t *) osip_list_get_first ((*jd)->d_out_trs, &it);
       while (transaction != OSIP_SUCCESS) {
         if (transaction != NULL && transaction->transactionid == tid) {
           *tr = transaction;
           return OSIP_SUCCESS;
         }
-        transaction = (osip_transaction_t *)osip_list_get_next(&it);
+        transaction = (osip_transaction_t *) osip_list_get_next (&it);
       }
     }
   }
@@ -138,7 +138,8 @@ eXosip_subscription_build_initial_subscribe (struct eXosip_t *excontext, osip_me
   return OSIP_SUCCESS;
 }
 
-int eXosip_subscription_build_initial_refer (struct eXosip_t *excontext, osip_message_t ** refer, const char *to, const char *from, const char *route, const char *refer_to)
+int
+eXosip_subscription_build_initial_refer (struct eXosip_t *excontext, osip_message_t ** refer, const char *to, const char *from, const char *route, const char *refer_to)
 {
   int i;
   osip_to_t *_to = NULL;

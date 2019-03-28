@@ -142,9 +142,9 @@ DigestCalcHA1 (IN const char *pszAlg, IN const char *pszUserName, IN const char 
   osip_MD5Update (&Md5Ctx, (unsigned char *) pszPassword, (unsigned int) strlen (pszPassword));
   osip_MD5Final ((unsigned char *) HA1, &Md5Ctx);
   if ((pszAlg != NULL) && osip_strcasecmp (pszAlg, "md5-sess") == 0) {
-    CvtHex(HA1, HA1Hex);
+    CvtHex (HA1, HA1Hex);
     osip_MD5Init (&Md5Ctx);
-    osip_MD5Update(&Md5Ctx, (unsigned char *)HA1Hex, HASHHEXLEN);
+    osip_MD5Update (&Md5Ctx, (unsigned char *) HA1Hex, HASHHEXLEN);
     osip_MD5Update (&Md5Ctx, (unsigned char *) ":", 1);
     osip_MD5Update (&Md5Ctx, (unsigned char *) pszNonce, (unsigned int) strlen (pszNonce));
     osip_MD5Update (&Md5Ctx, (unsigned char *) ":", 1);

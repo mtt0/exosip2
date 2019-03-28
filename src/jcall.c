@@ -69,9 +69,10 @@ _eXosip_call_init (struct eXosip_t *excontext, eXosip_call_t ** jc)
 #ifndef MINISIZE
   {
     struct timeval now;
+
     excontext->statistics.allocated_calls++;
-    osip_gettimeofday(&now, NULL);
-    _eXosip_counters_update(&excontext->average_calls, 1, &now);
+    osip_gettimeofday (&now, NULL);
+    _eXosip_counters_update (&excontext->average_calls, 1, &now);
   }
 #endif
   return OSIP_SUCCESS;
@@ -102,9 +103,9 @@ _eXosip_call_remove_dialog_reference_in_call (eXosip_call_t * jc, eXosip_dialog_
   _jd = (eXosip_dialog_t *) osip_transaction_get_reserved3 (jc->c_out_tr);
   if (_jd != NULL && _jd == jd)
     osip_transaction_set_reserved3 (jc->c_out_tr, NULL);
-  _jd = (eXosip_dialog_t *)osip_transaction_get_reserved3(jc->c_cancel_tr);
+  _jd = (eXosip_dialog_t *) osip_transaction_get_reserved3 (jc->c_cancel_tr);
   if (_jd != NULL && _jd == jd)
-    osip_transaction_set_reserved3(jc->c_cancel_tr, NULL);
+    osip_transaction_set_reserved3 (jc->c_cancel_tr, NULL);
 }
 
 void
@@ -128,9 +129,9 @@ _eXosip_call_free (struct eXosip_t *excontext, eXosip_call_t * jc)
   if (jc->c_inc_tr != NULL)
     osip_list_add (&excontext->j_transactions, jc->c_inc_tr, 0);
   if (jc->c_out_tr != NULL)
-    osip_list_add(&excontext->j_transactions, jc->c_out_tr, 0);
+    osip_list_add (&excontext->j_transactions, jc->c_out_tr, 0);
   if (jc->c_cancel_tr != NULL)
-    osip_list_add(&excontext->j_transactions, jc->c_cancel_tr, 0);
+    osip_list_add (&excontext->j_transactions, jc->c_cancel_tr, 0);
 
   osip_free (jc);
 #ifndef MINISIZE

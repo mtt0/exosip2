@@ -120,7 +120,7 @@ _eXosip_build_response_default (struct eXosip_t *excontext, osip_message_t ** de
 
   {
     osip_list_iterator_t it;
-    osip_via_t *via = (osip_via_t*)osip_list_get_first(&request->vias, &it);
+    osip_via_t *via = (osip_via_t *) osip_list_get_first (&request->vias, &it);
 
     while (via != NULL) {
       osip_via_t *via2;
@@ -131,7 +131,7 @@ _eXosip_build_response_default (struct eXosip_t *excontext, osip_message_t ** de
         return i;
       }
       osip_list_add (&response->vias, via2, -1);
-      via = (osip_via_t *)osip_list_get_next(&it);
+      via = (osip_via_t *) osip_list_get_next (&it);
     }
   }
 
@@ -182,13 +182,13 @@ _eXosip_complete_answer_that_establish_a_dialog (struct eXosip_t *excontext, osi
   osip_list_iterator_t it;
   osip_record_route_t *rr;
 
-  snprintf(scheme, sizeof(scheme), "sip");
+  snprintf (scheme, sizeof (scheme), "sip");
 
   /* 12.1.1:
      copy all record-route in response
      add a contact with global scope
    */
-  rr = (osip_record_route_t *)osip_list_get_first(&request->record_routes, &it);
+  rr = (osip_record_route_t *) osip_list_get_first (&request->record_routes, &it);
   while (rr != NULL) {
     osip_record_route_t *rr2;
 
@@ -198,26 +198,27 @@ _eXosip_complete_answer_that_establish_a_dialog (struct eXosip_t *excontext, osi
     osip_list_add (&response->record_routes, rr2, -1);
 
     /* rfc3261: 12.1.1 UAS behavior (check sips in top most Record-Route) */
-    if (it.pos==0 && rr2!=NULL && rr2->url!=NULL && rr2->url->scheme!=NULL && osip_strcasecmp(rr2->url->scheme, "sips")==0)
-      snprintf(scheme, sizeof(scheme), "sips");
+    if (it.pos == 0 && rr2 != NULL && rr2->url != NULL && rr2->url->scheme != NULL && osip_strcasecmp (rr2->url->scheme, "sips") == 0)
+      snprintf (scheme, sizeof (scheme), "sips");
 
-    rr = (osip_record_route_t *)osip_list_get_next(&it);
-    route_found=1;
+    rr = (osip_record_route_t *) osip_list_get_next (&it);
+    route_found = 1;
   }
 
   if (MSG_IS_BYE (request)) {
     return OSIP_SUCCESS;
   }
 
-  if (route_found==0) {
+  if (route_found == 0) {
     /* rfc3261: 12.1.1 UAS behavior (check sips in Contact if no Record-Route) */
-    osip_contact_t *co = (osip_contact_t *) osip_list_get(&request->contacts, 0);
-    if (co!=NULL && co->url!=NULL && co->url->scheme!=NULL && osip_strcasecmp(co->url->scheme, "sips")==0)
-      snprintf(scheme, sizeof(scheme), "sips");
+    osip_contact_t *co = (osip_contact_t *) osip_list_get (&request->contacts, 0);
+
+    if (co != NULL && co->url != NULL && co->url->scheme != NULL && osip_strcasecmp (co->url->scheme, "sips") == 0)
+      snprintf (scheme, sizeof (scheme), "sips");
   }
   /* rfc3261: 12.1.1 UAS behavior (check sips in Request-URI) */
-  if (request->req_uri->scheme!=NULL && osip_strcasecmp(request->req_uri->scheme, "sips")==0)
-    snprintf(scheme, sizeof(scheme), "sips");
+  if (request->req_uri->scheme != NULL && osip_strcasecmp (request->req_uri->scheme, "sips") == 0)
+    snprintf (scheme, sizeof (scheme), "sips");
 
   /* special values to be replaced in transport layer (eXtl_*.c files) */
   if (request->to->url->username == NULL)
@@ -235,7 +236,7 @@ _eXosip_complete_answer_that_establish_a_dialog (struct eXosip_t *excontext, osi
     via = (osip_via_t *) osip_list_get (&response->vias, 0);
     if (via == NULL || via->protocol == NULL)
       return OSIP_SYNTAXERROR;
-    if (excontext->enable_outbound==1) {
+    if (excontext->enable_outbound == 1) {
       contact[strlen (contact) - 1] = '\0';
       strcat (contact, ";ob");
       strcat (contact, ">");
@@ -247,24 +248,25 @@ _eXosip_complete_answer_that_establish_a_dialog (struct eXosip_t *excontext, osi
       strcat (contact, ">");
     }
     if (excontext->sip_instance[0] != 0 && strlen (contact) + 64 < 1024) {
-      strcat(contact, ";+sip.instance=\"<urn:uuid:");
-      strcat(contact, excontext->sip_instance);
-      strcat(contact, ">\"");
+      strcat (contact, ";+sip.instance=\"<urn:uuid:");
+      strcat (contact, excontext->sip_instance);
+      strcat (contact, ">\"");
     }
   }
 
   osip_message_set_contact (response, contact);
 
-  if (excontext->default_contact_displayname[0]!='\0') {
+  if (excontext->default_contact_displayname[0] != '\0') {
     osip_contact_t *new_contact;
-    osip_message_get_contact(response, 0, &new_contact);
-    if (new_contact!=NULL) {
+
+    osip_message_get_contact (response, 0, &new_contact);
+    if (new_contact != NULL) {
       new_contact->displayname = osip_strdup (excontext->default_contact_displayname);
     }
   }
 
-  if (excontext->eXtl_transport._tl_update_contact!=NULL)
-    excontext->eXtl_transport._tl_update_contact(excontext, response);
+  if (excontext->eXtl_transport._tl_update_contact != NULL)
+    excontext->eXtl_transport._tl_update_contact (excontext, response);
   return OSIP_SUCCESS;
 }
 

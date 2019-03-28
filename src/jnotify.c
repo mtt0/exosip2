@@ -42,14 +42,15 @@ _eXosip_find_last_inc_subscribe (eXosip_notify_t * jn, eXosip_dialog_t * jd)
   inc_tr = NULL;
   if (jd != NULL) {
     osip_list_iterator_t it;
-    inc_tr = (osip_transaction_t *)osip_list_get_first(jd->d_inc_trs, &it);
+
+    inc_tr = (osip_transaction_t *) osip_list_get_first (jd->d_inc_trs, &it);
     while (inc_tr != NULL) {
       if (0 == strcmp (inc_tr->cseq->method, "SUBSCRIBE"))
         break;
       else if (0 == strcmp (inc_tr->cseq->method, "REFER"))
         break;
-      
-      inc_tr = (osip_transaction_t *)osip_list_get_next(&it);
+
+      inc_tr = (osip_transaction_t *) osip_list_get_next (&it);
     }
   }
 
@@ -68,11 +69,12 @@ _eXosip_find_last_out_notify (eXosip_notify_t * jn, eXosip_dialog_t * jd)
   out_tr = NULL;
   if (jd != NULL) {
     osip_list_iterator_t it;
-    out_tr = (osip_transaction_t *)osip_list_get_first(jd->d_out_trs, &it);
+
+    out_tr = (osip_transaction_t *) osip_list_get_first (jd->d_out_trs, &it);
     while (out_tr != OSIP_SUCCESS) {
       if (0 == strcmp (out_tr->cseq->method, "NOTIFY"))
         return out_tr;
-      out_tr = (osip_transaction_t *)osip_list_get_next(&it);
+      out_tr = (osip_transaction_t *) osip_list_get_next (&it);
     }
   }
 
@@ -97,9 +99,10 @@ _eXosip_notify_init (struct eXosip_t *excontext, eXosip_notify_t ** jn, osip_mes
 #ifndef MINISIZE
   {
     struct timeval now;
+
     excontext->statistics.allocated_insubscriptions++;
-    osip_gettimeofday(&now, NULL);
-    _eXosip_counters_update(&excontext->average_insubscriptions, 1, &now);
+    osip_gettimeofday (&now, NULL);
+    _eXosip_counters_update (&excontext->average_insubscriptions, 1, &now);
   }
 #endif
   return OSIP_SUCCESS;
@@ -140,13 +143,13 @@ _eXosip_notify_set_refresh_interval (eXosip_notify_t * jn, osip_message_t * inc_
 {
   osip_header_t *exp;
   time_t now;
-  int default_expires=600;
+  int default_expires = 600;
 
   now = osip_getsystemtime (NULL);
   if (jn == NULL || inc_subscribe == NULL)
     return -1;
-  if (MSG_IS_REFER(inc_subscribe))
-    default_expires=120;
+  if (MSG_IS_REFER (inc_subscribe))
+    default_expires = 120;
   osip_message_get_expires (inc_subscribe, 0, &exp);
   if (exp == NULL || exp->hvalue == NULL)
     jn->n_ss_expires = now + default_expires;
@@ -174,7 +177,7 @@ _eXosip_notify_add_expires_in_2XX_for_subscribe (eXosip_notify_t * jn, osip_mess
     tmp[1] = '\0';
   }
   else {
-    snprintf (tmp, 20, "%li", (long)(jn->n_ss_expires - now));
+    snprintf (tmp, 20, "%li", (long) (jn->n_ss_expires - now));
   }
   osip_message_set_expires (answer, tmp);
 }

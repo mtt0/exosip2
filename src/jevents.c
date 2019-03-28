@@ -386,7 +386,7 @@ eXosip_event_wait (struct eXosip_t * excontext, int tv_s, int tv_ms)
   struct timeval tv;
   int max, i;
 
-  if (excontext==NULL) {
+  if (excontext == NULL) {
     return NULL;
   }
 

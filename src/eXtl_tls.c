@@ -208,7 +208,7 @@ tls_tl_init (struct eXosip_t *excontext)
   reserved->server_ctx = NULL;
   reserved->client_ctx = NULL;
   memset (&reserved->ai_addr, 0, sizeof (struct sockaddr_storage));
-  reserved->ai_addr_len=0;
+  reserved->ai_addr_len = 0;
   memset (&reserved->socket_tab, 0, sizeof (struct _tls_stream) * EXOSIP_MAX_SOCKETS);
 
   excontext->eXtltls_reserved = reserved;
@@ -273,11 +273,11 @@ tls_tl_free (struct eXosip_t *excontext)
   ERR_remove_state (0);
 #endif
 #endif
-  
+
   memset (&reserved->socket_tab, 0, sizeof (struct _tls_stream) * EXOSIP_MAX_SOCKETS);
 
   memset (&reserved->ai_addr, 0, sizeof (struct sockaddr_storage));
-  reserved->ai_addr_len=0;
+  reserved->ai_addr_len = 0;
   if (reserved->tls_socket > 0)
     _eXosip_closesocket (reserved->tls_socket);
   reserved->tls_socket = 0;
@@ -330,6 +330,7 @@ _tls_add_certificates (SSL_CTX * ctx)
   X509 *cert = NULL;
   HCERTSTORE hStore = CertOpenSystemStore (0, L"CA");
   X509_STORE *x509_store;
+
   for (pCertCtx = CertEnumCertificatesInStore (hStore, NULL); pCertCtx != NULL; pCertCtx = CertEnumCertificatesInStore (hStore, pCertCtx)) {
     cert = d2i_X509 (NULL, (const unsigned char **) &pCertCtx->pbCertEncoded, pCertCtx->cbCertEncoded);
     if (cert == NULL) {
@@ -337,9 +338,9 @@ _tls_add_certificates (SSL_CTX * ctx)
     }
     /*tls_dump_cert_info("CA", cert); */
 
-    x509_store = SSL_CTX_get_cert_store(ctx);
-    if (x509_store==NULL) {
-      X509_free(cert);
+    x509_store = SSL_CTX_get_cert_store (ctx);
+    if (x509_store == NULL) {
+      X509_free (cert);
       continue;
     }
 
@@ -361,9 +362,9 @@ _tls_add_certificates (SSL_CTX * ctx)
       continue;
     }
     /*tls_dump_cert_info("ROOT", cert); */
-    x509_store = SSL_CTX_get_cert_store(ctx);
+    x509_store = SSL_CTX_get_cert_store (ctx);
     if (x509_store == NULL) {
-      X509_free(cert);
+      X509_free (cert);
       continue;
     }
 
@@ -385,9 +386,9 @@ _tls_add_certificates (SSL_CTX * ctx)
       continue;
     }
     /*tls_dump_cert_info("MY", cert); */
-    x509_store = SSL_CTX_get_cert_store(ctx);
+    x509_store = SSL_CTX_get_cert_store (ctx);
     if (x509_store == NULL) {
-      X509_free(cert);
+      X509_free (cert);
       continue;
     }
 
@@ -409,9 +410,9 @@ _tls_add_certificates (SSL_CTX * ctx)
       continue;
     }
     /*tls_dump_cert_info("Trustedpublisher", cert); */
-    x509_store = SSL_CTX_get_cert_store(ctx);
+    x509_store = SSL_CTX_get_cert_store (ctx);
     if (x509_store == NULL) {
-      X509_free(cert);
+      X509_free (cert);
       continue;
     }
 
@@ -473,9 +474,9 @@ _tls_add_certificates (SSL_CTX * ctx)
           continue;
         }
         /*tls_dump_cert_info("ROOT", cert); */
-        x509_store = SSL_CTX_get_cert_store(ctx);
+        x509_store = SSL_CTX_get_cert_store (ctx);
         if (x509_store == NULL) {
-          X509_free(cert);
+          X509_free (cert);
           continue;
         }
 
@@ -534,7 +535,8 @@ verify_cb (int preverify_ok, X509_STORE_CTX * store)
    * it for something special
    */
   if (!preverify_ok && (err == X509_V_ERR_UNABLE_TO_GET_ISSUER_CERT)) {
-    X509 *current_cert = X509_STORE_CTX_get_current_cert(store);
+    X509 *current_cert = X509_STORE_CTX_get_current_cert (store);
+
     X509_NAME_oneline (X509_get_issuer_name (current_cert), buf, 256);
     OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "issuer= %s\n", buf));
   }
@@ -633,13 +635,13 @@ build_dh_params (SSL_CTX * ctx)
     return;
   }
 
-  OSIP_TRACE(osip_trace(__FILE__, __LINE__, OSIP_INFO3, NULL, "eXosip: building DH params!\n"));
+  OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO3, NULL, "eXosip: building DH params!\n"));
   if (!DH_generate_parameters_ex (dh, 128, DH_GENERATOR_2, 0)) {
     OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "eXosip: DH_generate_parameters_ex failed!\n"));
     DH_free (dh);
     return;
   }
-  OSIP_TRACE(osip_trace(__FILE__, __LINE__, OSIP_INFO3, NULL, "eXosip: DH params built!\n"));
+  OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO3, NULL, "eXosip: DH params built!\n"));
 
   if (!DH_check (dh, &codes)) {
     OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "eXosip: DH_check failed!\n"));
@@ -669,15 +671,15 @@ __RSA_generate_key (int bits, unsigned long e_value, void (*callback) (int, int,
   if (!rsa || !e)
     goto err;
 
-  i = BN_set_word(e, e_value);
-  if (i!=1)
+  i = BN_set_word (e, e_value);
+  if (i != 1)
     goto err;
 
   if (RSA_generate_key_ex (rsa, bits, e, NULL)) {
     BN_free (e);
     return rsa;
   }
- err:
+err:
   if (e)
     BN_free (e);
   if (rsa)
@@ -735,7 +737,7 @@ eXosip_set_tls_ctx (struct eXosip_t *excontext, eXosip_tls_ctx_t * ctx)
   memset (&excontext->eXosip_tls_ctx_params, 0, sizeof (eXosip_tls_ctx_t));
 
   if (client->public_key_pinned[0] != '\0') {
-    snprintf(ownClient->public_key_pinned, sizeof(ownClient->public_key_pinned), "%s", client->public_key_pinned);
+    snprintf (ownClient->public_key_pinned, sizeof (ownClient->public_key_pinned), "%s", client->public_key_pinned);
   }
 
   /* check if client has own certificate */
@@ -761,13 +763,13 @@ eXosip_set_tls_ctx (struct eXosip_t *excontext, eXosip_tls_ctx_t * ctx)
 eXosip_tls_ctx_error
 eXosip_tls_use_server_certificate (struct eXosip_t * excontext, const char *local_certificate_cn)
 {
-  return -1; /* obsolete */
+  return -1;                    /* obsolete */
 }
 
 eXosip_tls_ctx_error
 eXosip_tls_use_client_certificate (struct eXosip_t * excontext, const char *local_certificate_cn)
 {
-  return -1; /* obsolete */
+  return -1;                    /* obsolete */
 }
 
 eXosip_tls_ctx_error
@@ -777,12 +779,13 @@ eXosip_tls_verify_certificate (struct eXosip_t * excontext, int _tls_verify_clie
   return TLS_OK;
 }
 
-static void _tls_load_trusted_certificates(eXosip_tls_ctx_t *exosip_tls_cfg, SSL_CTX *ctx)
+static void
+_tls_load_trusted_certificates (eXosip_tls_ctx_t * exosip_tls_cfg, SSL_CTX * ctx)
 {
   char *caFile = 0, *caFolder = 0;
 
-  if (_tls_add_certificates(ctx) <= 0) {
-    OSIP_TRACE(osip_trace(__FILE__, __LINE__, OSIP_WARNING, NULL, "no system certificate loaded\n"));
+  if (_tls_add_certificates (ctx) <= 0) {
+    OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_WARNING, NULL, "no system certificate loaded\n"));
   }
 
   if (exosip_tls_cfg->root_ca_cert[0] == '\0')
@@ -795,10 +798,10 @@ static void _tls_load_trusted_certificates(eXosip_tls_ctx_t *exosip_tls_cfg, SSL
     char szDirPath[1024];
     WCHAR wUnicodeDirPath[2048];
 
-    snprintf(szDirPath, sizeof(szDirPath), "%s", exosip_tls_cfg->root_ca_cert);
+    snprintf (szDirPath, sizeof (szDirPath), "%s", exosip_tls_cfg->root_ca_cert);
 
-    MultiByteToWideChar(CP_UTF8, 0, szDirPath, -1, wUnicodeDirPath, 2048);
-    hSearch = FindFirstFileEx(wUnicodeDirPath, FindExInfoStandard, &FileData, FindExSearchNameMatch, NULL, 0);
+    MultiByteToWideChar (CP_UTF8, 0, szDirPath, -1, wUnicodeDirPath, 2048);
+    hSearch = FindFirstFileEx (wUnicodeDirPath, FindExInfoStandard, &FileData, FindExSearchNameMatch, NULL, 0);
     if (hSearch != INVALID_HANDLE_VALUE) {
       if ((FileData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) == FILE_ATTRIBUTE_DIRECTORY)
         caFolder = exosip_tls_cfg->root_ca_cert;
@@ -809,23 +812,23 @@ static void _tls_load_trusted_certificates(eXosip_tls_ctx_t *exosip_tls_cfg, SSL
       caFile = exosip_tls_cfg->root_ca_cert;
     }
 #else
-    int fd = open(exosip_tls_cfg->root_ca_cert, O_RDONLY);
+    int fd = open (exosip_tls_cfg->root_ca_cert, O_RDONLY);
 
     if (fd >= 0) {
       struct stat fileStat;
 
-      if (fstat(fd, &fileStat) < 0) {
+      if (fstat (fd, &fileStat) < 0) {
 
       }
       else {
-        if (S_ISDIR(fileStat.st_mode)) {
+        if (S_ISDIR (fileStat.st_mode)) {
           caFolder = exosip_tls_cfg->root_ca_cert;
         }
         else {
           caFile = exosip_tls_cfg->root_ca_cert;
         }
       }
-      close(fd);
+      close (fd);
     }
 #endif
   }
@@ -833,81 +836,84 @@ static void _tls_load_trusted_certificates(eXosip_tls_ctx_t *exosip_tls_cfg, SSL
   if (exosip_tls_cfg->root_ca_cert[0] == '\0') {
   }
   else {
-    if (SSL_CTX_load_verify_locations(ctx, caFile, caFolder)) {
-      OSIP_TRACE(osip_trace(__FILE__, __LINE__, OSIP_INFO2, NULL, "eXosip: trusted CA PEM file loaded [%s]\n", exosip_tls_cfg->root_ca_cert));
+    if (SSL_CTX_load_verify_locations (ctx, caFile, caFolder)) {
+      OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO2, NULL, "eXosip: trusted CA PEM file loaded [%s]\n", exosip_tls_cfg->root_ca_cert));
     }
     else {
-      OSIP_TRACE(osip_trace(__FILE__, __LINE__, OSIP_ERROR, NULL, "eXosip: Couldn't read trusted CA list [%s]\n", exosip_tls_cfg->root_ca_cert));
+      OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "eXosip: Couldn't read trusted CA list [%s]\n", exosip_tls_cfg->root_ca_cert));
     }
   }
 }
 
-static void _tls_use_certificate_private_key(const char *log, eXosip_tls_credentials_t *xtc, SSL_CTX *ctx)
+static void
+_tls_use_certificate_private_key (const char *log, eXosip_tls_credentials_t * xtc, SSL_CTX * ctx)
 {
   /* load from file name in PEM files */
   if (xtc->cert[0] != '\0' && xtc->priv_key[0] != '\0') {
     if (xtc->priv_key_pw[0] != '\0') {
-      SSL_CTX_set_default_passwd_cb_userdata(ctx, (void *)xtc->priv_key_pw);
-      SSL_CTX_set_default_passwd_cb(ctx, password_cb);
+      SSL_CTX_set_default_passwd_cb_userdata (ctx, (void *) xtc->priv_key_pw);
+      SSL_CTX_set_default_passwd_cb (ctx, password_cb);
     }
 
     /* Load our keys and certificates */
-    if (SSL_CTX_use_certificate_file(ctx, xtc->cert, SSL_FILETYPE_ASN1)) {
-      OSIP_TRACE(osip_trace(__FILE__, __LINE__, OSIP_INFO2, NULL, "eXosip: %s certificate ASN1 file loaded [%s]!\n", log, xtc->cert));
+    if (SSL_CTX_use_certificate_file (ctx, xtc->cert, SSL_FILETYPE_ASN1)) {
+      OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO2, NULL, "eXosip: %s certificate ASN1 file loaded [%s]!\n", log, xtc->cert));
     }
-    else if (SSL_CTX_use_certificate_file(ctx, xtc->cert, SSL_FILETYPE_PEM)) {
-      OSIP_TRACE(osip_trace(__FILE__, __LINE__, OSIP_INFO2, NULL, "eXosip: %s certificate PEM file loaded [%s]!\n", log, xtc->cert));
-    }
-    else {
-      OSIP_TRACE(osip_trace(__FILE__, __LINE__, OSIP_ERROR, NULL, "eXosip: Couldn't read %s certificate file [%s]!\n", log, xtc->cert));
-    }
-
-    if (SSL_CTX_use_PrivateKey_file(ctx, xtc->priv_key, SSL_FILETYPE_ASN1)) {
-      OSIP_TRACE(osip_trace(__FILE__, __LINE__, OSIP_INFO2, NULL, "eXosip: %s private key ASN1 file loaded [%s]!\n", log, xtc->priv_key));
-    }
-    else if (SSL_CTX_use_PrivateKey_file(ctx, xtc->priv_key, SSL_FILETYPE_PEM)) {
-      OSIP_TRACE(osip_trace(__FILE__, __LINE__, OSIP_INFO2, NULL, "eXosip: %s private key PEM file loaded [%s]!\n", log, xtc->priv_key));
+    else if (SSL_CTX_use_certificate_file (ctx, xtc->cert, SSL_FILETYPE_PEM)) {
+      OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO2, NULL, "eXosip: %s certificate PEM file loaded [%s]!\n", log, xtc->cert));
     }
     else {
-      OSIP_TRACE(osip_trace(__FILE__, __LINE__, OSIP_ERROR, NULL, "eXosip: Couldn't read %s private key file [%s]!\n", log, xtc->priv_key));
+      OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "eXosip: Couldn't read %s certificate file [%s]!\n", log, xtc->cert));
     }
 
-    if (!SSL_CTX_check_private_key(ctx)) {
-      OSIP_TRACE(osip_trace(__FILE__, __LINE__, OSIP_ERROR, NULL, "eXosip: %s private key does not match the public key of your certificate\n", log));
+    if (SSL_CTX_use_PrivateKey_file (ctx, xtc->priv_key, SSL_FILETYPE_ASN1)) {
+      OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO2, NULL, "eXosip: %s private key ASN1 file loaded [%s]!\n", log, xtc->priv_key));
+    }
+    else if (SSL_CTX_use_PrivateKey_file (ctx, xtc->priv_key, SSL_FILETYPE_PEM)) {
+      OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO2, NULL, "eXosip: %s private key PEM file loaded [%s]!\n", log, xtc->priv_key));
+    }
+    else {
+      OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "eXosip: Couldn't read %s private key file [%s]!\n", log, xtc->priv_key));
+    }
+
+    if (!SSL_CTX_check_private_key (ctx)) {
+      OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "eXosip: %s private key does not match the public key of your certificate\n", log));
     }
   }
 }
 
-static void _tls_common_setup(eXosip_tls_ctx_t *exosip_tls_cfg, SSL_CTX *ctx)
+static void
+_tls_common_setup (eXosip_tls_ctx_t * exosip_tls_cfg, SSL_CTX * ctx)
 {
 #ifndef SSL_CTRL_SET_ECDH_AUTO
 #define SSL_CTRL_SET_ECDH_AUTO 94
 #endif
   if (exosip_tls_cfg->dh_param[0] == '\0')
-    build_dh_params(ctx);
+    build_dh_params (ctx);
   else
-    load_dh_params(ctx, exosip_tls_cfg->dh_param);
+    load_dh_params (ctx, exosip_tls_cfg->dh_param);
 
   /* SSL_CTX_set_ecdh_auto (ctx, on) requires OpenSSL 1.0.2 which wraps: */
-  if (SSL_CTX_ctrl(ctx, SSL_CTRL_SET_ECDH_AUTO, 1, NULL)) {
-    OSIP_TRACE(osip_trace(__FILE__, __LINE__, OSIP_INFO2, NULL, "ctrl_set_ecdh_auto: faster PFS ciphers enabled\n"));
+  if (SSL_CTX_ctrl (ctx, SSL_CTRL_SET_ECDH_AUTO, 1, NULL)) {
+    OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO2, NULL, "ctrl_set_ecdh_auto: faster PFS ciphers enabled\n"));
 #if !defined(OPENSSL_NO_ECDH) && !(OPENSSL_VERSION_NUMBER < 0x10000000L) && (OPENSSL_VERSION_NUMBER < 0x10100000L)
   }
   else {
     /* enables AES-128 ciphers, to get AES-256 use NID_secp384r1 */
-    EC_KEY *ecdh = EC_KEY_new_by_curve_name(NID_X9_62_prime256v1);
+    EC_KEY *ecdh = EC_KEY_new_by_curve_name (NID_X9_62_prime256v1);
+
     if (ecdh != NULL) {
-      if (SSL_CTX_set_tmp_ecdh(ctx, ecdh)) {
-        OSIP_TRACE(osip_trace(__FILE__, __LINE__, OSIP_INFO2, NULL, "set_tmp_ecdh: faster PFS ciphers enabled (secp256r1)\n"));
+      if (SSL_CTX_set_tmp_ecdh (ctx, ecdh)) {
+        OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO2, NULL, "set_tmp_ecdh: faster PFS ciphers enabled (secp256r1)\n"));
       }
-      EC_KEY_free(ecdh);
+      EC_KEY_free (ecdh);
     }
 #endif
   }
 }
 
 SSL_CTX *
-initialize_client_ctx (struct eXosip_t * excontext, eXosip_tls_ctx_t * client_ctx, int transport, const char *sni_servernameindication)
+initialize_client_ctx (struct eXosip_t *excontext, eXosip_tls_ctx_t * client_ctx, int transport, const char *sni_servernameindication)
 {
   const SSL_METHOD *meth = NULL;
   SSL_CTX *ctx;
@@ -933,10 +939,10 @@ initialize_client_ctx (struct eXosip_t * excontext, eXosip_tls_ctx_t * client_ct
     return NULL;
   }
 
-  _tls_use_certificate_private_key("client", &client_ctx->client, ctx);
+  _tls_use_certificate_private_key ("client", &client_ctx->client, ctx);
 
   /* Load the CAs we trust */
-  _tls_load_trusted_certificates(client_ctx, ctx);
+  _tls_load_trusted_certificates (client_ctx, ctx);
 
   {
     int verify_mode = SSL_VERIFY_NONE;
@@ -944,35 +950,36 @@ initialize_client_ctx (struct eXosip_t * excontext, eXosip_tls_ctx_t * client_ct
 #if !(OPENSSL_VERSION_NUMBER < 0x10002000L)
 
     if (excontext->tls_verify_client_certificate > 0 && sni_servernameindication != NULL) {
-      X509_STORE *pkix_validation_store = SSL_CTX_get_cert_store(ctx);
-      const X509_VERIFY_PARAM *param = X509_VERIFY_PARAM_lookup("ssl_server");
+      X509_STORE *pkix_validation_store = SSL_CTX_get_cert_store (ctx);
+      const X509_VERIFY_PARAM *param = X509_VERIFY_PARAM_lookup ("ssl_server");
 
-      if (param != NULL) { /* const value, we have to copy (inherit) */
-        X509_VERIFY_PARAM *param_to = X509_STORE_get0_param(pkix_validation_store);
-        if (X509_VERIFY_PARAM_inherit(param_to, param)) {
-          X509_STORE_set_flags(pkix_validation_store, X509_V_FLAG_TRUSTED_FIRST);
-          X509_STORE_set_flags(pkix_validation_store, X509_V_FLAG_PARTIAL_CHAIN);
+      if (param != NULL) {      /* const value, we have to copy (inherit) */
+        X509_VERIFY_PARAM *param_to = X509_STORE_get0_param (pkix_validation_store);
+
+        if (X509_VERIFY_PARAM_inherit (param_to, param)) {
+          X509_STORE_set_flags (pkix_validation_store, X509_V_FLAG_TRUSTED_FIRST);
+          X509_STORE_set_flags (pkix_validation_store, X509_V_FLAG_PARTIAL_CHAIN);
         }
         else {
-          OSIP_TRACE(osip_trace(__FILE__, __LINE__, OSIP_ERROR, NULL, "PARAM_inherit: failed for ssl_server\n"));
+          OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "PARAM_inherit: failed for ssl_server\n"));
         }
-        if (X509_VERIFY_PARAM_set1_host(param_to, sni_servernameindication, 0)) {
-          X509_VERIFY_PARAM_set_hostflags(param_to, X509_CHECK_FLAG_NO_WILDCARDS);
+        if (X509_VERIFY_PARAM_set1_host (param_to, sni_servernameindication, 0)) {
+          X509_VERIFY_PARAM_set_hostflags (param_to, X509_CHECK_FLAG_NO_WILDCARDS);
         }
         else {
-          OSIP_TRACE(osip_trace(__FILE__, __LINE__, OSIP_ERROR, NULL, "PARAM_set1_host: %s failed\n", sni_servernameindication));
+          OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "PARAM_set1_host: %s failed\n", sni_servernameindication));
         }
       }
       else {
-        OSIP_TRACE(osip_trace(__FILE__, __LINE__, OSIP_ERROR, NULL, "PARAM_lookup: failed for ssl_server\n"));
+        OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "PARAM_lookup: failed for ssl_server\n"));
       }
     }
 #endif
 
     if (excontext->tls_verify_client_certificate > 0)
       verify_mode = SSL_VERIFY_PEER;
-    SSL_CTX_set_verify(ctx, verify_mode, &verify_cb);
-    SSL_CTX_set_verify_depth(ctx, ex_verify_depth + 1);
+    SSL_CTX_set_verify (ctx, verify_mode, &verify_cb);
+    SSL_CTX_set_verify_depth (ctx, ex_verify_depth + 1);
   }
 
   SSL_CTX_set_options (ctx, SSL_OP_NO_SSLv2 | SSL_OP_NO_SSLv3 | SSL_OP_SINGLE_ECDH_USE | SSL_OP_SINGLE_DH_USE);
@@ -981,7 +988,7 @@ initialize_client_ctx (struct eXosip_t * excontext, eXosip_tls_ctx_t * client_ct
     OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_WARNING, NULL, "set_cipher_list: using DEFAULT list now\n"));
   }
 
-  _tls_common_setup(client_ctx, ctx);
+  _tls_common_setup (client_ctx, ctx);
 
   return ctx;
 }
@@ -1023,14 +1030,14 @@ initialize_server_ctx (struct eXosip_t * excontext, eXosip_tls_ctx_t * srv_ctx, 
     SSL_CTX_set_read_ahead (ctx, 1);
   }
 
-  _tls_use_certificate_private_key("server", &srv_ctx->server, ctx);
+  _tls_use_certificate_private_key ("server", &srv_ctx->server, ctx);
 
   /* Load the CAs we trust */
-  _tls_load_trusted_certificates(srv_ctx, ctx);
+  _tls_load_trusted_certificates (srv_ctx, ctx);
 
-  if (!SSL_CTX_check_private_key(ctx)) {
-    OSIP_TRACE(osip_trace(__FILE__, __LINE__, OSIP_WARNING, NULL, "check_private_key: either no match, or no cert/key: disable incoming TLS connection\n"));
-    SSL_CTX_free(ctx);
+  if (!SSL_CTX_check_private_key (ctx)) {
+    OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_WARNING, NULL, "check_private_key: either no match, or no cert/key: disable incoming TLS connection\n"));
+    SSL_CTX_free (ctx);
     return NULL;
   }
 
@@ -1059,7 +1066,7 @@ initialize_server_ctx (struct eXosip_t * excontext, eXosip_tls_ctx_t * srv_ctx, 
   }
 #endif
 
-  _tls_common_setup(srv_ctx, ctx);
+  _tls_common_setup (srv_ctx, ctx);
 
 #ifndef OPENSSL_NO_RSA
   generate_eph_rsa_key (ctx);
@@ -1134,7 +1141,7 @@ tls_tl_open (struct eXosip_t *excontext)
     OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_WARNING, NULL, "eXosip: Couldn't load randomness\n"));
 #endif
 
-  if (osip_strcasecmp(excontext->eXtl_transport.proto_ifs, "0.0.0.0")!=0 && osip_strcasecmp(excontext->eXtl_transport.proto_ifs, "::")!=0)
+  if (osip_strcasecmp (excontext->eXtl_transport.proto_ifs, "0.0.0.0") != 0 && osip_strcasecmp (excontext->eXtl_transport.proto_ifs, "::") != 0)
     node = excontext->eXtl_transport.proto_ifs;
 
   res = _eXosip_get_addrinfo (excontext, &addrinfo, node, excontext->eXtl_transport.proto_local_port, excontext->eXtl_transport.proto_num);
@@ -1154,7 +1161,7 @@ tls_tl_open (struct eXosip_t *excontext)
 
     type = curinfo->ai_socktype;
 #if defined(SOCK_CLOEXEC)
-    type = SOCK_CLOEXEC|type;
+    type = SOCK_CLOEXEC | type;
 #endif
     sock = (int) socket (curinfo->ai_family, type, curinfo->ai_protocol);
     if (sock < 0) {
@@ -1180,7 +1187,7 @@ tls_tl_open (struct eXosip_t *excontext)
     }
 
 #ifdef ENABLE_MAIN_SOCKET
-    res = bind (sock, curinfo->ai_addr, (socklen_t)curinfo->ai_addrlen);
+    res = bind (sock, curinfo->ai_addr, (socklen_t) curinfo->ai_addrlen);
     if (res < 0) {
       OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "eXosip: Cannot bind socket node:%s family:%d %s\n", excontext->eXtl_transport.proto_ifs, curinfo->ai_family, strerror (ex_errno)));
       _eXosip_closesocket (sock);
@@ -1193,7 +1200,7 @@ tls_tl_open (struct eXosip_t *excontext)
       OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "eXosip: Cannot get socket name (%s)\n", strerror (ex_errno)));
       memcpy (&reserved->ai_addr, curinfo->ai_addr, curinfo->ai_addrlen);
     }
-    reserved->ai_addr_len=len;
+    reserved->ai_addr_len = len;
 
     if (excontext->eXtl_transport.proto_num == IPPROTO_TCP) {
       res = listen (sock, SOMAXCONN);
@@ -1257,7 +1264,7 @@ tls_tl_set_fdset (struct eXosip_t *excontext, fd_set * osip_fdset, fd_set * osip
         *fd_max = reserved->socket_tab[pos].socket;
       if (reserved->socket_tab[pos].sendbuflen > 0)
         eXFD_SET (reserved->socket_tab[pos].socket, osip_wrset);
-      if (reserved->socket_tab[pos].ssl_state == 0) /* wait for establishment */
+      if (reserved->socket_tab[pos].ssl_state == 0)     /* wait for establishment */
         eXFD_SET (reserved->socket_tab[pos].socket, osip_wrset);
     }
   }
@@ -1474,11 +1481,10 @@ _tls_tl_check_connected (struct eXosip_t *excontext)
 #if 0
         /* bug: calling connect several times for TCP is not allowed by specification */
         res = connect (reserved->socket_tab[pos].socket, &reserved->socket_tab[pos].ai_addr, reserved->socket_tab[pos].ai_addrlen);
-        if (res<0) {
+        if (res < 0) {
           int status = ex_errno;
-          OSIP_TRACE (osip_trace
-                      (__FILE__, __LINE__, OSIP_INFO2, NULL,
-                       "_tls_tl_check_connected: connect being called again (res=%i) (errno=%i) (%s)\n", res, status, strerror (status)));
+
+          OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO2, NULL, "_tls_tl_check_connected: connect being called again (res=%i) (errno=%i) (%s)\n", res, status, strerror (status)));
         }
 #endif
         OSIP_TRACE (osip_trace
@@ -1510,96 +1516,98 @@ _tls_tl_check_connected (struct eXosip_t *excontext)
   return 0;
 }
 
-static int pkp_pin_peer_pubkey(struct eXosip_t *excontext, SSL* ssl)
+static int
+pkp_pin_peer_pubkey (struct eXosip_t *excontext, SSL * ssl)
 {
-  X509* cert = NULL;
-  FILE* fp = NULL;
+  X509 *cert = NULL;
+  FILE *fp = NULL;
 
   int len1 = 0, len2 = 0;
   unsigned char *buff1 = NULL, *buff2 = NULL;
 
   int ret = 0, result = -1;
 
-  if (NULL == ssl) return -1;
+  if (NULL == ssl)
+    return -1;
 
   if (excontext->eXosip_tls_ctx_params.client.public_key_pinned[0] == '\0')
     return 0;
-  OSIP_TRACE(osip_trace(__FILE__, __LINE__, OSIP_INFO1, NULL, "eXosip: checking pinned public key for certificate [%s]\n", excontext->eXosip_tls_ctx_params.client.public_key_pinned));
+  OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO1, NULL, "eXosip: checking pinned public key for certificate [%s]\n", excontext->eXosip_tls_ctx_params.client.public_key_pinned));
 
-  do
-  {
-    unsigned char* temp = NULL;
+  do {
+    unsigned char *temp = NULL;
     long size;
 
-    cert = SSL_get_peer_certificate(ssl);
+    cert = SSL_get_peer_certificate (ssl);
     if (!(cert != NULL))
-      break; /* failed */
+      break;                    /* failed */
 
     /* Begin Gyrations to get the subjectPublicKeyInfo       */
     /* Thanks to Viktor Dukhovni on the OpenSSL mailing list */
 
-    len1 = i2d_X509_PUBKEY(X509_get_X509_PUBKEY(cert), NULL);
+    len1 = i2d_X509_PUBKEY (X509_get_X509_PUBKEY (cert), NULL);
     if (!(len1 > 0))
-      break; /* failed */
+      break;                    /* failed */
 
-    buff1 = temp = OPENSSL_malloc(len1);
+    buff1 = temp = OPENSSL_malloc (len1);
     if (!(buff1 != NULL))
-      break; /* failed */
+      break;                    /* failed */
 
-    len2 = i2d_X509_PUBKEY(X509_get_X509_PUBKEY(cert), &temp);
+    len2 = i2d_X509_PUBKEY (X509_get_X509_PUBKEY (cert), &temp);
 
     if (!((len1 == len2) && (temp != NULL) && ((temp - buff1) == len1)))
-      break; /* failed */
+      break;                    /* failed */
 
     /* in order to get your public key file in DER format: */
     /* openssl x509 -in your-base64-certificate.pem -pubkey -noout | openssl enc -base64 -d > publickey.der */
-    fp = fopen(excontext->eXosip_tls_ctx_params.client.public_key_pinned, "rb");
+    fp = fopen (excontext->eXosip_tls_ctx_params.client.public_key_pinned, "rb");
     if (NULL == fp)
-      fp = fopen(excontext->eXosip_tls_ctx_params.client.public_key_pinned, "r");
+      fp = fopen (excontext->eXosip_tls_ctx_params.client.public_key_pinned, "r");
 
     if (!(NULL != fp))
-      break; /* failed */
+      break;                    /* failed */
 
-    ret = fseek(fp, 0, SEEK_END);
+    ret = fseek (fp, 0, SEEK_END);
     if (!(0 == ret))
-      break; /* failed */
+      break;                    /* failed */
 
-    size = ftell(fp);
+    size = ftell (fp);
 
     if (!(size != -1 && size > 0 && size < 4096))
-      break; /* failed */
+      break;                    /* failed */
 
-    ret = fseek(fp, 0, SEEK_SET);
+    ret = fseek (fp, 0, SEEK_SET);
     if (!(0 == ret))
-      break; /* failed */
+      break;                    /* failed */
 
-    buff2 = NULL; len2 = (int)size;
+    buff2 = NULL;
+    len2 = (int) size;
 
-    buff2 = OPENSSL_malloc(len2);
+    buff2 = OPENSSL_malloc (len2);
     if (!(buff2 != NULL))
-      break; /* failed */
+      break;                    /* failed */
 
-    ret = (int)fread(buff2, (size_t)len2, 1, fp);
+    ret = (int) fread (buff2, (size_t) len2, 1, fp);
     if (!(ret == 1))
-      break; /* failed */
+      break;                    /* failed */
 
     size = len1 < len2 ? len1 : len2;
 
-    if (len1 != (int)size || len2 != (int)size || 0 != memcmp(buff1, buff2, (size_t)size))
-      break; /* failed */
+    if (len1 != (int) size || len2 != (int) size || 0 != memcmp (buff1, buff2, (size_t) size))
+      break;                    /* failed */
 
     result = 0;
 
   } while (0);
 
   if (fp != NULL)
-    fclose(fp);
+    fclose (fp);
   if (NULL != buff2)
-    OPENSSL_free(buff2);
+    OPENSSL_free (buff2);
   if (NULL != buff1)
-    OPENSSL_free(buff1);
+    OPENSSL_free (buff1);
   if (NULL != cert)
-    X509_free(cert);
+    X509_free (cert);
 
   return result;
 }
@@ -1630,7 +1638,7 @@ _tls_tl_ssl_connect_socket (struct eXosip_t *excontext, struct _tls_stream *sock
     SSL_set_bio (sockinfo->ssl_conn, sbio, sbio);
 
 #ifndef OPENSSL_NO_TLSEXT
-    if (!SSL_set_tlsext_host_name (sockinfo->ssl_conn, sockinfo->sni_servernameindication /* "host.name.after.dns.srv.com" */)) {
+    if (!SSL_set_tlsext_host_name (sockinfo->ssl_conn, sockinfo->sni_servernameindication /* "host.name.after.dns.srv.com" */ )) {
       OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_WARNING, NULL, "set_tlsext_host_name (SNI): no servername gets indicated\n"));
     }
 #endif
@@ -1705,8 +1713,8 @@ _tls_tl_ssl_connect_socket (struct eXosip_t *excontext, struct _tls_stream *sock
     }
     X509_free (cert);
 
-    if (pkp_pin_peer_pubkey(excontext, sockinfo->ssl_conn)) {
-      OSIP_TRACE(osip_trace(__FILE__, __LINE__, OSIP_ERROR, NULL, "Failed to verify public key for certificate\n"));
+    if (pkp_pin_peer_pubkey (excontext, sockinfo->ssl_conn)) {
+      OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "Failed to verify public key for certificate\n"));
       return -1;
     }
   }
@@ -1800,8 +1808,8 @@ handle_messages (struct eXosip_t *excontext, struct _tls_stream *sockinfo)
       OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO1, NULL, "socket %s:%i: message has no content-length: <%s>\n", sockinfo->remote_ip, sockinfo->remote_port, buf));
     }
     clen = clen_header ? atoi (clen_header) : 0;
-    if (clen<0)
-      return (int)sockinfo->buflen; /* discard data */
+    if (clen < 0)
+      return (int) sockinfo->buflen;    /* discard data */
     /* undo our overwrite and advance end_headers */
     *end_headers = END_HEADERS_STR[0];
     end_headers += const_strlen (END_HEADERS_STR);
@@ -1948,12 +1956,12 @@ _tls_tl_recv (struct eXosip_t *excontext, struct _tls_stream *sockinfo)
   }
   else {
     int consumed;
-    int err=OSIP_SUCCESS;
+    int err = OSIP_SUCCESS;
 
     if (SSL_pending (sockinfo->ssl_conn))
       err = -999;
 
-    sockinfo->tcp_max_timeout=0;
+    sockinfo->tcp_max_timeout = 0;
     OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO1, NULL, "socket %s:%i: read %d bytes\n", sockinfo->remote_ip, sockinfo->remote_port, r));
     sockinfo->buflen += rlen;
     consumed = handle_messages (excontext, sockinfo);
@@ -1967,7 +1975,7 @@ _tls_tl_recv (struct eXosip_t *excontext, struct _tls_stream *sockinfo)
       }
     }
 
-    return err; /* if -999 is returned, internal buffer of SSL still contains some data */
+    return err;                 /* if -999 is returned, internal buffer of SSL still contains some data */
   }
 }
 
@@ -2016,7 +2024,7 @@ tls_tl_read_message (struct eXosip_t *excontext, fd_set * osip_fdset, fd_set * o
 
     OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO3, NULL, "creating TLS socket at index: %i\n", pos));
 
-    sock = (int)accept (reserved->tls_socket, (struct sockaddr *) &sa, (socklen_t*)&slen);
+    sock = (int) accept (reserved->tls_socket, (struct sockaddr *) &sa, (socklen_t *) & slen);
     if (sock < 0) {
 #if defined(EBADF)
       int status = ex_errno;
@@ -2092,8 +2100,8 @@ tls_tl_read_message (struct eXosip_t *excontext, fd_set * osip_fdset, fd_set * o
       }
 
       memset (src6host, 0, NI_MAXHOST);
-      recvport = _eXosip_getport((struct sockaddr *) &sa, slen);
-      _eXosip_getnameinfo((struct sockaddr *) &sa, slen, src6host, NI_MAXHOST, NULL, 0, NI_NUMERICHOST);
+      recvport = _eXosip_getport ((struct sockaddr *) &sa, slen);
+      _eXosip_getnameinfo ((struct sockaddr *) &sa, slen, src6host, NI_MAXHOST, NULL, 0, NI_NUMERICHOST);
 
       _eXosip_transport_set_dscp (excontext, sa.ss_family, sock);
 
@@ -2108,7 +2116,8 @@ tls_tl_read_message (struct eXosip_t *excontext, fd_set * osip_fdset, fd_set * o
       if (FD_ISSET (reserved->socket_tab[pos].socket, osip_fdset) || FD_ISSET (reserved->socket_tab[pos].socket, osip_wrset)) {
         int err = -999;
         int max = 5;
-        while (err == -999 && max>0) {
+
+        while (err == -999 && max > 0) {
           err = _tls_tl_recv (excontext, &reserved->socket_tab[pos]);
           max--;
         }
@@ -2176,7 +2185,7 @@ _tls_tl_connect_socket (struct eXosip_t *excontext, char *host, int port, int re
     if (curinfo->ai_protocol && curinfo->ai_protocol != IPPROTO_TCP)
       continue;
 
-    res = _eXosip_getnameinfo((struct sockaddr *) curinfo->ai_addr, (socklen_t)curinfo->ai_addrlen, src6host, NI_MAXHOST, NULL, 0, NI_NUMERICHOST);
+    res = _eXosip_getnameinfo ((struct sockaddr *) curinfo->ai_addr, (socklen_t) curinfo->ai_addrlen, src6host, NI_MAXHOST, NULL, 0, NI_NUMERICHOST);
     if (res != 0)
       continue;
 
@@ -2187,17 +2196,18 @@ _tls_tl_connect_socket (struct eXosip_t *excontext, char *host, int port, int re
     }
   }
 
-  if (retry>0)
+  if (retry > 0)
     return -1;
 
   for (curinfo = addrinfo; curinfo; curinfo = curinfo->ai_next) {
     int type;
+
     if (curinfo->ai_protocol && curinfo->ai_protocol != IPPROTO_TCP) {
       OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO2, NULL, "eXosip: Skipping protocol %d\n", curinfo->ai_protocol));
       continue;
     }
 
-    res = _eXosip_getnameinfo((struct sockaddr *) curinfo->ai_addr, (socklen_t)curinfo->ai_addrlen, src6host, NI_MAXHOST, NULL, 0, NI_NUMERICHOST);
+    res = _eXosip_getnameinfo ((struct sockaddr *) curinfo->ai_addr, (socklen_t) curinfo->ai_addrlen, src6host, NI_MAXHOST, NULL, 0, NI_NUMERICHOST);
 
     if (res == 0) {
       int i = _tls_tl_find_socket (excontext, src6host, port);
@@ -2211,7 +2221,7 @@ _tls_tl_connect_socket (struct eXosip_t *excontext, char *host, int port, int re
 
     type = curinfo->ai_socktype;
 #if defined(SOCK_CLOEXEC)
-    type = SOCK_CLOEXEC|type;
+    type = SOCK_CLOEXEC | type;
 #endif
     sock = (int) socket (curinfo->ai_family, type, curinfo->ai_protocol);
     if (sock < 0) {
@@ -2230,97 +2240,101 @@ _tls_tl_connect_socket (struct eXosip_t *excontext, char *host, int port, int re
 #endif /* IPV6_V6ONLY */
     }
 
-    if (reserved->ai_addr_len>0)
-    {
-      if (excontext->reuse_tcp_port>0) {
+    if (reserved->ai_addr_len > 0) {
+      if (excontext->reuse_tcp_port > 0) {
         struct sockaddr_storage ai_addr;
         int valopt = 1;
 
         setsockopt (sock, SOL_SOCKET, SO_REUSEADDR, (void *) &valopt, sizeof (valopt));
 
-        memcpy(&ai_addr, &reserved->ai_addr, reserved->ai_addr_len);
+        memcpy (&ai_addr, &reserved->ai_addr, reserved->ai_addr_len);
         if (ai_addr.ss_family == AF_INET)
-          ((struct sockaddr_in *) &ai_addr)->sin_port = htons(excontext->eXtl_transport.proto_local_port);
+          ((struct sockaddr_in *) &ai_addr)->sin_port = htons (excontext->eXtl_transport.proto_local_port);
         else
-          ((struct sockaddr_in6 *) &ai_addr)->sin6_port = htons(excontext->eXtl_transport.proto_local_port);
-        res = bind (sock, (const struct sockaddr *)&ai_addr, reserved->ai_addr_len);
+          ((struct sockaddr_in6 *) &ai_addr)->sin6_port = htons (excontext->eXtl_transport.proto_local_port);
+        res = bind (sock, (const struct sockaddr *) &ai_addr, reserved->ai_addr_len);
         if (res < 0) {
           OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_WARNING, NULL, "Cannot bind socket node:%s family:%d %s\n", excontext->eXtl_transport.proto_ifs, ai_addr.ss_family, strerror (ex_errno)));
         }
-      } else if (excontext->oc_local_address[0]=='\0') {
-        if (reserved->ai_addr.ss_family==curinfo->ai_family) {
+      }
+      else if (excontext->oc_local_address[0] == '\0') {
+        if (reserved->ai_addr.ss_family == curinfo->ai_family) {
           struct sockaddr_storage ai_addr;
-          int count=0;
-          memcpy(&ai_addr, &reserved->ai_addr, reserved->ai_addr_len);
-          while (count<100) {
-            if (excontext->oc_local_port_range[0]<1024) {
+          int count = 0;
+
+          memcpy (&ai_addr, &reserved->ai_addr, reserved->ai_addr_len);
+          while (count < 100) {
+            if (excontext->oc_local_port_range[0] < 1024) {
               if (ai_addr.ss_family == AF_INET)
-                ((struct sockaddr_in *) &ai_addr)->sin_port = htons(0);
+                ((struct sockaddr_in *) &ai_addr)->sin_port = htons (0);
               else
-                ((struct sockaddr_in6 *) &ai_addr)->sin6_port = htons(0);
-            } else {
-              if (excontext->oc_local_port_current==0)
+                ((struct sockaddr_in6 *) &ai_addr)->sin6_port = htons (0);
+            }
+            else {
+              if (excontext->oc_local_port_current == 0)
                 excontext->oc_local_port_current = excontext->oc_local_port_range[0];
               /* reset value */
-              if (excontext->oc_local_port_current>=excontext->oc_local_port_range[1])
+              if (excontext->oc_local_port_current >= excontext->oc_local_port_range[1])
                 excontext->oc_local_port_current = excontext->oc_local_port_range[0];
 
               if (ai_addr.ss_family == AF_INET)
-                ((struct sockaddr_in *) &ai_addr)->sin_port = htons(excontext->oc_local_port_current);
+                ((struct sockaddr_in *) &ai_addr)->sin_port = htons (excontext->oc_local_port_current);
               else
-                ((struct sockaddr_in6 *) &ai_addr)->sin6_port = htons(excontext->oc_local_port_current);
+                ((struct sockaddr_in6 *) &ai_addr)->sin6_port = htons (excontext->oc_local_port_current);
 
             }
-            res = bind (sock, (const struct sockaddr *)&ai_addr, reserved->ai_addr_len);
+            res = bind (sock, (const struct sockaddr *) &ai_addr, reserved->ai_addr_len);
             if (res < 0) {
               OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_WARNING, NULL, "Cannot bind socket node:%s family:%d (port=%i) %s\n", excontext->eXtl_transport.proto_ifs, ai_addr.ss_family, excontext->oc_local_port_current, strerror (ex_errno)));
               count++;
-              if (excontext->oc_local_port_range[0]>=1024)
+              if (excontext->oc_local_port_range[0] >= 1024)
                 excontext->oc_local_port_current++;
               continue;
             }
-            if (excontext->oc_local_port_range[0]>=1024)
+            if (excontext->oc_local_port_range[0] >= 1024)
               excontext->oc_local_port_current++;
             break;
           }
         }
-      } else {
-        int count=0;
+      }
+      else {
+        int count = 0;
 
-        if (excontext->oc_local_port_range[0]<1024)
-          excontext->oc_local_port_range[0]=0;
-        while (count<100) {
+        if (excontext->oc_local_port_range[0] < 1024)
+          excontext->oc_local_port_range[0] = 0;
+        while (count < 100) {
           struct addrinfo *oc_addrinfo = NULL;
           struct addrinfo *oc_curinfo;
-          if (excontext->oc_local_port_current==0)
+
+          if (excontext->oc_local_port_current == 0)
             excontext->oc_local_port_current = excontext->oc_local_port_range[0];
-          if (excontext->oc_local_port_current>=excontext->oc_local_port_range[1])
+          if (excontext->oc_local_port_current >= excontext->oc_local_port_range[1])
             excontext->oc_local_port_current = excontext->oc_local_port_range[0];
 
-          _eXosip_get_addrinfo(excontext, &oc_addrinfo, excontext->oc_local_address, excontext->oc_local_port_current, IPPROTO_TCP);
-            
+          _eXosip_get_addrinfo (excontext, &oc_addrinfo, excontext->oc_local_address, excontext->oc_local_port_current, IPPROTO_TCP);
+
           for (oc_curinfo = oc_addrinfo; oc_curinfo; oc_curinfo = oc_curinfo->ai_next) {
-            if  (oc_curinfo->ai_protocol && oc_curinfo->ai_protocol != IPPROTO_TCP) {
+            if (oc_curinfo->ai_protocol && oc_curinfo->ai_protocol != IPPROTO_TCP) {
               OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO2, NULL, "Skipping protocol %d\n", oc_curinfo->ai_protocol));
               continue;
             }
             break;
           }
-          if (oc_curinfo==NULL) {
+          if (oc_curinfo == NULL) {
             OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO2, NULL, "not able to find any address to bind\n"));
             _eXosip_freeaddrinfo (oc_addrinfo);
             break;
           }
-          res = bind (sock, (const struct sockaddr *)oc_curinfo->ai_addr, (socklen_t)oc_curinfo->ai_addrlen);
+          res = bind (sock, (const struct sockaddr *) oc_curinfo->ai_addr, (socklen_t) oc_curinfo->ai_addrlen);
           if (res < 0) {
             OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_WARNING, NULL, "Cannot bind socket node:%s family:%d (port=%i) %s\n", excontext->oc_local_address, curinfo->ai_addr->sa_family, excontext->oc_local_port_current, strerror (ex_errno)));
             count++;
-            if (excontext->oc_local_port_range[0]!=0)
+            if (excontext->oc_local_port_range[0] != 0)
               excontext->oc_local_port_current++;
             continue;
           }
           _eXosip_freeaddrinfo (oc_addrinfo);
-          if (excontext->oc_local_port_range[0]!=0)
+          if (excontext->oc_local_port_range[0] != 0)
             excontext->oc_local_port_current++;
           break;
         }
@@ -2403,7 +2417,7 @@ _tls_tl_connect_socket (struct eXosip_t *excontext, char *host, int port, int re
     _eXosip_transport_set_dscp (excontext, curinfo->ai_family, sock);
 
     OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO2, NULL, "eXosip: socket node:%s , socket %d, family:%d set to non blocking mode\n", host, sock, curinfo->ai_family));
-    res = connect (sock, curinfo->ai_addr, (socklen_t)curinfo->ai_addrlen);
+    res = connect (sock, curinfo->ai_addr, (socklen_t) curinfo->ai_addrlen);
     if (res < 0) {
 #ifdef HAVE_WINSOCK2_H
       if (ex_errno != WSAEWOULDBLOCK) {
@@ -2420,7 +2434,7 @@ _tls_tl_connect_socket (struct eXosip_t *excontext, char *host, int port, int re
         res = _tls_tl_is_connected (sock);
         if (res > 0) {
           OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO2, NULL, "socket node:%s, socket %d [pos=%d], family:%d, in progress\n", host, sock, pos, curinfo->ai_family));
-          selected_ai_addrlen = (socklen_t)curinfo->ai_addrlen;
+          selected_ai_addrlen = (socklen_t) curinfo->ai_addrlen;
           memcpy (&selected_ai_addr, curinfo->ai_addr, sizeof (struct sockaddr));
           break;
         }
@@ -2477,7 +2491,7 @@ _tls_tl_connect_socket (struct eXosip_t *excontext, char *host, int port, int re
     reserved->socket_tab[pos].ssl_ctx = NULL;
 
     osip_strncpy (reserved->socket_tab[pos].sni_servernameindication, host, sizeof (reserved->socket_tab[pos].sni_servernameindication) - 1);
-    
+
     {
       struct sockaddr_storage local_ai_addr;
       socklen_t selected_ai_addrlen;
@@ -2512,12 +2526,13 @@ _tls_tl_connect_socket (struct eXosip_t *excontext, char *host, int port, int re
 static int
 _tls_tl_update_contact (struct eXosip_t *excontext, osip_message_t * req, char *natted_ip, int natted_port)
 {
-  if (req->application_data != (void*) 0x1)
+  if (req->application_data != (void *) 0x1)
     return OSIP_SUCCESS;
 
   if ((natted_ip != NULL && natted_ip[0] != '\0') || natted_port > 0) {
     osip_list_iterator_t it;
-    osip_contact_t* co = (osip_contact_t *)osip_list_get_first(&req->contacts, &it);
+    osip_contact_t *co = (osip_contact_t *) osip_list_get_first (&req->contacts, &it);
+
     while (co != NULL) {
       if (co != NULL && co->url != NULL && co->url->host != NULL) {
         if (natted_port > 0) {
@@ -2533,7 +2548,7 @@ _tls_tl_update_contact (struct eXosip_t *excontext, osip_message_t * req, char *
           osip_message_force_update (req);
         }
       }
-      co = (osip_contact_t *)osip_list_get_next(&it);
+      co = (osip_contact_t *) osip_list_get_next (&it);
     }
   }
 
@@ -2647,9 +2662,9 @@ tls_tl_send_message (struct eXosip_t *excontext, osip_transaction_t * tr, osip_m
 
         if (MSG_IS_REGISTER (sip) || MSG_IS_OPTIONS (sip)) {
           /* activate the failover capability: for no answer OR 503 */
-          if (naptr_record->siptls_record.srventry[naptr_record->siptls_record.index].srv_is_broken.tv_sec>0) {
-            naptr_record->siptls_record.srventry[naptr_record->siptls_record.index].srv_is_broken.tv_sec=0;
-            naptr_record->siptls_record.srventry[naptr_record->siptls_record.index].srv_is_broken.tv_usec=0;
+          if (naptr_record->siptls_record.srventry[naptr_record->siptls_record.index].srv_is_broken.tv_sec > 0) {
+            naptr_record->siptls_record.srventry[naptr_record->siptls_record.index].srv_is_broken.tv_sec = 0;
+            naptr_record->siptls_record.srventry[naptr_record->siptls_record.index].srv_is_broken.tv_usec = 0;
             if (eXosip_dnsutils_rotate_srv (&naptr_record->siptls_record) > 0) {
               OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO1, NULL,
                                       "Doing TLS failover: %s:%i->%s:%i\n", host, port, naptr_record->siptls_record.srventry[naptr_record->siptls_record.index].srv, naptr_record->siptls_record.srventry[naptr_record->siptls_record.index].port));
@@ -2720,21 +2735,22 @@ tls_tl_send_message (struct eXosip_t *excontext, osip_transaction_t * tr, osip_m
 
     /* Step 2: create new socket with host:port */
     if (pos < 0) {
-      if (tr==NULL) {
+      if (tr == NULL) {
         pos = _tls_tl_connect_socket (excontext, host, port, 0);
-        OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO1, NULL,
-                                "message out of transaction: trying to send to %s:%i\n", host, port));
-        if (pos<0) {
+        OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO1, NULL, "message out of transaction: trying to send to %s:%i\n", host, port));
+        if (pos < 0) {
           return -1;
         }
-      } else {
+      }
+      else {
         pos = _tls_tl_connect_socket (excontext, host, port, 0);
-        if (pos<0) {
+        if (pos < 0) {
           if (naptr_record != NULL && MSG_IS_REGISTER (sip)) {
             if (eXosip_dnsutils_rotate_srv (&naptr_record->siptls_record) > 0) {
               /* reg_call_id is not set! */
               _eXosip_mark_registration_expired (excontext, sip->call_id->number);
-              if (pos >= 0) _tls_tl_close_sockinfo (&reserved->socket_tab[pos]);
+              if (pos >= 0)
+                _tls_tl_close_sockinfo (&reserved->socket_tab[pos]);
               OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO1, NULL,
                                       "Doing TLS failover: %s:%i->%s:%i\n", host, port, naptr_record->siptls_record.srventry[naptr_record->siptls_record.index].srv, naptr_record->siptls_record.srventry[naptr_record->siptls_record.index].port));
             }
@@ -2747,7 +2763,7 @@ tls_tl_send_message (struct eXosip_t *excontext, osip_transaction_t * tr, osip_m
 
       if (MSG_IS_REGISTER (sip)) {
         /* this value is saved: when a connection breaks, we will ask to retry the registration */
-        snprintf(reserved->socket_tab[pos].reg_call_id, sizeof(reserved->socket_tab[pos].reg_call_id), "%s", sip->call_id->number);
+        snprintf (reserved->socket_tab[pos].reg_call_id, sizeof (reserved->socket_tab[pos].reg_call_id), "%s", sip->call_id->number);
       }
       out_socket = reserved->socket_tab[pos].socket;
       ssl = reserved->socket_tab[pos].ssl_conn;
@@ -2770,14 +2786,16 @@ tls_tl_send_message (struct eXosip_t *excontext, osip_transaction_t * tr, osip_m
     i = _tls_tl_is_connected (out_socket);
     if (i > 0) {
       time_t now;
-      if (tr!=NULL) {
+
+      if (tr != NULL) {
         now = osip_getsystemtime (NULL);
         OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO2, NULL, "socket node:%s, socket %d [pos=%d], in progress\n", host, out_socket, pos));
         if (tr != NULL && now - tr->birth_time > 10) {
           if (naptr_record != NULL && (MSG_IS_REGISTER (sip) || MSG_IS_OPTIONS (sip))) {
             if (eXosip_dnsutils_rotate_srv (&naptr_record->siptls_record) > 0) {
               _eXosip_mark_registration_expired (excontext, reserved->socket_tab[pos].reg_call_id);
-              if (pos >= 0) _tls_tl_close_sockinfo (&reserved->socket_tab[pos]);
+              if (pos >= 0)
+                _tls_tl_close_sockinfo (&reserved->socket_tab[pos]);
               OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO1, NULL,
                                       "Doing TLS failover: %s:%i->%s:%i\n", host, port, naptr_record->siptls_record.srventry[naptr_record->siptls_record.index].srv, naptr_record->siptls_record.srventry[naptr_record->siptls_record.index].port));
               return -1;
@@ -2834,11 +2852,11 @@ tls_tl_send_message (struct eXosip_t *excontext, osip_transaction_t * tr, osip_m
   }
 #endif
 
-  _eXosip_request_viamanager(excontext, tr, sip, reserved->socket_tab[pos].ai_addr.sa_family, IPPROTO_TCP, NULL, reserved->socket_tab[pos].ephemeral_port, reserved->socket_tab[pos].socket, host);
-  if (excontext->use_ephemeral_port==1)
-    _eXosip_message_contactmanager(excontext, tr, sip, reserved->socket_tab[pos].ai_addr.sa_family, IPPROTO_TCP, NULL, reserved->socket_tab[pos].ephemeral_port, reserved->socket_tab[pos].socket, host);
+  _eXosip_request_viamanager (excontext, tr, sip, reserved->socket_tab[pos].ai_addr.sa_family, IPPROTO_TCP, NULL, reserved->socket_tab[pos].ephemeral_port, reserved->socket_tab[pos].socket, host);
+  if (excontext->use_ephemeral_port == 1)
+    _eXosip_message_contactmanager (excontext, tr, sip, reserved->socket_tab[pos].ai_addr.sa_family, IPPROTO_TCP, NULL, reserved->socket_tab[pos].ephemeral_port, reserved->socket_tab[pos].socket, host);
   else
-    _eXosip_message_contactmanager(excontext, tr, sip, reserved->socket_tab[pos].ai_addr.sa_family, IPPROTO_TCP, NULL, excontext->eXtl_transport.proto_local_port, reserved->socket_tab[pos].socket, host);
+    _eXosip_message_contactmanager (excontext, tr, sip, reserved->socket_tab[pos].ai_addr.sa_family, IPPROTO_TCP, NULL, excontext->eXtl_transport.proto_local_port, reserved->socket_tab[pos].socket, host);
   if (excontext->tls_firewall_ip[0] != '\0' || excontext->auto_masquerade_contact > 0)
     _tls_tl_update_contact (excontext, sip, reserved->socket_tab[pos].natted_ip, reserved->socket_tab[pos].natted_port);
 
@@ -2848,12 +2866,12 @@ tls_tl_send_message (struct eXosip_t *excontext, osip_transaction_t * tr, osip_m
     osip_route_t *route = NULL;
     osip_generic_param_t *tag = NULL;
 
-    if (excontext->remove_prerouteset>0) {
+    if (excontext->remove_prerouteset > 0) {
       osip_message_get_route (sip, 0, &route);
       osip_to_get_tag (sip->to, &tag);
       if (tag == NULL && route != NULL && route->url != NULL) {
         osip_list_remove (&sip->routes, 0);
-        osip_message_force_update(sip);
+        osip_message_force_update (sip);
       }
     }
     i = osip_message_to_str (sip, &message, &length);
@@ -2897,7 +2915,8 @@ tls_tl_send_message (struct eXosip_t *excontext, osip_transaction_t * tr, osip_m
       print_ssl_error (i);
 
       osip_free (message);
-      if (pos >= 0) _tls_tl_close_sockinfo (&reserved->socket_tab[pos]);
+      if (pos >= 0)
+        _tls_tl_close_sockinfo (&reserved->socket_tab[pos]);
       return -1;
     }
     length = length - i;
@@ -2906,7 +2925,7 @@ tls_tl_send_message (struct eXosip_t *excontext, osip_transaction_t * tr, osip_m
 
   osip_free (message);
 
-  if (tr!=NULL && MSG_IS_REGISTER(sip) && pos>=0) {
+  if (tr != NULL && MSG_IS_REGISTER (sip) && pos >= 0) {
     /* start a timeout to destroy connection if no answer */
     reserved->socket_tab[pos].tcp_max_timeout = osip_getsystemtime (NULL) + 32;
   }
@@ -3009,7 +3028,7 @@ tls_tl_get_masquerade_contact (struct eXosip_t *excontext, char *ip, int ip_size
 static int
 tls_tl_update_contact (struct eXosip_t *excontext, osip_message_t * req)
 {
-  req->application_data = (void*) 0x1; /* request for masquerading */
+  req->application_data = (void *) 0x1; /* request for masquerading */
   return OSIP_SUCCESS;
 }
 
@@ -3030,28 +3049,26 @@ tls_tl_check_connection (struct eXosip_t *excontext)
   for (pos = 0; pos < EXOSIP_MAX_SOCKETS; pos++) {
 
     if (reserved->socket_tab[pos].socket > 0 && reserved->socket_tab[pos].ssl_state > 2)
-      reserved->socket_tab[pos].tcp_inprogress_max_timeout=0; /* reset value */
+      reserved->socket_tab[pos].tcp_inprogress_max_timeout = 0; /* reset value */
 
-    if (reserved->socket_tab[pos].socket > 0 && reserved->socket_tab[pos].ssl_state <= 2
-      && reserved->socket_tab[pos].tcp_inprogress_max_timeout>0) {
+    if (reserved->socket_tab[pos].socket > 0 && reserved->socket_tab[pos].ssl_state <= 2 && reserved->socket_tab[pos].tcp_inprogress_max_timeout > 0) {
       time_t now = osip_getsystemtime (NULL);
+
       if (now > reserved->socket_tab[pos].tcp_inprogress_max_timeout) {
-        OSIP_TRACE (osip_trace
-          (__FILE__, __LINE__, OSIP_INFO2, NULL, "tls_tl_check_connection socket is in progress since 32 seconds / close socket\n"));
-        reserved->socket_tab[pos].tcp_inprogress_max_timeout=0;
+        OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO2, NULL, "tls_tl_check_connection socket is in progress since 32 seconds / close socket\n"));
+        reserved->socket_tab[pos].tcp_inprogress_max_timeout = 0;
         _eXosip_mark_registration_expired (excontext, reserved->socket_tab[pos].reg_call_id);
         _tls_tl_close_sockinfo (&reserved->socket_tab[pos]);
         continue;
       }
     }
 
-    if (reserved->socket_tab[pos].socket > 0 && reserved->socket_tab[pos].ssl_state > 2
-      && reserved->socket_tab[pos].tcp_max_timeout>0) {
+    if (reserved->socket_tab[pos].socket > 0 && reserved->socket_tab[pos].ssl_state > 2 && reserved->socket_tab[pos].tcp_max_timeout > 0) {
       time_t now = osip_getsystemtime (NULL);
+
       if (now > reserved->socket_tab[pos].tcp_max_timeout) {
-        OSIP_TRACE (osip_trace
-          (__FILE__, __LINE__, OSIP_INFO2, NULL, "tls_tl_check_connection we expected a reply on established sockets / close socket\n"));
-        reserved->socket_tab[pos].tcp_max_timeout=0;
+        OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO2, NULL, "tls_tl_check_connection we expected a reply on established sockets / close socket\n"));
+        reserved->socket_tab[pos].tcp_max_timeout = 0;
         _eXosip_mark_registration_expired (excontext, reserved->socket_tab[pos].reg_call_id);
         _tls_tl_close_sockinfo (&reserved->socket_tab[pos]);
         continue;

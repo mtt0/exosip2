@@ -52,7 +52,7 @@ _eXosip_reg_init (struct eXosip_t *excontext, eXosip_reg_t ** jr, const char *fr
   if (*jr == NULL)
     return OSIP_NOMEM;
 
-  if (r_id == INT_MAX)            /* keep it non-negative */
+  if (r_id == INT_MAX)          /* keep it non-negative */
     r_id = 0;
 
   memset (*jr, '\0', sizeof (eXosip_reg_t));
@@ -122,9 +122,10 @@ _eXosip_reg_init (struct eXosip_t *excontext, eXosip_reg_t ** jr, const char *fr
 #ifndef MINISIZE
   {
     struct timeval now;
+
     excontext->statistics.allocated_registrations++;
-    osip_gettimeofday(&now, NULL);
-    _eXosip_counters_update(&excontext->average_registrations, 1, &now);
+    osip_gettimeofday (&now, NULL);
+    _eXosip_counters_update (&excontext->average_registrations, 1, &now);
   }
 #endif
   return OSIP_SUCCESS;

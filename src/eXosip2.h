@@ -239,7 +239,7 @@ extern "C" {
 #define _SS_PAD1SIZE (_SS_ALIGNSIZE - sizeof (unsigned short))
 #define _SS_PAD2SIZE (_SS_MAXSIZE - (sizeof (unsigned short)+ _SS_PAD1SIZE + _SS_ALIGNSIZE))
   struct sockaddr_storage {
-    unsigned short  ss_family;
+    unsigned short ss_family;
     char _ss_pad1[_SS_PAD1SIZE];
     int64_t _ss_align;
     char _ss_pad2[_SS_PAD2SIZE];
@@ -275,7 +275,7 @@ extern "C" {
 #define _SS_PAD1SIZE (_SS_ALIGNSIZE - sizeof (unsigned short))
 #define _SS_PAD2SIZE (_SS_MAXSIZE - (sizeof (unsigned short)+ _SS_PAD1SIZE + _SS_ALIGNSIZE))
   struct sockaddr_storage {
-    unsigned short  ss_family;
+    unsigned short ss_family;
     char _ss_pad1[_SS_PAD1SIZE];
     int64_t _ss_align;
     char _ss_pad2[_SS_PAD2SIZE];
@@ -477,16 +477,16 @@ extern "C" {
 #define MAX_EXOSIP_HTTP_AUTH 100
 #endif
 
-struct eXosip_counters {
-  float current_average;
-  unsigned int num_entries;
-  unsigned short period; /* total max duration */
-  unsigned short interval; /* minimum interval */
-  unsigned short *values;
-  struct timeval *times;
-  unsigned int index_last;
-  unsigned int total_values;
-};
+  struct eXosip_counters {
+    float current_average;
+    unsigned int num_entries;
+    unsigned short period;      /* total max duration */
+    unsigned short interval;    /* minimum interval */
+    unsigned short *values;
+    struct timeval *times;
+    unsigned int index_last;
+    unsigned int total_values;
+  };
 
   typedef struct eXosip_t eXosip_t;
 
@@ -532,7 +532,7 @@ struct eXosip_counters {
 #endif
     int max_message_to_read;
     long int max_read_timeout;
-    
+
     osip_fifo_t *j_events;
 
     jauthinfo_t *authinfos;
@@ -590,7 +590,7 @@ struct eXosip_counters {
     int outgoing_wake_lock_state;
     int incoming_wake_lock_state;
 
-    char sip_instance[37]; /* can only be used if ONE excontext is used for ONE registration only */
+    char sip_instance[37];      /* can only be used if ONE excontext is used for ONE registration only */
     char default_contact_displayname[256];
     int opt_sessiontimers_force;
   };
@@ -599,9 +599,9 @@ struct eXosip_counters {
   int _eXosip_guess_ip_for_destination (struct eXosip_t *excontext, int family, char *destination, char *address, int size);
   int _eXosip_guess_ip_for_destinationsock (struct eXosip_t *excontext, int family, int proto, struct sockaddr_storage *udp_local_bind, int sock, char *destination, char *address, int size);
 
-  int _eXosip_closesocket(SOCKET_TYPE sock);
-  int _eXosip_getnameinfo(const struct sockaddr *sa, socklen_t salen, char *host, socklen_t hostlen, char *serv, socklen_t servlen, int flags);
-  int _eXosip_getport(const struct sockaddr *sa, socklen_t salen);
+  int _eXosip_closesocket (SOCKET_TYPE sock);
+  int _eXosip_getnameinfo (const struct sockaddr *sa, socklen_t salen, char *host, socklen_t hostlen, char *serv, socklen_t servlen, int flags);
+  int _eXosip_getport (const struct sockaddr *sa, socklen_t salen);
   int _eXosip_get_addrinfo (struct eXosip_t *excontext, struct addrinfo **addrinfo, const char *hostname, int service, int protocol);
 
   int _eXosip_set_callbacks (osip_t * osip);
@@ -617,9 +617,9 @@ struct eXosip_counters {
   int _eXosip_generating_publish (struct eXosip_t *excontext, osip_message_t ** message, const char *to, const char *from, const char *route);
   int _eXosip_generating_cancel (struct eXosip_t *excontext, osip_message_t ** dest, osip_message_t * request_cancelled);
   int _eXosip_generating_bye (struct eXosip_t *excontext, osip_message_t ** bye, osip_dialog_t * dialog);
-  int _eXosip_request_viamanager(struct eXosip_t *excontext, osip_transaction_t * tr, osip_message_t * sip, int family, int proto, struct sockaddr_storage *udp_local_bind, int local_port, int sock, char *host);
-  int _eXosip_message_contactmanager(struct eXosip_t *excontext, osip_transaction_t * tr, osip_message_t * sip, int family, int proto, struct sockaddr_storage *udp_local_bind, int local_port, int sock, char *host);
-  
+  int _eXosip_request_viamanager (struct eXosip_t *excontext, osip_transaction_t * tr, osip_message_t * sip, int family, int proto, struct sockaddr_storage *udp_local_bind, int local_port, int sock, char *host);
+  int _eXosip_message_contactmanager (struct eXosip_t *excontext, osip_transaction_t * tr, osip_message_t * sip, int family, int proto, struct sockaddr_storage *udp_local_bind, int local_port, int sock, char *host);
+
   int _eXosip_update_top_via (struct eXosip_t *excontext, osip_message_t * sip);
   int _eXosip_request_add_via (struct eXosip_t *excontext, osip_message_t * request);
 
@@ -699,7 +699,7 @@ struct eXosip_counters {
   int _eXosip_dialog_add_contact (struct eXosip_t *excontext, osip_message_t * request);
 
   int _eXosip_transaction_init (struct eXosip_t *excontext, osip_transaction_t ** transaction, osip_fsm_type_t ctx_type, osip_t * osip, osip_message_t * message);
-  void _eXosip_transaction_free (struct eXosip_t *excontext, osip_transaction_t *transaction);
+  void _eXosip_transaction_free (struct eXosip_t *excontext, osip_transaction_t * transaction);
 
   int _eXosip_srv_lookup (struct eXosip_t *excontext, osip_message_t * sip, osip_naptr_t ** naptr_record);
 
@@ -730,18 +730,18 @@ struct eXosip_counters {
   */
   eXosip_tls_ctx_error eXosip_tls_verify_certificate (struct eXosip_t *excontext, int _tls_verify_client_certificate);
 
-  
+
 #ifndef EXOSIP_STATS_PERIOD
-#define EXOSIP_STATS_PERIOD 3600  /* default period in seconds */
+#define EXOSIP_STATS_PERIOD 3600        /* default period in seconds */
 #endif
 #ifndef EXOSIP_STATS_INTERVAL
-#define EXOSIP_STATS_INTERVAL 60 /* default interval in seconds */
+#define EXOSIP_STATS_INTERVAL 60        /* default interval in seconds */
 #endif
 
 #ifndef MINISIZE
-  void _eXosip_counters_init(struct eXosip_counters *bw_stats, int period, int interval);
-  void _eXosip_counters_update(struct eXosip_counters *bw_stats, int nvalues, struct timeval *now);
-  void _eXosip_counters_free(struct eXosip_counters *bw_stats);
+  void _eXosip_counters_init (struct eXosip_counters *bw_stats, int period, int interval);
+  void _eXosip_counters_update (struct eXosip_counters *bw_stats, int nvalues, struct timeval *now);
+  void _eXosip_counters_free (struct eXosip_counters *bw_stats);
 #else
 #define _eXosip_counters_init(A, B, C)
 #define _eXosip_counters_update(A, B, C)
