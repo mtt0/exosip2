@@ -1257,7 +1257,13 @@ _eXosip_process_response_out_of_transaction (struct eXosip_t *excontext, osip_ev
     return;
   }
 
-  if (evt->sip->status_code<200 && evt->sip->status_code > 299) {
+  /* fix 31/01/2019: */
+  if (evt->sip->status_code < 200) {
+    osip_event_free(evt);
+    return;
+  }
+  if (evt->sip->status_code > 299) {
+    /* TODO: we should send an ACK for negative answer */
     osip_event_free(evt);
     return;
   }
