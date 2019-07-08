@@ -226,7 +226,7 @@ shutdown_free_client_dtls (struct eXosip_t *excontext, int pos)
   if (reserved->socket_tab[pos].ssl_type == 2) {
     if (reserved->socket_tab[pos].ssl_conn != NULL) {
 
-      i = _eXosip_get_addrinfo (NULL, &addrinfo, reserved->socket_tab[pos].remote_ip, reserved->socket_tab[pos].remote_port, IPPROTO_UDP);
+      i = _eXosip_get_addrinfo (excontext, &addrinfo, reserved->socket_tab[pos].remote_ip, reserved->socket_tab[pos].remote_port, IPPROTO_UDP);
       if (i != 0) {
         return -1;
       }
