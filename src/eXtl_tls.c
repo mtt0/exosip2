@@ -1272,8 +1272,8 @@ tls_tl_set_fdset (struct eXosip_t *excontext, fd_set * osip_fdset, fd_set * osip
   return OSIP_SUCCESS;
 }
 
-int static
-print_ssl_error (int err)
+static int
+_tls_print_ssl_error (int err)
 {
   switch (err) {
   case SSL_ERROR_NONE:
@@ -1664,7 +1664,7 @@ _tls_tl_ssl_connect_socket (struct eXosip_t *excontext, struct _tls_stream *sock
     }
 
     if (res != SSL_ERROR_WANT_READ && res != SSL_ERROR_WANT_WRITE) {
-      print_ssl_error (res);
+      _tls_print_ssl_error (res);
       OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "SSL_connect error\n"));
 
       /* any transaction here should fail? --> but this is called from _tls_tl_recv not the send side... */
@@ -1739,7 +1739,7 @@ _tls_tl_ssl_connect_socket (struct eXosip_t *excontext, struct _tls_stream *sock
 /* Like strstr, but works for haystack that may contain binary data and is
    not NUL-terminated. */
 static char *
-buffer_find (const char *haystack, size_t haystack_len, const char *needle)
+_tls_buffer_find (const char *haystack, size_t haystack_len, const char *needle)
 {
   const char *search = haystack, *end = haystack + haystack_len;
   char *p;
@@ -1766,14 +1766,14 @@ buffer_find (const char *haystack, size_t haystack_len, const char *needle)
 /* consume any complete messages in sockinfo->buf and
    return the total number of bytes consumed */
 static int
-handle_messages (struct eXosip_t *excontext, struct _tls_stream *sockinfo)
+_tls_handle_messages (struct eXosip_t *excontext, struct _tls_stream *sockinfo)
 {
   int consumed = 0;
   char *buf = sockinfo->buf;
   size_t buflen = sockinfo->buflen;
   char *end_headers;
 
-  while (buflen > 0 && (end_headers = buffer_find (buf, buflen, END_HEADERS_STR)) != NULL) {
+  while (buflen > 0 && (end_headers = _tls_buffer_find (buf, buflen, END_HEADERS_STR)) != NULL) {
     int clen, msglen;
     char *clen_header;
 
@@ -1900,7 +1900,7 @@ _tls_tl_recv (struct eXosip_t *excontext, struct _tls_stream *sockinfo)
     r = SSL_do_handshake (sockinfo->ssl_conn);
     if (r <= 0) {
       r = SSL_get_error (sockinfo->ssl_conn, r);
-      print_ssl_error (r);
+      _tls_print_ssl_error (r);
 
       _tls_tl_close_sockinfo (sockinfo);
       return OSIP_SUCCESS;
@@ -1924,7 +1924,7 @@ _tls_tl_recv (struct eXosip_t *excontext, struct _tls_stream *sockinfo)
         break;
       }
       else {
-        print_ssl_error (err);
+        _tls_print_ssl_error (err);
         /*
            The TLS/SSL connection has been closed.  If the protocol version
            is SSL 3.0 or TLS 1.0, this result code is returned only if a
@@ -1964,7 +1964,7 @@ _tls_tl_recv (struct eXosip_t *excontext, struct _tls_stream *sockinfo)
     sockinfo->tcp_max_timeout = 0;
     OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO1, NULL, "socket %s:%i: read %d bytes\n", sockinfo->remote_ip, sockinfo->remote_port, r));
     sockinfo->buflen += rlen;
-    consumed = handle_messages (excontext, sockinfo);
+    consumed = _tls_handle_messages (excontext, sockinfo);
     if (consumed != 0) {
       if (sockinfo->buflen > consumed) {
         memmove (sockinfo->buf, sockinfo->buf + consumed, sockinfo->buflen - consumed);
@@ -2077,7 +2077,7 @@ tls_tl_read_message (struct eXosip_t *excontext, fd_set * osip_fdset, fd_set * o
       if (i <= 0) {
         OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "SSL_accept error: %s\n", ERR_error_string (ERR_get_error (), NULL)));
         i = SSL_get_error (ssl, i);
-        print_ssl_error (i);
+        _tls_print_ssl_error (i);
 
 
         SSL_shutdown (ssl);
@@ -2912,7 +2912,7 @@ tls_tl_send_message (struct eXosip_t *excontext, osip_transaction_t * tr, osip_m
       i = SSL_get_error (ssl, i);
       if (i == SSL_ERROR_WANT_READ || i == SSL_ERROR_WANT_WRITE)
         continue;
-      print_ssl_error (i);
+      _tls_print_ssl_error (i);
 
       osip_free (message);
       if (pos >= 0)
@@ -2962,7 +2962,7 @@ tls_tl_keepalive (struct eXosip_t *excontext)
             i = SSL_get_error (reserved->socket_tab[pos].ssl_conn, i);
             if (i == SSL_ERROR_WANT_READ || i == SSL_ERROR_WANT_WRITE)
               continue;
-            print_ssl_error (i);
+            _tls_print_ssl_error (i);
           }
           break;
         }
