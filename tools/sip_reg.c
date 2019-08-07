@@ -157,6 +157,9 @@ main (int argc, char *argv[])
   int nofork = 0;
   int err;
 
+#ifdef SIGPIPE
+  signal (SIGPIPE, SIG_IGN);
+#endif
 #ifdef __linux
   signal (SIGINT, intHandler);
 #endif
