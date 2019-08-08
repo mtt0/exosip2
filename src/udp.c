@@ -1645,6 +1645,28 @@ _eXosip_handle_incoming_message (struct eXosip_t *excontext, char *buf, size_t l
 #define eXFD_SET(A, B)   FD_SET(A, B)
 #endif
 
+static int
+_wakelock_handle_incoming (struct eXosip_t *excontext, int err, int my_errno)
+{
+#if !defined (_WIN32_WCE)
+  /* TODO: fix me for wince */
+  if ((err == -1) && (my_errno == EINTR || my_errno == EAGAIN)) {
+    if (excontext->cbsipWakeLock != NULL && excontext->incoming_wake_lock_state > 0) {
+      int count = osip_list_size (&excontext->j_osip->osip_ist_transactions);
+
+      count += osip_list_size (&excontext->j_osip->osip_nist_transactions);
+      if (count == 0) {
+        excontext->cbsipWakeLock (0);
+        excontext->incoming_wake_lock_state = 0;
+      }
+    }
+
+    return OSIP_SUCCESS;
+  }
+#endif
+  return OSIP_UNDEFINED_ERROR;
+}
+
 /* if second==-1 && useconds==-1  -> wait for ever
    if max_message_nb<=0  -> infinite loop....  */
 int
@@ -1734,22 +1756,8 @@ _eXosip_read_message (struct eXosip_t *excontext, int max_message_nb, int sec_ma
       i = select (max + 1, &osip_fdset, &osip_wrset, NULL, &tv);
 #endif
 
-#if !defined (_WIN32_WCE)
-    /* TODO: fix me for wince */
-    if ((i == -1) && (errno == EINTR || errno == EAGAIN)) {
-      if (excontext->cbsipWakeLock != NULL && excontext->incoming_wake_lock_state > 0) {
-        int count = osip_list_size (&excontext->j_osip->osip_ist_transactions);
-
-        count += osip_list_size (&excontext->j_osip->osip_nist_transactions);
-        if (count == 0) {
-          excontext->cbsipWakeLock (0);
-          excontext->incoming_wake_lock_state = 0;
-        }
-      }
-
+    if (_wakelock_handle_incoming (excontext, i, errno) == OSIP_SUCCESS)
       continue;
-    }
-#endif
 
     osip_compensatetime ();
 
