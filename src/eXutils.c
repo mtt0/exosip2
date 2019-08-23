@@ -2112,6 +2112,36 @@ _naptr_callback (void *arg, int status, int timeouts, unsigned char *abuf, int a
 }
 
 static int
+eXosip_dnsutils_cares_process (struct osip_naptr *output_record, ares_channel channel)
+{
+  fd_set read_fds, write_fds;
+  struct timeval *tvp, tv;
+  int nfds;
+  int count;
+
+  FD_ZERO (&read_fds);
+  FD_ZERO (&write_fds);
+  nfds = ares_fds (channel, &read_fds, &write_fds);
+  if (nfds != 0) {
+    tvp = ares_timeout (channel, NULL, &tv);
+    tvp->tv_sec = 0;
+    tvp->tv_usec = 0;
+    count = select (nfds, &read_fds, &write_fds, NULL, tvp);
+    if (count < 0 && SOCKERRNO != EINVAL) {
+      output_record->arg = NULL;
+      ares_destroy (channel);
+      return OSIP_UNDEFINED_ERROR;
+    }
+    ares_process (channel, &read_fds, &write_fds);
+
+    FD_ZERO (&read_fds);
+    FD_ZERO (&write_fds);
+    nfds = ares_fds (channel, &read_fds, &write_fds);
+  }
+  return nfds;
+}
+
+static int
 eXosip_dnsutils_srv_lookup (struct osip_naptr *output_record, const char *dnsserver)
 {
   ares_channel channel = NULL;
@@ -2125,31 +2155,13 @@ eXosip_dnsutils_srv_lookup (struct osip_naptr *output_record, const char *dnsser
 
     channel = output_record->arg;
     {
-      fd_set read_fds, write_fds;
-      struct timeval *tvp, tv;
       int nfds;
-      int count;
 
-      FD_ZERO (&read_fds);
-      FD_ZERO (&write_fds);
-      nfds = ares_fds (channel, &read_fds, &write_fds);
-      if (nfds != 0) {
-        tvp = ares_timeout (channel, NULL, &tv);
-        tvp->tv_sec = 0;
-        tvp->tv_usec = 0;
-        count = select (nfds, &read_fds, &write_fds, NULL, tvp);
-        if (count < 0 && SOCKERRNO != EINVAL) {
-          OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO2, NULL, "eXosip_dnsutils_srv_lookup: select failed ('%s SRV')\n", output_record->domain));
-          output_record->naptr_state = OSIP_NAPTR_STATE_RETRYLATER;
-          output_record->arg = NULL;
-          ares_destroy (channel);
-          return OSIP_UNDEFINED_ERROR;
-        }
-        ares_process (channel, &read_fds, &write_fds);
-
-        FD_ZERO (&read_fds);
-        FD_ZERO (&write_fds);
-        nfds = ares_fds (channel, &read_fds, &write_fds);
+      nfds = eXosip_dnsutils_cares_process (output_record, channel);
+      if (nfds < 0) {
+        OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "eXosip_dnsutils_srv_lookup: select failed ('%s SRV')\n", output_record->domain));
+        output_record->naptr_state = OSIP_NAPTR_STATE_RETRYLATER;
+        return OSIP_UNDEFINED_ERROR;
       }
 
       if (nfds == 0) {
@@ -2245,31 +2257,13 @@ eXosip_dnsutils_srv_lookup (struct osip_naptr *output_record, const char *dnsser
   }
 
   {
-    fd_set read_fds, write_fds;
-    struct timeval *tvp, tv;
     int nfds;
-    int count;
 
-    FD_ZERO (&read_fds);
-    FD_ZERO (&write_fds);
-    nfds = ares_fds (channel, &read_fds, &write_fds);
-    if (nfds != 0) {
-      tvp = ares_timeout (channel, NULL, &tv);
-      tvp->tv_sec = 0;
-      tvp->tv_usec = 0;
-      count = select (nfds, &read_fds, &write_fds, NULL, tvp);
-      if (count < 0 && SOCKERRNO != EINVAL) {
-        OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "eXosip_dnsutils_srv_lookup: select failed ('%s SRV')\n", output_record->domain));
-        output_record->naptr_state = OSIP_NAPTR_STATE_RETRYLATER;
-        output_record->arg = NULL;
-        ares_destroy (channel);
-        return OSIP_UNDEFINED_ERROR;
-      }
-      ares_process (channel, &read_fds, &write_fds);
-
-      FD_ZERO (&read_fds);
-      FD_ZERO (&write_fds);
-      nfds = ares_fds (channel, &read_fds, &write_fds);
+    nfds = eXosip_dnsutils_cares_process (output_record, channel);
+    if (nfds < 0) {
+      OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "eXosip_dnsutils_srv_lookup: select failed ('%s SRV')\n", output_record->domain));
+      output_record->naptr_state = OSIP_NAPTR_STATE_RETRYLATER;
+      return OSIP_UNDEFINED_ERROR;
     }
 
     if (nfds == 0) {
@@ -2349,32 +2343,15 @@ eXosip_dnsutils_naptr_lookup (osip_naptr_t * output_record, const char *domain, 
   OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO2, NULL, "eXosip_dnsutils_naptr_lookup: About to ask for '%s NAPTR'\n", domain));
 
   {
-    fd_set read_fds, write_fds;
-    struct timeval *tvp, tv;
     int nfds;
-    int count;
 
-    FD_ZERO (&read_fds);
-    FD_ZERO (&write_fds);
-    nfds = ares_fds (channel, &read_fds, &write_fds);
-    if (nfds != 0) {
-      tvp = ares_timeout (channel, NULL, &tv);
-      tvp->tv_sec = 0;
-      tvp->tv_usec = 0;
-      count = select (nfds, &read_fds, &write_fds, NULL, tvp);
-      if (count < 0 && SOCKERRNO != EINVAL) {
-        OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "eXosip_dnsutils_naptr_lookup: select failed ('%s NAPTR')\n", domain));
-        output_record->arg = NULL;
-        ares_destroy (channel);
-        output_record->naptr_state = OSIP_NAPTR_STATE_RETRYLATER;
-        return OSIP_UNDEFINED_ERROR;
-      }
-      ares_process (channel, &read_fds, &write_fds);
-
-      FD_ZERO (&read_fds);
-      FD_ZERO (&write_fds);
-      nfds = ares_fds (channel, &read_fds, &write_fds);
+    nfds = eXosip_dnsutils_cares_process (output_record, channel);
+    if (nfds < 0) {
+      OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "eXosip_dnsutils_naptr_lookup: select failed ('%s NAPTR')\n", domain));
+      output_record->naptr_state = OSIP_NAPTR_STATE_RETRYLATER;
+      return OSIP_UNDEFINED_ERROR;
     }
+
     if (nfds == 0) {
       if (output_record->naptr_state != OSIP_NAPTR_STATE_NAPTRDONE) {
         /* don't need channel any more */
@@ -2632,31 +2609,14 @@ eXosip_dnsutils_dns_process (osip_naptr_t * naptr_record, int force)
 
   /* in "keep_in_cache" use-case (REGISTER), we delayed completion. */
   for (;;) {
-    fd_set read_fds, write_fds;
-    struct timeval *tvp, tv;
     int nfds;
-    int count;
 
-    FD_ZERO (&read_fds);
-    FD_ZERO (&write_fds);
-    nfds = ares_fds (channel, &read_fds, &write_fds);
-    if (nfds != 0) {
-      tvp = ares_timeout (channel, NULL, &tv);
-      tvp->tv_sec = 0;
-      tvp->tv_usec = 0;
-      count = select (nfds, &read_fds, &write_fds, NULL, tvp);
-      if (count < 0 && SOCKERRNO != EINVAL) {
-        OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO2, NULL, "eXosip_dnsutils_dns_process: select failed ('%s')\n", naptr_record->domain));
-        ares_destroy (channel);
-        naptr_record->arg = NULL;
-        return OSIP_UNDEFINED_ERROR;
-      }
-      ares_process (channel, &read_fds, &write_fds);
-
-      FD_ZERO (&read_fds);
-      FD_ZERO (&write_fds);
-      nfds = ares_fds (channel, &read_fds, &write_fds);
+    nfds = eXosip_dnsutils_cares_process (naptr_record, channel);
+    if (nfds < 0) {
+      OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "eXosip_dnsutils_srv_lookup: select failed ('%s')\n", naptr_record->domain));
+      return OSIP_UNDEFINED_ERROR;
     }
+
     if (nfds == 0) {
       if (naptr_record->naptr_state == OSIP_NAPTR_STATE_NAPTRDONE || naptr_record->naptr_state == OSIP_NAPTR_STATE_SRVINPROGRESS) {
         /* missing SRV */
