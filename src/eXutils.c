@@ -2111,6 +2111,77 @@ _naptr_callback (void *arg, int status, int timeouts, unsigned char *abuf, int a
   }
 }
 
+#ifdef HAVE_SYS_EPOLL_H
+
+static int
+eXosip_dnsutils_cares_process (struct osip_naptr *output_record, ares_channel channel)
+{
+  ares_socket_t socks[16] = {ARES_SOCKET_BAD,
+			    ARES_SOCKET_BAD,
+			    ARES_SOCKET_BAD,
+			    ARES_SOCKET_BAD,
+			    ARES_SOCKET_BAD,
+			    ARES_SOCKET_BAD,
+			    ARES_SOCKET_BAD,
+			    ARES_SOCKET_BAD,
+			    ARES_SOCKET_BAD,
+			    ARES_SOCKET_BAD,
+			    ARES_SOCKET_BAD,
+			    ARES_SOCKET_BAD,
+			    ARES_SOCKET_BAD,
+			    ARES_SOCKET_BAD,
+			    ARES_SOCKET_BAD,
+			    ARES_SOCKET_BAD,
+  };
+
+  int bitmask = ares_getsock (channel, socks, 16);
+  if (bitmask != 0) {
+    int num;
+    int nfds;
+    int epfd;
+    int n;
+    struct epoll_event ep_array[16];
+    
+    epfd = epoll_create (16);
+    if (epfd < 0) {
+      output_record->arg = NULL;
+      ares_destroy (channel);
+      return OSIP_UNDEFINED_ERROR;
+    }
+    
+    for (num=0;num<ARES_GETSOCK_MAXNUM;num++) {
+      struct epoll_event ev;
+
+      if (socks[num]==ARES_SOCKET_BAD)
+	continue;
+      
+      ev.events = EPOLLIN | EPOLLET;
+      if (ARES_GETSOCK_READABLE(bitmask, num)) {
+	ev.events |= EPOLLIN;
+      } else if (ARES_GETSOCK_WRITABLE(bitmask, num)) {
+	ev.events |= EPOLLOUT;
+      }
+      ev.data.fd = socks[num];
+      epoll_ctl(epfd, EPOLL_CTL_ADD, socks[num], &ev);
+    }
+    nfds = epoll_wait (epfd, ep_array, 16, 0);
+    if (nfds < 0 && SOCKERRNO != EINVAL) {
+      output_record->arg = NULL;
+      ares_destroy (channel);
+      return OSIP_UNDEFINED_ERROR;
+    }
+
+    for (n = 0; n < nfds; ++n) {
+      ares_process_fd(channel, ep_array[n].data.fd, ep_array[n].data.fd);
+    }
+
+    bitmask = ares_getsock (channel, socks, 16);
+  }
+  return bitmask;
+}
+
+#else
+
 static int
 eXosip_dnsutils_cares_process (struct osip_naptr *output_record, ares_channel channel)
 {
@@ -2140,6 +2211,8 @@ eXosip_dnsutils_cares_process (struct osip_naptr *output_record, ares_channel ch
   }
   return nfds;
 }
+
+#endif
 
 static int
 eXosip_dnsutils_srv_lookup (struct osip_naptr *output_record, const char *dnsserver)

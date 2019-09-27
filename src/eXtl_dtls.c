@@ -1216,6 +1216,9 @@ static struct eXtl_protocol eXtl_dtls = {
   &dtls_tl_open,
   &dtls_tl_set_fdset,
   &dtls_tl_read_message,
+#ifdef HAVE_SYS_EPOLL_H
+  NULL,
+#endif
   &dtls_tl_send_message,
   &dtls_tl_keepalive,
   &dtls_tl_set_socket,

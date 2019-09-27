@@ -281,6 +281,15 @@ eXosip_quit (struct eXosip_t *excontext)
   _eXosip_counters_free (&excontext->average_subscriptions);
   _eXosip_counters_free (&excontext->average_insubscriptions);
 
+#ifdef HAVE_SYS_EPOLL_H
+  if (excontext->ep_array != NULL)
+    osip_free (excontext->ep_array);
+  if (excontext->epfd > 0)
+    _eXosip_closesocket (excontext->epfd);
+  if (excontext->epfdctl > 0)
+    _eXosip_closesocket (excontext->epfdctl);
+#endif
+
   memset (excontext, 0, sizeof (eXosip_t));
   excontext->j_stop_ua = -1;
 
@@ -760,6 +769,53 @@ eXosip_init (struct eXosip_t *excontext)
   excontext->masquerade_via = 0;
   excontext->use_ephemeral_port = 1;
 
+  excontext->poll_method = EXOSIP_USE_SELECT;
+#ifdef HAVE_SYS_EPOLL_H
+  excontext->max_fd_no = EXOSIP_MAX_DESCRIPTOR;
+  excontext->epfd = epoll_create (excontext->max_fd_no);
+  if (excontext->epfd > 0)
+    excontext->ep_array = (struct epoll_event*) osip_malloc(sizeof(struct epoll_event)*excontext->max_fd_no);
+
+#ifndef OSIP_MONOTHREAD
+  if (excontext->ep_array != NULL) {
+    struct epoll_event ev;
+    ev.events = EPOLLIN | EPOLLET;
+    ev.data.fd = jpipe_get_read_descr (excontext->j_socketctl);
+    i=epoll_ctl(excontext->epfd, EPOLL_CTL_ADD, jpipe_get_read_descr (excontext->j_socketctl), &ev);
+    if (i<0) {
+      return OSIP_UNDEFINED_ERROR;
+    }
+  }
+#endif
+  if (excontext->ep_array != NULL && i == 0)
+    excontext->poll_method = EXOSIP_USE_EPOLL_LT;
+  else {
+    /* if epoll failed, just switch back to "select" */
+    if (excontext->ep_array != NULL)
+      osip_free (excontext->ep_array);
+    excontext->ep_array = NULL;
+    if (excontext->epfd > 0)
+      _eXosip_closesocket (excontext->epfd);
+    excontext->epfd = 0;
+  }
+
+  if (excontext->poll_method == EXOSIP_USE_EPOLL_LT) {
+    struct epoll_event ev;
+    excontext->epfdctl = epoll_create (1);
+    if (excontext->epfdctl < 0) {
+      return OSIP_UNDEFINED_ERROR;
+    }
+    
+    ev.events = EPOLLIN | EPOLLET;
+    ev.data.fd = jpipe_get_read_descr (excontext->j_socketctl_event);
+    i = epoll_ctl(excontext->epfdctl, EPOLL_CTL_ADD, jpipe_get_read_descr (excontext->j_socketctl_event), &ev);
+    if (i<0) {
+      _eXosip_closesocket (excontext->epfdctl);
+      return OSIP_UNDEFINED_ERROR;
+    }
+  }
+#endif
+  
   return OSIP_SUCCESS;
 }
 

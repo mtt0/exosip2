@@ -469,6 +469,22 @@ _udp_tl_open (struct eXosip_t *excontext, int force_family)
       excontext->eXtl_transport.proto_local_port = ntohs (((struct sockaddr_in6 *) &reserved->ai_addr)->sin6_port);
     OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO1, NULL, "eXosip: Binding on port %i!\n", excontext->eXtl_transport.proto_local_port));
   }
+
+#ifdef HAVE_SYS_EPOLL_H
+  if (excontext->poll_method == EXOSIP_USE_EPOLL_LT) {
+    struct epoll_event ev;
+    ev.events = EPOLLIN | EPOLLET;
+    ev.data.fd = sock;
+    res=epoll_ctl(excontext->epfd, EPOLL_CTL_ADD, sock, &ev);
+    if (res<0) {
+      OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "Cannot poll on main udp socket: %i\n", excontext->eXtl_transport.proto_local_port));
+      _eXosip_closesocket (sock);
+      reserved->udp_socket = -1;
+      return -1;
+    }
+  }
+#endif
+
   return OSIP_SUCCESS;
 }
 
@@ -619,6 +635,21 @@ _udp_tl_open_oc (struct eXosip_t *excontext, int force_family)
   reserved->udp_socket_oc = sock;
 
   _eXosip_transport_set_dscp (excontext, reserved->udp_socket_oc_family, sock);
+
+#ifdef HAVE_SYS_EPOLL_H
+  if (excontext->poll_method == EXOSIP_USE_EPOLL_LT) {
+    struct epoll_event ev;
+    ev.events = EPOLLIN | EPOLLET;
+    ev.data.fd = sock;
+    res=epoll_ctl(excontext->epfd, EPOLL_CTL_ADD, sock, &ev);
+    if (res<0) {
+      OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "Cannot poll on oc udp socket: %i\n", excontext->eXtl_transport.proto_local_port));
+      _eXosip_closesocket (sock);
+      reserved->udp_socket_oc = -1;
+      return -1;
+    }
+  }
+#endif
 
   return OSIP_SUCCESS;
 }
@@ -852,6 +883,38 @@ _udp_read_udp_oc_socket(struct eXosip_t *excontext) {
   }
   return OSIP_SUCCESS;
 }
+
+#ifdef HAVE_SYS_EPOLL_H
+
+static int
+udp_tl_epoll_read_message (struct eXosip_t *excontext, int nfds, struct epoll_event* ep_array)
+{
+  struct eXtludp *reserved = (struct eXtludp *) excontext->eXtludp_reserved;
+  int n;
+  
+  if (reserved == NULL) {
+    OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "wrong state: create transport layer first\n"));
+    return OSIP_WRONG_STATE;
+  }
+
+  if (reserved->udp_socket < 0)
+    return -1;
+
+  for (n = 0; n < nfds; ++n) {
+    
+    if (ep_array[n].data.fd == reserved->udp_socket) {
+      _udp_read_udp_main_socket(excontext);
+    }
+
+    if (reserved->udp_socket_oc >= 0 && ep_array[n].data.fd == reserved->udp_socket_oc) {
+      _udp_read_udp_oc_socket(excontext);
+    }
+  }
+  
+  return OSIP_SUCCESS;
+}
+
+#endif
 
 static int
 udp_tl_read_message (struct eXosip_t *excontext, fd_set * osip_fdset, fd_set * osip_wrset)
@@ -1498,6 +1561,9 @@ static struct eXtl_protocol eXtl_udp = {
   &udp_tl_open,
   &udp_tl_set_fdset,
   &udp_tl_read_message,
+#ifdef HAVE_SYS_EPOLL_H
+  &udp_tl_epoll_read_message,
+#endif
   &udp_tl_send_message,
   &udp_tl_keepalive,
   &udp_tl_set_socket,

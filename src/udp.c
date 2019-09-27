@@ -1687,104 +1687,145 @@ _eXosip_read_message (struct eXosip_t *excontext, int max_message_nb, int sec_ma
     int wakeup_socket = jpipe_get_read_descr (excontext->j_socketctl);
 #endif
 
-    FD_ZERO (&osip_fdset);
-    FD_ZERO (&osip_wrset);
-    excontext->eXtl_transport.tl_set_fdset (excontext, &osip_fdset, &osip_wrset, &max);
+#ifdef HAVE_SYS_EPOLL_H
+    if (excontext->poll_method == EXOSIP_USE_EPOLL_LT) {
+      int nfds = epoll_wait (excontext->epfd, excontext->ep_array, excontext->max_fd_no, sec_max * 1000 + usec_max / 1000);
+      int n;
+
+      if (_wakelock_handle_incoming (excontext, nfds, errno) == OSIP_SUCCESS)
+        continue;
+
+      osip_compensatetime ();
+
+      for (n = 0; n < nfds; ++n) {
 #ifndef OSIP_MONOTHREAD
-    eXFD_SET (wakeup_socket, &osip_fdset);
-    if (wakeup_socket > max)
-      max = wakeup_socket;
+        if (excontext->ep_array[n].data.fd == wakeup_socket) {
+          char buf2[500];
+
+          jpipe_read (excontext->j_socketctl, buf2, 499);
+        }
+#endif
+      }
+
+      if (0 == nfds || excontext->j_stop_ua != 0) {
+        return OSIP_SUCCESS;
+      }
+      else if (-1 == nfds) {
+#if !defined (_WIN32_WCE)       /* TODO: fix me for wince */
+        return -2000;           /* error */
+#endif
+      }
+      else {
+
+        if (excontext->cbsipWakeLock != NULL && excontext->incoming_wake_lock_state == 0)
+          excontext->cbsipWakeLock (++excontext->incoming_wake_lock_state);
+
+        excontext->eXtl_transport.tl_epoll_read_message (excontext, nfds, excontext->ep_array);
+      }
+    }
+#endif
+
+    if (excontext->poll_method == EXOSIP_USE_SELECT) {
+      FD_ZERO (&osip_fdset);
+      FD_ZERO (&osip_wrset);
+      excontext->eXtl_transport.tl_set_fdset (excontext, &osip_fdset, &osip_wrset, &max);
+#ifndef OSIP_MONOTHREAD
+      eXFD_SET (wakeup_socket, &osip_fdset);
+      if (wakeup_socket > max)
+        max = wakeup_socket;
 #endif
 
 #ifdef TSC_SUPPORT
-    if (excontext->tunnel_handle) {
-      int udp_socket = max;
+      if (excontext->tunnel_handle) {
+        int udp_socket = max;
 
-      if ((sec_max != -1) && (usec_max != -1)) {
-        int32_t total_time = sec_max * 1000 + usec_max / 1000;
+        if ((sec_max != -1) && (usec_max != -1)) {
+          int32_t total_time = sec_max * 1000 + usec_max / 1000;
 
-        while (total_time > 0) {
-          struct timeval tv;
-          struct tsc_timeval ttv;
-          tsc_fd_set tsc_fdset;
+          while (total_time > 0) {
+            struct timeval tv;
+            struct tsc_timeval ttv;
+            tsc_fd_set tsc_fdset;
 
-          FD_ZERO (&osip_fdset);
-          eXFD_SET (wakeup_socket, &osip_fdset);
+            FD_ZERO (&osip_fdset);
+            eXFD_SET (wakeup_socket, &osip_fdset);
 
-          tv.tv_sec = 0;
-          tv.tv_usec = 1000;
+            tv.tv_sec = 0;
+            tv.tv_usec = 1000;
 
-          i = select (wakeup_socket + 1, &osip_fdset, NULL, NULL, &tv);
-          if (i > 0) {
-            break;
+            i = select (wakeup_socket + 1, &osip_fdset, NULL, NULL, &tv);
+            if (i > 0) {
+              break;
+            }
+            else if (i == -1) {
+              return -1;
+            }
+
+            ttv.tv_sec = 0;
+            ttv.tv_usec = 1000;
+            TSC_FD_ZERO (&tsc_fdset);
+            TSC_FD_SET (udp_socket, &tsc_fdset);
+
+            i = tsc_select (udp_socket + 1, &tsc_fdset, NULL, NULL, &ttv);
+            if (i > 0) {
+              eXFD_SET (udp_socket, &osip_fdset);
+
+              break;
+            }
+            else if (i == -1) {
+              return -1;
+            }
+
+            tsc_sleep (100);
+
+            total_time -= 100;
           }
-          else if (i == -1) {
-            return -1;
-          }
-
-          ttv.tv_sec = 0;
-          ttv.tv_usec = 1000;
-          TSC_FD_ZERO (&tsc_fdset);
-          TSC_FD_SET (udp_socket, &tsc_fdset);
-
-          i = tsc_select (udp_socket + 1, &tsc_fdset, NULL, NULL, &ttv);
-          if (i > 0) {
-            eXFD_SET (udp_socket, &osip_fdset);
-
-            break;
-          }
-          else if (i == -1) {
-            return -1;
-          }
-
-          tsc_sleep (100);
-
-          total_time -= 100;
         }
       }
-    }
-    else {
+      else {
+        if ((sec_max == -1) || (usec_max == -1))
+          i = select (max + 1, &osip_fdset, &osip_wrset, NULL, NULL);
+        else
+          i = select (max + 1, &osip_fdset, &osip_wrset, NULL, &tv);
+      }
+#else
       if ((sec_max == -1) || (usec_max == -1))
         i = select (max + 1, &osip_fdset, &osip_wrset, NULL, NULL);
       else
         i = select (max + 1, &osip_fdset, &osip_wrset, NULL, &tv);
-    }
-#else
-    if ((sec_max == -1) || (usec_max == -1))
-      i = select (max + 1, &osip_fdset, &osip_wrset, NULL, NULL);
-    else
-      i = select (max + 1, &osip_fdset, &osip_wrset, NULL, &tv);
 #endif
 
-    if (_wakelock_handle_incoming (excontext, i, errno) == OSIP_SUCCESS)
-      continue;
+      if (_wakelock_handle_incoming (excontext, i, errno) == OSIP_SUCCESS)
+        continue;
 
-    osip_compensatetime ();
+      osip_compensatetime ();
 
 #ifndef OSIP_MONOTHREAD
-    if ((i > 0) && FD_ISSET (wakeup_socket, &osip_fdset)) {
-      char buf2[500];
+      if ((i > 0) && FD_ISSET (wakeup_socket, &osip_fdset)) {
+        char buf2[500];
 
-      jpipe_read (excontext->j_socketctl, buf2, 499);
-    }
+        jpipe_read (excontext->j_socketctl, buf2, 499);
+      }
 #endif
 
-    if (0 == i || excontext->j_stop_ua != 0) {
-      return OSIP_SUCCESS;
-    }
-    else if (-1 == i) {
+      if (0 == i || excontext->j_stop_ua != 0) {
+        return OSIP_SUCCESS;
+      }
+      else if (-1 == i) {
 #if !defined (_WIN32_WCE)       /* TODO: fix me for wince */
-      return -2000;             /* error */
+        return -2000;           /* error */
 #endif
+      }
+      else {
+
+        if (excontext->cbsipWakeLock != NULL && excontext->incoming_wake_lock_state == 0)
+          excontext->cbsipWakeLock (++excontext->incoming_wake_lock_state);
+
+        excontext->eXtl_transport.tl_read_message (excontext, &osip_fdset, &osip_wrset);
+
+      }
     }
-    else {
 
-      if (excontext->cbsipWakeLock != NULL && excontext->incoming_wake_lock_state == 0)
-        excontext->cbsipWakeLock (++excontext->incoming_wake_lock_state);
-
-      excontext->eXtl_transport.tl_read_message (excontext, &osip_fdset, &osip_wrset);
-
-    }
 
     if (excontext->cbsipWakeLock != NULL && excontext->incoming_wake_lock_state > 0) {
       int count = osip_list_size (&excontext->j_osip->osip_ist_transactions);

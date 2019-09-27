@@ -321,6 +321,7 @@ AC_CHECK_HEADERS(arpa/nameser_compat.h)
 AC_CHECK_HEADERS(netinet/tcp.h)
 AC_CHECK_HEADERS(netinet/in.h)
 AC_CHECK_HEADERS(regex.h)
+AC_CHECK_HEADERS(sys/epoll.h)
 
 AC_CHECK_HEADERS([resolv.h], [], [],
 [#if HAVE_SYS_TYPES_H

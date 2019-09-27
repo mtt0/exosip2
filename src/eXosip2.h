@@ -203,6 +203,9 @@
 #ifdef HAVE_NETDB_H
 #include <netdb.h>
 #endif
+#ifdef HAVE_SYS_EPOLL_H
+#include <sys/epoll.h>
+#endif
 
 #include <osip2/osip.h>
 #include <osip2/osip_dialog.h>
@@ -508,6 +511,22 @@ extern "C" {
     void *eXtltls_reserved;
     void *eXtldtls_reserved;
 #endif
+
+#define EXOSIP_USE_SELECT 0
+#define EXOSIP_USE_EPOLL_LT 1
+
+    int poll_method; /* EXOSIP_USE_SELECT EXOSIP_USE_EPOLL_LT */
+
+#ifndef EXOSIP_MAX_DESCRIPTOR
+#define EXOSIP_MAX_DESCRIPTOR 10000
+#endif
+#ifdef HAVE_SYS_EPOLL_H
+    int max_fd_no;
+    int epfd; /* epoll ctrl fd */
+    struct epoll_event* ep_array;
+    int epfdctl; /* epoll ctrl fd for exosip wait/get events */
+#endif
+    
     void *tunnel_handle;
     char transport[10];
     char *user_agent;
