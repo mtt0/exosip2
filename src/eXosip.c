@@ -1210,6 +1210,7 @@ _eXosip_add_authentication_information (struct eXosip_t *excontext, osip_message
   jauthinfo_t *authinfo = NULL;
   int pos;
   int i;
+  unsigned int val_cnonce = osip_build_random_number();
 
   if (req == NULL || req->from == NULL || req->from->url == NULL || req->from->url->username == NULL) {
     OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO2, NULL, "authinfo: Invalid message\n"));
@@ -1240,6 +1241,7 @@ _eXosip_add_authentication_information (struct eXosip_t *excontext, osip_message
           return i;
 
         http_auth->iNonceCount++;
+        snprintf(http_auth->pszCNonce, sizeof(http_auth->pszCNonce), "%x", val_cnonce);
         i = _eXosip_create_proxy_authorization_header (http_auth->wa, uri, authinfo->userid, authinfo->passwd, authinfo->ha1, &aut, req->sip_method, http_auth->pszCNonce, http_auth->iNonceCount);
 
         osip_free (uri);
@@ -1268,6 +1270,7 @@ _eXosip_add_authentication_information (struct eXosip_t *excontext, osip_message
 
   while (wwwauth != NULL) {
     char *uri;
+    char _cnonce[64];
 
     authinfo = eXosip_find_authentication_info (excontext, req->from->url->username, wwwauth->realm);
     if (authinfo == NULL) {
@@ -1280,7 +1283,8 @@ _eXosip_add_authentication_information (struct eXosip_t *excontext, osip_message
     if (i != 0)
       return i;
 
-    i = _eXosip_create_proxy_authorization_header (wwwauth, uri, authinfo->userid, authinfo->passwd, authinfo->ha1, &aut, req->sip_method, "0a4f113b", 1);
+    snprintf(_cnonce, sizeof(_cnonce), "%x", val_cnonce);
+    i = _eXosip_create_proxy_authorization_header (wwwauth, uri, authinfo->userid, authinfo->passwd, authinfo->ha1, &aut, req->sip_method, _cnonce, 1);
     osip_free (uri);
     if (i != 0)
       return i;
@@ -1314,6 +1318,7 @@ _eXosip_add_authentication_information (struct eXosip_t *excontext, osip_message
   pos = 0;
   while (proxyauth != NULL) {
     char *uri;
+    char _cnonce[64];
 
     authinfo = eXosip_find_authentication_info (excontext, req->from->url->username, proxyauth->realm);
     if (authinfo == NULL) {
@@ -1326,7 +1331,8 @@ _eXosip_add_authentication_information (struct eXosip_t *excontext, osip_message
     if (i != 0)
       return i;
 
-    i = _eXosip_create_proxy_authorization_header (proxyauth, uri, authinfo->userid, authinfo->passwd, authinfo->ha1, &proxy_aut, req->sip_method, "0a4f113b", 1);
+    snprintf(_cnonce, sizeof(_cnonce), "%x", val_cnonce);
+    i = _eXosip_create_proxy_authorization_header (proxyauth, uri, authinfo->userid, authinfo->passwd, authinfo->ha1, &proxy_aut, req->sip_method, _cnonce, 1);
     osip_free (uri);
     if (i != 0)
       return i;
