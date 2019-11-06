@@ -1748,7 +1748,7 @@ _tls_tl_ssl_connect_socket (struct eXosip_t *excontext, struct _tls_stream *sock
     SSL_set_bio (sockinfo->ssl_conn, sbio, sbio);
 
 #ifndef OPENSSL_NO_TLSEXT
-    if (!SSL_set_tlsext_host_name (sockinfo->ssl_conn, sockinfo->sni_servernameindication /* "host.name.after.dns.srv.com" */ )) {
+    if (!SSL_set_tlsext_host_name (sockinfo->ssl_conn, sockinfo->sni_servernameindication /* "host.name.before.dns.srv.com" */ )) {
       OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_WARNING, NULL, "set_tlsext_host_name (SNI): no servername gets indicated\n"));
     }
 #endif
@@ -2324,7 +2324,7 @@ _tls_tl_find_socket (struct eXosip_t *excontext, char *host, int port)
 
 
 static int
-_tls_tl_connect_socket (struct eXosip_t *excontext, char *host, int port, int retry)
+_tls_tl_connect_socket (struct eXosip_t *excontext, char *host, int port, int retry, const char *sni_servernameindication)
 {
   struct eXtltls *reserved = (struct eXtltls *) excontext->eXtltls_reserved;
   int pos;
@@ -2667,7 +2667,13 @@ _tls_tl_connect_socket (struct eXosip_t *excontext, char *host, int port, int re
     reserved->socket_tab[pos].ssl_state = ssl_state;
     reserved->socket_tab[pos].ssl_ctx = NULL;
 
-    osip_strncpy (reserved->socket_tab[pos].sni_servernameindication, host, sizeof (reserved->socket_tab[pos].sni_servernameindication) - 1);
+    /* sni should be set to the domain portion of the "Application Unique String (AUS)" */
+    /* Usually, this should end up being the domain of the "From" header (but if a Route is set in exosip, it will be the domain from the Route) */
+    /* this code prevents Man-In-The-Middle Attack where the attacker is modifying the NAPTR result to route the request somewhere else */
+    if (sni_servernameindication !=NULL)
+      osip_strncpy (reserved->socket_tab[pos].sni_servernameindication, sni_servernameindication, sizeof (reserved->socket_tab[pos].sni_servernameindication) - 1);
+    else
+      osip_strncpy(reserved->socket_tab[pos].sni_servernameindication, host, sizeof(reserved->socket_tab[pos].sni_servernameindication) - 1);
 
     {
       struct sockaddr_storage local_ai_addr;
@@ -2926,15 +2932,19 @@ tls_tl_send_message (struct eXosip_t *excontext, osip_transaction_t * tr, osip_m
 
     /* Step 2: create new socket with host:port */
     if (pos < 0) {
+      const char *sni = NULL;
+      if (naptr_record != NULL) {
+        sni = naptr_record->domain;
+      }
       if (tr == NULL) {
-        pos = _tls_tl_connect_socket (excontext, host, port, 0);
+        pos = _tls_tl_connect_socket (excontext, host, port, 0, sni);
         OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO1, NULL, "message out of transaction: trying to send to %s:%i\n", host, port));
         if (pos < 0) {
           return -1;
         }
       }
       else {
-        pos = _tls_tl_connect_socket (excontext, host, port, 0);
+        pos = _tls_tl_connect_socket (excontext, host, port, 0, sni);
         if (pos < 0) {
           if (naptr_record != NULL && MSG_IS_REGISTER (sip)) {
             if (eXosip_dnsutils_rotate_srv (&naptr_record->siptls_record) > 0) {
