@@ -40,6 +40,12 @@
 #include <windows.h>
 #endif
 
+#ifdef HAVE_OPENSSL_SSL_H
+#include <openssl/rand.h>
+#endif
+
+#include <osipparser2/osip_md5.h>
+
 /* Private functions */
 static int dialog_fill_route_set (osip_dialog_t * dialog, osip_message_t * request);
 
@@ -66,6 +72,46 @@ eXosip_generate_random (char *buf, int buf_size)
 
   snprintf (buf, buf_size, "%u", number);
   return OSIP_SUCCESS;
+}
+
+/* TAKEN from rcf2617.txt */
+#define HASHLEN 16
+typedef char HASH[HASHLEN];
+
+#define HASHHEXLEN 32
+typedef char HASHHEX[HASHHEXLEN + 1];
+
+void CvtHex(HASH Bin, HASHHEX Hex);
+
+int
+eXosip_hexa_generate_random(char *val, int val_size, char *str1, char *str2, char *str3)
+{
+	osip_MD5_CTX Md5Ctx;
+	HASH HA1;
+	HASHHEX Key;
+
+	osip_MD5Init(&Md5Ctx);
+	osip_MD5Update(&Md5Ctx, (unsigned char *)str1, (unsigned int)strlen(str1));
+	osip_MD5Update(&Md5Ctx, (unsigned char *) ":", 1);
+	osip_MD5Update(&Md5Ctx, (unsigned char *)str2, (unsigned int)strlen(str2));
+	osip_MD5Update(&Md5Ctx, (unsigned char *) ":", 1);
+	osip_MD5Update(&Md5Ctx, (unsigned char *)str3, (unsigned int)strlen(str3));
+	osip_MD5Final((unsigned char *)HA1, &Md5Ctx);
+	CvtHex(HA1, Key);
+	osip_strncpy(val, Key, val_size - 1);
+	return 0;
+}
+
+int
+eXosip_byte_generate_random(char *val, int val_size)
+{
+#ifdef HAVE_OPENSSL_SSL_H
+	return RAND_bytes(val, val_size) > 0 ? 0 : -1;
+#else
+	eXosip_generate_random(val, 16);
+	eXosip_hexa_generate_random(val, val_size, val, "key", "crypto");
+	return 0;
+#endif
 }
 
 int
