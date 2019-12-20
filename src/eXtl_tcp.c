@@ -249,6 +249,7 @@ static int tcp_tl_open(struct eXosip_t *excontext) {
       int valopt = 1;
 
       setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, (void *) &valopt, sizeof(valopt));
+      setsockopt(sock, SOL_SOCKET, SO_REUSEPORT, (void *) &valopt, sizeof(valopt));
     }
 
 #ifdef ENABLE_MAIN_SOCKET
@@ -674,6 +675,7 @@ static int _tcp_read_tcp_main_socket(struct eXosip_t *excontext) {
 
     valopt = 1;
     setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, (void *) &valopt, sizeof(valopt));
+    setsockopt(sock, SOL_SOCKET, SO_REUSEPORT, (void *) &valopt, sizeof(valopt));
 
     memset(src6host, 0, NI_MAXHOST);
     recvport = _eXosip_getport((struct sockaddr *) &sa);
@@ -1068,6 +1070,7 @@ static int _tcp_tl_new_socket(struct eXosip_t *excontext, char *host, int port) 
         int valopt = 1;
 
         setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, (void *) &valopt, sizeof(valopt));
+        setsockopt(sock, SOL_SOCKET, SO_REUSEPORT, (void *) &valopt, sizeof(valopt));
 
         memcpy(&ai_addr, &reserved->ai_addr, reserved->ai_addr_len);
 
