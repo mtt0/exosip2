@@ -242,6 +242,7 @@ tcp_tl_open (struct eXosip_t *excontext)
       int valopt = 1;
 
       setsockopt (sock, SOL_SOCKET, SO_REUSEADDR, (void *) &valopt, sizeof (valopt));
+      setsockopt (sock, SOL_SOCKET, SO_REUSEPORT, (void *) &valopt, sizeof (valopt));
     }
 
 #ifdef ENABLE_MAIN_SOCKET
@@ -864,6 +865,7 @@ _tcp_tl_connect_socket (struct eXosip_t *excontext, char *host, int port)
         int valopt = 1;
 
         setsockopt (sock, SOL_SOCKET, SO_REUSEADDR, (void *) &valopt, sizeof (valopt));
+        setsockopt (sock, SOL_SOCKET, SO_REUSEPORT, (void *) &valopt, sizeof (valopt));
 
         memcpy (&ai_addr, &reserved->ai_addr, reserved->ai_addr_len);
         if (ai_addr.ss_family == AF_INET)
