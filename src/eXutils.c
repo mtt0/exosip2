@@ -2501,7 +2501,7 @@ eXosip_dnsutils_naptr (struct eXosip_t *excontext, const char *_domain, const ch
     snprintf (domain + idx_domain, delim_aus - _domain, "%s", _domain);
   }
   else if (delim_aus != NULL && delim_aus[1] == '\0') {
-    snprintf (domain, delim_aus - _domain, "%s", _domain);
+    snprintf (domain, delim_aus - _domain + 1, "%s", _domain);
   }
   else {
     delim_aus = NULL;
@@ -3188,7 +3188,7 @@ eXosip_dnsutils_naptr (struct eXosip_t *excontext, const char *_domain, const ch
     snprintf (domain + idx_domain, delim_aus - _domain, "%s", _domain);
   }
   else if (delim_aus != NULL && delim_aus[1] == '\0') {
-    snprintf (domain, delim_aus - _domain, "%s", _domain);
+    snprintf (domain, delim_aus - _domain + 1, "%s", _domain);
   }
   else {
     snprintf (domain, sizeof (domain), "%s", _domain);
@@ -3872,7 +3872,7 @@ eXosip_dnsutils_naptr (struct eXosip_t *excontext, const char *_domain, const ch
     snprintf (domain + idx_domain, delim_aus - _domain, "%s", _domain);
   }
   else if (delim_aus != NULL && delim_aus[1] == '\0') {
-    snprintf (domain, delim_aus - _domain, "%s", _domain);
+    snprintf (domain, delim_aus - _domain + 1, "%s", _domain);
   }
   else {
     delim_aus = NULL;
