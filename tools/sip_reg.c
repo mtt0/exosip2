@@ -309,6 +309,8 @@ main (int argc, char *argv[])
 
   if (err) {
     syslog_wrapper (LOG_ERR, "eXosip_listen_addr failed");
+    eXosip_quit (context_eXosip);
+    osip_free (context_eXosip);
     exit (1);
   }
 
@@ -329,6 +331,8 @@ main (int argc, char *argv[])
     syslog_wrapper (LOG_INFO, "password: [removed]");
     if (eXosip_add_authentication_info (context_eXosip, username, username, password, NULL, NULL)) {
       syslog_wrapper (LOG_ERR, "eXosip_add_authentication_info failed");
+      eXosip_quit (context_eXosip);
+      osip_free (context_eXosip);
       exit (1);
     }
   }
@@ -340,11 +344,15 @@ main (int argc, char *argv[])
     regparam.regid = eXosip_register_build_initial_register (context_eXosip, fromuser, proxy, contact, regparam.expiry * 2, &reg);
     if (regparam.regid < 1) {
       syslog_wrapper (LOG_ERR, "eXosip_register_build_initial_register failed");
+      eXosip_quit (context_eXosip);
+      osip_free (context_eXosip);
       exit (1);
     }
     i = eXosip_register_send_register (context_eXosip, regparam.regid, reg);
     if (i != 0) {
       syslog_wrapper (LOG_ERR, "eXosip_register_send_register failed");
+      eXosip_quit (context_eXosip);
+      osip_free (context_eXosip);
       exit (1);
     }
   }
