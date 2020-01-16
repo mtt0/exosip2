@@ -2152,6 +2152,7 @@ eXosip_dnsutils_cares_process (struct osip_naptr *output_record, ares_channel ch
     for (num=0;num<ARES_GETSOCK_MAXNUM;num++) {
       struct epoll_event ev;
 
+      memset(&ev, 0, sizeof(struct epoll_event));
       if (socks[num]==ARES_SOCKET_BAD)
 	continue;
       

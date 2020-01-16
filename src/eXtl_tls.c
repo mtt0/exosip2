@@ -1239,6 +1239,7 @@ tls_tl_open (struct eXosip_t *excontext)
   if (excontext->poll_method == EXOSIP_USE_EPOLL_LT) {
     struct epoll_event ev;
 
+    memset(&ev, 0, sizeof(struct epoll_event));
     ev.events = EPOLLIN | EPOLLET;
     ev.data.fd = sock;
     res = epoll_ctl (excontext->epfd, EPOLL_CTL_ADD, sock, &ev);
@@ -1444,6 +1445,7 @@ _tls_tl_is_connected_epoll (int sock)
 
   epfd = epoll_create (1);
 
+  memset(&ev, 0, sizeof(struct epoll_event));
   ev.events = EPOLLOUT | EPOLLET;
   ev.data.fd = sock;
   res = epoll_ctl (epfd, EPOLL_CTL_ADD, sock, &ev);
@@ -2216,6 +2218,7 @@ _tls_read_tls_main_socket (struct eXosip_t *excontext)
       struct epoll_event ev;
       int res;
 
+      memset(&ev, 0, sizeof(struct epoll_event));
       ev.events = EPOLLIN | EPOLLOUT | EPOLLET;
       ev.data.fd = sock;
       res = epoll_ctl (excontext->epfd, EPOLL_CTL_ADD, sock, &ev);
@@ -2697,6 +2700,7 @@ _tls_tl_connect_socket (struct eXosip_t *excontext, char *host, int port, int re
     if (excontext->poll_method == EXOSIP_USE_EPOLL_LT) {
       struct epoll_event ev;
 
+      memset(&ev, 0, sizeof(struct epoll_event));
       ev.events = EPOLLIN | EPOLLOUT | EPOLLET;
       ev.data.fd = sock;
       res = epoll_ctl (excontext->epfd, EPOLL_CTL_ADD, sock, &ev);

@@ -297,6 +297,7 @@ tcp_tl_open (struct eXosip_t *excontext)
   if (excontext->poll_method == EXOSIP_USE_EPOLL_LT) {
     struct epoll_event ev;
 
+    memset(&ev, 0, sizeof(struct epoll_event));
     ev.events = EPOLLIN | EPOLLET;
     ev.data.fd = sock;
     res = epoll_ctl (excontext->epfd, EPOLL_CTL_ADD, sock, &ev);
@@ -615,6 +616,7 @@ _tcp_read_tcp_main_socket (struct eXosip_t *excontext)
       struct epoll_event ev;
       int res;
 
+      memset(&ev, 0, sizeof(struct epoll_event));
       ev.events = EPOLLIN | EPOLLOUT | EPOLLET;
       ev.data.fd = sock;
       res = epoll_ctl (excontext->epfd, EPOLL_CTL_ADD, sock, &ev);
@@ -771,6 +773,7 @@ _tcp_tl_is_connected_epoll (int sock)
     return -1;
   }
   
+  memset(&ev, 0, sizeof(struct epoll_event));
   ev.events = EPOLLOUT | EPOLLET;
   ev.data.fd = sock;
   res = epoll_ctl (epfd, EPOLL_CTL_ADD, sock, &ev);
@@ -1320,6 +1323,7 @@ _tcp_tl_connect_socket (struct eXosip_t *excontext, char *host, int port)
     if (excontext->poll_method == EXOSIP_USE_EPOLL_LT) {
       struct epoll_event ev;
 
+      memset(&ev, 0, sizeof(struct epoll_event));
       ev.events = EPOLLIN | EPOLLOUT | EPOLLET;
       ev.data.fd = sock;
       res = epoll_ctl (excontext->epfd, EPOLL_CTL_ADD, sock, &ev);
@@ -1362,6 +1366,7 @@ _tcp_tl_send_sockinfo (struct eXosip_t *excontext, struct _tcp_stream *sockinfo,
 	    return -1;
 	  }
 	  
+	  memset(&ev, 0, sizeof(struct epoll_event));
 	  ev.events = EPOLLOUT | EPOLLET;
 	  ev.data.fd = sockinfo->socket;
 	  i = epoll_ctl (epfd, EPOLL_CTL_ADD, sockinfo->socket, &ev);

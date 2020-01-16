@@ -779,6 +779,7 @@ eXosip_init (struct eXosip_t *excontext)
 #ifndef OSIP_MONOTHREAD
   if (excontext->ep_array != NULL) {
     struct epoll_event ev;
+    memset(&ev, 0, sizeof(struct epoll_event));
     ev.events = EPOLLIN | EPOLLET;
     ev.data.fd = jpipe_get_read_descr (excontext->j_socketctl);
     i=epoll_ctl(excontext->epfd, EPOLL_CTL_ADD, jpipe_get_read_descr (excontext->j_socketctl), &ev);
@@ -806,6 +807,7 @@ eXosip_init (struct eXosip_t *excontext)
       return OSIP_UNDEFINED_ERROR;
     }
     
+    memset(&ev, 0, sizeof(struct epoll_event));
     ev.events = EPOLLIN | EPOLLET;
     ev.data.fd = jpipe_get_read_descr (excontext->j_socketctl_event);
     i = epoll_ctl(excontext->epfdctl, EPOLL_CTL_ADD, jpipe_get_read_descr (excontext->j_socketctl_event), &ev);
