@@ -761,14 +761,14 @@ _udp_read_udp_main_socket(struct eXosip_t *excontext) {
 #endif
   
   if (i > 32) {
-    char src6host[NI_MAXHOST];
+    char src6host[64];
     int recvport = 0;
     
     reserved->buf[i] = '\0';
     
-    memset (src6host, 0, NI_MAXHOST);
+    memset (src6host, 0, 64);
     recvport = _eXosip_getport ((struct sockaddr *) &sa, slen);
-    _eXosip_getnameinfo ((struct sockaddr *) &sa, slen, src6host, NI_MAXHOST, NULL, 0, NI_NUMERICHOST);
+    _eXosip_getnameinfo ((struct sockaddr *) &sa, slen, src6host, 64, NULL, 0, NI_NUMERICHOST);
     OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO1, NULL, "Message received from: %s:%i\n", src6host, recvport));
     
     _eXosip_handle_incoming_message (excontext, reserved->buf, i, reserved->udp_socket, src6host, recvport, NULL, NULL);
