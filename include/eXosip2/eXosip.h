@@ -179,7 +179,7 @@ extern "C" {
    * @param buf	        destination buffer for random string.
    * @param buf_size    size of destination buffer
    */
-  int eXosip_byte_generate_random(char *val, int val_size);
+  int eXosip_hexa_generate_random(char *val, int val_size);
 
   /**
    * Generate random string: (high entropy when compiled with openssl)
