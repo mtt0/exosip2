@@ -20,7 +20,9 @@ EXPORTS
      eXosip_automatic_refresh
      eXosip_automatic_action
      eXosip_generate_random
-          
+     eXosip_hexa_generate_random
+     eXosip_byte_generate_random
+
      eXosip_event_free
      eXosip_event_wait
      eXosip_event_get
