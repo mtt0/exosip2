@@ -137,7 +137,7 @@
 
 SSL_CTX *initialize_client_ctx (struct eXosip_t *excontext, eXosip_tls_ctx_t * client_ctx, int transport, const char *sni_servernameindication);
 
-SSL_CTX *initialize_server_ctx (struct eXosip_t *excontext, eXosip_tls_ctx_t * srv_ctx, int transport);
+SSL_CTX *initialize_server_ctx (eXosip_tls_ctx_t * srv_ctx, int transport);
 
 int verify_cb (int preverify_ok, X509_STORE_CTX * store);
 
@@ -761,18 +761,6 @@ eXosip_set_tls_ctx (struct eXosip_t *excontext, eXosip_tls_ctx_t * ctx)
 }
 
 eXosip_tls_ctx_error
-eXosip_tls_use_server_certificate (struct eXosip_t * excontext, const char *local_certificate_cn)
-{
-  return -1;                    /* obsolete */
-}
-
-eXosip_tls_ctx_error
-eXosip_tls_use_client_certificate (struct eXosip_t * excontext, const char *local_certificate_cn)
-{
-  return -1;                    /* obsolete */
-}
-
-eXosip_tls_ctx_error
 eXosip_tls_verify_certificate (struct eXosip_t * excontext, int _tls_verify_client_certificate)
 {
   excontext->tls_verify_client_certificate = _tls_verify_client_certificate;
@@ -994,7 +982,7 @@ initialize_client_ctx (struct eXosip_t *excontext, eXosip_tls_ctx_t * client_ctx
 }
 
 SSL_CTX *
-initialize_server_ctx (struct eXosip_t * excontext, eXosip_tls_ctx_t * srv_ctx, int transport)
+initialize_server_ctx (eXosip_tls_ctx_t * srv_ctx, int transport)
 {
   const SSL_METHOD *meth = NULL;
   SSL_CTX *ctx;
@@ -1121,7 +1109,7 @@ tls_tl_open (struct eXosip_t *excontext)
   OPENSSL_init_ssl (OPENSSL_INIT_LOAD_SSL_STRINGS | OPENSSL_INIT_LOAD_CRYPTO_STRINGS, NULL);
 #endif
 
-  reserved->server_ctx = initialize_server_ctx (excontext, &excontext->eXosip_tls_ctx_params, IPPROTO_TCP);
+  reserved->server_ctx = initialize_server_ctx (&excontext->eXosip_tls_ctx_params, IPPROTO_TCP);
 
   /* always initialize the client */
   reserved->client_ctx = initialize_client_ctx (excontext, &excontext->eXosip_tls_ctx_params, IPPROTO_TCP, NULL);
@@ -2204,7 +2192,7 @@ _tls_read_tls_main_socket (struct eXosip_t *excontext)
     }
 
     memset (src6host, 0, NI_MAXHOST);
-    recvport = _eXosip_getport ((struct sockaddr *) &sa, slen);
+    recvport = _eXosip_getport ((struct sockaddr *) &sa);
     _eXosip_getnameinfo ((struct sockaddr *) &sa, slen, src6host, NI_MAXHOST, NULL, 0, NI_NUMERICHOST);
 
     _eXosip_transport_set_dscp (excontext, sa.ss_family, sock);
@@ -3057,11 +3045,11 @@ tls_tl_send_message (struct eXosip_t *excontext, osip_transaction_t * tr, osip_m
   }
 #endif
 
-  _eXosip_request_viamanager (excontext, tr, sip, reserved->socket_tab[pos].ai_addr.sa_family, IPPROTO_TCP, NULL, reserved->socket_tab[pos].ephemeral_port, reserved->socket_tab[pos].socket, host);
+  _eXosip_request_viamanager (excontext, sip, reserved->socket_tab[pos].ai_addr.sa_family, IPPROTO_TCP, NULL, reserved->socket_tab[pos].ephemeral_port, reserved->socket_tab[pos].socket, host);
   if (excontext->use_ephemeral_port == 1)
-    _eXosip_message_contactmanager (excontext, tr, sip, reserved->socket_tab[pos].ai_addr.sa_family, IPPROTO_TCP, NULL, reserved->socket_tab[pos].ephemeral_port, reserved->socket_tab[pos].socket, host);
+    _eXosip_message_contactmanager (excontext, sip, reserved->socket_tab[pos].ai_addr.sa_family, IPPROTO_TCP, NULL, reserved->socket_tab[pos].ephemeral_port, reserved->socket_tab[pos].socket, host);
   else
-    _eXosip_message_contactmanager (excontext, tr, sip, reserved->socket_tab[pos].ai_addr.sa_family, IPPROTO_TCP, NULL, excontext->eXtl_transport.proto_local_port, reserved->socket_tab[pos].socket, host);
+    _eXosip_message_contactmanager (excontext, sip, reserved->socket_tab[pos].ai_addr.sa_family, IPPROTO_TCP, NULL, excontext->eXtl_transport.proto_local_port, reserved->socket_tab[pos].socket, host);
   if (excontext->tls_firewall_ip[0] != '\0' || excontext->auto_masquerade_contact > 0)
     _tls_tl_update_contact (excontext, sip, reserved->socket_tab[pos].natted_ip, reserved->socket_tab[pos].natted_port);
 
@@ -3353,19 +3341,6 @@ eXosip_tls_verify_certificate (struct eXosip_t *excontext, int
 }
 
 eXosip_tls_ctx_error
-eXosip_tls_use_server_certificate (struct eXosip_t * excontext, const char *local_certificate_cn)
-{
-  return -1;                    /* NOT IMPLEMENTED */
-}
-
-eXosip_tls_ctx_error
-eXosip_tls_use_client_certificate (struct eXosip_t * excontext, const char *local_certificate_cn)
-{
-  return -1;                    /* NOT IMPLEMENTED */
-}
-
-
-eXosip_tls_ctx_error
 eXosip_set_tls_ctx (struct eXosip_t * excontext, eXosip_tls_ctx_t * ctx)
 {
   return -1;                    /* NOT IMPLEMENTED */
@@ -3430,10 +3405,8 @@ eXosip_set_tls_ctx (struct eXosip_t * excontext, eXosip_tls_ctx_t * ctx)
 
 5/ Today, I have removed the ability to use a client certificate from windows store: the feature was limited
    to RSA with SHA1 which is never negociated if you wish to have correct security. This makes the feature obsolete
-   and mostly not working. So... just removed. API has been kept, but returns -1 only.
-
-   eXosip_tls_use_client_certificate (struct eXosip_t * excontext, const char *local_certificate_cn)
-   eXosip_tls_use_server_certificate (struct eXosip_t * excontext, const char *local_certificate_cn)
+   and mostly not working. So... just removed. EXOSIP_OPT_SET_TLS_CLIENT_CERTIFICATE_NAME
+   and EXOSIP_OPT_SET_TLS_SERVER_CERTIFICATE_NAME have been kept, but returns -1 only.
 
 6/ A recent feature has been introduced: Certificate pinning.
 

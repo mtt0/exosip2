@@ -1388,7 +1388,7 @@ _eXosip_call_retry_request (struct eXosip_t *excontext, eXosip_call_t * jc, eXos
     jd->d_dialog->local_cseq++;
   }
 
-  i = _eXosip_update_top_via (excontext, msg);
+  i = _eXosip_update_top_via (msg);
   if (i != 0) {
     osip_message_free (msg);
     return i;

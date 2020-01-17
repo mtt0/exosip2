@@ -547,7 +547,7 @@ _eXosip_get_addrinfo (struct eXosip_t *excontext, struct addrinfo **addrinfo, co
 #endif
 
 int
-_eXosip_getport (const struct sockaddr *sa, socklen_t salen)
+_eXosip_getport (const struct sockaddr *sa)
 {
   if (sa->sa_family == AF_INET)
     return ntohs (((struct sockaddr_in *) sa)->sin_port);
@@ -776,7 +776,7 @@ _eXosip_default_gateway_with_getifaddrs (int type, char *address, int size)
  * The ip of the default interface is returned.
  */
 static int
-_eXosip_default_gateway_ipv4 (struct eXosip_t *excontext, char *destination, char *address, int size)
+_eXosip_default_gateway_ipv4 (char *destination, char *address, int size)
 {
   socklen_t len;
   int sock_rt, on = 1;
@@ -833,7 +833,7 @@ _eXosip_default_gateway_ipv4 (struct eXosip_t *excontext, char *destination, cha
  * The ip of the default interface is returned.
  */
 static int
-_eXosip_default_gateway_ipv6 (struct eXosip_t *excontext, char *destination, char *address, int size)
+_eXosip_default_gateway_ipv6 (char *destination, char *address, int size)
 {
   socklen_t len;
   int sock_rt, on = 1;
@@ -884,10 +884,10 @@ _eXosip_guess_ip_for_destination (struct eXosip_t *excontext, int family, char *
   int err;
 
   if (family == AF_INET6) {
-    err = _eXosip_default_gateway_ipv6 (excontext, destination, address, size);
+    err = _eXosip_default_gateway_ipv6 (destination, address, size);
   }
   else {
-    err = _eXosip_default_gateway_ipv4 (excontext, destination, address, size);
+    err = _eXosip_default_gateway_ipv4 (destination, address, size);
   }
 #ifdef HAVE_GETIFADDRS
   if (err < 0)
@@ -900,7 +900,7 @@ _eXosip_guess_ip_for_destination (struct eXosip_t *excontext, int family, char *
  * The ip of the default interface is returned.
  */
 static int
-_eXosip_default_gateway_ipv4sock (struct eXosip_t *excontext, int proto, struct sockaddr_storage *udp_local_bind, int sock, char *destination, char *address, int size)
+_eXosip_default_gateway_ipv4sock (int proto, struct sockaddr_storage *udp_local_bind, int sock, char *destination, char *address, int size)
 {
   socklen_t len;
   struct sockaddr_in iface_out;
@@ -966,7 +966,7 @@ _eXosip_default_gateway_ipv4sock (struct eXosip_t *excontext, int proto, struct 
  * The ip of the default interface is returned.
  */
 static int
-_eXosip_default_gateway_ipv6sock (struct eXosip_t *excontext, int proto, struct sockaddr_storage *udp_local_bind, int sock, char *destination, char *address, int size)
+_eXosip_default_gateway_ipv6sock (int proto, struct sockaddr_storage *udp_local_bind, int sock, char *destination, char *address, int size)
 {
   socklen_t len;
   struct sockaddr_in6 iface_out;
@@ -1028,10 +1028,10 @@ _eXosip_guess_ip_for_destinationsock (struct eXosip_t *excontext, int family, in
   int err;
 
   if (family == AF_INET6) {
-    err = _eXosip_default_gateway_ipv6sock (excontext, proto, udp_local_bind, sock, destination, address, size);
+    err = _eXosip_default_gateway_ipv6sock (proto, udp_local_bind, sock, destination, address, size);
   }
   else {
-    err = _eXosip_default_gateway_ipv4sock (excontext, proto, udp_local_bind, sock, destination, address, size);
+    err = _eXosip_default_gateway_ipv4sock (proto, udp_local_bind, sock, destination, address, size);
   }
 #ifdef HAVE_GETIFADDRS
   if (err < 0)

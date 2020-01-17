@@ -1170,11 +1170,9 @@ eXosip_set_option (struct eXosip_t *excontext, int opt, const void *value)
     }
     break;
   case EXOSIP_OPT_SET_TLS_CLIENT_CERTIFICATE_NAME:
-    eXosip_tls_use_client_certificate (excontext, (const char *) value);
-    break;
+    return OSIP_UNDEFINED_ERROR; /* obsolete */
   case EXOSIP_OPT_SET_TLS_SERVER_CERTIFICATE_NAME:
-    eXosip_tls_use_server_certificate (excontext, (const char *) value);
-    break;
+    return OSIP_UNDEFINED_ERROR; /* obsolete */
   case EXOSIP_OPT_SET_TSC_SERVER:
 #ifdef TSC_SUPPORT
     excontext->tunnel_handle = (void *) value;
@@ -1247,6 +1245,7 @@ eXosip_set_option (struct eXosip_t *excontext, int opt, const void *value)
       excontext->statistics.average_subscriptions = excontext->average_subscriptions.current_average;
       excontext->statistics.average_insubscriptions = excontext->average_insubscriptions.current_average;
       memcpy (stats, &excontext->statistics, sizeof (struct eXosip_stats));
+      break;
     }
   default:
     return OSIP_BADPARAMETER;

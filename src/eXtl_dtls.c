@@ -82,7 +82,7 @@ SSL_set0_rbio (SSL * s, BIO * rbio)
 #endif
 
 SSL_CTX *initialize_client_ctx (struct eXosip_t *excontext, eXosip_tls_ctx_t * client_ctx, int transport);
-SSL_CTX *initialize_server_ctx (struct eXosip_t *excontext, eXosip_tls_ctx_t * srv_ctx, int transport);
+SSL_CTX *initialize_server_ctx (eXosip_tls_ctx_t * srv_ctx, int transport);
 
 /* persistent connection */
 struct _dtls_stream {
@@ -137,7 +137,7 @@ dtls_tl_init (struct eXosip_t *excontext)
   return OSIP_SUCCESS;
 }
 
-int static
+static int
 _dtls_print_ssl_error (int err)
 {
   switch (err) {
@@ -339,7 +339,7 @@ dtls_tl_open (struct eXosip_t *excontext)
     excontext->eXtl_transport.proto_local_port = 5061;
 
   /* TODO: allow parameters for DTLS */
-  reserved->server_ctx = initialize_server_ctx (excontext, &reserved->eXosip_dtls_ctx_params, IPPROTO_UDP);
+  reserved->server_ctx = initialize_server_ctx (&reserved->eXosip_dtls_ctx_params, IPPROTO_UDP);
   reserved->client_ctx = initialize_client_ctx (excontext, &reserved->eXosip_dtls_ctx_params, IPPROTO_UDP);
 
   res = _eXosip_get_addrinfo (excontext, &addrinfo, excontext->eXtl_transport.proto_ifs, excontext->eXtl_transport.proto_local_port, excontext->eXtl_transport.proto_num);
@@ -480,7 +480,7 @@ _dtls_read_udp_main_socket (struct eXosip_t *excontext)
     enc_buf[enc_buf_len] = '\0';
 
     memset (src6host, 0, NI_MAXHOST);
-    recvport = _eXosip_getport ((struct sockaddr *) &sa, slen);
+    recvport = _eXosip_getport ((struct sockaddr *) &sa);
     _eXosip_getnameinfo ((struct sockaddr *) &sa, slen, src6host, NI_MAXHOST, NULL, 0, NI_NUMERICHOST);
     OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO1, NULL, "Message received from: %s:%i\n", src6host, recvport));
 
@@ -1047,8 +1047,8 @@ dtls_tl_send_message (struct eXosip_t *excontext, osip_transaction_t * tr, osip_
     reserved->socket_tab[pos].remote_port = port;
   }
 
-  _eXosip_request_viamanager (excontext, tr, sip, addr.ss_family, IPPROTO_UDP, &reserved->ai_addr, excontext->eXtl_transport.proto_local_port, reserved->dtls_socket, host);
-  _eXosip_message_contactmanager (excontext, tr, sip, addr.ss_family, IPPROTO_UDP, &reserved->ai_addr, excontext->eXtl_transport.proto_local_port, reserved->dtls_socket, host);
+  _eXosip_request_viamanager (excontext, sip, addr.ss_family, IPPROTO_UDP, &reserved->ai_addr, excontext->eXtl_transport.proto_local_port, reserved->dtls_socket, host);
+  _eXosip_message_contactmanager (excontext, sip, addr.ss_family, IPPROTO_UDP, &reserved->ai_addr, excontext->eXtl_transport.proto_local_port, reserved->dtls_socket, host);
   _dtls_tl_update_contact (excontext, sip);
 
   /* remove preloaded route if there is no tag in the To header

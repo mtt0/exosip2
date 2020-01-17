@@ -202,7 +202,7 @@ _eXosip_retry_with_auth (struct eXosip_t *excontext, eXosip_dialog_t * jd, osip_
     jd->d_dialog->local_cseq++;
   }
 
-  i = _eXosip_update_top_via (excontext, msg);
+  i = _eXosip_update_top_via (msg);
   if (i != 0) {
     osip_message_free (msg);
     return i;
@@ -330,7 +330,7 @@ _eXosip_publish_refresh (struct eXosip_t *excontext, eXosip_dialog_t * jd, osip_
     jd->d_dialog->local_cseq++;
   }
 
-  i = _eXosip_update_top_via (excontext, msg);
+  i = _eXosip_update_top_via (msg);
   if (i != 0) {
     osip_message_free (msg);
     return i;
@@ -1367,7 +1367,7 @@ _eXosip_add_authentication_information (struct eXosip_t *excontext, osip_message
 }
 
 int
-_eXosip_update_top_via (struct eXosip_t *excontext, osip_message_t * sip)
+_eXosip_update_top_via (osip_message_t * sip)
 {
   unsigned int number;
   char tmp[40];

@@ -87,7 +87,7 @@ _eXosip_find_last_transaction (eXosip_call_t * jc, eXosip_dialog_t * jd, const c
   osip_transaction_t *inc_tr;
   osip_transaction_t *out_tr;
 
-  inc_tr = _eXosip_find_last_inc_transaction (jc, jd, method);
+  inc_tr = _eXosip_find_last_inc_transaction (jd, method);
   out_tr = _eXosip_find_last_out_transaction (jc, jd, method);
   if (inc_tr == NULL)
     return out_tr;
@@ -100,7 +100,7 @@ _eXosip_find_last_transaction (eXosip_call_t * jc, eXosip_dialog_t * jd, const c
 }
 
 osip_transaction_t *
-_eXosip_find_last_inc_transaction (eXosip_call_t * jc, eXosip_dialog_t * jd, const char *method)
+_eXosip_find_last_inc_transaction (eXosip_dialog_t * jd, const char *method)
 {
   osip_transaction_t *inc_tr;
 

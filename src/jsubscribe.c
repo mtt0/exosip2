@@ -60,7 +60,7 @@ _eXosip_find_last_out_subscribe (eXosip_subscribe_t * js, eXosip_dialog_t * jd)
 }
 
 osip_transaction_t *
-_eXosip_find_last_inc_notify (eXosip_subscribe_t * js, eXosip_dialog_t * jd)
+_eXosip_find_last_inc_notify (eXosip_dialog_t * jd)
 {
   osip_transaction_t *out_tr;
 

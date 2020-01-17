@@ -769,7 +769,7 @@ _udp_read_udp_main_socket(struct eXosip_t *excontext) {
     reserved->buf[i] = '\0';
     
     memset (src6host, 0, 64);
-    recvport = _eXosip_getport ((struct sockaddr *) &sa, slen);
+    recvport = _eXosip_getport ((struct sockaddr *) &sa);
     _eXosip_getnameinfo ((struct sockaddr *) &sa, slen, src6host, 64, NULL, 0, NI_NUMERICHOST);
     OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO1, NULL, "Message received from: %s:%i\n", src6host, recvport));
     
@@ -857,7 +857,7 @@ _udp_read_udp_oc_socket(struct eXosip_t *excontext) {
     reserved->buf[i] = '\0';
     
     memset (src6host, 0, NI_MAXHOST);
-    recvport = _eXosip_getport ((struct sockaddr *) &sa, slen);
+    recvport = _eXosip_getport ((struct sockaddr *) &sa);
     _eXosip_getnameinfo ((struct sockaddr *) &sa, slen, src6host, NI_MAXHOST, NULL, 0, NI_NUMERICHOST);
     OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO1, NULL, "Message received from: %s:%i\n", src6host, recvport));
     
@@ -1350,8 +1350,8 @@ udp_tl_send_message (struct eXosip_t *excontext, osip_transaction_t * tr, osip_m
     }
   }
 
-  _eXosip_request_viamanager (excontext, tr, sip, addr.ss_family, IPPROTO_UDP, local_ai_addr, local_port, sock, ipbuf);
-  _eXosip_message_contactmanager (excontext, tr, sip, addr.ss_family, IPPROTO_UDP, local_ai_addr, local_port, sock, ipbuf);
+  _eXosip_request_viamanager (excontext, sip, addr.ss_family, IPPROTO_UDP, local_ai_addr, local_port, sock, ipbuf);
+  _eXosip_message_contactmanager (excontext, sip, addr.ss_family, IPPROTO_UDP, local_ai_addr, local_port, sock, ipbuf);
   _udp_tl_update_contact (excontext, sip);
 
   /* remove preloaded route if there is no tag in the To header

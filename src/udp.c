@@ -183,7 +183,7 @@ _eXosip_process_ack (struct eXosip_t *excontext, eXosip_call_t * jc, eXosip_dial
   jd->d_200Ok = NULL;
 
   if (je != NULL)
-    _eXosip_report_event (excontext, je, NULL);
+    _eXosip_report_event (excontext, je);
 
   osip_event_free (evt);
 }
@@ -371,7 +371,7 @@ _eXosip_process_cancel (struct eXosip_t *excontext, osip_transaction_t * transac
 }
 
 static void
-_eXosip_process_reinvite (struct eXosip_t *excontext, eXosip_call_t * jc, eXosip_dialog_t * jd, osip_transaction_t * transaction, osip_event_t * evt)
+_eXosip_process_reinvite (struct eXosip_t *excontext, eXosip_call_t * jc, eXosip_dialog_t * jd, osip_transaction_t * transaction)
 {
   osip_transaction_set_reserved2 (transaction, jc);
   osip_transaction_set_reserved3 (transaction, jd);
@@ -794,7 +794,7 @@ _eXosip_match_notify_for_subscribe (eXosip_subscribe_t * js, osip_message_t * no
 
 
 static void
-_eXosip_process_message_within_dialog (struct eXosip_t *excontext, eXosip_call_t * jc, eXosip_dialog_t * jd, osip_transaction_t * transaction, osip_event_t * evt)
+_eXosip_process_message_within_dialog (struct eXosip_t *excontext, eXosip_call_t * jc, eXosip_dialog_t * jd, osip_transaction_t * transaction)
 {
   osip_list_add (jd->d_inc_trs, transaction, 0);
   osip_transaction_set_reserved2 (transaction, jc);
@@ -1005,7 +1005,7 @@ _eXosip_process_newrequest (struct eXosip_t *excontext, osip_event_t * evt, int 
     }
     else if (!MSG_IS_BYE (evt->sip)) {
       /* reject all requests for a closed dialog */
-      old_trn = _eXosip_find_last_inc_transaction (jc, jd, "BYE");
+      old_trn = _eXosip_find_last_inc_transaction (jd, "BYE");
       if (old_trn == NULL)
         old_trn = _eXosip_find_last_out_transaction (jc, jd, "BYE");
 
@@ -1039,7 +1039,7 @@ _eXosip_process_newrequest (struct eXosip_t *excontext, osip_event_t * evt, int 
       /* osip_dialog_update_osip_cseq_as_uas (jd->d_dialog, evt->sip); */
       osip_dialog_update_route_set_as_uas (jd->d_dialog, evt->sip);
 
-      _eXosip_process_reinvite (excontext, jc, jd, transaction, evt);
+      _eXosip_process_reinvite (excontext, jc, jd, transaction);
     }
     else if (MSG_IS_BYE (evt->sip)) {
       osip_generic_param_t *tag_to = NULL;
@@ -1053,7 +1053,7 @@ _eXosip_process_newrequest (struct eXosip_t *excontext, osip_event_t * evt, int 
         return;
       }
 
-      old_trn = _eXosip_find_last_inc_transaction (jc, jd, "BYE");
+      old_trn = _eXosip_find_last_inc_transaction (jd, "BYE");
 
       if (old_trn != NULL) {
         /* && old_trn->state!=NIST_TERMINATED) */
@@ -1068,7 +1068,7 @@ _eXosip_process_newrequest (struct eXosip_t *excontext, osip_event_t * evt, int 
       _eXosip_process_ack (excontext, jc, jd, evt);
     }
     else {
-      _eXosip_process_message_within_dialog (excontext, jc, jd, transaction, evt);
+      _eXosip_process_message_within_dialog (excontext, jc, jd, transaction);
     }
     return;
   }
@@ -1116,7 +1116,7 @@ _eXosip_process_newrequest (struct eXosip_t *excontext, osip_event_t * evt, int 
      */
     if (MSG_IS_NOTIFY (evt->sip)) {
       /* the previous transaction MUST be freed */
-      old_trn = _eXosip_find_last_inc_notify (js, jd);
+      old_trn = _eXosip_find_last_inc_notify (jd);
 
       /* shouldn't we wait for the COMPLETED state? */
       if (old_trn != NULL && old_trn->state != NIST_TERMINATED) {
@@ -1852,7 +1852,7 @@ _eXosip_pendingosip_transaction_exist (struct eXosip_t *excontext, eXosip_call_t
   osip_transaction_t *tr;
   time_t now = osip_getsystemtime (NULL);
 
-  tr = _eXosip_find_last_inc_transaction (jc, jd, "BYE");
+  tr = _eXosip_find_last_inc_transaction (jd, "BYE");
   if (tr != NULL && tr->state != NIST_TERMINATED) {     /* Don't want to wait forever on broken transaction!! */
     if (tr->birth_time + 180 < now) {   /* Wait a max of 2 minutes */
       /* remove the transaction from oSIP: */
@@ -1892,7 +1892,7 @@ _eXosip_pendingosip_transaction_exist (struct eXosip_t *excontext, eXosip_call_t
       return OSIP_SUCCESS;
   }
 
-  tr = _eXosip_find_last_inc_transaction (jc, jd, "REFER");
+  tr = _eXosip_find_last_inc_transaction (jd, "REFER");
   if (tr != NULL && tr->state != NIST_TERMINATED) {     /* Don't want to wait forever on broken transaction!! */
     if (tr->birth_time + 180 < now) {   /* Wait a max of 2 minutes */
       /* remove the transaction from oSIP: */
@@ -1920,7 +1920,7 @@ _eXosip_pendingosip_transaction_exist (struct eXosip_t *excontext, eXosip_call_t
 }
 
 static int
-_eXosip_pending_subscription_exist (struct eXosip_t *excontext, eXosip_call_t * jc, eXosip_dialog_t * jd)
+_eXosip_pending_subscription_exist (eXosip_dialog_t * jd)
 {
   time_t now = osip_getsystemtime (NULL);
 
@@ -2032,7 +2032,7 @@ _eXosip_release_finished_calls (struct eXosip_t *excontext, eXosip_call_t * jc, 
 {
   osip_transaction_t *tr;
 
-  tr = _eXosip_find_last_inc_transaction (jc, jd, "BYE");
+  tr = _eXosip_find_last_inc_transaction (jd, "BYE");
   if (tr == NULL)
     tr = _eXosip_find_last_out_transaction (jc, jd, "BYE");
 
@@ -2157,7 +2157,7 @@ _eXosip_release_terminated_calls (struct eXosip_t *excontext)
       }
       else if (0 == _eXosip_release_finished_transactions (excontext, jc, jd)) {
       }
-      else if (0 == _eXosip_pending_subscription_exist (excontext, jc, jd)) {
+      else if (0 == _eXosip_pending_subscription_exist (jd)) {
       }
       else if (0 == _eXosip_release_finished_calls (excontext, jc, jd)) {
         jd = jc->c_dialogs;
@@ -2393,7 +2393,7 @@ _eXosip_release_terminated_subscriptions (struct eXosip_t *excontext)
             /* exosip2 don't send REFRESH, so if it's expired, then, drop subscription */
             if (now - transaction->birth_time > js->s_reg_period) {
 
-              osip_transaction_t *transaction_notify = _eXosip_find_last_inc_notify (js, jd);
+              osip_transaction_t *transaction_notify = _eXosip_find_last_inc_notify (jd);
 
               if (transaction_notify == NULL || (transaction_notify->state == NIST_TERMINATED && now - transaction_notify->birth_time > js->s_reg_period)) {
                 /* NOTIFY is usually removed from the list of transaction.... */
@@ -2474,7 +2474,7 @@ _eXosip_release_terminated_in_subscriptions (struct eXosip_t *excontext)
 
       _eXosip_release_finished_transactions_for_subscription (excontext, jd);
 
-      transaction_notify = _eXosip_find_last_out_notify (jn, jd);
+      transaction_notify = _eXosip_find_last_out_notify (jd);
       if (transaction_notify != NULL && transaction_notify->state == NICT_TERMINATED && now > jn->n_ss_expires) {
         REMOVE_ELEMENT (excontext->j_notifies, jn);
         _eXosip_notify_free (excontext, jn);

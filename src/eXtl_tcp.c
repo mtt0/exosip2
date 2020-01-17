@@ -602,7 +602,7 @@ _tcp_read_tcp_main_socket (struct eXosip_t *excontext)
     }
 
     memset (src6host, 0, NI_MAXHOST);
-    recvport = _eXosip_getport ((struct sockaddr *) &sa, slen);
+    recvport = _eXosip_getport ((struct sockaddr *) &sa);
     _eXosip_getnameinfo ((struct sockaddr *) &sa, slen, src6host, NI_MAXHOST, NULL, 0, NI_NUMERICHOST);
 
     _eXosip_transport_set_dscp (excontext, sa.ss_family, sock);
@@ -1729,11 +1729,11 @@ tcp_tl_send_message (struct eXosip_t *excontext, osip_transaction_t * tr, osip_m
   }
 #endif
 
-  _eXosip_request_viamanager (excontext, tr, sip, reserved->socket_tab[pos].ai_addr.sa_family, IPPROTO_TCP, NULL, reserved->socket_tab[pos].ephemeral_port, reserved->socket_tab[pos].socket, host);
+  _eXosip_request_viamanager (excontext, sip, reserved->socket_tab[pos].ai_addr.sa_family, IPPROTO_TCP, NULL, reserved->socket_tab[pos].ephemeral_port, reserved->socket_tab[pos].socket, host);
   if (excontext->use_ephemeral_port == 1)
-    _eXosip_message_contactmanager (excontext, tr, sip, reserved->socket_tab[pos].ai_addr.sa_family, IPPROTO_TCP, NULL, reserved->socket_tab[pos].ephemeral_port, reserved->socket_tab[pos].socket, host);
+    _eXosip_message_contactmanager (excontext, sip, reserved->socket_tab[pos].ai_addr.sa_family, IPPROTO_TCP, NULL, reserved->socket_tab[pos].ephemeral_port, reserved->socket_tab[pos].socket, host);
   else
-    _eXosip_message_contactmanager (excontext, tr, sip, reserved->socket_tab[pos].ai_addr.sa_family, IPPROTO_TCP, NULL, excontext->eXtl_transport.proto_local_port, reserved->socket_tab[pos].socket, host);
+    _eXosip_message_contactmanager (excontext, sip, reserved->socket_tab[pos].ai_addr.sa_family, IPPROTO_TCP, NULL, excontext->eXtl_transport.proto_local_port, reserved->socket_tab[pos].socket, host);
   if (excontext->tcp_firewall_ip[0] != '\0' || excontext->auto_masquerade_contact > 0)
     _tcp_tl_update_contact (excontext, sip, reserved->socket_tab[pos].natted_ip, reserved->socket_tab[pos].natted_port);
 

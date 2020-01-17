@@ -157,7 +157,7 @@ _eXosip_register_add_contact (struct eXosip_t *excontext, eXosip_reg_t * jreg, o
 }
 
 static int
-_eXosip_generating_register (struct eXosip_t *excontext, eXosip_reg_t * jreg, osip_message_t ** reg, char *transport, char *from, char *proxy, char *contact, int expires)
+_eXosip_generating_register (struct eXosip_t *excontext, eXosip_reg_t * jreg, osip_message_t ** reg, char *from, char *proxy, char *contact, int expires)
 {
   int i;
 
@@ -233,7 +233,7 @@ _eXosip_register_build_register (struct eXosip_t *excontext, eXosip_reg_t * jr, 
                               &osip_proxy_authorization_free);
 
 
-      i = _eXosip_update_top_via (excontext, reg);
+      i = _eXosip_update_top_via (reg);
       if (i != 0) {
         osip_message_free (reg);
         if (last_response != NULL)
@@ -347,7 +347,7 @@ _eXosip_register_build_register (struct eXosip_t *excontext, eXosip_reg_t * jr, 
   }
 
   if (reg == NULL) {
-    i = _eXosip_generating_register (excontext, jr, &reg, excontext->transport, jr->r_aor, jr->r_registrar, jr->r_contact, jr->r_reg_expire);
+    i = _eXosip_generating_register (excontext, jr, &reg, jr->r_aor, jr->r_registrar, jr->r_contact, jr->r_reg_expire);
     if (i != 0)
       return i;
   }

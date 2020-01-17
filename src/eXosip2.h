@@ -456,7 +456,7 @@ extern "C" {
 
   int _eXosip_event_init (eXosip_event_t ** je, int type);
   void _eXosip_report_call_event (struct eXosip_t *excontext, int evt, eXosip_call_t * jc, eXosip_dialog_t * jd, osip_transaction_t * tr);
-  void _eXosip_report_event (struct eXosip_t *excontext, eXosip_event_t * je, osip_message_t * sip);
+  void _eXosip_report_event (struct eXosip_t *excontext, eXosip_event_t * je);
   int _eXosip_event_add (struct eXosip_t *excontext, eXosip_event_t * je);
 
   typedef void (*eXosip_callback_t) (int type, eXosip_event_t *);
@@ -620,7 +620,7 @@ extern "C" {
 
   int _eXosip_closesocket (SOCKET_TYPE sock);
   int _eXosip_getnameinfo (const struct sockaddr *sa, socklen_t salen, char *host, socklen_t hostlen, char *serv, socklen_t servlen, int flags);
-  int _eXosip_getport (const struct sockaddr *sa, socklen_t salen);
+  int _eXosip_getport (const struct sockaddr *sa);
   int _eXosip_get_addrinfo (struct eXosip_t *excontext, struct addrinfo **addrinfo, const char *hostname, int service, int protocol);
 
   int _eXosip_set_callbacks (osip_t * osip);
@@ -636,10 +636,10 @@ extern "C" {
   int _eXosip_generating_publish (struct eXosip_t *excontext, osip_message_t ** message, const char *to, const char *from, const char *route);
   int _eXosip_generating_cancel (struct eXosip_t *excontext, osip_message_t ** dest, osip_message_t * request_cancelled);
   int _eXosip_generating_bye (struct eXosip_t *excontext, osip_message_t ** bye, osip_dialog_t * dialog);
-  int _eXosip_request_viamanager (struct eXosip_t *excontext, osip_transaction_t * tr, osip_message_t * sip, int family, int proto, struct sockaddr_storage *udp_local_bind, int local_port, int sock, char *host);
-  int _eXosip_message_contactmanager (struct eXosip_t *excontext, osip_transaction_t * tr, osip_message_t * sip, int family, int proto, struct sockaddr_storage *udp_local_bind, int local_port, int sock, char *host);
+  int _eXosip_request_viamanager (struct eXosip_t *excontext, osip_message_t * sip, int family, int proto, struct sockaddr_storage *udp_local_bind, int local_port, int sock, char *host);
+  int _eXosip_message_contactmanager (struct eXosip_t *excontext, osip_message_t * sip, int family, int proto, struct sockaddr_storage *udp_local_bind, int local_port, int sock, char *host);
 
-  int _eXosip_update_top_via (struct eXosip_t *excontext, osip_message_t * sip);
+  int _eXosip_update_top_via (osip_message_t * sip);
   int _eXosip_request_add_via (struct eXosip_t *excontext, osip_message_t * request);
 
   void _eXosip_mark_all_registrations_expired (struct eXosip_t *excontext);
@@ -669,7 +669,7 @@ extern "C" {
   int _eXosip_remove_transaction_from_call (osip_transaction_t * tr, eXosip_call_t * jc);
 
   osip_transaction_t *_eXosip_find_last_transaction (eXosip_call_t * jc, eXosip_dialog_t * jd, const char *method);
-  osip_transaction_t *_eXosip_find_last_inc_transaction (eXosip_call_t * jc, eXosip_dialog_t * jd, const char *method);
+  osip_transaction_t *_eXosip_find_last_inc_transaction (eXosip_dialog_t * jd, const char *method);
   osip_transaction_t *_eXosip_find_last_out_transaction (eXosip_call_t * jc, eXosip_dialog_t * jd, const char *method);
   osip_transaction_t *_eXosip_find_last_invite (eXosip_call_t * jc, eXosip_dialog_t * jd);
   osip_transaction_t *_eXosip_find_last_inc_invite (eXosip_call_t * jc, eXosip_dialog_t * jd);
@@ -693,8 +693,8 @@ extern "C" {
   int _eXosip_insubscription_answer_1xx (struct eXosip_t *excontext, eXosip_notify_t * jc, eXosip_dialog_t * jd, int code);
   int _eXosip_insubscription_answer_2xx (eXosip_notify_t * jn, eXosip_dialog_t * jd, int code);
   int _eXosip_insubscription_answer_3456xx (struct eXosip_t *excontext, eXosip_notify_t * jn, eXosip_dialog_t * jd, int code);
-  osip_transaction_t *_eXosip_find_last_inc_notify (eXosip_subscribe_t * js, eXosip_dialog_t * jd);
-  osip_transaction_t *_eXosip_find_last_out_notify (eXosip_notify_t * jn, eXosip_dialog_t * jd);
+  osip_transaction_t *_eXosip_find_last_inc_notify (eXosip_dialog_t * jd);
+  osip_transaction_t *_eXosip_find_last_out_notify (eXosip_dialog_t * jd);
   osip_transaction_t *_eXosip_find_last_inc_subscribe (eXosip_notify_t * jn, eXosip_dialog_t * jd);
   osip_transaction_t *_eXosip_find_last_out_subscribe (eXosip_subscribe_t * js, eXosip_dialog_t * jd);
   void _eXosip_release_terminated_subscriptions (struct eXosip_t *excontext);
@@ -731,18 +731,6 @@ extern "C" {
   * @return  the eXosip_tls_ctx_error code
   */
   eXosip_tls_ctx_error eXosip_set_tls_ctx (struct eXosip_t *excontext, eXosip_tls_ctx_t * ctx);
-
-/**
-  * Select by CN name the server certificate from OS store.
-  * 12/11/2009 -> implemented only for "Windows Certificate Store"
-  */
-  eXosip_tls_ctx_error eXosip_tls_use_server_certificate (struct eXosip_t *excontext, const char *local_certificate_cn);
-
-/**
-  * Select by CN name the client certificate from OS store.
-  * 31/1/2011 -> implemented only for "Windows Certificate Store"
-  */
-  eXosip_tls_ctx_error eXosip_tls_use_client_certificate (struct eXosip_t *excontext, const char *local_certificate_cn);
 
 /**
   * Configure to accept/reject self signed and expired certificates.

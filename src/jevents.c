@@ -326,7 +326,7 @@ eXosip_event_free (eXosip_event_t * je)
 }
 
 void
-_eXosip_report_event (struct eXosip_t *excontext, eXosip_event_t * je, osip_message_t * sip)
+_eXosip_report_event (struct eXosip_t *excontext, eXosip_event_t * je)
 {
   if (je != NULL) {
     _eXosip_event_add (excontext, je);
@@ -339,7 +339,7 @@ _eXosip_report_call_event (struct eXosip_t *excontext, int evt, eXosip_call_t * 
   eXosip_event_t *je;
 
   je = _eXosip_event_init_for_call (evt, jc, jd, tr);
-  _eXosip_report_event (excontext, je, NULL);
+  _eXosip_report_event (excontext, je);
 }
 
 int

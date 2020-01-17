@@ -947,7 +947,7 @@ _eXosip_generating_cancel (struct eXosip_t *excontext, osip_message_t ** dest, o
 }
 
 int
-_eXosip_request_viamanager (struct eXosip_t *excontext, osip_transaction_t * tr, osip_message_t * sip, int family, int proto, struct sockaddr_storage *udp_local_bind, int ephemeral_port, int tcp_sock, char *host)
+_eXosip_request_viamanager (struct eXosip_t *excontext, osip_message_t * sip, int family, int proto, struct sockaddr_storage *udp_local_bind, int ephemeral_port, int tcp_sock, char *host)
 {
   /* step1: put local-ip in VIA->host or udp_firewall_ip set by eXosip_masquerade_contact (tl_get_masquerade_contact) */
   /* step2: put local-port in VIA->port or udp_firewall_port set by eXosip_masquerade_contact (tl_get_masquerade_contact) */
@@ -1032,7 +1032,7 @@ _eXosip_request_viamanager (struct eXosip_t *excontext, osip_transaction_t * tr,
 }
 
 int
-_eXosip_message_contactmanager (struct eXosip_t *excontext, osip_transaction_t * tr, osip_message_t * sip, int family, int proto, struct sockaddr_storage *udp_local_bind, int ephemeral_port, int sock, char *host)
+_eXosip_message_contactmanager (struct eXosip_t *excontext, osip_message_t * sip, int family, int proto, struct sockaddr_storage *udp_local_bind, int ephemeral_port, int sock, char *host)
 {
   /* step1: put local-ip in Contact ->host or udp_firewall_ip set by eXosip_masquerade_contact (_eXosip_register_add_contact) */
   /* step2: put local-port in Contact->port or udp_firewall_port set by eXosip_masquerade_contact (_eXosip_register_add_contact) */

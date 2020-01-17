@@ -310,8 +310,7 @@ eXosip_insubscription_build_request (struct eXosip_t *excontext, int did, const 
     return OSIP_NOTFOUND;
   }
 
-  transaction = NULL;
-  transaction = _eXosip_find_last_out_notify (jn, jd);
+  transaction = _eXosip_find_last_out_notify (jd);
   if (transaction != NULL) {
     if (transaction->state != NICT_TERMINATED && transaction->state != NIST_TERMINATED && transaction->state != NICT_COMPLETED && transaction->state != NIST_COMPLETED)
       return OSIP_WRONG_STATE;
@@ -351,8 +350,7 @@ eXosip_insubscription_send_request (struct eXosip_t *excontext, int did, osip_me
     return OSIP_NOTFOUND;
   }
 
-  transaction = NULL;
-  transaction = _eXosip_find_last_out_notify (jn, jd);
+  transaction = _eXosip_find_last_out_notify (jd);
   if (transaction != NULL) {
     if (transaction->state != NICT_TERMINATED && transaction->state != NIST_TERMINATED && transaction->state != NICT_COMPLETED && transaction->state != NIST_COMPLETED) {
       osip_message_free (request);
@@ -399,7 +397,7 @@ _eXosip_insubscription_send_request_with_credential (struct eXosip_t *excontext,
   }
 
   if (out_tr == NULL) {
-    out_tr = _eXosip_find_last_out_notify (jn, jd);
+    out_tr = _eXosip_find_last_out_notify (jd);
   }
 
   if (out_tr == NULL || out_tr->orig_request == NULL || out_tr->last_response == NULL)
@@ -431,7 +429,7 @@ _eXosip_insubscription_send_request_with_credential (struct eXosip_t *excontext,
     jd->d_dialog->local_cseq++;
   }
 
-  i = _eXosip_update_top_via (excontext, msg);
+  i = _eXosip_update_top_via (msg);
   if (i != 0) {
     osip_message_free (msg);
     OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "eXosip: unsupported protocol\n"));
