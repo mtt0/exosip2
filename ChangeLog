@@ -1,3 +1,17 @@
+eXosip2 (5.1.0) - 2020-01-16
+	* new API:
+	Generate random string: (low entropy, only hexa)
+	int eXosip_hexa_generate_random(char *val, int val_size);
+	Generate random string: (high entropy when compiled with openssl)
+	int eXosip_byte_generate_random(char *val, int val_size)
+
+	* provide more entropy with eXosip_byte_generate_random (with openssl when available).
+	* fix TLS security issue reported by Alexander Traud regarding hostname validation when using NAPTR/SRV.
+	* add support for epoll (detected by configured) // becomes the default on linux platforms with autotools
+	* fix bug #56839: The cnonce should not be static -this is identified as replay attack by some services-.
+	* fix tcp and tls connection failure detection (accelerate error detection and recovery)
+	* fix: fixed a crash with DTLS
+
 eXosip2 (5.1.0) - 2019-03-27
 	* minor API update:
 	  API parameter change: eXosip_call_build_ack/eXosip_call_send_ack API to use tid instead of did as parameter.
