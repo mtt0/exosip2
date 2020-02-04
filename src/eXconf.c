@@ -780,7 +780,7 @@ eXosip_init (struct eXosip_t *excontext)
   if (excontext->ep_array != NULL) {
     struct epoll_event ev;
     memset(&ev, 0, sizeof(struct epoll_event));
-    ev.events = EPOLLIN | EPOLLET;
+    ev.events = EPOLLIN;
     ev.data.fd = jpipe_get_read_descr (excontext->j_socketctl);
     i=epoll_ctl(excontext->epfd, EPOLL_CTL_ADD, jpipe_get_read_descr (excontext->j_socketctl), &ev);
     if (i<0) {
@@ -808,7 +808,7 @@ eXosip_init (struct eXosip_t *excontext)
     }
     
     memset(&ev, 0, sizeof(struct epoll_event));
-    ev.events = EPOLLIN | EPOLLET;
+    ev.events = EPOLLIN;
     ev.data.fd = jpipe_get_read_descr (excontext->j_socketctl_event);
     i = epoll_ctl(excontext->epfdctl, EPOLL_CTL_ADD, jpipe_get_read_descr (excontext->j_socketctl_event), &ev);
     if (i<0) {

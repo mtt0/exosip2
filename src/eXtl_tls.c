@@ -1228,7 +1228,7 @@ tls_tl_open (struct eXosip_t *excontext)
     struct epoll_event ev;
 
     memset(&ev, 0, sizeof(struct epoll_event));
-    ev.events = EPOLLIN | EPOLLET;
+    ev.events = EPOLLIN;
     ev.data.fd = sock;
     res = epoll_ctl (excontext->epfd, EPOLL_CTL_ADD, sock, &ev);
     if (res < 0) {
@@ -1434,7 +1434,7 @@ _tls_tl_is_connected_epoll (int sock)
   epfd = epoll_create (1);
 
   memset(&ev, 0, sizeof(struct epoll_event));
-  ev.events = EPOLLOUT | EPOLLET;
+  ev.events = EPOLLOUT;
   ev.data.fd = sock;
   res = epoll_ctl (epfd, EPOLL_CTL_ADD, sock, &ev);
   if (res < 0) {
@@ -1759,7 +1759,7 @@ _tls_tl_ssl_connect_socket (struct eXosip_t *excontext, struct _tls_stream *sock
     res = SSL_connect (sockinfo->ssl_conn);
     res = SSL_get_error (sockinfo->ssl_conn, res);
     if (res == SSL_ERROR_NONE) {
-      OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO2, NULL, "SSL_connect succeeded\n"));
+      OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO2, NULL, "SSL_connect succeeded [%s]\n", SSL_get_version(sockinfo->ssl_conn)));
       break;
     }
 
@@ -2207,7 +2207,7 @@ _tls_read_tls_main_socket (struct eXosip_t *excontext)
       int res;
 
       memset(&ev, 0, sizeof(struct epoll_event));
-      ev.events = EPOLLIN | EPOLLOUT | EPOLLET;
+      ev.events = EPOLLIN | EPOLLOUT;
       ev.data.fd = sock;
       res = epoll_ctl (excontext->epfd, EPOLL_CTL_ADD, sock, &ev);
       if (res < 0) {
@@ -2689,7 +2689,7 @@ _tls_tl_connect_socket (struct eXosip_t *excontext, char *host, int port, int re
       struct epoll_event ev;
 
       memset(&ev, 0, sizeof(struct epoll_event));
-      ev.events = EPOLLIN | EPOLLOUT | EPOLLET;
+      ev.events = EPOLLIN | EPOLLOUT;
       ev.data.fd = sock;
       res = epoll_ctl (excontext->epfd, EPOLL_CTL_ADD, sock, &ev);
       if (res < 0) {

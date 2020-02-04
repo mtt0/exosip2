@@ -474,7 +474,7 @@ _udp_tl_open (struct eXosip_t *excontext, int force_family)
   if (excontext->poll_method == EXOSIP_USE_EPOLL_LT) {
     struct epoll_event ev;
     memset(&ev, 0, sizeof(struct epoll_event));
-    ev.events = EPOLLIN | EPOLLET;
+    ev.events = EPOLLIN;
     ev.data.fd = sock;
     res=epoll_ctl(excontext->epfd, EPOLL_CTL_ADD, sock, &ev);
     if (res<0) {
@@ -641,7 +641,7 @@ _udp_tl_open_oc (struct eXosip_t *excontext, int force_family)
   if (excontext->poll_method == EXOSIP_USE_EPOLL_LT) {
     struct epoll_event ev;
     memset(&ev, 0, sizeof(struct epoll_event));
-    ev.events = EPOLLIN | EPOLLET;
+    ev.events = EPOLLIN;
     ev.data.fd = sock;
     res=epoll_ctl(excontext->epfd, EPOLL_CTL_ADD, sock, &ev);
     if (res<0) {

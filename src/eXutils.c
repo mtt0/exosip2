@@ -2154,13 +2154,13 @@ eXosip_dnsutils_cares_process (struct osip_naptr *output_record, ares_channel ch
 
       memset(&ev, 0, sizeof(struct epoll_event));
       if (socks[num]==ARES_SOCKET_BAD)
-	continue;
+        continue;
       
-      ev.events = EPOLLIN | EPOLLET;
+      ev.events = EPOLLIN;
       if (ARES_GETSOCK_READABLE(bitmask, num)) {
-	ev.events |= EPOLLIN;
+        ev.events |= EPOLLIN;
       } else if (ARES_GETSOCK_WRITABLE(bitmask, num)) {
-	ev.events |= EPOLLOUT;
+        ev.events |= EPOLLOUT;
       }
       ev.data.fd = socks[num];
       epoll_ctl(epfd, EPOLL_CTL_ADD, socks[num], &ev);
