@@ -875,6 +875,8 @@ _udp_read_udp_oc_socket(struct eXosip_t *excontext) {
     OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "Could not read socket (%i) (%i) (%s)\n", i, my_errno, strerror (my_errno)));
     if (errno == 0 || errno == 34) {
       udp_message_max_length = udp_message_max_length * 2;
+      if (udp_message_max_length > 65536)
+        udp_message_max_length = 65536;
       osip_free (reserved->buf);
       reserved->buf = (char *) osip_malloc (udp_message_max_length * sizeof (char) + 1);
     }
