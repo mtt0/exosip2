@@ -103,13 +103,13 @@ eXosip_hexa_generate_random(char *val, int val_size, char *str1, char *str2, cha
 }
 
 int
-eXosip_byte_generate_random(char *val, int val_size)
+eXosip_byte_generate_random(char *buf, int buf_size)
 {
 #ifdef HAVE_OPENSSL_SSL_H
-  return RAND_bytes((unsigned char *)val, val_size) > 0 ? 0 : -1;
+  return RAND_bytes((unsigned char *)buf, buf_size) > 0 ? 0 : -1;
 #else
-  eXosip_generate_random(val, 16);
-  eXosip_hexa_generate_random(val, val_size, val, "key", "crypto");
+  eXosip_generate_random(buf, 16);
+  eXosip_hexa_generate_random(buf, buf_size, buf, "key", "crypto");
   return 0;
 #endif
 }
