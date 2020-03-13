@@ -801,12 +801,15 @@ eXosip_init (struct eXosip_t *excontext)
   }
 
   if (excontext->poll_method == EXOSIP_USE_EPOLL_LT) {
+#ifndef OSIP_MONOTHREAD
     struct epoll_event ev;
+#endif
     excontext->epfdctl = epoll_create (1);
     if (excontext->epfdctl < 0) {
       return OSIP_UNDEFINED_ERROR;
     }
     
+#ifndef OSIP_MONOTHREAD
     memset(&ev, 0, sizeof(struct epoll_event));
     ev.events = EPOLLIN;
     ev.data.fd = jpipe_get_read_descr (excontext->j_socketctl_event);
@@ -815,6 +818,7 @@ eXosip_init (struct eXosip_t *excontext)
       _eXosip_closesocket (excontext->epfdctl);
       return OSIP_UNDEFINED_ERROR;
     }
+#endif
   }
 #endif
   
