@@ -1601,7 +1601,18 @@ _tls_tl_check_connected (struct eXosip_t *excontext)
         /* stop calling "connect()" */
         reserved->socket_tab[pos].ai_addrlen = 0;
         reserved->socket_tab[pos].ssl_state = 1;
-        continue;
+
+#ifdef HAVE_SYS_EPOLL_H
+	if (excontext->poll_method == EXOSIP_USE_EPOLL_LT) {
+	  struct epoll_event ev;
+	  /* no need for EPOLLOUT anymore */
+	  memset(&ev, 0, sizeof(struct epoll_event));
+	  ev.events = EPOLLIN;
+	  ev.data.fd = reserved->socket_tab[pos].socket;
+	  epoll_ctl (excontext->epfd, EPOLL_CTL_MOD, reserved->socket_tab[pos].socket, &ev);
+	}
+#endif
+	continue;
       }
       else {
         OSIP_TRACE (osip_trace
@@ -1973,6 +1984,17 @@ _tls_tl_recv (struct eXosip_t *excontext, struct _tls_stream *sockinfo)
       OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO2, NULL, "socket node:%s , socket %d [pos=%d], connected\n", sockinfo->remote_ip, sockinfo->socket, -1));
       sockinfo->ssl_state = 1;
       sockinfo->ai_addrlen = 0;
+
+#ifdef HAVE_SYS_EPOLL_H
+      if (excontext->poll_method == EXOSIP_USE_EPOLL_LT) {
+	struct epoll_event ev;
+	/* no need for EPOLLOUT anymore */
+	memset(&ev, 0, sizeof(struct epoll_event));
+	ev.events = EPOLLIN;
+	ev.data.fd = sockinfo->socket;
+	epoll_ctl (excontext->epfd, EPOLL_CTL_MOD, sockinfo->socket, &ev);
+      }
+#endif
     }
     else {
       OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "socket node:%s, socket %d [pos=%d], socket error\n", sockinfo->remote_ip, sockinfo->socket, -1));
@@ -2689,7 +2711,10 @@ _tls_tl_connect_socket (struct eXosip_t *excontext, char *host, int port, int re
       struct epoll_event ev;
 
       memset(&ev, 0, sizeof(struct epoll_event));
-      ev.events = EPOLLIN | EPOLLOUT;
+      if (reserved->socket_tab[pos].ssl_state == 1)
+	ev.events = EPOLLIN;
+      else
+	ev.events = EPOLLIN | EPOLLOUT;
       ev.data.fd = sock;
       res = epoll_ctl (excontext->epfd, EPOLL_CTL_ADD, sock, &ev);
       if (res < 0) {
@@ -3003,6 +3028,17 @@ tls_tl_send_message (struct eXosip_t *excontext, osip_transaction_t * tr, osip_m
       OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO2, NULL, "socket node:%s , socket %d [pos=%d], connected\n", host, out_socket, pos));
       reserved->socket_tab[pos].ssl_state = 1;
       reserved->socket_tab[pos].ai_addrlen = 0;
+
+#ifdef HAVE_SYS_EPOLL_H
+      if (excontext->poll_method == EXOSIP_USE_EPOLL_LT) {
+	struct epoll_event ev;
+	/* no need for EPOLLOUT anymore */
+	memset(&ev, 0, sizeof(struct epoll_event));
+	ev.events = EPOLLIN;
+	ev.data.fd = reserved->socket_tab[pos].socket;
+	epoll_ctl (excontext->epfd, EPOLL_CTL_MOD, reserved->socket_tab[pos].socket, &ev);
+      }
+#endif
     }
     else {
       OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "socket node:%s, socket %d [pos=%d], socket error\n", host, out_socket, pos));

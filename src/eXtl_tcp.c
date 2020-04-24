@@ -659,9 +659,17 @@ tcp_tl_epoll_read_message (struct eXosip_t *excontext, int nfds, struct epoll_ev
             int r = _tcp_tl_is_connected (excontext->poll_method, reserved->socket_tab[pos].socket);
 
             if (r == 0) {
+	      struct epoll_event ev;
+
               OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO2, NULL, "socket node:%s , socket %d [pos=%d], connected\n", reserved->socket_tab[pos].remote_ip, reserved->socket_tab[pos].socket, pos));
               reserved->socket_tab[pos].tcp_inprogress_max_timeout = 0;
               _eXosip_mark_registration_ready (excontext, reserved->socket_tab[pos].reg_call_id);
+
+	      /* no need for EPOLLOUT anymore */
+	      memset(&ev, 0, sizeof(struct epoll_event));
+	      ev.events = EPOLLIN;
+	      ev.data.fd = reserved->socket_tab[pos].socket;
+	      epoll_ctl (excontext->epfd, EPOLL_CTL_MOD, reserved->socket_tab[pos].socket, &ev);
             }
             else if (r < 0) {
               _eXosip_mark_registration_expired (excontext, reserved->socket_tab[pos].reg_call_id);
