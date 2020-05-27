@@ -2137,6 +2137,7 @@ eXosip_dnsutils_cares_process (struct osip_naptr *output_record, ares_channel ch
   int bitmask = ares_getsock (channel, socks, 16);
   if (bitmask != 0) {
     int num;
+#if 0
     int nfds;
     int epfd;
     int n;
@@ -2175,7 +2176,13 @@ eXosip_dnsutils_cares_process (struct osip_naptr *output_record, ares_channel ch
     for (n = 0; n < nfds; ++n) {
       ares_process_fd(channel, ep_array[n].data.fd, ep_array[n].data.fd);
     }
-
+#else
+    for (num=0;num<ARES_GETSOCK_MAXNUM;num++) {
+      if (socks[num]==ARES_SOCKET_BAD)
+        continue;
+      ares_process_fd(channel, socks[num], socks[num]);
+    }
+#endif
     bitmask = ares_getsock (channel, socks, 16);
   }
   return bitmask;
