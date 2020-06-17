@@ -1200,6 +1200,38 @@ eXosip_remove_authentication_info (struct eXosip_t *excontext, const char *usern
   return OSIP_NOTFOUND;
 }
 
+static int
+authorization_already_exist_for_realm(osip_message_t *req, const char *realm) {
+  osip_authorization_t *aut = NULL;
+  int pos = 0;
+  osip_message_get_authorization(req, pos, &aut);
+  while (aut != NULL) {
+    if (aut->realm != NULL && realm != NULL && osip_strcasecmp(realm, aut->realm) == 0) {
+      /* there is a match */
+      return OSIP_SUCCESS;
+    }
+    pos++;
+    osip_message_get_authorization(req, pos, &aut);
+  }
+  return OSIP_NOTFOUND;
+}
+
+static int
+proxyauthorization_already_exist_for_realm(osip_message_t *req, const char *realm) {
+  osip_proxy_authorization_t *aut = NULL;
+  int pos = 0;
+  osip_message_get_proxy_authorization(req, pos, &aut);
+  while (aut != NULL) {
+    if (aut->realm != NULL && realm != NULL && osip_strcasecmp(realm, aut->realm) == 0) {
+      /* there is a match */
+      return OSIP_SUCCESS;
+    }
+    pos++;
+    osip_message_get_proxy_authorization(req, pos, &aut);
+  }
+  return OSIP_NOTFOUND;
+}
+
 int
 _eXosip_add_authentication_information (struct eXosip_t *excontext, osip_message_t * req, osip_message_t * last_response)
 {
@@ -1276,7 +1308,16 @@ _eXosip_add_authentication_information (struct eXosip_t *excontext, osip_message
     if (authinfo == NULL) {
       if (wwwauth->realm != NULL)
         OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO2, NULL, "authinfo: No authentication found for %s %s\n", req->from->url->username, wwwauth->realm));
-      return OSIP_NOTFOUND;
+      pos++;
+      osip_message_get_www_authenticate(last_response, pos, &wwwauth);
+      continue; /* not compliant with rfc8760 (should stop and no retry), but I prefer best effort */
+    }
+
+    /* do we already have an authorization header for the same realm? If we do, skip the new header (alternative authentication) */
+    if (wwwauth->realm != NULL && authorization_already_exist_for_realm(req, wwwauth->realm)==0) {
+      pos++;
+      osip_message_get_www_authenticate(last_response, pos, &wwwauth);
+      continue; /* fix: skip and continue when there are several challenge for one service */
     }
 
     i = osip_uri_to_str (req->req_uri, &uri);
@@ -1286,8 +1327,11 @@ _eXosip_add_authentication_information (struct eXosip_t *excontext, osip_message
     snprintf(_cnonce, sizeof(_cnonce), "%x", val_cnonce);
     i = _eXosip_create_proxy_authorization_header (wwwauth, uri, authinfo->userid, authinfo->passwd, authinfo->ha1, &aut, req->sip_method, _cnonce, 1);
     osip_free (uri);
-    if (i != 0)
-      return i;
+    if (i != 0) {
+      pos++;
+      osip_message_get_www_authenticate(last_response, pos, &wwwauth);
+      continue; /* we should make a difference between errors VS not supported // not compliant with rfc8760 (should stop and no retry), but I prefer best effort */
+    }
 
     if (aut != NULL) {
       osip_list_add (&req->authorizations, aut, -1);
@@ -1324,9 +1368,18 @@ _eXosip_add_authentication_information (struct eXosip_t *excontext, osip_message
     if (authinfo == NULL) {
       if (proxyauth->realm != NULL)
         OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO2, NULL, "authinfo: No authentication found for %s %s\n", req->from->url->username, proxyauth->realm));
-      return OSIP_NOTFOUND;
+      pos++;
+      osip_message_get_www_authenticate(last_response, pos, &wwwauth);
+      continue; /* not compliant with rfc8760 (should stop and no retry), but I prefer best effort */
     }
-    OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO1, NULL, "authinfo: %s\n", authinfo->username));
+
+    /* do we already have an authorization header for the same realm? If we do, skip the new header (alternative authentication) */
+    if (wwwauth->realm != NULL && proxyauthorization_already_exist_for_realm(req, proxyauth->realm) == 0) {
+      pos++;
+      osip_message_get_proxy_authenticate(last_response, pos, &proxyauth);
+      continue; /* fix: skip and continue when there are several challenge for one service */
+    }
+
     i = osip_uri_to_str (req->req_uri, &uri);
     if (i != 0)
       return i;
@@ -1334,8 +1387,11 @@ _eXosip_add_authentication_information (struct eXosip_t *excontext, osip_message
     snprintf(_cnonce, sizeof(_cnonce), "%x", val_cnonce);
     i = _eXosip_create_proxy_authorization_header (proxyauth, uri, authinfo->userid, authinfo->passwd, authinfo->ha1, &proxy_aut, req->sip_method, _cnonce, 1);
     osip_free (uri);
-    if (i != 0)
-      return i;
+    if (i != 0) {
+      pos++;
+      osip_message_get_proxy_authenticate(last_response, pos, &proxyauth);
+      continue; /* we should make a difference between errors VS not supported // not compliant with rfc8760 (should stop and no retry), but I prefer best effort */
+    }
 
     if (proxy_aut != NULL) {
       osip_list_add (&req->proxy_authorizations, proxy_aut, -1);

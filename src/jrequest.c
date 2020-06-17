@@ -74,21 +74,17 @@ eXosip_generate_random (char *buf, int buf_size)
   return OSIP_SUCCESS;
 }
 
-/* TAKEN from rcf2617.txt */
-#define HASHLEN 16
-typedef char HASH[HASHLEN];
+#define MD5HASHLEN 16
+#define MD5HEXLEN 32
 
-#define HASHHEXLEN 32
-typedef char HASHHEX[HASHHEXLEN + 1];
-
-void CvtHex(HASH Bin, HASHHEX Hex);
+void CvtHex(char *input_binary, size_t input_len, char *output_hexa);
 
 int
 eXosip_hexa_generate_random(char *val, int val_size, char *str1, char *str2, char *str3)
 {
   osip_MD5_CTX Md5Ctx;
-  HASH HA1;
-  HASHHEX Key;
+  char HA1[MD5HASHLEN];
+  char Key[MD5HEXLEN+1];
   
   osip_MD5Init(&Md5Ctx);
   osip_MD5Update(&Md5Ctx, (unsigned char *)str1, (unsigned int)strlen(str1));
@@ -97,7 +93,7 @@ eXosip_hexa_generate_random(char *val, int val_size, char *str1, char *str2, cha
   osip_MD5Update(&Md5Ctx, (unsigned char *) ":", 1);
   osip_MD5Update(&Md5Ctx, (unsigned char *)str3, (unsigned int)strlen(str3));
   osip_MD5Final((unsigned char *)HA1, &Md5Ctx);
-  CvtHex(HA1, Key);
+  CvtHex(HA1, MD5HASHLEN, Key);
   osip_strncpy(val, Key, val_size - 1);
   return 0;
 }

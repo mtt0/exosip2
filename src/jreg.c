@@ -34,14 +34,10 @@
 
 #include <osipparser2/osip_md5.h>
 
-/* TAKEN from rcf2617.txt */
-#define HASHLEN 16
-typedef char HASH[HASHLEN];
+#define MD5HASHLEN 16
+#define MD5HEXLEN 32
 
-#define HASHHEXLEN 32
-typedef char HASHHEX[HASHHEXLEN + 1];
-
-void CvtHex (HASH Bin, HASHHEX Hex);
+void CvtHex (char *input_binary, size_t input_len, char *output_hexa);
 
 int
 _eXosip_reg_init (struct eXosip_t *excontext, eXosip_reg_t ** jr, const char *from, const char *proxy, const char *contact)
@@ -77,8 +73,8 @@ _eXosip_reg_init (struct eXosip_t *excontext, eXosip_reg_t ** jr, const char *fr
 
   {
     osip_MD5_CTX Md5Ctx;
-    HASH hval;
-    HASHHEX key_line;
+    char hval[MD5HASHLEN];
+    char key_line[MD5HEXLEN + 1];
     char localip[128];
     char firewall_ip[65];
     char firewall_port[10];
@@ -114,7 +110,7 @@ _eXosip_reg_init (struct eXosip_t *excontext, eXosip_reg_t ** jr, const char *fr
     osip_MD5Update (&Md5Ctx, (unsigned char *) somerandom, (unsigned int) strlen (somerandom));
 
     osip_MD5Final ((unsigned char *) hval, &Md5Ctx);
-    CvtHex (hval, key_line);
+    CvtHex (hval, MD5HASHLEN, key_line);
 
     osip_strncpy ((*jr)->r_line, key_line, sizeof ((*jr)->r_line) - 1);
   }
