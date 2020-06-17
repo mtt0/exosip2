@@ -1369,12 +1369,12 @@ _eXosip_add_authentication_information (struct eXosip_t *excontext, osip_message
       if (proxyauth->realm != NULL)
         OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO2, NULL, "authinfo: No authentication found for %s %s\n", req->from->url->username, proxyauth->realm));
       pos++;
-      osip_message_get_www_authenticate(last_response, pos, &wwwauth);
+      osip_message_get_www_authenticate(last_response, pos, &proxyauth);
       continue; /* not compliant with rfc8760 (should stop and no retry), but I prefer best effort */
     }
 
     /* do we already have an authorization header for the same realm? If we do, skip the new header (alternative authentication) */
-    if (wwwauth->realm != NULL && proxyauthorization_already_exist_for_realm(req, proxyauth->realm) == 0) {
+    if (proxyauth->realm != NULL && proxyauthorization_already_exist_for_realm(req, proxyauth->realm) == 0) {
       pos++;
       osip_message_get_proxy_authenticate(last_response, pos, &proxyauth);
       continue; /* fix: skip and continue when there are several challenge for one service */
