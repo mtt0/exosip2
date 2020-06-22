@@ -46,7 +46,7 @@ eXosip_get_remote_sdp_from_tid (struct eXosip_t *excontext, int tid)
     _eXosip_call_transaction_find (excontext, tid, &jc, &jd, &tr);
   }
   if (jc == NULL) {
-    OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "eXosip: No call here?\n"));
+    OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "[eXosip] no call here\n"));
     return NULL;
   }
   if (tr == NULL)
@@ -67,7 +67,7 @@ eXosip_get_local_sdp_from_tid (struct eXosip_t * excontext, int tid)
     _eXosip_call_transaction_find (excontext, tid, &jc, &jd, &tr);
   }
   if (jc == NULL) {
-    OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "eXosip: No call here?\n"));
+    OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "[eXosip] no call here\n"));
     return NULL;
   }
   if (tr == NULL)
@@ -87,7 +87,7 @@ eXosip_get_remote_sdp (struct eXosip_t * excontext, int jid)
     _eXosip_call_dialog_find (excontext, jid, &jc, &jd);
   }
   if (jc == NULL) {
-    OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "eXosip: No call here?\n"));
+    OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "[eXosip] no call here\n"));
     return NULL;
   }
   invite_tr = _eXosip_find_last_invite (jc, jd);
@@ -108,7 +108,7 @@ eXosip_get_previous_local_sdp (struct eXosip_t * excontext, int jid)
     _eXosip_call_dialog_find (excontext, jid, &jc, &jd);
   }
   if (jc == NULL) {
-    OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "eXosip: No call here?\n"));
+    OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "[eXosip] no call here\n"));
     return NULL;
   }
   invite_tr = _eXosip_find_last_invite (jc, jd);
@@ -132,7 +132,7 @@ eXosip_get_local_sdp (struct eXosip_t * excontext, int jid)
     _eXosip_call_dialog_find (excontext, jid, &jc, &jd);
   }
   if (jc == NULL) {
-    OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "eXosip: No call here?\n"));
+    OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "[eXosip] no call here\n"));
     return NULL;
   }
   invite_tr = _eXosip_find_last_invite (jc, jd);

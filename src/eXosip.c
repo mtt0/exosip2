@@ -183,14 +183,14 @@ _eXosip_retry_with_auth (struct eXosip_t *excontext, eXosip_dialog_t * jd, osip_
 
   i = osip_message_clone (out_tr->orig_request, &msg);
   if (i != 0) {
-    OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "eXosip: could not clone msg for authentication\n"));
+    OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "[eXosip] cannot clone msg for authentication\n"));
     return i;
   }
 
   via = (osip_via_t *) osip_list_get (&msg->vias, 0);
   if (via == NULL || msg->cseq == NULL || msg->cseq->number == NULL) {
     osip_message_free (msg);
-    OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "eXosip: missing via or cseq header\n"));
+    OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "[eXosip] missing via or cseq header\n"));
     return OSIP_SYNTAXERROR;
   }
 
@@ -307,14 +307,14 @@ _eXosip_publish_refresh (struct eXosip_t *excontext, eXosip_dialog_t * jd, osip_
 
   i = osip_message_clone (out_tr->orig_request, &msg);
   if (i != 0) {
-    OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "eXosip: could not clone msg for authentication\n"));
+    OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "[eXosip] cannot clone msg for authentication\n"));
     return i;
   }
 
   via = (osip_via_t *) osip_list_get (&msg->vias, 0);
   if (via == NULL || msg->cseq == NULL || msg->cseq->number == NULL) {
     osip_message_free (msg);
-    OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "eXosip: missing via or cseq header\n"));
+    OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "[eXosip] missing via or cseq header\n"));
     return OSIP_SYNTAXERROR;
   }
 
@@ -374,7 +374,7 @@ _eXosip_publish_refresh (struct eXosip_t *excontext, eXosip_dialog_t * jd, osip_
     }
     else {
       osip_message_free (msg);
-      OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "eXosip: missing Min-Expires or Expires in PUBLISH\n"));
+      OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "[eXosip] missing Min-Expires or Expires in PUBLISH\n"));
       return OSIP_SYNTAXERROR;
     }
   }
@@ -414,7 +414,7 @@ _eXosip_retry_register_with_auth (struct eXosip_t *excontext, eXosip_event_t * j
 
   i = _eXosip_reg_find_id (excontext, &jr, je->rid);
   if (i < 0) {
-    OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "eXosip: registration not found\n"));
+    OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "[eXosip] registration not found\n"));
     return i;
   }
 
@@ -437,7 +437,7 @@ _eXosip_retry_invite_with_auth (struct eXosip_t *excontext, eXosip_event_t * je)
 
   i = _eXosip_call_transaction_find (excontext, je->tid, &jc, &jd, &tr);
   if (i != 0) {
-    OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "eXosip: call dialog not found\n"));
+    OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "[eXosip] call dialog not found\n"));
     return i;
   }
 
@@ -463,7 +463,7 @@ _eXosip_redirect_invite (struct eXosip_t *excontext, eXosip_event_t * je)
 
   i = _eXosip_call_transaction_find (excontext, je->tid, &jc, &jd, &tr);
   if (i != 0) {
-    OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "eXosip: call dialog not found\n"));
+    OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "[eXosip] call dialog not found\n"));
     return i;
   }
 
@@ -481,7 +481,7 @@ _eXosip_retry_subscribe_with_auth (struct eXosip_t *excontext, eXosip_event_t * 
 
   i = _eXosip_subscription_transaction_find (excontext, je->tid, &js, &jd, &tr);
   if (i != 0) {
-    OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "eXosip: subscribe dialog not found\n"));
+    OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "[eXosip] subscribe dialog not found\n"));
     return i;
   }
 
@@ -505,7 +505,7 @@ _eXosip_retry_publish_with_auth (struct eXosip_t *excontext, eXosip_event_t * je
 
   i = _eXosip_pub_find_by_tid (excontext, &jp, je->tid);
   if (i != 0) {
-    OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "eXosip: publish transaction not found\n"));
+    OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "[eXosip] publish transaction not found\n"));
     return i;
   }
 
@@ -523,7 +523,7 @@ _eXosip_retry_notify_with_auth (struct eXosip_t *excontext, eXosip_event_t * je)
 
   i = _eXosip_insubscription_transaction_find (excontext, je->tid, &jn, &jd, &tr);
   if (i != 0) {
-    OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "eXosip: notify dialog not found\n"));
+    OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "[eXosip] notify dialog not found\n"));
     return i;
   }
 
@@ -573,7 +573,7 @@ eXosip_retry_with_auth (struct eXosip_t *excontext, eXosip_event_t * je)
     }
   }
 
-  OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "eXosip: Can't retry event %d with auth\n", je->type));
+  OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "[eXosip] cannot retry event [%d] with auth\n", je->type));
   return OSIP_UNDEFINED_ERROR;
 }
 
@@ -587,11 +587,11 @@ _eXosip_redirect (struct eXosip_t *excontext, eXosip_event_t * je)
   case EXOSIP_CALL_MESSAGE_REDIRECTED:
   case EXOSIP_MESSAGE_REDIRECTED:
   case EXOSIP_SUBSCRIPTION_REDIRECTED:
-    OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "eXosip: not implemented\n"));
+    OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "[eXosip] not implemented\n"));
     return OSIP_UNDEFINED_ERROR;
 
   default:
-    OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "eXosip: Can't redirect event %d\n", je->type));
+    OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "[eXosip] cannot redirect event [%d]\n", je->type));
     return OSIP_UNDEFINED_ERROR;
   }
 }
@@ -628,7 +628,7 @@ _eXosip_retransmit_lost200ok (struct eXosip_t *excontext)
           if (jd->d_count == 9) {
             int i;
 
-            OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "eXosip: no ACK received during 20s: dropping call\n"));
+            OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "[eXosip] no ACK received during 20s [dropping call]\n"));
             /* hard for users to detect than I sent this BYE... */
             jd->d_count = 0;
             osip_message_free (jd->d_200Ok);
@@ -698,7 +698,7 @@ eXosip_automatic_action (struct eXosip_t *excontext)
 
           i = _eXosip_call_retry_request (excontext, jc, NULL, out_tr);
           if (i != 0) {
-            OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "eXosip: could not clone msg for authentication\n"));
+            OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "[eXosip] cannot clone msg for authentication\n"));
           }
           jc->c_retry++;
         }
@@ -714,7 +714,7 @@ eXosip_automatic_action (struct eXosip_t *excontext)
 
           i = _eXosip_call_retry_request (excontext, jc, NULL, out_tr);
           if (i != 0) {
-            OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "eXosip: could not clone msg for updating Session-Expires\n"));
+            OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "[eXosip] cannot clone msg for updating Session-Expires\n"));
           }
           jc->c_retry++;
         }
@@ -730,7 +730,7 @@ eXosip_automatic_action (struct eXosip_t *excontext)
 
         i = _eXosip_call_retry_request (excontext, jc, NULL, out_tr);
         if (i != 0) {
-          OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "eXosip: could not clone msg for redirection\n"));
+          OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "[eXosip] cannot clone msg for redirection\n"));
         }
       }
     }
@@ -757,7 +757,7 @@ eXosip_automatic_action (struct eXosip_t *excontext)
 
             i = _eXosip_call_retry_request (excontext, jc, jd, out_tr);
             if (i != 0) {
-              OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "eXosip: could not clone msg for authentication\n"));
+              OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "[eXosip] cannot clone msg for authentication\n"));
             }
             jd->d_retry++;
           }
@@ -773,7 +773,7 @@ eXosip_automatic_action (struct eXosip_t *excontext)
 
             i = _eXosip_call_retry_request (excontext, jc, jd, out_tr);
             if (i != 0) {
-              OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "eXosip: could not clone msg for updating Session-Expires\n"));
+              OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "[eXosip] cannot clone msg for updating Session-Expires\n"));
             }
             jd->d_retry++;
           }
@@ -789,7 +789,7 @@ eXosip_automatic_action (struct eXosip_t *excontext)
 
           i = _eXosip_call_retry_request (excontext, jc, jd, out_tr);
           if (i != 0) {
-            OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "eXosip: could not clone msg for redirection\n"));
+            OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "[eXosip] cannot clone msg for redirection\n"));
           }
         }
         else {
@@ -911,7 +911,7 @@ eXosip_automatic_action (struct eXosip_t *excontext)
 
           i = _eXosip_subscription_send_request_with_credential (excontext, js, NULL, out_tr);
           if (i != 0) {
-            OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "eXosip: could not clone msg for authentication\n"));
+            OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "[eXosip] cannot clone msg for authentication\n"));
           }
           js->s_retry++;
         }
@@ -937,7 +937,7 @@ eXosip_automatic_action (struct eXosip_t *excontext)
 
               i = _eXosip_subscription_send_request_with_credential (excontext, js, jd, out_tr);
               if (i != 0) {
-                OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "eXosip: could not clone suscbribe for authentication\n"));
+                OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "[eXosip] cannot clone suscbribe for authentication\n"));
               }
               jd->d_retry++;
             }
@@ -951,12 +951,12 @@ eXosip_automatic_action (struct eXosip_t *excontext)
             int i;
 
             if (out_tr->orig_request != NULL && MSG_IS_REFER (out_tr->orig_request)) {
-              OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "eXosip: subscription for REFER is expired\n"));
+              OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "[eXosip] subscription for REFER is expired\n"));
             }
             else {
               i = _eXosip_subscription_automatic_refresh (excontext, js, jd, out_tr);
               if (i != 0) {
-                OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "eXosip: could not clone subscribe for refresh\n"));
+                OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "[eXosip] cannot clone subscribe for refresh\n"));
               }
             }
           }
@@ -984,7 +984,7 @@ eXosip_automatic_action (struct eXosip_t *excontext)
 
               i = _eXosip_insubscription_send_request_with_credential (excontext, jn, jd, out_tr);
               if (i != 0) {
-                OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "eXosip: could not clone notify for authentication\n"));
+                OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "[eXosip] cannot clone notify for authentication\n"));
               }
               jd->d_retry++;
             }
@@ -1102,7 +1102,7 @@ eXosip_find_authentication_info (struct eXosip_t *excontext, const char *usernam
 
   for (authinfo = excontext->authinfos; authinfo != NULL; authinfo = authinfo->next) {
     if (realm != NULL)
-      OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO3, NULL, "INFO: authinfo: %s %s\n", realm, authinfo->realm));
+      OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO3, NULL, "[eXosip] searching for [%s] vs authinfo [%s]\n", realm, authinfo->realm));
     if (0 == osip_strcasecmp (authinfo->username, username)) {
       if (authinfo->realm[0] == '\0') {
         fallback = authinfo;
@@ -1117,7 +1117,7 @@ eXosip_find_authentication_info (struct eXosip_t *excontext, const char *usernam
      try with another username... */
   for (authinfo = excontext->authinfos; authinfo != NULL; authinfo = authinfo->next) {
     if (realm != NULL)
-      OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO3, NULL, "INFO: authinfo: %s %s\n", realm, authinfo->realm));
+      OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO3, NULL, "[eXosip] searching for [%s] vs authinfo [%s]\n", realm, authinfo->realm));
     if (authinfo->realm[0] == '\0' && fallback == NULL) {
       fallback = authinfo;
     }
@@ -1245,7 +1245,7 @@ _eXosip_add_authentication_information (struct eXosip_t *excontext, osip_message
   unsigned int val_cnonce = osip_build_random_number();
 
   if (req == NULL || req->from == NULL || req->from->url == NULL || req->from->url->username == NULL) {
-    OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO2, NULL, "authinfo: Invalid message\n"));
+    OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO2, NULL, "[eXosip] authinfo: Invalid message\n"));
     return OSIP_BADPARAMETER;
   }
 
@@ -1264,7 +1264,7 @@ _eXosip_add_authentication_information (struct eXosip_t *excontext, osip_message
         authinfo = eXosip_find_authentication_info (excontext, req->from->url->username, http_auth->wa->realm);
         if (authinfo == NULL) {
           if (http_auth->wa->realm != NULL)
-            OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO2, NULL, "authinfo: No authentication found for %s %s\n", req->from->url->username, http_auth->wa->realm));
+            OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO2, NULL, "[eXosip] authinfo: No authentication found for %s %s\n", req->from->url->username, http_auth->wa->realm));
           return OSIP_NOTFOUND;
         }
 
@@ -1296,7 +1296,7 @@ _eXosip_add_authentication_information (struct eXosip_t *excontext, osip_message
   osip_message_get_www_authenticate (last_response, pos, &wwwauth);
   osip_message_get_proxy_authenticate (last_response, pos, &proxyauth);
   if (wwwauth == NULL && proxyauth == NULL) {
-    OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO2, NULL, "authinfo: No WWW-Authenticate or Proxy-Authenticate\n"));
+    OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO2, NULL, "[eXosip] authinfo: No WWW-Authenticate or Proxy-Authenticate\n"));
     return OSIP_SYNTAXERROR;
   }
 
@@ -1307,7 +1307,7 @@ _eXosip_add_authentication_information (struct eXosip_t *excontext, osip_message
     authinfo = eXosip_find_authentication_info (excontext, req->from->url->username, wwwauth->realm);
     if (authinfo == NULL) {
       if (wwwauth->realm != NULL)
-        OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO2, NULL, "authinfo: No authentication found for %s %s\n", req->from->url->username, wwwauth->realm));
+        OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO2, NULL, "[eXosip] authinfo: No authentication found for %s %s\n", req->from->url->username, wwwauth->realm));
       pos++;
       osip_message_get_www_authenticate(last_response, pos, &wwwauth);
       continue; /* not compliant with rfc8760 (should stop and no retry), but I prefer best effort */
@@ -1367,7 +1367,7 @@ _eXosip_add_authentication_information (struct eXosip_t *excontext, osip_message
     authinfo = eXosip_find_authentication_info (excontext, req->from->url->username, proxyauth->realm);
     if (authinfo == NULL) {
       if (proxyauth->realm != NULL)
-        OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO2, NULL, "authinfo: No authentication found for %s %s\n", req->from->url->username, proxyauth->realm));
+        OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO2, NULL, "[eXosip] authinfo: No authentication found for %s %s\n", req->from->url->username, proxyauth->realm));
       pos++;
       osip_message_get_www_authenticate(last_response, pos, &proxyauth);
       continue; /* not compliant with rfc8760 (should stop and no retry), but I prefer best effort */
@@ -1431,7 +1431,7 @@ _eXosip_update_top_via (osip_message_t * sip)
   osip_via_t *via = (osip_via_t *) osip_list_get (&sip->vias, 0);
 
   if (via == NULL) {
-    OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "missing via in SIP message\n"));
+    OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "[eXosip] missing via in SIP message\n"));
     return OSIP_SYNTAXERROR;
   }
 
@@ -1445,7 +1445,7 @@ _eXosip_update_top_via (osip_message_t * sip)
   osip_via_param_get_byname (via, "branch", &br);
 
   if (br == NULL || br->gvalue == NULL) {
-    OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "missing branch parameter via in SIP message\n"));
+    OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "[eXosip] missing branch parameter via in SIP message\n"));
     return OSIP_SYNTAXERROR;
   }
 
@@ -1512,7 +1512,7 @@ _eXosip_mark_registration_expired (struct eXosip_t *excontext, const char *call_
   }
 }
 
-void
+int
 _eXosip_mark_registration_ready (struct eXosip_t *excontext, const char *call_id)
 {
   eXosip_reg_t *jr;
@@ -1534,7 +1534,9 @@ _eXosip_mark_registration_ready (struct eXosip_t *excontext, const char *call_id
   }
   if (wakeup) {
     _eXosip_wakeup (excontext);
+    return OSIP_SUCCESS;
   }
+  return OSIP_UNDEFINED_ERROR;
 }
 
 int
@@ -1547,7 +1549,7 @@ _eXosip_check_allow_header (eXosip_dialog_t * jd, osip_message_t * message)
   while (dest != NULL) {
     if (dest->value != NULL && osip_strcasecmp (dest->value, "update") == 0) {
       jd->d_session_timer_use_update = 1;
-      OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO2, NULL, "Allow header contains UPDATE\n"));
+      OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO2, NULL, "[eXosip] Allow header contains UPDATE\n"));
       break;
     }
     dest = (osip_allow_t *) osip_list_get_next (&it);
@@ -1560,7 +1562,7 @@ _eXosip_check_allow_header (eXosip_dialog_t * jd, osip_message_t * message)
     if (dest->hvalue != NULL && osip_strcasecmp (dest->hname, "allow") == 0) {
       if (osip_strcasestr (dest->hvalue, "UPDATE") != NULL) {
         jd->d_session_timer_use_update = 1;
-        OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO2, NULL, "Allow header contains UPDATE\n"));
+        OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO2, NULL, "[eXosip] Allow header contains UPDATE\n"));
         break;
       }
     }

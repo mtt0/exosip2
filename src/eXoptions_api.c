@@ -97,7 +97,7 @@ eXosip_options_build_answer (struct eXosip_t *excontext, int tid, int status, os
     _eXosip_transaction_find (excontext, tid, &tr);
   }
   if (tr == NULL) {
-    OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "eXosip: No call here?\n"));
+    OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "[eXosip] no call here\n"));
     return OSIP_NOTFOUND;
   }
 
@@ -130,14 +130,14 @@ eXosip_options_send_answer (struct eXosip_t *excontext, int tid, int status, osi
     _eXosip_transaction_find (excontext, tid, &tr);
   }
   if (tr == NULL) {
-    OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "eXosip: No OPTIONS transaction found\n"));
+    OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "[eXosip] no OPTIONS transaction found\n"));
     osip_message_free (answer);
     return OSIP_NOTFOUND;
   }
 
   /* is the transaction already answered? */
   if (tr->state == NIST_COMPLETED || tr->state == NIST_TERMINATED) {
-    OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "eXosip: transaction already answered\n"));
+    OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "[eXosip] transaction already answered\n"));
     osip_message_free (answer);
     return OSIP_WRONG_STATE;
   }

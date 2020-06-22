@@ -193,7 +193,7 @@ tcp_tl_open (struct eXosip_t *excontext)
   char *node = NULL;
 
   if (reserved == NULL) {
-    OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "wrong state: create transport layer first\n"));
+    OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "[eXosip] [TCP] wrong state: create transport layer first\n"));
     return OSIP_WRONG_STATE;
   }
 
@@ -214,7 +214,7 @@ tcp_tl_open (struct eXosip_t *excontext)
     int type;
 
     if (curinfo->ai_protocol && curinfo->ai_protocol != excontext->eXtl_transport.proto_num) {
-      OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO3, NULL, "Skipping protocol %d\n", curinfo->ai_protocol));
+      OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO3, NULL, "[eXosip] [TCP] skipping protocol [%d]\n", curinfo->ai_protocol));
       continue;
     }
     type = curinfo->ai_socktype;
@@ -223,7 +223,7 @@ tcp_tl_open (struct eXosip_t *excontext)
 #endif
     sock = (int) socket (curinfo->ai_family, type, curinfo->ai_protocol);
     if (sock < 0) {
-      OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "Cannot create socket %s!\n", strerror (ex_errno)));
+      OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "[eXosip] [TCP] cannot create socket [%s]\n", strerror (ex_errno)));
       continue;
     }
 
@@ -232,7 +232,7 @@ tcp_tl_open (struct eXosip_t *excontext)
       if (setsockopt_ipv6only (sock)) {
         _eXosip_closesocket (sock);
         sock = -1;
-        OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "Cannot set socket option %s!\n", strerror (ex_errno)));
+        OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "[eXosip] [TCP] cannot set socket option [%s]\n", strerror (ex_errno)));
         continue;
       }
 #endif /* IPV6_V6ONLY */
@@ -247,7 +247,7 @@ tcp_tl_open (struct eXosip_t *excontext)
 #ifdef ENABLE_MAIN_SOCKET
     res = bind (sock, curinfo->ai_addr, (socklen_t) curinfo->ai_addrlen);
     if (res < 0) {
-      OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "Cannot bind socket node:%s family:%d %s\n", excontext->eXtl_transport.proto_ifs, curinfo->ai_family, strerror (ex_errno)));
+      OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "[eXosip] [TCP] cannot bind socket node:[%s][%s] [%s]\n", excontext->eXtl_transport.proto_ifs, (curinfo->ai_family==AF_INET)?"AF_INET":"AF_INET6", strerror (ex_errno)));
       _eXosip_closesocket (sock);
       sock = -1;
       continue;
@@ -255,7 +255,7 @@ tcp_tl_open (struct eXosip_t *excontext)
     len = sizeof (reserved->ai_addr);
     res = getsockname (sock, (struct sockaddr *) &reserved->ai_addr, &len);
     if (res != 0) {
-      OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "Cannot get socket name (%s)\n", strerror (ex_errno)));
+      OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "[eXosip] [TCP] cannot get socket name [%s]\n", strerror (ex_errno)));
       memcpy (&reserved->ai_addr, curinfo->ai_addr, curinfo->ai_addrlen);
     }
     reserved->ai_addr_len = len;
@@ -263,7 +263,7 @@ tcp_tl_open (struct eXosip_t *excontext)
     if (excontext->eXtl_transport.proto_num == IPPROTO_TCP) {
       res = listen (sock, SOMAXCONN);
       if (res < 0) {
-        OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "Cannot bind socket node:%s family:%d %s\n", excontext->eXtl_transport.proto_ifs, curinfo->ai_family, strerror (ex_errno)));
+        OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "[eXosip] [TCP] cannot bind socket node:[%s][%s] [%s]\n", excontext->eXtl_transport.proto_ifs, (curinfo->ai_family==AF_INET)?"AF_INET":"AF_INET6", strerror (ex_errno)));
         _eXosip_closesocket (sock);
         sock = -1;
         continue;
@@ -277,7 +277,7 @@ tcp_tl_open (struct eXosip_t *excontext)
   _eXosip_freeaddrinfo (addrinfo);
 
   if (sock < 0) {
-    OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "Cannot bind on port: %i\n", excontext->eXtl_transport.proto_local_port));
+    OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "[eXosip] [TCP] cannot bind on port [%i]\n", excontext->eXtl_transport.proto_local_port));
     return -1;
   }
 
@@ -289,7 +289,7 @@ tcp_tl_open (struct eXosip_t *excontext)
       excontext->eXtl_transport.proto_local_port = ntohs (((struct sockaddr_in *) &reserved->ai_addr)->sin_port);
     else
       excontext->eXtl_transport.proto_local_port = ntohs (((struct sockaddr_in6 *) &reserved->ai_addr)->sin6_port);
-    OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO1, NULL, "Binding on port %i!\n", excontext->eXtl_transport.proto_local_port));
+    OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO1, NULL, "[eXosip] [TCP] binding on port [%i]\n", excontext->eXtl_transport.proto_local_port));
   }
 
 #ifdef ENABLE_MAIN_SOCKET
@@ -302,7 +302,7 @@ tcp_tl_open (struct eXosip_t *excontext)
     ev.data.fd = sock;
     res = epoll_ctl (excontext->epfd, EPOLL_CTL_ADD, sock, &ev);
     if (res < 0) {
-      OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "Cannot poll on main tcp socket: %i\n", excontext->eXtl_transport.proto_local_port));
+      OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "[eXosip] [TCP] cannot poll on main tcp socket [%i]\n", excontext->eXtl_transport.proto_local_port));
       _eXosip_closesocket (sock);
       reserved->tcp_socket = -1;
       return -1;
@@ -321,7 +321,7 @@ tcp_tl_reset (struct eXosip_t *excontext)
   int pos;
 
   if (reserved == NULL) {
-    OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "wrong state: create transport layer first\n"));
+    OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "[eXosip] [TCP] wrong state: create transport layer first\n"));
     return OSIP_WRONG_STATE;
   }
 
@@ -339,7 +339,7 @@ tcp_tl_set_fdset (struct eXosip_t *excontext, fd_set * osip_fdset, fd_set * osip
   int pos;
 
   if (reserved == NULL) {
-    OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "wrong state: create transport layer first\n"));
+    OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "[eXosip] [TCP] wrong state: create transport layer first\n"));
     return OSIP_WRONG_STATE;
   }
 
@@ -397,21 +397,22 @@ buffer_find (const char *haystack, size_t haystack_len, const char *needle)
 
 /* consume any complete messages in sockinfo->buf and
  return the total number of bytes consumed */
-static int
+static size_t
 handle_messages (struct eXosip_t *excontext, struct _tcp_stream *sockinfo)
 {
-  int consumed = 0;
+  size_t consumed = 0;
   char *buf = sockinfo->buf;
   size_t buflen = sockinfo->buflen;
   char *end_headers;
 
   while (buflen > 0 && (end_headers = buffer_find (buf, buflen, END_HEADERS_STR)) != NULL) {
-    int clen, msglen;
+    int clen;
+    size_t msglen;
     char *clen_header;
 
     if (buf == end_headers) {
       /* skip tcp standard keep-alive */
-      OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO1, NULL, "socket %s:%i: standard keep alive received (CRLFCRLF)\n", sockinfo->remote_ip, sockinfo->remote_port, buf));
+      OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO1, NULL, "[eXosip] [TCP] socket [%s:%i]: standard keep alive received (CRLFCRLF)\n", sockinfo->remote_ip, sockinfo->remote_port, buf));
       consumed += 4;
       buflen -= 4;
       buf += 4;
@@ -437,17 +438,17 @@ handle_messages (struct eXosip_t *excontext, struct _tcp_stream *sockinfo)
       /* Oops, no content-length header.      Presume 0 (below) so we
          consume the headers and make forward progress.  This permits
          server-side keepalive of "\r\n\r\n". */
-      OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO1, NULL, "socket %s:%i: message has no content-length: <%s>\n", sockinfo->remote_ip, sockinfo->remote_port, buf));
+      OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO1, NULL, "[eXosip] [TCP] socket [%s:%i]: message has no content-length: <%s>\n", sockinfo->remote_ip, sockinfo->remote_port, buf));
     }
     clen = clen_header ? atoi (clen_header) : 0;
     if (clen < 0)
-      return (int) sockinfo->buflen;    /* discard data */
+      return sockinfo->buflen;    /* discard data */
     /* undo our overwrite and advance end_headers */
     *end_headers = END_HEADERS_STR[0];
     end_headers += const_strlen (END_HEADERS_STR);
 
     /* do we have the whole message? */
-    msglen = (int) (end_headers - buf + clen);
+    msglen = (end_headers - buf + clen);
     if (msglen > buflen) {
       /* nope */
       return consumed;
@@ -494,7 +495,7 @@ _tcp_tl_recv (struct eXosip_t *excontext, struct _tcp_stream *sockinfo)
 
   r = (int) recv (sockinfo->socket, sockinfo->buf + sockinfo->buflen, (int) (sockinfo->bufsize - sockinfo->buflen), 0);
   if (r == 0) {
-    OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO1, NULL, "socket %s:%i: eof\n", sockinfo->remote_ip, sockinfo->remote_port));
+    OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO1, NULL, "[eXosip] [TCP] socket [%s:%i]: eof\n", sockinfo->remote_ip, sockinfo->remote_port));
     _eXosip_mark_registration_expired (excontext, sockinfo->reg_call_id);
     _tcp_tl_close_sockinfo (sockinfo);
     return OSIP_UNDEFINED_ERROR;
@@ -507,15 +508,15 @@ _tcp_tl_recv (struct eXosip_t *excontext, struct _tcp_stream *sockinfo)
     /* Do we need next line ? */
     /* else if (is_connreset_error(status)) */
     _eXosip_mark_registration_expired (excontext, sockinfo->reg_call_id);
-    OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO1, NULL, "socket %s:%i: error %d\n", sockinfo->remote_ip, sockinfo->remote_port, status));
+    OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO1, NULL, "[eXosip] [TCP] socket [%s:%i]: error %d\n", sockinfo->remote_ip, sockinfo->remote_port, status));
     _tcp_tl_close_sockinfo (sockinfo);
     return OSIP_UNDEFINED_ERROR;
   }
   else {
-    int consumed;
+    size_t consumed;
 
     sockinfo->tcp_max_timeout = 0;
-    OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO1, NULL, "socket %s:%i: read %d bytes\n", sockinfo->remote_ip, sockinfo->remote_port, r));
+    OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO1, NULL, "[eXosip] [TCP] socket [%s:%i]: read %d bytes\n", sockinfo->remote_ip, sockinfo->remote_port, r));
     sockinfo->buflen += r;
     consumed = handle_messages (excontext, sockinfo);
     if (consumed == 0) {
@@ -567,17 +568,17 @@ _tcp_read_tcp_main_socket (struct eXosip_t *excontext)
     memset (&reserved->socket_tab[pos], 0, sizeof (reserved->socket_tab[pos]));
   }
 
-  OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO3, NULL, "creating TCP socket at index: %i\n", pos));
+  OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO3, NULL, "[eXosip] [TCP] creating TCP socket at index: [%i]\n", pos));
 
   sock = (int) accept (reserved->tcp_socket, (struct sockaddr *) &sa, (socklen_t *) & slen);
   if (sock < 0) {
 #if defined(EBADF)
     int status = ex_errno;
 #endif
-    OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "Error accepting TCP socket\n"));
+    OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "[eXosip] [TCP] error accepting TCP socket\n"));
 #if defined(EBADF)
     if (status == EBADF) {
-      OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "Error accepting TCP socket: EBADF\n"));
+      OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "[eXosip] [TCP] error accepting TCP socket [EBADF]\n"));
       memset (&reserved->ai_addr, 0, sizeof (struct sockaddr_storage));
       if (reserved->tcp_socket > 0) {
         _eXosip_closesocket (reserved->tcp_socket);
@@ -593,7 +594,7 @@ _tcp_read_tcp_main_socket (struct eXosip_t *excontext)
   else {
     reserved->socket_tab[pos].socket = sock;
     reserved->socket_tab[pos].is_server = 1;
-    OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO1, NULL, "New TCP connection accepted\n"));
+    OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO1, NULL, "[eXosip] [TCP] incoming TCP connection accepted\n"));
 
     {
       int valopt = 1;
@@ -607,7 +608,7 @@ _tcp_read_tcp_main_socket (struct eXosip_t *excontext)
 
     _eXosip_transport_set_dscp (excontext, sa.ss_family, sock);
 
-    OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO1, NULL, "Message received from: %s:%i\n", src6host, recvport));
+    OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO1, NULL, "[eXosip] [TCP] message received from [%s:%i]\n", src6host, recvport));
     osip_strncpy (reserved->socket_tab[pos].remote_ip, src6host, sizeof (reserved->socket_tab[pos].remote_ip) - 1);
     reserved->socket_tab[pos].remote_port = recvport;
 
@@ -641,7 +642,7 @@ tcp_tl_epoll_read_message (struct eXosip_t *excontext, int nfds, struct epoll_ev
   int n;
 
   if (reserved == NULL) {
-    OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "wrong state: create transport layer first\n"));
+    OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "[eXosip] [TCP] wrong state: create transport layer first\n"));
     return OSIP_WRONG_STATE;
   }
 
@@ -661,7 +662,7 @@ tcp_tl_epoll_read_message (struct eXosip_t *excontext, int nfds, struct epoll_ev
             if (r == 0) {
 	      struct epoll_event ev;
 
-              OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO2, NULL, "socket node:%s , socket %d [pos=%d], connected\n", reserved->socket_tab[pos].remote_ip, reserved->socket_tab[pos].socket, pos));
+              OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO2, NULL, "[eXosip] [TCP] socket node:%s , socket %d [pos=%d], connected\n", reserved->socket_tab[pos].remote_ip, reserved->socket_tab[pos].socket, pos));
               reserved->socket_tab[pos].tcp_inprogress_max_timeout = 0;
               _eXosip_mark_registration_ready (excontext, reserved->socket_tab[pos].reg_call_id);
 
@@ -698,7 +699,7 @@ tcp_tl_read_message (struct eXosip_t *excontext, fd_set * osip_fdset, fd_set * o
   int pos = 0;
 
   if (reserved == NULL) {
-    OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "wrong state: create transport layer first\n"));
+    OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "[eXosip] [TCP] wrong state: create transport layer first\n"));
     return OSIP_WRONG_STATE;
   }
 
@@ -712,7 +713,7 @@ tcp_tl_read_message (struct eXosip_t *excontext, fd_set * osip_fdset, fd_set * o
         int r = _tcp_tl_is_connected (excontext->poll_method, reserved->socket_tab[pos].socket);
 
         if (r == 0) {
-          OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO2, NULL, "socket node:%s , socket %d [pos=%d], connected\n", reserved->socket_tab[pos].remote_ip, reserved->socket_tab[pos].socket, pos));
+          OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO2, NULL, "[eXosip] [TCP] socket node:%s , socket %d [pos=%d], connected\n", reserved->socket_tab[pos].remote_ip, reserved->socket_tab[pos].socket, pos));
           reserved->socket_tab[pos].tcp_inprogress_max_timeout = 0;
           _eXosip_mark_registration_ready (excontext, reserved->socket_tab[pos].reg_call_id);
         }
@@ -794,39 +795,39 @@ _tcp_tl_is_connected_epoll (int sock)
   if (nfds > 0) {
     sock_len = sizeof (int);
     if (getsockopt (sock, SOL_SOCKET, SO_ERROR, (void *) (&valopt), &sock_len) == 0) {
-      //OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO2, NULL, "XX Cannot connect socket node [%d]\n", valopt));
+      //OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO2, NULL, "[eXosip] [TCP] XX cannot connect socket node [%d]\n", valopt));
       if (valopt == 0) {
 	_eXosip_closesocket (epfd);
         return 0;
       }
       if (valopt == EINPROGRESS || valopt == EALREADY) {
-        OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO2, NULL, "(epoll) Cannot connect socket node(%i) / %s[%d]\n", valopt, strerror (ex_errno), ex_errno));
+        OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO2, NULL, "[eXosip] [TCP] [epoll] cannot connect socket node[%i] / [%d:%s]\n", valopt,  ex_errno, strerror (ex_errno)));
 	_eXosip_closesocket (epfd);
         return 1;
       }
       if (is_wouldblock_error (valopt)) {
-        OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO2, NULL, "(epoll) Cannot connect socket node(%i) would block / %s[%d]\n", valopt, strerror (ex_errno), ex_errno));
+        OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO2, NULL, "[eXosip] [TCP] [epoll] cannot connect socket node[%i] would block / [%d:%s]\n", valopt,  ex_errno, strerror (ex_errno)));
 	_eXosip_closesocket (epfd);
         return 1;
       }
-      OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO2, NULL, "(epoll) Cannot connect socket node / %s[%d]\n", strerror (valopt), valopt));
+      OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO2, NULL, "[eXosip] [TCP] [epoll] cannot connect socket node / [%d:%s]\n", valopt, strerror (valopt)));
 
       _eXosip_closesocket (epfd);
       return -1;
     }
     else {
-      OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO2, NULL, "(epoll) Cannot connect socket node / error in getsockopt %s[%d]\n", strerror (ex_errno), ex_errno));
+      OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO2, NULL, "[eXosip] [TCP] [epoll] cannot connect socket node / error in getsockopt [%d:%s]\n",  ex_errno, strerror (ex_errno)));
       _eXosip_closesocket (epfd);
       return -1;
     }
   }
   else if (res < 0) {
-    OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO2, NULL, "(epoll) Cannot connect socket node / error in epoll %s[%d]\n", strerror (ex_errno), ex_errno));
+    OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO2, NULL, "[eXosip] [TCP] [epoll] cannot connect socket node / error in epoll [%d:%s]\n",  ex_errno, strerror (ex_errno)));
     _eXosip_closesocket (epfd);
     return -1;
   }
   else {
-    OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO2, NULL, "(epoll) Cannot connect socket node / epoll timeout (%d ms)\n", SOCKET_TIMEOUT));
+    OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO2, NULL, "[eXosip] [TCP] [epoll] cannot connect socket node / timeout [%d ms]\n", SOCKET_TIMEOUT));
     _eXosip_closesocket (epfd);
     return 1;
   }
@@ -859,44 +860,44 @@ _tcp_tl_is_connected (int epoll_method, int sock)
   if (res > 0) {
     sock_len = sizeof (int);
     if (getsockopt (sock, SOL_SOCKET, SO_ERROR, (void *) (&valopt), &sock_len) == 0) {
-      //OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO2, NULL, "XX Cannot connect socket node [%d]\n", valopt));
+      //OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO2, NULL, "[eXosip] [TCP] XX cannot connect socket node [%d]\n", valopt));
       if (valopt == 0)
         return 0;
 #if defined(HAVE_WINSOCK2_H)
       if (ex_errno == WSAEWOULDBLOCK) {
-        OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO2, NULL, "Cannot connect socket node(%i) / %s[%d]\n", valopt, strerror (ex_errno), ex_errno));
+        OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO2, NULL, "[eXosip] [TCP] cannot connect socket node[%i] / [%d:%s]\n", valopt,  ex_errno, strerror (ex_errno)));
         return 1;
       }
       if (is_wouldblock_error (ex_errno)) {
-        OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO2, NULL, "Cannot connect socket node(%i) would block / %s[%d]\n", valopt, strerror (ex_errno), ex_errno));
+        OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO2, NULL, "[eXosip] [TCP] cannot connect socket node[%i] would block / [%d:%s]\n", valopt,  ex_errno, strerror (ex_errno)));
         return 1;
       }
-      OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO2, NULL, "Cannot connect socket node / %s[%d]\n", strerror (ex_errno), ex_errno));
+      OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO2, NULL, "[eXosip] [TCP] cannot connect socket node / [%d:%s]\n",  ex_errno, strerror (ex_errno)));
 #else
       if (valopt == EINPROGRESS || valopt == EALREADY) {
-        OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO2, NULL, "Cannot connect socket node(%i) / %s[%d]\n", valopt, strerror (ex_errno), ex_errno));
+        OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO2, NULL, "[eXosip] [TCP] cannot connect socket node[%i] / [%d:%s]\n", valopt,  ex_errno, strerror (ex_errno)));
         return 1;
       }
       if (is_wouldblock_error (valopt)) {
-        OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO2, NULL, "Cannot connect socket node(%i) would block / %s[%d]\n", valopt, strerror (ex_errno), ex_errno));
+        OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO2, NULL, "[eXosip] [TCP] cannot connect socket node[%i] would block / [%d:%s]\n", valopt,  ex_errno, strerror (ex_errno)));
         return 1;
       }
-      OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO2, NULL, "Cannot connect socket node / %s[%d]\n", strerror (valopt), valopt));
+      OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO2, NULL, "[eXosip] [TCP] cannot connect socket node / [%d:%s]\n", valopt, strerror (valopt)));
 #endif
 
       return -1;
     }
     else {
-      OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO2, NULL, "Cannot connect socket node / error in getsockopt %s[%d]\n", strerror (ex_errno), ex_errno));
+      OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO2, NULL, "[eXosip] [TCP] cannot connect socket node / error in getsockopt [%d:%s]\n",  ex_errno, strerror (ex_errno)));
       return -1;
     }
   }
   else if (res < 0) {
-    OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO2, NULL, "Cannot connect socket node / error in select %s[%d]\n", strerror (ex_errno), ex_errno));
+    OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO2, NULL, "[eXosip] [TCP] cannot connect socket node / error in select [%d:%s]\n",  ex_errno, strerror (ex_errno)));
     return -1;
   }
   else {
-    OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO2, NULL, "Cannot connect socket node / select timeout (%d ms)\n", SOCKET_TIMEOUT));
+    OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO2, NULL, "[eXosip] [TCP] cannot connect socket node / timeout [%d ms]\n", SOCKET_TIMEOUT));
     return 1;
   }
 }
@@ -910,9 +911,7 @@ _tcp_tl_check_connected (struct eXosip_t *excontext)
 
   for (pos = 0; pos < EXOSIP_MAX_SOCKETS; pos++) {
     if (reserved->socket_tab[pos].invalid > 0) {
-      OSIP_TRACE (osip_trace
-                  (__FILE__, __LINE__, OSIP_INFO2, NULL,
-                   "_tcp_tl_check_connected: socket node is in invalid state:%s:%i, socket %d [pos=%d], family:%d\n",
+      OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO2, NULL, "[eXosip] [TCP] [check] socket node is in invalid state:[%s:%i], socket %d [pos=%d], family:%d\n",
                    reserved->socket_tab[pos].remote_ip, reserved->socket_tab[pos].remote_port, reserved->socket_tab[pos].socket, pos, reserved->socket_tab[pos].ai_addr.sa_family));
       _tcp_tl_close_sockinfo (&reserved->socket_tab[pos]);
       continue;
@@ -927,19 +926,15 @@ _tcp_tl_check_connected (struct eXosip_t *excontext)
         if (res < 0) {
           int status = ex_errno;
 
-          OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO2, NULL, "_tcp_tl_check_connected: connect being called again (res=%i) (errno=%i) (%s)\n", res, status, strerror (status)));
+          OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO2, NULL, "[eXosip] [TCP] [check] connect being called again (res=%i) (errno=%i) (%s)\n", res, status, strerror (status)));
         }
 #endif
-        OSIP_TRACE (osip_trace
-                    (__FILE__, __LINE__, OSIP_INFO2, NULL,
-                     "_tcp_tl_check_connected: socket node:%s:%i, socket %d [pos=%d], family:%d, in progress\n",
+        OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO2, NULL, "[eXosip] [TCP] [check] socket node:[%s:%i], socket %d [pos=%d], family:%d, in progress\n",
                      reserved->socket_tab[pos].remote_ip, reserved->socket_tab[pos].remote_port, reserved->socket_tab[pos].socket, pos, reserved->socket_tab[pos].ai_addr.sa_family));
         continue;
       }
       else if (res == 0) {
-        OSIP_TRACE (osip_trace
-                    (__FILE__, __LINE__, OSIP_INFO1, NULL,
-                     "_tcp_tl_check_connected: socket node:%s:%i , socket %d [pos=%d], family:%d, connected\n",
+        OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO1, NULL, "[eXosip] [TCP] [check] socket node:[%s:%i] , socket %d [pos=%d], family:%d, connected\n",
                      reserved->socket_tab[pos].remote_ip, reserved->socket_tab[pos].remote_port, reserved->socket_tab[pos].socket, pos, reserved->socket_tab[pos].ai_addr.sa_family));
         /* stop calling "connect()" */
         reserved->socket_tab[pos].ai_addrlen = 0;
@@ -947,9 +942,7 @@ _tcp_tl_check_connected (struct eXosip_t *excontext)
         continue;
       }
       else {
-        OSIP_TRACE (osip_trace
-                    (__FILE__, __LINE__, OSIP_INFO2, NULL,
-                     "_tcp_tl_check_connected: socket node:%s:%i, socket %d [pos=%d], family:%d, error\n",
+        OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO2, NULL, "[eXosip] [TCP] [check] socket node:[%s:%i], socket %d [pos=%d], family:%d, error\n",
                      reserved->socket_tab[pos].remote_ip, reserved->socket_tab[pos].remote_port, reserved->socket_tab[pos].socket, pos, reserved->socket_tab[pos].ai_addr.sa_family));
         _tcp_tl_close_sockinfo (&reserved->socket_tab[pos]);
         continue;
@@ -960,7 +953,7 @@ _tcp_tl_check_connected (struct eXosip_t *excontext)
 }
 
 static int
-_tcp_tl_connect_socket (struct eXosip_t *excontext, char *host, int port)
+_tcp_tl_new_socket (struct eXosip_t *excontext, char *host, int port)
 {
   struct eXtltcp *reserved = (struct eXtltcp *) excontext->eXtltcp_reserved;
   int pos;
@@ -985,7 +978,7 @@ _tcp_tl_connect_socket (struct eXosip_t *excontext, char *host, int port)
   }
 
   if (pos == EXOSIP_MAX_SOCKETS) {
-    OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "reserved->socket_tab is full - cannot create new socket!\n"));
+    OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "[eXosip] [TCP] [new] reserved->socket_tab is full - cannot create new socket\n"));
 #ifdef DELETE_OLD_SOCKETS
     /* delete an old one! */
     pos = 0;
@@ -1023,14 +1016,14 @@ _tcp_tl_connect_socket (struct eXosip_t *excontext, char *host, int port)
     int type;
 
     if (curinfo->ai_protocol && curinfo->ai_protocol != IPPROTO_TCP) {
-      OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO2, NULL, "Skipping protocol %d\n", curinfo->ai_protocol));
+      OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO2, NULL, "[eXosip] [TCP] [new] skipping protocol [%d]\n", curinfo->ai_protocol));
       continue;
     }
 
     res = _eXosip_getnameinfo ((struct sockaddr *) curinfo->ai_addr, (socklen_t) curinfo->ai_addrlen, src6host, NI_MAXHOST, NULL, 0, NI_NUMERICHOST);
 
     if (res == 0) {
-      OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO1, NULL, "New binding with %s:%i\n", src6host, port));
+      OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO1, NULL, "[eXosip] [TCP] [new] new binding with [%s][%d]\n", src6host, port));
     }
 
     type = curinfo->ai_socktype;
@@ -1039,7 +1032,7 @@ _tcp_tl_connect_socket (struct eXosip_t *excontext, char *host, int port)
 #endif
     sock = (int) socket (curinfo->ai_family, type, curinfo->ai_protocol);
     if (sock < 0) {
-      OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO2, NULL, "Cannot create socket %s!\n", strerror (ex_errno)));
+      OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO2, NULL, "[eXosip] [TCP] [new] cannot create socket [%d:%s]\n", ex_errno, strerror (ex_errno)));
       continue;
     }
 
@@ -1048,7 +1041,7 @@ _tcp_tl_connect_socket (struct eXosip_t *excontext, char *host, int port)
       if (setsockopt_ipv6only (sock)) {
         _eXosip_closesocket (sock);
         sock = -1;
-        OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO2, NULL, "Cannot set socket option %s!\n", strerror (ex_errno)));
+        OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO2, NULL, "[eXosip] [TCP] [new] cannot set socket option [%d:%s]\n", ex_errno, strerror (ex_errno)));
         continue;
       }
 #endif /* IPV6_V6ONLY */
@@ -1068,7 +1061,7 @@ _tcp_tl_connect_socket (struct eXosip_t *excontext, char *host, int port)
           ((struct sockaddr_in6 *) &ai_addr)->sin6_port = htons (excontext->eXtl_transport.proto_local_port);
         res = bind (sock, (const struct sockaddr *) &ai_addr, reserved->ai_addr_len);
         if (res < 0) {
-          OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_WARNING, NULL, "Cannot bind socket node:%s family:%d %s\n", excontext->eXtl_transport.proto_ifs, ai_addr.ss_family, strerror (ex_errno)));
+          OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_WARNING, NULL, "[eXosip] [TCP] [new] cannot bind socket node:%s family:%d [%d:%s]\n", excontext->eXtl_transport.proto_ifs, ai_addr.ss_family, ex_errno, strerror (ex_errno)));
         }
       }
       else if (excontext->oc_local_address[0] == '\0') {
@@ -1099,7 +1092,7 @@ _tcp_tl_connect_socket (struct eXosip_t *excontext, char *host, int port)
             }
             res = bind (sock, (const struct sockaddr *) &ai_addr, reserved->ai_addr_len);
             if (res < 0) {
-              OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_WARNING, NULL, "Cannot bind socket node:%s family:%d (port=%i) %s\n", excontext->eXtl_transport.proto_ifs, ai_addr.ss_family, excontext->oc_local_port_current, strerror (ex_errno)));
+              OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_WARNING, NULL, "[eXosip] [TCP] [new] cannot bind socket node:%s family:%d (port=%i) [%d:%s]\n", excontext->eXtl_transport.proto_ifs, ai_addr.ss_family, excontext->oc_local_port_current, ex_errno, strerror (ex_errno)));
               count++;
               if (excontext->oc_local_port_range[0] >= 1024)
                 excontext->oc_local_port_current++;
@@ -1129,19 +1122,19 @@ _tcp_tl_connect_socket (struct eXosip_t *excontext, char *host, int port)
 
           for (oc_curinfo = oc_addrinfo; oc_curinfo; oc_curinfo = oc_curinfo->ai_next) {
             if (oc_curinfo->ai_protocol && oc_curinfo->ai_protocol != IPPROTO_TCP) {
-              OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO2, NULL, "Skipping protocol %d\n", oc_curinfo->ai_protocol));
+              OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO2, NULL, "[eXosip] [TCP] [new] skipping protocol [%d]\n", oc_curinfo->ai_protocol));
               continue;
             }
             break;
           }
           if (oc_curinfo == NULL) {
-            OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO2, NULL, "not able to find any address to bind\n"));
+            OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO2, NULL, "[eXosip] [TCP] [new] not able to find any address to bind\n"));
             _eXosip_freeaddrinfo (oc_addrinfo);
             break;
           }
           res = bind (sock, (const struct sockaddr *) oc_curinfo->ai_addr, (socklen_t) oc_curinfo->ai_addrlen);
           if (res < 0) {
-            OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_WARNING, NULL, "Cannot bind socket node:%s family:%d (port=%i) %s\n", excontext->oc_local_address, oc_curinfo->ai_addr->sa_family, excontext->oc_local_port_current, strerror (ex_errno)));
+            OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_WARNING, NULL, "[eXosip] [TCP] [new] cannot bind socket node:%s family:%d (port=%i) [%d:%s]\n", excontext->oc_local_address, oc_curinfo->ai_addr->sa_family, excontext->oc_local_port_current, ex_errno, strerror (ex_errno)));
             _eXosip_freeaddrinfo (oc_addrinfo);
             count++;
             if (excontext->oc_local_port_range[0] != 0)
@@ -1166,7 +1159,7 @@ _tcp_tl_connect_socket (struct eXosip_t *excontext, char *host, int port)
 
       val = 1;
       if (setsockopt (sock, SOL_SOCKET, SO_KEEPALIVE, (char *) &val, sizeof (val)) == -1) {
-        OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO2, NULL, "Cannot set socket SO_KEEPALIVE!\n"));
+        OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO2, NULL, "[eXosip] [TCP] [new] cannot set socket SO_KEEPALIVE\n"));
       }
     }
 #ifdef HAVE_MSTCPIP_H
@@ -1176,11 +1169,11 @@ _tcp_tl_connect_socket (struct eXosip_t *excontext, char *host, int port)
       struct tcp_keepalive kalive = { 0 };
       struct tcp_keepalive kaliveOut = { 0 };
       kalive.onoff = 1;
-      kalive.keepalivetime = 30000;     /* Keep Alive in 5.5 sec. */
+      kalive.keepalivetime = 30000;     /* Keep Alive every 30 seconds */
       kalive.keepaliveinterval = 3000;  /* Resend if No-Reply */
       err = WSAIoctl (sock, SIO_KEEPALIVE_VALS, &kalive, sizeof (kalive), &kaliveOut, sizeof (kaliveOut), &dwBytes, NULL, NULL);
       if (err != 0) {
-        OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_WARNING, NULL, "Cannot set keepalive interval!\n"));
+        OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_WARNING, NULL, "[eXosip] [TCP] [new] cannot set keepalive interval\n"));
       }
     }
 #endif
@@ -1192,14 +1185,14 @@ _tcp_tl_connect_socket (struct eXosip_t *excontext, char *host, int port)
       if (val < 0) {
         _eXosip_closesocket (sock);
         sock = -1;
-        OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO2, NULL, "Cannot get socket flag!\n"));
+        OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO2, NULL, "[eXosip] [TCP] [new] cannot get socket flag\n"));
         continue;
       }
       val |= O_NONBLOCK;
       if (fcntl (sock, F_SETFL, val) < 0) {
         _eXosip_closesocket (sock);
         sock = -1;
-        OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO2, NULL, "Cannot set socket flag!\n"));
+        OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO2, NULL, "[eXosip] [TCP] [new] cannot set socket flag\n"));
         continue;
       }
 #if SO_KEEPALIVE
@@ -1229,25 +1222,24 @@ _tcp_tl_connect_socket (struct eXosip_t *excontext, char *host, int port)
 
       val = 1;
       if (setsockopt (sock, IPPROTO_TCP, TCP_NODELAY, (char *) &val, sizeof (int)) != 0) {
-        OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO2, NULL, "Cannot set socket flag (TCP_NODELAY)\n"));
+        OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO2, NULL, "[eXosip] [TCP] [new] cannot set socket flag (TCP_NODELAY)\n"));
       }
     }
 #endif
 
     _eXosip_transport_set_dscp (excontext, curinfo->ai_family, sock);
 
-    OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO2, NULL, "socket node:%s , socket %d, family:%d set to non blocking mode\n", host, sock, curinfo->ai_family));
+    OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO2, NULL, "[eXosip] [TCP] [new] socket node:%s , socket %d, family:%d\n", host, sock, curinfo->ai_family));
     res = connect (sock, curinfo->ai_addr, (socklen_t) curinfo->ai_addrlen);
     if (res < 0) {
       int connect_err = ex_errno;
 
-      OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO2, NULL, "connecting socket node:%s, socket %d [pos=%d], family:%d, %s[%d]\n", host, sock, pos, curinfo->ai_family, strerror (connect_err), connect_err));
 #if defined(HAVE_WINSOCK2_H)
       if (connect_err != WSAEWOULDBLOCK) {
 #else
       if (connect_err != EINPROGRESS) {
 #endif
-        OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO2, NULL, "Cannot connect socket node:%s family:%d %s[%d]\n", host, curinfo->ai_family, strerror (connect_err), connect_err));
+        OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO2, NULL, "[eXosip] [TCP] [new] cannot connect socket node:%s family:%d [%d:%s]\n", host, curinfo->ai_family, connect_err, strerror (connect_err)));
         _eXosip_closesocket (sock);
         sock = -1;
         continue;
@@ -1255,7 +1247,7 @@ _tcp_tl_connect_socket (struct eXosip_t *excontext, char *host, int port)
       else {
         res = _tcp_tl_is_connected (excontext->poll_method, sock);
         if (res > 0) {
-          OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO2, NULL, "socket node:%s, socket %d [pos=%d], family:%d, in progress\n", host, sock, pos, curinfo->ai_family));
+          OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO2, NULL, "[eXosip] [TCP] [new] socket node:%s, socket %d [pos=%d], family:%d, in progress\n", host, sock, pos, curinfo->ai_family));
           selected_ai_addrlen = (socklen_t) curinfo->ai_addrlen;
           memcpy (&selected_ai_addr, curinfo->ai_addr, sizeof (struct sockaddr));
           break;
@@ -1270,12 +1262,12 @@ _tcp_tl_connect_socket (struct eXosip_t *excontext, char *host, int port)
           if (reserved->socket_tab[pos].writeStream != NULL)
             CFWriteStreamSetProperty (reserved->socket_tab[pos].writeStream, kCFStreamNetworkServiceType, kCFStreamNetworkServiceTypeVoIP);
           if (CFReadStreamOpen (reserved->socket_tab[pos].readStream)) {
-            OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO1, NULL, "CFReadStreamOpen Succeeded!\n"));
+            OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO1, NULL, "[eXosip] [TCP] [new] CFReadStreamOpen Succeeded\n"));
           }
 
           CFWriteStreamOpen (reserved->socket_tab[pos].writeStream);
 #endif
-          OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO1, NULL, "socket node:%s , socket %d [pos=%d], family:%d, connected\n", host, sock, pos, curinfo->ai_family));
+          OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO1, NULL, "[eXosip] [TCP] [new] socket node:%s , socket %d [pos=%d], family:%d, connected\n", host, sock, pos, curinfo->ai_family));
           selected_ai_addrlen = 0;
           memcpy (&selected_ai_addr, curinfo->ai_addr, sizeof (struct sockaddr));
           reserved->socket_tab[pos].tcp_inprogress_max_timeout = 0;
@@ -1321,7 +1313,7 @@ _tcp_tl_connect_socket (struct eXosip_t *excontext, char *host, int port)
           reserved->socket_tab[pos].ephemeral_port = ntohs (((struct sockaddr_in *) &local_ai_addr)->sin_port);
         else
           reserved->socket_tab[pos].ephemeral_port = ntohs (((struct sockaddr_in6 *) &local_ai_addr)->sin6_port);
-        OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO2, NULL, "Outgoing socket created on port %i!\n", reserved->socket_tab[pos].ephemeral_port));
+        OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO2, NULL, "[eXosip] [TCP] [new] outgoing socket created on port [%i]\n", reserved->socket_tab[pos].ephemeral_port));
       }
     }
 
@@ -1388,12 +1380,12 @@ _tcp_tl_send_sockinfo (struct eXosip_t *excontext, struct _tcp_stream *sockinfo,
 	    continue;
 	  }
 	  else if (nfds < 0) {
-	    OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "TCP epoll error: %s:%i\n", strerror (ex_errno), ex_errno));
+	    OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "[eXosip] [TCP] TCP epoll error: [%d:%s]\n",  ex_errno, strerror (ex_errno)));
 	    _eXosip_closesocket (epfd);
 	    return -1;
 	  }
 
-	  OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "TCP timeout: %d ms\n", SOCKET_TIMEOUT));
+	  OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "[eXosip] [TCP] TCP timeout: %d ms\n", SOCKET_TIMEOUT));
 	  _eXosip_closesocket (epfd);
 	  continue;
 	}
@@ -1412,15 +1404,15 @@ _tcp_tl_send_sockinfo (struct eXosip_t *excontext, struct _tcp_stream *sockinfo,
           continue;
         }
         else if (i < 0) {
-          OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "TCP select error: %s:%i\n", strerror (ex_errno), ex_errno));
+          OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "[eXosip] [TCP] TCP select error: [%s:%i]\n",  ex_errno, strerror (ex_errno)));
           return -1;
         }
-	OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "TCP timeout: %d ms\n", SOCKET_TIMEOUT));
+	OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "[eXosip] [TCP] TCP timeout: %d ms\n", SOCKET_TIMEOUT));
 	continue;
       }
       else {
         /* SIP_NETWORK_ERROR; */
-        OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "TCP error: %s\n", strerror (status)));
+        OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "[eXosip] [TCP] TCP error: %s\n", strerror (status)));
         return -1;
       }
     }
@@ -1428,7 +1420,7 @@ _tcp_tl_send_sockinfo (struct eXosip_t *excontext, struct _tcp_stream *sockinfo,
       break;                    /* what's the meaning here? */
     }
     else if (i < msglen) {
-      OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "TCP partial write: wrote %i instead of %i\n", i, msglen));
+      OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "[eXosip] [TCP] TCP partial write: wrote [%i] instead of [%i]\n", i, msglen));
       msglen -= i;
       msg += i;
       continue;
@@ -1444,7 +1436,7 @@ _tcp_tl_send (struct eXosip_t *excontext, int sock, const char *msg, int msglen)
   struct _tcp_stream *sockinfo = _tcp_tl_find_sockinfo (excontext, sock);
 
   if (sockinfo == NULL) {
-    OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO1, NULL, "could not find sockinfo for socket %d! dropping message\n", sock));
+    OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO1, NULL, "[eXosip] [TCP] cannot find sockinfo for socket [%d] [dropping message]\n", sock));
     return -1;
   }
   return _tcp_tl_send_sockinfo (excontext, sockinfo, msg, msglen);
@@ -1491,9 +1483,13 @@ tcp_tl_send_message (struct eXosip_t *excontext, osip_transaction_t * tr, osip_m
   int i;
   int pos = -1;
   osip_naptr_t *naptr_record = NULL;
+  int tid=-1;
+
+  if (tr!=NULL)
+    tid = tr->transactionid;
 
   if (reserved == NULL) {
-    OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "wrong state: create transport layer first\n"));
+    OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "[eXosip] [TCP] [tid=%i] wrong state: create transport layer first\n", tid));
     return OSIP_WRONG_STATE;
   }
 
@@ -1587,8 +1583,7 @@ tcp_tl_send_message (struct eXosip_t *excontext, osip_transaction_t * tr, osip_m
             naptr_record->siptcp_record.srventry[naptr_record->siptcp_record.index].srv_is_broken.tv_sec = 0;
             naptr_record->siptcp_record.srventry[naptr_record->siptcp_record.index].srv_is_broken.tv_usec = 0;
             if (eXosip_dnsutils_rotate_srv (&naptr_record->siptcp_record) > 0) {
-              OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO1, NULL,
-                                      "Doing TCP failover: %s:%i->%s:%i\n", host, port, naptr_record->siptcp_record.srventry[naptr_record->siptcp_record.index].srv, naptr_record->siptcp_record.srventry[naptr_record->siptcp_record.index].port));
+              OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO1, NULL, "[eXosip] [TCP] [tid=%i] doing TCP failover: [%s:%i] -> [%s:%i]\n", tid, host, port, naptr_record->siptcp_record.srventry[naptr_record->siptcp_record.index].srv, naptr_record->siptcp_record.srventry[naptr_record->siptcp_record.index].port));
             }
           }
         }
@@ -1620,7 +1615,7 @@ tcp_tl_send_message (struct eXosip_t *excontext, osip_transaction_t * tr, osip_m
     for (pos = 0; pos < EXOSIP_MAX_SOCKETS; pos++) {
       if (reserved->socket_tab[pos].socket != 0) {
         if (reserved->socket_tab[pos].socket == out_socket) {
-          OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO1, NULL, "reusing REQUEST connection (to dest=%s:%i)\n", reserved->socket_tab[pos].remote_ip, reserved->socket_tab[pos].remote_port));
+          OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO1, NULL, "[eXosip] [TCP] [tid=%i] reusing REQUEST connection to [%s:%i]\n", tid, reserved->socket_tab[pos].remote_ip, reserved->socket_tab[pos].remote_port));
           break;
         }
       }
@@ -1642,7 +1637,7 @@ tcp_tl_send_message (struct eXosip_t *excontext, osip_transaction_t * tr, osip_m
       if (pos2 >= 0) {
         out_socket = reserved->socket_tab[pos2].socket;
         pos = pos2;
-        OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO1, NULL, "reusing connection --with exact port--: (to dest=%s:%i)\n", reserved->socket_tab[pos].remote_ip, reserved->socket_tab[pos].remote_port));
+        OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO1, NULL, "[eXosip] [TCP] [tid=%i] reusing connection --with exact port-- to [%s:%i]\n", tid, reserved->socket_tab[pos].remote_ip, reserved->socket_tab[pos].remote_port));
       }
     }
   }
@@ -1651,12 +1646,12 @@ tcp_tl_send_message (struct eXosip_t *excontext, osip_transaction_t * tr, osip_m
   if (out_socket <= 0) {
     pos = _tcp_tl_find_socket (excontext, host, port);
     if (pos >= 0) {
-      OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO1, NULL, "reusing connection (to dest=%s:%i)\n", reserved->socket_tab[pos].remote_ip, reserved->socket_tab[pos].remote_port));
+      OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO1, NULL, "[eXosip] [TCP] [tid=%i] reusing connection to [%s:%i]\n", tid, reserved->socket_tab[pos].remote_ip, reserved->socket_tab[pos].remote_port));
     }
 
     /* Step 2: create new socket with host:port */
     if (pos < 0) {
-      pos = _tcp_tl_connect_socket (excontext, host, port);
+      pos = _tcp_tl_new_socket (excontext, host, port);
     }
     if (pos >= 0) {
       out_socket = reserved->socket_tab[pos].socket;
@@ -1664,12 +1659,11 @@ tcp_tl_send_message (struct eXosip_t *excontext, osip_transaction_t * tr, osip_m
   }
 
   if (out_socket <= 0) {
-    OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO2, NULL, "no socket can be found or created\n"));
+    OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO2, NULL, "[eXosip] [TCP] [tid=%i] no socket can be found or created\n", tid));
     if (naptr_record != NULL && (MSG_IS_REGISTER (sip) || MSG_IS_OPTIONS (sip))) {
       if (eXosip_dnsutils_rotate_srv (&naptr_record->siptcp_record) > 0) {
         _eXosip_mark_registration_expired (excontext, sip->call_id->number);
-        OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO1, NULL,
-                                "Doing TCP failover: %s:%i->%s:%i\n", host, port, naptr_record->siptcp_record.srventry[naptr_record->siptcp_record.index].srv, naptr_record->siptcp_record.srventry[naptr_record->siptcp_record.index].port));
+        OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO1, NULL, "[eXosip] [TCP] [tid=%i] doing TCP failover: [%s:%i] -> [%s:%i]\n", tid, host, port, naptr_record->siptcp_record.srventry[naptr_record->siptcp_record.index].srv, naptr_record->siptcp_record.srventry[naptr_record->siptcp_record.index].port));
       }
     }
     return -1;
@@ -1686,15 +1680,14 @@ tcp_tl_send_message (struct eXosip_t *excontext, osip_transaction_t * tr, osip_m
 
     if (tr != NULL) {
       now = osip_getsystemtime (NULL);
-      OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO2, NULL, "socket node:%s, socket %d [pos=%d], in progress\n", host, out_socket, pos));
+      OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO2, NULL, "[eXosip] [TCP] [tid=%i] socket node:%s, socket %d [pos=%d], in progress\n", tid, host, out_socket, pos));
       if (tr != NULL && now - tr->birth_time > 10) {
         if (naptr_record != NULL && (MSG_IS_REGISTER (sip) || MSG_IS_OPTIONS (sip))) {
           if (eXosip_dnsutils_rotate_srv (&naptr_record->siptcp_record) > 0) {
             _eXosip_mark_registration_expired (excontext, reserved->socket_tab[pos].reg_call_id);
             if (pos >= 0)
               _tcp_tl_close_sockinfo (&reserved->socket_tab[pos]);
-            OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO1, NULL,
-                                    "Doing TCP failover: %s:%i->%s:%i\n", host, port, naptr_record->siptcp_record.srventry[naptr_record->siptcp_record.index].srv, naptr_record->siptcp_record.srventry[naptr_record->siptcp_record.index].port));
+            OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO1, NULL, "[eXosip] [TCP] [tid=%i] doing TCP failover: [%s:%i] -> [%s:%i]\n", tid, host, port, naptr_record->siptcp_record.srventry[naptr_record->siptcp_record.index].srv, naptr_record->siptcp_record.srventry[naptr_record->siptcp_record.index].port));
           }
         }
         return -1;
@@ -1703,7 +1696,7 @@ tcp_tl_send_message (struct eXosip_t *excontext, osip_transaction_t * tr, osip_m
     return 1;
   }
   else if (i == 0) {
-    OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO2, NULL, "socket node:%s , socket %d [pos=%d], connected\n", host, out_socket, pos));
+    OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO2, NULL, "[eXosip] [TCP] [tid=%i] socket node:%s , socket %d [pos=%d], connected\n", tid, host, out_socket, pos));
     reserved->socket_tab[pos].tcp_inprogress_max_timeout = 0;
   }
   else {
@@ -1712,7 +1705,7 @@ tcp_tl_send_message (struct eXosip_t *excontext, osip_transaction_t * tr, osip_m
         _eXosip_mark_registration_expired (excontext, reserved->socket_tab[pos].reg_call_id);
       }
     }
-    OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "socket node:%s, socket %d [pos=%d], socket error\n", host, out_socket, pos));
+    OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "[eXosip] [TCP] [tid=%i] socket node:%s, socket %d [pos=%d], error\n", tid, host, out_socket, pos));
     _tcp_tl_close_sockinfo (&reserved->socket_tab[pos]);
     return -1;
   }
@@ -1729,11 +1722,11 @@ tcp_tl_send_message (struct eXosip_t *excontext, osip_transaction_t * tr, osip_m
     if (reserved->socket_tab[pos].writeStream != NULL)
       CFWriteStreamSetProperty (reserved->socket_tab[pos].writeStream, kCFStreamNetworkServiceType, kCFStreamNetworkServiceTypeVoIP);
     if (CFReadStreamOpen (reserved->socket_tab[pos].readStream)) {
-      OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO1, NULL, "CFReadStreamOpen Succeeded!\n"));
+      OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO1, NULL, "[eXosip] [TCP] [tid=%i] CFReadStreamOpen Succeeded\n", tid));
     }
 
     CFWriteStreamOpen (reserved->socket_tab[pos].writeStream);
-    OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO1, NULL, "socket node:%s:%i , socket %d [pos=%d], family:?, connected\n", reserved->socket_tab[pos].remote_ip, reserved->socket_tab[pos].remote_port, reserved->socket_tab[pos].socket, pos));
+    OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO1, NULL, "[eXosip] [TCP] [tid=%i] socket node:[%s:%i] , socket %d [pos=%d], family:?, connected\n", tid, reserved->socket_tab[pos].remote_ip, reserved->socket_tab[pos].remote_port, reserved->socket_tab[pos].socket, pos));
   }
 #endif
 
@@ -1770,7 +1763,7 @@ tcp_tl_send_message (struct eXosip_t *excontext, osip_transaction_t * tr, osip_m
     return -1;
   }
 
-  OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO1, NULL, "Message sent: (to dest=%s:%i) \n%s\n", host, port, message));
+  OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO1, NULL, "[eXosip] [TCP] [tid=%i] message sent [len=%d] to [%s:%i]\n%s\n", tid, length, host, port, message));
 
   if (pos >= 0 && excontext->enable_dns_cache == 1 && osip_strcasecmp (host, reserved->socket_tab[pos].remote_ip) != 0 && MSG_IS_REQUEST (sip)) {
     if (MSG_IS_REGISTER (sip)) {
@@ -1836,7 +1829,7 @@ tcp_tl_keepalive (struct eXosip_t *excontext)
   int i;
 
   if (reserved == NULL) {
-    OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "wrong state: create transport layer first\n"));
+    OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "[eXosip] [TCP] wrong state: create transport layer first\n"));
     return OSIP_WRONG_STATE;
   }
 
@@ -1847,18 +1840,15 @@ tcp_tl_keepalive (struct eXosip_t *excontext)
     if (reserved->socket_tab[pos].socket > 0) {
       i = _tcp_tl_is_connected (excontext->poll_method, reserved->socket_tab[pos].socket);
       if (i > 0) {
-        OSIP_TRACE (osip_trace
-                    (__FILE__, __LINE__, OSIP_INFO2, NULL, "tcp_tl_keepalive socket node:%s:%i, socket %d [pos=%d], in progress\n", reserved->socket_tab[pos].remote_ip, reserved->socket_tab[pos].remote_port, reserved->socket_tab[pos].socket, pos));
+        OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO2, NULL, "[eXosip] [TCP] tcp_tl_keepalive socket node:[%s:%i], socket %d [pos=%d], in progress\n", reserved->socket_tab[pos].remote_ip, reserved->socket_tab[pos].remote_port, reserved->socket_tab[pos].socket, pos));
         continue;
       }
       else if (i == 0) {
-        OSIP_TRACE (osip_trace
-                    (__FILE__, __LINE__, OSIP_INFO2, NULL, "tcp_tl_keepalive socket node:%s:%i , socket %d [pos=%d], connected\n", reserved->socket_tab[pos].remote_ip, reserved->socket_tab[pos].remote_port, reserved->socket_tab[pos].socket, pos));
+        OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO2, NULL, "[eXosip] [TCP] tcp_tl_keepalive socket node:[%s:%i] , socket %d [pos=%d], connected\n", reserved->socket_tab[pos].remote_ip, reserved->socket_tab[pos].remote_port, reserved->socket_tab[pos].socket, pos));
         reserved->socket_tab[pos].tcp_inprogress_max_timeout = 0;
       }
       else {
-        OSIP_TRACE (osip_trace
-                    (__FILE__, __LINE__, OSIP_ERROR, NULL, "tcp_tl_keepalive socket node:%s:%i, socket %d [pos=%d], socket error\n", reserved->socket_tab[pos].remote_ip, reserved->socket_tab[pos].remote_port, reserved->socket_tab[pos].socket, pos));
+        OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "[eXosip] [TCP] tcp_tl_keepalive socket node:[%s:%i], socket %d [pos=%d], error\n", reserved->socket_tab[pos].remote_ip, reserved->socket_tab[pos].remote_port, reserved->socket_tab[pos].socket, pos));
         _eXosip_mark_registration_expired (excontext, reserved->socket_tab[pos].reg_call_id);
         _tcp_tl_close_sockinfo (&reserved->socket_tab[pos]);
         continue;
@@ -1883,7 +1873,7 @@ tcp_tl_keepalive (struct eXosip_t *excontext)
           snprintf (to, sizeof (to), "<sip:%s:%d>", reserved->socket_tab[pos].remote_ip, reserved->socket_tab[pos].remote_port);
           _tcp_tl_get_socket_info (reserved->socket_tab[pos].socket, locip, sizeof (locip), &locport);
           if (locip[0] == '\0') {
-            OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_WARNING, NULL, "tcp_tl_keepalive socket node:%s , socket %d [pos=%d], failed to create sip options message\n", reserved->socket_tab[pos].remote_ip, reserved->socket_tab[pos].socket, pos));
+            OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_WARNING, NULL, "[eXosip] [TCP] tcp_tl_keepalive socket node:%s , socket %d [pos=%d], failed to create sip options message\n", reserved->socket_tab[pos].remote_ip, reserved->socket_tab[pos].socket, pos));
             continue;
           }
 
@@ -1896,26 +1886,26 @@ tcp_tl_keepalive (struct eXosip_t *excontext)
             length = 0;
             /* Convert message to str for direct sending over correct socket */
             if (osip_message_to_str (options, &message, &length) == OSIP_SUCCESS) {
-              OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO2, NULL, "tcp_tl_keepalive socket node:%s , socket %d [pos=%d], sending sip options\n\r%s", reserved->socket_tab[pos].remote_ip, reserved->socket_tab[pos].socket, pos, message));
+              OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO2, NULL, "[eXosip] [TCP] tcp_tl_keepalive socket node:%s , socket %d [pos=%d], sending sip options\n%s", reserved->socket_tab[pos].remote_ip, reserved->socket_tab[pos].socket, pos, message));
               i = send (reserved->socket_tab[pos].socket, (const void *) message, length, 0);
               osip_free (message);
               if (i > 0) {
-                OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO1, NULL, "eXosip: Keep Alive sent on TCP!\n"));
+                OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO1, NULL, "[eXosip] [TCP] keep alive sent on TCP\n"));
               }
             }
             else {
-              OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_WARNING, NULL, "tcp_tl_keepalive socket node:%s , socket %d [pos=%d], failed to convert sip options message\n", reserved->socket_tab[pos].remote_ip, reserved->socket_tab[pos].socket, pos));
+              OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_WARNING, NULL, "[eXosip] [TCP] tcp_tl_keepalive socket node:%s , socket %d [pos=%d], failed to convert sip options message\n", reserved->socket_tab[pos].remote_ip, reserved->socket_tab[pos].socket, pos));
             }
           }
           else {
-            OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_WARNING, NULL, "tcp_tl_keepalive socket node:%s , socket %d [pos=%d], failed to create sip options message\n", reserved->socket_tab[pos].remote_ip, reserved->socket_tab[pos].socket, pos));
+            OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_WARNING, NULL, "[eXosip] [TCP] tcp_tl_keepalive socket node:%s , socket %d [pos=%d], failed to create sip options message\n", reserved->socket_tab[pos].remote_ip, reserved->socket_tab[pos].socket, pos));
           }
           eXosip_unlock (excontext);
           continue;
         }
 #endif
         i = (int) send (reserved->socket_tab[pos].socket, (const void *) buf, 4, 0);
-        OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_WARNING, NULL, "tcp_tl_keepalive [ret=%i] socket node:%s , socket %d [pos=%d]\n", i, reserved->socket_tab[pos].remote_ip, reserved->socket_tab[pos].socket, pos));
+        OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_WARNING, NULL, "[eXosip] [TCP] tcp_tl_keepalive [ret=%i] socket node:%s , socket %d [pos=%d]\n", i, reserved->socket_tab[pos].remote_ip, reserved->socket_tab[pos].socket, pos));
       }
     }
   }
@@ -1928,7 +1918,7 @@ tcp_tl_set_socket (struct eXosip_t *excontext, int socket)
   struct eXtltcp *reserved = (struct eXtltcp *) excontext->eXtltcp_reserved;
 
   if (reserved == NULL) {
-    OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "wrong state: create transport layer first\n"));
+    OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "[eXosip] [TCP] wrong state: create transport layer first\n"));
     return OSIP_WRONG_STATE;
   }
 
@@ -1961,7 +1951,7 @@ tcp_tl_get_masquerade_contact (struct eXosip_t *excontext, char *ip, int ip_size
   memset (port, 0, port_size);
 
   if (reserved == NULL) {
-    OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "wrong state: create transport layer first\n"));
+    OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "[eXosip] [TCP] wrong state: create transport layer first\n"));
     return OSIP_WRONG_STATE;
   }
 
@@ -1988,7 +1978,7 @@ tcp_tl_check_connection (struct eXosip_t *excontext)
   int i;
 
   if (reserved == NULL) {
-    OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "wrong state: create transport layer first\n"));
+    OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "[eXosip] [TCP] wrong state: create transport layer first\n"));
     return OSIP_WRONG_STATE;
   }
 
@@ -2003,27 +1993,25 @@ tcp_tl_check_connection (struct eXosip_t *excontext)
           time_t now = osip_getsystemtime (NULL);
 
           if (now > reserved->socket_tab[pos].tcp_inprogress_max_timeout) {
-            OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO2, NULL, "tcp_tl_check_connection socket is in progress since 32 seconds / close socket\n"));
+            OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO2, NULL, "[eXosip] [TCP] tcp_tl_check_connection socket is in progress since 32 seconds / close socket\n"));
             reserved->socket_tab[pos].tcp_inprogress_max_timeout = 0;
             _eXosip_mark_registration_expired (excontext, reserved->socket_tab[pos].reg_call_id);
             _tcp_tl_close_sockinfo (&reserved->socket_tab[pos]);
             continue;
           }
         }
-        OSIP_TRACE (osip_trace
-                    (__FILE__, __LINE__, OSIP_INFO2, NULL, "tcp_tl_check_connection socket node:%s:%i, socket %d [pos=%d], in progress\n", reserved->socket_tab[pos].remote_ip, reserved->socket_tab[pos].remote_port, reserved->socket_tab[pos].socket, pos));
+        OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO2, NULL, "[eXosip] [TCP] tcp_tl_check_connection socket node:[%s:%i], socket %d [pos=%d], in progress\n", reserved->socket_tab[pos].remote_ip, reserved->socket_tab[pos].remote_port, reserved->socket_tab[pos].socket, pos));
         continue;
       }
       else if (i == 0) {
         reserved->socket_tab[pos].tcp_inprogress_max_timeout = 0;
 
-        OSIP_TRACE (osip_trace
-                    (__FILE__, __LINE__, OSIP_INFO2, NULL, "tcp_tl_check_connection socket node:%s:%i , socket %d [pos=%d], connected\n", reserved->socket_tab[pos].remote_ip, reserved->socket_tab[pos].remote_port, reserved->socket_tab[pos].socket, pos));
+        OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO2, NULL, "[eXosip] [TCP] tcp_tl_check_connection socket node:[%s:%i] , socket %d [pos=%d], connected\n", reserved->socket_tab[pos].remote_ip, reserved->socket_tab[pos].remote_port, reserved->socket_tab[pos].socket, pos));
         if (reserved->socket_tab[pos].tcp_max_timeout > 0) {
           time_t now = osip_getsystemtime (NULL);
 
           if (now > reserved->socket_tab[pos].tcp_max_timeout) {
-            OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO2, NULL, "tcp_tl_check_connection we excepted a reply on established sockets / close socket\n"));
+            OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO2, NULL, "[eXosip] [TCP] tcp_tl_check_connection we excepted a reply on established sockets / close socket\n"));
             reserved->socket_tab[pos].tcp_max_timeout = 0;
             _eXosip_mark_registration_expired (excontext, reserved->socket_tab[pos].reg_call_id);
             _tcp_tl_close_sockinfo (&reserved->socket_tab[pos]);
@@ -2032,8 +2020,7 @@ tcp_tl_check_connection (struct eXosip_t *excontext)
         }
       }
       else {
-        OSIP_TRACE (osip_trace
-                    (__FILE__, __LINE__, OSIP_ERROR, NULL, "tcp_tl_check_connection socket node:%s:%i, socket %d [pos=%d], socket error\n", reserved->socket_tab[pos].remote_ip, reserved->socket_tab[pos].remote_port, reserved->socket_tab[pos].socket,
+        OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "[eXosip] [TCP] tcp_tl_check_connection socket node:[%s:%i], socket %d [pos=%d], error\n", reserved->socket_tab[pos].remote_ip, reserved->socket_tab[pos].remote_port, reserved->socket_tab[pos].socket,
                      pos));
         _eXosip_mark_registration_expired (excontext, reserved->socket_tab[pos].reg_call_id);
         _tcp_tl_close_sockinfo (&reserved->socket_tab[pos]);

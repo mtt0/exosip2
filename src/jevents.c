@@ -44,19 +44,19 @@ _eXosip_event_fill_messages (eXosip_event_t * je, osip_transaction_t * tr)
   if (tr != NULL && tr->orig_request != NULL) {
     i = osip_message_clone (tr->orig_request, &je->request);
     if (i != 0) {
-      OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "failed to clone request for event\n"));
+      OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "[eXosip] failed to clone request for event\n"));
     }
   }
   if (tr != NULL && tr->last_response != NULL) {
     i = osip_message_clone (tr->last_response, &je->response);
     if (i != 0) {
-      OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "failed to clone response for event\n"));
+      OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "[eXosip] failed to clone response for event\n"));
     }
   }
   if (tr != NULL && tr->ack != NULL) {
     i = osip_message_clone (tr->ack, &je->ack);
     if (i != 0) {
-      OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "failed to clone ACK for event\n"));
+      OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "[eXosip] failed to clone ACK for event\n"));
     }
   }
   return OSIP_SUCCESS;

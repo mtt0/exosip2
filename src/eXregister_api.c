@@ -270,7 +270,7 @@ _eXosip_register_build_register (struct eXosip_t *excontext, eXosip_reg_t * jr, 
           osip_message_free (reg);
           if (last_response != NULL)
             osip_message_free (last_response);
-          OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "eXosip: missing Min-Expires or Expires in REGISTER\n"));
+          OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "[eXosip] missing Min-Expires or Expires in REGISTER\n"));
           return OSIP_SYNTAXERROR;
         }
       }
@@ -391,7 +391,7 @@ eXosip_register_build_initial_register_withqvalue (struct eXosip_t *excontext, c
     /* Add new registration info */
     i = _eXosip_reg_init (excontext, &jr, from, proxy, contact);
     if (i != 0) {
-      OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "eXosip: cannot register! "));
+      OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "[eXosip] cannot register\n"));
       return i;
     }
     ADD_ELEMENT (excontext->j_reg, jr);
@@ -415,7 +415,7 @@ eXosip_register_build_initial_register_withqvalue (struct eXosip_t *excontext, c
 
   i = _eXosip_register_build_register (excontext, jr, reg);
   if (i != 0) {
-    OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "eXosip: cannot build REGISTER!\n"));
+    OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "[eXosip] cannot build REGISTER\n"));
     *reg = NULL;
     if (lallocated == 1) {
       REMOVE_ELEMENT (excontext->j_reg, jr);
@@ -466,7 +466,7 @@ eXosip_register_build_register (struct eXosip_t *excontext, int rid, int expires
 
   i = _eXosip_register_build_register (excontext, jr, reg);
   if (i != 0) {
-    OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "eXosip: cannot build REGISTER!"));
+    OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "[eXosip] cannot build REGISTER\n"));
     *reg = NULL;
     return i;
   }
@@ -502,7 +502,7 @@ eXosip_register_send_register (struct eXosip_t *excontext, int rid, osip_message
   if (reg == NULL) {
     i = _eXosip_register_build_register (excontext, jr, &reg);
     if (i != 0) {
-      OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "eXosip: cannot build REGISTER!"));
+      OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "[eXosip] cannot build REGISTER\n"));
       return i;
     }
   }

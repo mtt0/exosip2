@@ -280,18 +280,18 @@ _eXosip_answer_invite_123456xx (struct eXosip_t *excontext, eXosip_call_t * jc, 
   tr = _eXosip_find_last_inc_invite (jc, jd);
 
   if (tr == NULL || tr->orig_request == NULL) {
-    OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "eXosip: cannot find transaction to answer\n"));
+    OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "[eXosip] cannot find transaction to answer\n"));
     return OSIP_NOTFOUND;
   }
 
   if (code >= 200 && code < 300 && jd != NULL && jd->d_dialog == NULL) {        /* element previously removed */
-    OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "eXosip: cannot answer this closed transaction\n"));
+    OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "[eXosip] cannot answer this closed transaction\n"));
     return OSIP_WRONG_STATE;
   }
 
   /* is the transaction already answered? */
   if (tr->state == IST_COMPLETED || tr->state == IST_CONFIRMED || tr->state == IST_TERMINATED) {
-    OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "eXosip: transaction already answered\n"));
+    OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "[eXosip] transaction already answered\n"));
     return OSIP_WRONG_STATE;
   }
 
@@ -301,7 +301,7 @@ _eXosip_answer_invite_123456xx (struct eXosip_t *excontext, eXosip_call_t * jc, 
     i = _eXosip_build_response_default (excontext, answer, jd->d_dialog, code, tr->orig_request);
 
   if (i != 0) {
-    OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO1, NULL, "ERROR: Could not create response for invite\n"));
+    OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO1, NULL, "[eXosip] cannot create response for invite\n"));
     *answer = NULL;
     return i;
   }
@@ -350,7 +350,7 @@ _eXosip_insubscription_answer_1xx (struct eXosip_t *excontext, eXosip_notify_t *
 
   tr = _eXosip_find_last_inc_subscribe (jn, jd);
   if (tr == NULL) {
-    OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "eXosip: cannot find transaction to answer"));
+    OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "[eXosip] cannot find transaction to answer"));
     return OSIP_NOTFOUND;
   }
 
@@ -360,7 +360,7 @@ _eXosip_insubscription_answer_1xx (struct eXosip_t *excontext, eXosip_notify_t *
     i = _eXosip_build_response_default (excontext, &response, jd->d_dialog, code, tr->orig_request);
 
   if (i != 0) {
-    OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "ERROR: Could not create response for subscribe\n"));
+    OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "[eXosip] cannot create response for subscribe\n"));
     return i;
   }
 
@@ -374,7 +374,7 @@ _eXosip_insubscription_answer_1xx (struct eXosip_t *excontext, eXosip_notify_t *
     if (jd == NULL) {
       i = _eXosip_dialog_init_as_uas (&jd, tr->orig_request, response);
       if (i != 0) {
-        OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "eXosip: cannot create dialog!\n"));
+        OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "[eXosip] cannot create dialog\n"));
       }
       else
         ADD_ELEMENT (jn->n_dialogs, jd);
@@ -399,7 +399,7 @@ _eXosip_insubscription_answer_3456xx (struct eXosip_t *excontext, eXosip_notify_
 
   tr = _eXosip_find_last_inc_subscribe (jn, jd);
   if (tr == NULL) {
-    OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "eXosip: cannot find transaction to answer"));
+    OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "[eXosip] cannot find transaction to answer"));
     return OSIP_NOTFOUND;
   }
   if (jd == NULL)
@@ -407,7 +407,7 @@ _eXosip_insubscription_answer_3456xx (struct eXosip_t *excontext, eXosip_notify_
   else
     i = _eXosip_build_response_default (excontext, &response, jd->d_dialog, code, tr->orig_request);
   if (i != 0) {
-    OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO1, NULL, "ERROR: Could not create response for subscribe\n"));
+    OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO1, NULL, "[eXosip] cannot create response for subscribe\n"));
     return i;
   }
 

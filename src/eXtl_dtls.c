@@ -142,25 +142,25 @@ _dtls_print_ssl_error (int err)
 {
   switch (err) {
   case SSL_ERROR_NONE:
-    OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "SSL ERROR NONE - OK\n"));
+    OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "[eXosip] [DTLS] SSL ERROR NONE - OK\n"));
     break;
   case SSL_ERROR_ZERO_RETURN:
-    OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "SSL ERROR ZERO RETURN - SHUTDOWN\n"));
+    OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "[eXosip] [DTLS] SSL ERROR ZERO RETURN - SHUTDOWN\n"));
     break;
   case SSL_ERROR_WANT_READ:
-    OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "SSL want read\n"));
+    OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "[eXosip] [DTLS] SSL want read\n"));
     break;
   case SSL_ERROR_WANT_WRITE:
-    OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "SSL want write\n"));
+    OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "[eXosip] [DTLS] SSL want write\n"));
     break;
   case SSL_ERROR_SSL:
-    OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "SSL ERROR\n"));
+    OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "[eXosip] [DTLS] SSL ERROR\n"));
     break;
   case SSL_ERROR_SYSCALL:
-    OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "SSL ERROR SYSCALL\n"));
+    OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "[eXosip] [DTLS] SSL ERROR SYSCALL\n"));
     break;
   default:
-    OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "SSL problem\n"));
+    OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "[eXosip] [DTLS] SSL problem\n"));
   }
   return OSIP_SUCCESS;
 }
@@ -174,7 +174,7 @@ shutdown_free_server_dtls (struct eXosip_t *excontext, int pos)
   if (reserved->socket_tab[pos].ssl_type == 1) {
     if (reserved->socket_tab[pos].ssl_conn != NULL) {
 #ifdef SSLDEBUG
-      OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO3, NULL, "DTLS-UDP server SSL_shutdown\n"));
+      OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO3, NULL, "[eXosip] [DTLS] DTLS-UDP server SSL_shutdown\n"));
 #endif
 
       i = SSL_shutdown (reserved->socket_tab[pos].ssl_conn);
@@ -184,12 +184,12 @@ shutdown_free_server_dtls (struct eXosip_t *excontext, int pos)
         _dtls_print_ssl_error (err);
 #ifdef SSLDEBUG
 
-        OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "DTLS-UDP server shutdown <= 0\n"));
+        OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "[eXosip] [DTLS] DTLS-UDP server shutdown <= 0\n"));
 #endif
       }
       else {
 #ifdef SSLDEBUG
-        OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO3, NULL, "DTLS-UDP server shutdown > 0\n"));
+        OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO3, NULL, "[eXosip] [DTLS] DTLS-UDP server shutdown > 0\n"));
 #endif
 
       }
@@ -206,7 +206,7 @@ shutdown_free_server_dtls (struct eXosip_t *excontext, int pos)
       return OSIP_SUCCESS;
     }
     else {
-      OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "DTLS-UDP server shutdown: invalid SSL object!\n"));
+      OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "[eXosip] [DTLS] DTLS-UDP server shutdown: invalid SSL object\n"));
       return -1;
     }
   }
@@ -246,14 +246,14 @@ shutdown_free_client_dtls (struct eXosip_t *excontext, int pos)
         err = SSL_get_error (reserved->socket_tab[pos].ssl_conn, i);
 #ifdef SSLDEBUG
 
-        OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "DTLS-UDP client shutdown error %d <= 0\n", i));
+        OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "[eXosip] [DTLS] DTLS-UDP client shutdown error [%d] <= 0\n", i));
 #endif
 
         _dtls_print_ssl_error (err);
       }
       else {
 #ifdef SSLDEBUG
-        OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO3, NULL, "DTLS-UDP client shutdown > 0\n"));
+        OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO3, NULL, "[eXosip] [DTLS] DTLS-UDP client shutdown > 0\n"));
 #endif
 
       }
@@ -270,7 +270,7 @@ shutdown_free_client_dtls (struct eXosip_t *excontext, int pos)
       return OSIP_SUCCESS;
     }
     else {
-      OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "DTLS-UDP client shutdown: invalid SSL object!\n"));
+      OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "[eXosip] [DTLS] DTLS-UDP client shutdown: invalid SSL object\n"));
       return -1;
     }
   }
@@ -330,7 +330,7 @@ dtls_tl_open (struct eXosip_t *excontext)
   int sock = -1;
 
   if (reserved == NULL) {
-    OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "wrong state: create transport layer first\n"));
+    OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "[eXosip] [DTLS] wrong state: create transport layer first\n"));
     return OSIP_WRONG_STATE;
   }
 
@@ -351,7 +351,7 @@ dtls_tl_open (struct eXosip_t *excontext)
     int type;
 
     if (curinfo->ai_protocol && curinfo->ai_protocol != excontext->eXtl_transport.proto_num) {
-      OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO3, NULL, "eXosip: Skipping protocol %d\n", curinfo->ai_protocol));
+      OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO3, NULL, "[eXosip] [DTLS] skipping protocol [%d]\n", curinfo->ai_protocol));
       continue;
     }
     type = curinfo->ai_socktype;
@@ -360,7 +360,7 @@ dtls_tl_open (struct eXosip_t *excontext)
 #endif
     sock = (int) socket (curinfo->ai_family, type, curinfo->ai_protocol);
     if (sock < 0) {
-      OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "eXosip: Cannot create socket %s!\n", strerror (errno)));
+      OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "[eXosip] [DTLS] cannot create socket %s\n", strerror (errno)));
       continue;
     }
 
@@ -369,7 +369,7 @@ dtls_tl_open (struct eXosip_t *excontext)
       if (setsockopt_ipv6only (sock)) {
         _eXosip_closesocket (sock);
         sock = -1;
-        OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "eXosip: Cannot set socket option %s!\n", strerror (errno)));
+        OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "[eXosip] [DTLS] cannot set socket option %s\n", strerror (errno)));
         continue;
       }
 #endif /* IPV6_V6ONLY */
@@ -377,7 +377,7 @@ dtls_tl_open (struct eXosip_t *excontext)
 
     res = bind (sock, curinfo->ai_addr, (socklen_t) curinfo->ai_addrlen);
     if (res < 0) {
-      OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "eXosip: Cannot bind socket node:%s family:%d %s\n", excontext->eXtl_transport.proto_ifs, curinfo->ai_family, strerror (errno)));
+      OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "[eXosip] [DTLS] cannot bind socket node:%s family:%d %s\n", excontext->eXtl_transport.proto_ifs, curinfo->ai_family, strerror (errno)));
       _eXosip_closesocket (sock);
       sock = -1;
       continue;
@@ -385,14 +385,14 @@ dtls_tl_open (struct eXosip_t *excontext)
     len = sizeof (reserved->ai_addr);
     res = getsockname (sock, (struct sockaddr *) &reserved->ai_addr, &len);
     if (res != 0) {
-      OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "eXosip: Cannot get socket name (%s)\n", strerror (errno)));
+      OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "[eXosip] [DTLS] cannot get socket name (%s)\n", strerror (errno)));
       memcpy (&reserved->ai_addr, curinfo->ai_addr, curinfo->ai_addrlen);
     }
 
     if (excontext->eXtl_transport.proto_num == IPPROTO_TCP) {
       res = listen (sock, SOMAXCONN);
       if (res < 0) {
-        OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "eXosip: Cannot bind socket node:%s family:%d %s\n", excontext->eXtl_transport.proto_ifs, curinfo->ai_family, strerror (errno)));
+        OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "[eXosip] [DTLS] cannot bind socket node:%s family:%d %s\n", excontext->eXtl_transport.proto_ifs, curinfo->ai_family, strerror (errno)));
         _eXosip_closesocket (sock);
         sock = -1;
         continue;
@@ -405,7 +405,7 @@ dtls_tl_open (struct eXosip_t *excontext)
   _eXosip_freeaddrinfo (addrinfo);
 
   if (sock < 0) {
-    OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "eXosip: Cannot bind on port: %i\n", excontext->eXtl_transport.proto_local_port));
+    OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "[eXosip] [DTLS] cannot bind on port: %i\n", excontext->eXtl_transport.proto_local_port));
     return -1;
   }
 
@@ -417,7 +417,7 @@ dtls_tl_open (struct eXosip_t *excontext)
       excontext->eXtl_transport.proto_local_port = ntohs (((struct sockaddr_in *) &reserved->ai_addr)->sin_port);
     else
       excontext->eXtl_transport.proto_local_port = ntohs (((struct sockaddr_in6 *) &reserved->ai_addr)->sin6_port);
-    OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO1, NULL, "eXosip: Binding on port %i!\n", excontext->eXtl_transport.proto_local_port));
+    OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO1, NULL, "[eXosip] [DTLS] binding on port %i\n", excontext->eXtl_transport.proto_local_port));
   }
   return OSIP_SUCCESS;
 }
@@ -431,7 +431,7 @@ dtls_tl_set_fdset (struct eXosip_t *excontext, fd_set * osip_fdset, fd_set * osi
   struct eXtldtls *reserved = (struct eXtldtls *) excontext->eXtldtls_reserved;
 
   if (reserved == NULL) {
-    OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "wrong state: create transport layer first\n"));
+    OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "[eXosip] [DTLS] wrong state: create transport layer first\n"));
     return OSIP_WRONG_STATE;
   }
 
@@ -482,7 +482,7 @@ _dtls_read_udp_main_socket (struct eXosip_t *excontext)
     memset (src6host, 0, NI_MAXHOST);
     recvport = _eXosip_getport ((struct sockaddr *) &sa);
     _eXosip_getnameinfo ((struct sockaddr *) &sa, slen, src6host, NI_MAXHOST, NULL, 0, NI_NUMERICHOST);
-    OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO1, NULL, "Message received from: %s:%i\n", src6host, recvport));
+    OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO1, NULL, "[eXosip] [DTLS] message received from [%s:%i]\n", src6host, recvport));
 
     for (pos = 0; pos < EXOSIP_MAX_SOCKETS; pos++) {
       if (reserved->socket_tab[pos].ssl_conn != NULL) {
@@ -501,7 +501,7 @@ _dtls_read_udp_main_socket (struct eXosip_t *excontext)
         }
       }
 
-      OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO3, NULL, "creating DTLS-UDP socket at index: %i\n", pos));
+      OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO3, NULL, "[eXosip] [DTLS] creating DTLS-UDP socket at index: %i\n", pos));
       if (pos < 0) {
         /* delete an old one! */
         pos = 0;
@@ -518,7 +518,7 @@ _dtls_read_udp_main_socket (struct eXosip_t *excontext)
       BIO *wbio;
 
       if (!SSL_CTX_check_private_key (reserved->server_ctx)) {
-        OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "SSL CTX private key check error\n"));
+        OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "[eXosip] [DTLS] SSL CTX private key check error\n"));
         osip_free (enc_buf);
         return -1;
       }
@@ -526,7 +526,7 @@ _dtls_read_udp_main_socket (struct eXosip_t *excontext)
       /* behave as a server: */
       reserved->socket_tab[pos].ssl_conn = SSL_new (reserved->server_ctx);
       if (reserved->socket_tab[pos].ssl_conn == NULL) {
-        OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "SSL_new error\n"));
+        OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "[eXosip] [DTLS] SSL_new error\n"));
         osip_free (enc_buf);
         return -1;
       }
@@ -553,13 +553,13 @@ _dtls_read_udp_main_socket (struct eXosip_t *excontext)
       osip_strncpy (reserved->socket_tab[pos].remote_ip, src6host, sizeof (reserved->socket_tab[pos].remote_ip) - 1);
       reserved->socket_tab[pos].remote_port = recvport;
 
-      OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO1, NULL, "New DTLS-UDP connection accepted\n"));
+      OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO1, NULL, "[eXosip] [DTLS] incoming DTLS-UDP connection accepted\n"));
 
     }
 
     dec_buf = (char *) osip_malloc (SIP_MESSAGE_MAX_LENGTH * sizeof (char) + 1);
     if (dec_buf == NULL) {
-      OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "Allocation error\n"));
+      OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "[eXosip] [DTLS] allocation error\n"));
       osip_free (enc_buf);
       return OSIP_NOMEM;
     }
@@ -583,10 +583,10 @@ _dtls_read_udp_main_socket (struct eXosip_t *excontext)
       err = SSL_get_error (reserved->socket_tab[pos].ssl_conn, i);
       _dtls_print_ssl_error (err);
       if (err == SSL_ERROR_SYSCALL) {
-        OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_WARNING, NULL, "DTLS-UDP SYSCALL on SSL_read\n"));
+        OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_WARNING, NULL, "[eXosip] [DTLS] DTLS-UDP SYSCALL on SSL_read\n"));
       }
       else if (err == SSL_ERROR_SSL || err == SSL_ERROR_ZERO_RETURN) {
-        OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_WARNING, NULL, "DTLS-UDP closed\n"));
+        OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_WARNING, NULL, "[eXosip] [DTLS] DTLS-UDP closed\n"));
 
         shutdown_free_client_dtls (excontext, pos);
         shutdown_free_server_dtls (excontext, pos);
@@ -595,7 +595,7 @@ _dtls_read_udp_main_socket (struct eXosip_t *excontext)
       }
     }
     else {
-      OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO1, NULL, "Dummy SIP message received\n"));
+      OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO1, NULL, "[eXosip] [DTLS] dummy SIP message received\n"));
     }
 
     osip_free (dec_buf);
@@ -610,7 +610,7 @@ dtls_tl_read_message (struct eXosip_t *excontext, fd_set * osip_fdset, fd_set * 
   struct eXtldtls *reserved = (struct eXtldtls *) excontext->eXtldtls_reserved;
 
   if (reserved == NULL) {
-    OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "wrong state: create transport layer first\n"));
+    OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "[eXosip] [DTLS] wrong state: create transport layer first\n"));
     return OSIP_WRONG_STATE;
   }
 
@@ -780,9 +780,13 @@ dtls_tl_send_message (struct eXosip_t *excontext, osip_transaction_t * tr, osip_
   int pos;
   struct _dtls_stream *_dtls_stream_used = NULL;
   BIO *sbio = NULL;
+  int tid=-1;
+
+  if (tr!=NULL)
+    tid = tr->transactionid;
 
   if (reserved == NULL) {
-    OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "wrong state: create transport layer first\n"));
+    OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "[eXosip] [DTLS] [tid=%i] wrong state: create transport layer first\n", tid));
     return OSIP_WRONG_STATE;
   }
 
@@ -1009,7 +1013,7 @@ dtls_tl_send_message (struct eXosip_t *excontext, osip_transaction_t * tr, osip_
     reserved->socket_tab[pos].ssl_conn = SSL_new (reserved->client_ctx);
 
     if (reserved->socket_tab[pos].ssl_conn == NULL) {
-      OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "DTLS-UDP SSL_new error\n"));
+      OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "[eXosip] [DTLS] [tid=%i] DTLS-UDP SSL_new error\n", tid));
 
       if (reserved->socket_tab[pos].ssl_conn != NULL) {
         shutdown_free_client_dtls (excontext, pos);
@@ -1022,7 +1026,7 @@ dtls_tl_send_message (struct eXosip_t *excontext, osip_transaction_t * tr, osip_
     }
 
     if (connect (reserved->dtls_socket, (struct sockaddr *) &addr, sizeof (addr)) == -1) {
-      OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "DTLS-UDP connect error\n"));
+      OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "[eXosip] [DTLS] [tid=%i] DTLS-UDP connect error\n", tid));
       if (reserved->socket_tab[pos].ssl_conn != NULL) {
         shutdown_free_client_dtls (excontext, pos);
         shutdown_free_server_dtls (excontext, pos);
@@ -1075,7 +1079,7 @@ dtls_tl_send_message (struct eXosip_t *excontext, osip_transaction_t * tr, osip_
     return -1;
   }
 
-  OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO1, NULL, "Message sent: (to dest=%s:%i)\n%s\n", ipbuf, port, message));
+  OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO1, NULL, "[eXosip] [DTLS] [tid=%i] message sent [len=%d] to [%s:%i]\n%s\n", tid, length, ipbuf, port, message));
 
   i = SSL_write (reserved->socket_tab[pos].ssl_conn, message, (int) length);
 
@@ -1083,7 +1087,7 @@ dtls_tl_send_message (struct eXosip_t *excontext, osip_transaction_t * tr, osip_
     i = SSL_get_error (reserved->socket_tab[pos].ssl_conn, i);
     _dtls_print_ssl_error (i);
     if (i == SSL_ERROR_SSL || i == SSL_ERROR_SYSCALL) {
-      OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "DTLS-UDP SSL_write error\n"));
+      OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "[eXosip] [DTLS] [tid=%i] DTLS-UDP SSL_write error\n", tid));
       if (reserved->socket_tab[pos].ssl_conn != NULL) {
         shutdown_free_client_dtls (excontext, pos);
         shutdown_free_server_dtls (excontext, pos);
@@ -1128,7 +1132,7 @@ dtls_tl_keepalive (struct eXosip_t *excontext)
   eXosip_reg_t *jr;
 
   if (reserved == NULL) {
-    OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "wrong state: create transport layer first\n"));
+    OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "[eXosip] [DTLS] wrong state: create transport layer first\n"));
     return OSIP_WRONG_STATE;
   }
 
@@ -1142,7 +1146,7 @@ dtls_tl_keepalive (struct eXosip_t *excontext)
   for (jr = excontext->j_reg; jr != NULL; jr = jr->next) {
     if (jr->len > 0) {
       if (sendto (reserved->dtls_socket, (const void *) excontext->ka_crlf, 4, 0, (struct sockaddr *) &(jr->addr), jr->len) > 0) {
-        OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO1, NULL, "eXosip: Keep Alive sent on DTLS-UDP!\n"));
+        OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO1, NULL, "[eXosip] [DTLS] keep alive sent on DTLS-UDP\n"));
       }
     }
   }
@@ -1155,7 +1159,7 @@ dtls_tl_set_socket (struct eXosip_t *excontext, int socket)
   struct eXtldtls *reserved = (struct eXtldtls *) excontext->eXtldtls_reserved;
 
   if (reserved == NULL) {
-    OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "wrong state: create transport layer first\n"));
+    OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "[eXosip] [DTLS] wrong state: create transport layer first\n"));
     return OSIP_WRONG_STATE;
   }
 
@@ -1188,7 +1192,7 @@ dtls_tl_get_masquerade_contact (struct eXosip_t *excontext, char *ip, int ip_siz
   memset (port, 0, port_size);
 
   if (reserved == NULL) {
-    OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "wrong state: create transport layer first\n"));
+    OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "[eXosip] [DTLS] wrong state: create transport layer first\n"));
     return OSIP_WRONG_STATE;
   }
 

@@ -334,7 +334,7 @@ _eXosip_generating_request_out_of_dialog (struct eXosip_t *excontext, osip_messa
     if (i != 0 || request->to == NULL) {
       if (i >= 0)
         i = OSIP_SYNTAXERROR;
-      OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "ERROR: callee address does not seems to be a sipurl: %s\n", to));
+      OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "[eXosip] callee address does not seems to be a sipurl: [%s]\n", to));
       osip_message_free (request);
       return i;
     }
@@ -1004,10 +1004,10 @@ _eXosip_request_viamanager (struct eXosip_t *excontext, osip_message_t * sip, in
   }
 
   if (via_ip == NULL) {
-    OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "missing ip for Via header\n"));
+    OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "[eXosip] missing ip for Via header\n"));
   }
   if (via_port == NULL) {
-    OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "missing port for Via header\n"));
+    OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "[eXosip] missing port for Via header\n"));
   }
   if (via_ip == NULL || via_port == NULL) {
     return OSIP_UNDEFINED_ERROR;
@@ -1022,7 +1022,7 @@ _eXosip_request_viamanager (struct eXosip_t *excontext, osip_message_t * sip, in
     osip_free (via->port);
     via->port = osip_strdup (via_port);
   }
-  OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO1, NULL, "updating: Via header to %s:%s\n", via_ip, via_port));
+  OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO1, NULL, "[eXosip] updating: Via header to [%s][%s]\n", via_ip, via_port));
   osip_message_force_update (sip);
   return OSIP_SUCCESS;
 }
@@ -1073,7 +1073,7 @@ _eXosip_message_contactmanager (struct eXosip_t *excontext, osip_message_t * sip
   locip[0] = '\0';
   _eXosip_guess_ip_for_destinationsock (excontext, family, proto, udp_local_bind, sock, host, locip, 49);
   if (locip[0] == '\0') {
-    OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "eXosip: no network interface found\n"));
+    OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "[eXosip] no network interface found\n"));
     return OSIP_NO_NETWORK;
   }
 
@@ -1087,10 +1087,10 @@ _eXosip_message_contactmanager (struct eXosip_t *excontext, osip_message_t * sip
   }
 
   if (contact_ip == NULL) {
-    OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "missing ip for Contact header\n"));
+    OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "[eXosip] missing ip for Contact header\n"));
   }
   if (contact_port == NULL) {
-    OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "missing port for Contact header\n"));
+    OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "[eXosip] missing port for Contact header\n"));
   }
   if (contact_ip == NULL || contact_port == NULL) {
     return OSIP_UNDEFINED_ERROR;
@@ -1105,7 +1105,7 @@ _eXosip_message_contactmanager (struct eXosip_t *excontext, osip_message_t * sip
     osip_free (acontact->url->port);
     acontact->url->port = osip_strdup (contact_port);
   }
-  OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO1, NULL, "updating: Contact header to %s:%s\n", contact_ip, contact_port));
+  OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO1, NULL, "[eXosip] updating: Contact header to [%s][%s]\n", contact_ip, contact_port));
   osip_message_force_update (sip);
   return OSIP_SUCCESS;
 }

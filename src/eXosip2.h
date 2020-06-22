@@ -644,7 +644,7 @@ extern "C" {
 
   void _eXosip_mark_all_registrations_expired (struct eXosip_t *excontext);
   void _eXosip_mark_registration_expired (struct eXosip_t *excontext, const char *call_id);
-  void _eXosip_mark_registration_ready (struct eXosip_t *excontext, const char *call_id);
+  int _eXosip_mark_registration_ready (struct eXosip_t *excontext, const char *call_id);
 
   int _eXosip_check_allow_header (eXosip_dialog_t * jd, osip_message_t * message);
 

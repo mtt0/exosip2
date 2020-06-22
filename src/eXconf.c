@@ -66,7 +66,7 @@ void
 eXosip_masquerade_contact (struct eXosip_t *excontext, const char *public_address, int port)
 {
   if (excontext->eXtl_transport.tl_masquerade_contact == NULL) {
-    OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_WARNING, NULL, "no transport protocol selected!\n"));
+    OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_WARNING, NULL, "[eXosip] no transport protocol selected\n"));
     if (public_address == NULL || public_address[0] == '\0') {
       memset (excontext->udp_firewall_ip, '\0', sizeof (excontext->udp_firewall_ip));
       memset (excontext->udp_firewall_port, '\0', sizeof (excontext->udp_firewall_port));
@@ -139,7 +139,7 @@ _eXosip_kill_transaction (struct eXosip_t *excontext, osip_list_t * transactions
   if (!osip_list_eol (transactions, 0)) {
     /* some transaction are still used by osip,
        transaction should be released by modules! */
-    OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "module sfp: _osip_kill_transaction transaction should be released by modules!\n"));
+    OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_WARNING, NULL, "[eXosip] transactions are supposed to be already deallocated\n"));
   }
 
   while (!osip_list_eol (transactions, 0)) {
@@ -168,7 +168,7 @@ eXosip_quit (struct eXosip_t *excontext)
     return;
 
   if (excontext->j_stop_ua == -1) {
-    OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_WARNING, NULL, "eXosip: already stopped!\n"));
+    OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_WARNING, NULL, "[eXosip] already stopped\n"));
     return;
   }
 
@@ -180,7 +180,7 @@ eXosip_quit (struct eXosip_t *excontext)
   if (excontext->j_thread != NULL) {
     i = osip_thread_join ((struct osip_thread *) excontext->j_thread);
     if (i != 0) {
-      OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "eXosip: can't terminate thread!\n"));
+      OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "[eXosip] can't terminate thread\n"));
     }
     osip_free ((struct osip_thread *) excontext->j_thread);
   }
@@ -231,7 +231,7 @@ eXosip_quit (struct eXosip_t *excontext)
     osip_transaction_t *tr = (osip_transaction_t *) osip_list_get (&excontext->j_transactions, 0);
 
     if (tr->state == IST_TERMINATED || tr->state == ICT_TERMINATED || tr->state == NICT_TERMINATED || tr->state == NIST_TERMINATED) {
-      OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO1, NULL, "Release a terminated transaction\n"));
+      OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO1, NULL, "[eXosip] [tid=%i] release a terminated transaction\n", tr->transactionid));
     }
     osip_list_remove (&excontext->j_transactions, 0);
     _eXosip_transaction_free (excontext, tr);
@@ -304,7 +304,7 @@ eXosip_set_socket (struct eXosip_t *excontext, int transport, int socket, int po
 {
   if (excontext->eXtl_transport.enabled > 0) {
     /* already set */
-    OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "eXosip: already listening somewhere\n"));
+    OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "[eXosip] already listening somewhere\n"));
     return OSIP_WRONG_STATE;
   }
 
@@ -330,7 +330,7 @@ eXosip_set_socket (struct eXosip_t *excontext, int transport, int socket, int po
 #ifndef OSIP_MONOTHREAD
   excontext->j_thread = (void *) osip_thread_create (20000, _eXosip_thread, excontext);
   if (excontext->j_thread == NULL) {
-    OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "eXosip: Cannot start thread!\n"));
+    OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "[eXosip] cannot start thread\n"));
     return OSIP_UNDEFINED_ERROR;
   }
 #endif
@@ -382,7 +382,7 @@ eXosip_find_free_port (struct eXosip_t *excontext, int free_port, int transport)
         int type;
 
         if (curinfo_rtp->ai_protocol && curinfo_rtp->ai_protocol != transport) {
-          OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO3, NULL, "eXosip: Skipping protocol %d\n", curinfo_rtp->ai_protocol));
+          OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO3, NULL, "[eXosip] skipping protocol [%d]\n", curinfo_rtp->ai_protocol));
           continue;
         }
         type = curinfo_rtp->ai_socktype;
@@ -391,7 +391,7 @@ eXosip_find_free_port (struct eXosip_t *excontext, int free_port, int transport)
 #endif
         sock = (int) socket (curinfo_rtp->ai_family, type, curinfo_rtp->ai_protocol);
         if (sock < 0) {
-          OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "eXosip: Cannot create socket!\n"));
+          OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "[eXosip] cannot create socket\n"));
           continue;
         }
 
@@ -400,7 +400,7 @@ eXosip_find_free_port (struct eXosip_t *excontext, int free_port, int transport)
           if (setsockopt_ipv6only (sock)) {
             _eXosip_closesocket (sock);
             sock = -1;
-            OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "eXosip: Cannot set socket option!\n"));
+            OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "[eXosip] cannot set socket option\n"));
             continue;
           }
 #endif /* IPV6_V6ONLY */
@@ -408,7 +408,7 @@ eXosip_find_free_port (struct eXosip_t *excontext, int free_port, int transport)
 
         res1 = bind (sock, curinfo_rtp->ai_addr, (socklen_t) curinfo_rtp->ai_addrlen);
         if (res1 < 0) {
-          OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_WARNING, NULL, "eXosip: Cannot bind socket node: 0.0.0.0 family:%d\n", curinfo_rtp->ai_family));
+          OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_WARNING, NULL, "[eXosip] cannot bind socket node: [0.0.0.0] [family:%d]\n", curinfo_rtp->ai_family));
           _eXosip_closesocket (sock);
           sock = -1;
           continue;
@@ -429,7 +429,7 @@ eXosip_find_free_port (struct eXosip_t *excontext, int free_port, int transport)
         int type;
 
         if (curinfo_rtcp->ai_protocol && curinfo_rtcp->ai_protocol != transport) {
-          OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO3, NULL, "eXosip: Skipping protocol %d\n", curinfo_rtcp->ai_protocol));
+          OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO3, NULL, "[eXosip] skipping protocol [%d]\n", curinfo_rtcp->ai_protocol));
           continue;
         }
         type = curinfo_rtcp->ai_socktype;
@@ -438,7 +438,7 @@ eXosip_find_free_port (struct eXosip_t *excontext, int free_port, int transport)
 #endif
         sock = (int) socket (curinfo_rtcp->ai_family, type, curinfo_rtcp->ai_protocol);
         if (sock < 0) {
-          OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "eXosip: Cannot create socket!\n"));
+          OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "[eXosip] cannot create socket\n"));
           continue;
         }
 
@@ -447,7 +447,7 @@ eXosip_find_free_port (struct eXosip_t *excontext, int free_port, int transport)
           if (setsockopt_ipv6only (sock)) {
             _eXosip_closesocket (sock);
             sock = -1;
-            OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "eXosip: Cannot set socket option!\n"));
+            OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "[eXosip] cannot set socket option\n"));
             continue;
           }
 #endif /* IPV6_V6ONLY */
@@ -456,7 +456,7 @@ eXosip_find_free_port (struct eXosip_t *excontext, int free_port, int transport)
 
         res1 = bind (sock, curinfo_rtcp->ai_addr, (socklen_t) curinfo_rtcp->ai_addrlen);
         if (res1 < 0) {
-          OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_WARNING, NULL, "eXosip: Cannot bind socket node: 0.0.0.0 family:%d\n", curinfo_rtp->ai_family));
+          OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_WARNING, NULL, "[eXosip] cannot bind socket node: [0.0.0.0] [family:%d]\n", curinfo_rtp->ai_family));
           _eXosip_closesocket (sock);
           sock = -1;
           continue;
@@ -493,7 +493,7 @@ eXosip_find_free_port (struct eXosip_t *excontext, int free_port, int transport)
       int type;
 
       if (curinfo_rtp->ai_protocol && curinfo_rtp->ai_protocol != transport) {
-        OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO3, NULL, "eXosip: Skipping protocol %d\n", curinfo_rtp->ai_protocol));
+        OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO3, NULL, "[eXosip] skipping protocol [%d]\n", curinfo_rtp->ai_protocol));
         continue;
       }
       type = curinfo_rtp->ai_socktype;
@@ -502,7 +502,7 @@ eXosip_find_free_port (struct eXosip_t *excontext, int free_port, int transport)
 #endif
       sock = (int) socket (curinfo_rtp->ai_family, type, curinfo_rtp->ai_protocol);
       if (sock < 0) {
-        OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "eXosip: Cannot create socket!\n"));
+        OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "[eXosip] cannot create socket\n"));
         continue;
       }
 
@@ -511,7 +511,7 @@ eXosip_find_free_port (struct eXosip_t *excontext, int free_port, int transport)
         if (setsockopt_ipv6only (sock)) {
           _eXosip_closesocket (sock);
           sock = -1;
-          OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "eXosip: Cannot set socket option!\n"));
+          OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "[eXosip] cannot set socket option\n"));
           continue;
         }
 #endif /* IPV6_V6ONLY */
@@ -519,7 +519,7 @@ eXosip_find_free_port (struct eXosip_t *excontext, int free_port, int transport)
 
       res1 = bind (sock, curinfo_rtp->ai_addr, (socklen_t) curinfo_rtp->ai_addrlen);
       if (res1 < 0) {
-        OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_WARNING, NULL, "eXosip: Cannot bind socket node: 0.0.0.0 family:%d\n", curinfo_rtp->ai_family));
+        OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_WARNING, NULL, "[eXosip] cannot bind socket node: [0.0.0.0] family:[%d]\n", curinfo_rtp->ai_family));
         _eXosip_closesocket (sock);
         sock = -1;
         continue;
@@ -573,7 +573,7 @@ eXosip_listen_addr (struct eXosip_t *excontext, int transport, const char *addr,
 
   if (excontext->eXtl_transport.enabled > 0) {
     /* already set */
-    OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "eXosip: already listening somewhere\n"));
+    OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "[eXosip] already listening somewhere\n"));
     return OSIP_WRONG_STATE;
   }
 
@@ -627,7 +627,7 @@ eXosip_listen_addr (struct eXosip_t *excontext, int transport, const char *addr,
   if (excontext->j_thread == NULL) {
     excontext->j_thread = (void *) osip_thread_create (20000, _eXosip_thread, excontext);
     if (excontext->j_thread == NULL) {
-      OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "eXosip: Cannot start thread!\n"));
+      OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "[eXosip] cannot start thread\n"));
       return OSIP_UNDEFINED_ERROR;
     }
   }
@@ -689,7 +689,7 @@ eXosip_init (struct eXosip_t *excontext)
     wVersionRequested = MAKEWORD (2, 0);
     i = WSAStartup (wVersionRequested, &wsaData);
     if (i != 0) {
-      OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_WARNING, NULL, "eXosip: Unable to initialize WINSOCK, reason: %d\n", i));
+      OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_WARNING, NULL, "[eXosip] unable to initialize WINSOCK [%d]\n", i));
     }
   }
 #endif
@@ -730,7 +730,7 @@ eXosip_init (struct eXosip_t *excontext)
 
   i = osip_init (&osip);
   if (i != 0) {
-    OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "eXosip: Cannot initialize osip!\n"));
+    OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "[eXosip] cannot initialize osip\n"));
     return i;
   }
 
@@ -864,10 +864,10 @@ eXosip_execute (struct eXosip_t *excontext)
       eXosip_unlock (excontext);
 
       if (lower_tv.tv_sec == 1) {
-        OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO2, NULL, "eXosip: Reseting timer to 1s before waking up!\n"));
+        OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO2, NULL, "[eXosip] reseting timer to 1s before waking up\n"));
       }
       else {
-        OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO2, NULL, "eXosip: Reseting timer to 10s before waking up!\n"));
+        OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO2, NULL, "[eXosip] reseting timer to 10s before waking up\n"));
       }
     }
     else {
@@ -880,7 +880,7 @@ eXosip_execute (struct eXosip_t *excontext)
       }
     }
 #if 0
-    OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO2, NULL, "eXosip: timer sec:%i usec:%i!\n", lower_tv.tv_sec, lower_tv.tv_usec));
+    OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO2, NULL, "[eXosip] timer [sec:%i] [usec:%i]\n", lower_tv.tv_sec, lower_tv.tv_usec));
 #endif
   }
 #else
@@ -964,11 +964,11 @@ eXosip_set_option (struct eXosip_t *excontext, int opt, const void *value)
               return OSIP_SUCCESS + 1;  /* NOT MODIFIED */
             snprintf (excontext->account_entries[i].nat_ip, sizeof (excontext->account_entries[i].nat_ip), "%s", ainfo->nat_ip);
             excontext->account_entries[i].nat_port = ainfo->nat_port;
-            OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO1, NULL, "eXosip option set: account info updated:%s -> %s:%i\n", ainfo->proxy, ainfo->nat_ip, ainfo->nat_port));
+            OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO1, NULL, "[eXosip] option set: account info updated [%s] -> [%s:%i]\n", ainfo->proxy, ainfo->nat_ip, ainfo->nat_port));
           }
           else {
             excontext->account_entries[i].proxy[0] = '\0';
-            OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO2, NULL, "eXosip option set: account info deleted :%s\n", ainfo->proxy));
+            OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO2, NULL, "[eXosip] option set: account info deleted [%s]\n", ainfo->proxy));
           }
           return OSIP_SUCCESS;
         }
@@ -983,7 +983,7 @@ eXosip_set_option (struct eXosip_t *excontext, int opt, const void *value)
           snprintf (excontext->account_entries[i].proxy, sizeof (ainfo->proxy), "%s", ainfo->proxy);
           snprintf (excontext->account_entries[i].nat_ip, sizeof (ainfo->nat_ip), "%s", ainfo->nat_ip);
           excontext->account_entries[i].nat_port = ainfo->nat_port;
-          OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO1, NULL, "eXosip option set: account info added:%s -> %s:%i\n", ainfo->proxy, ainfo->nat_ip, ainfo->nat_port));
+          OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO1, NULL, "[eXosip] option set: account info added [%s] -> [%s:%i]\n", ainfo->proxy, ainfo->nat_ip, ainfo->nat_port));
           return OSIP_SUCCESS;
         }
       }
@@ -1004,12 +1004,12 @@ eXosip_set_option (struct eXosip_t *excontext, int opt, const void *value)
           /* update entry */
           if (entry->ip[0] != '\0') {
             snprintf (excontext->dns_entries[i].ip, sizeof (excontext->dns_entries[i].ip), "%s", entry->ip);
-            OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO1, NULL, "eXosip option set: dns cache updated:%s -> %s\n", entry->host, entry->ip));
+            OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO1, NULL, "[eXosip] option set: dns cache updated [%s] -> [%s]\n", entry->host, entry->ip));
           }
           else {
             /* return previously added cache */
             snprintf (entry->ip, sizeof (entry->ip), "%s", excontext->dns_entries[i].ip);
-            OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO2, NULL, "eXosip option set: dns cache returned:%s ->%s\n", entry->host, entry->ip));
+            OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO2, NULL, "[eXosip] option set: dns cache returned [%s] -> [%s]\n", entry->host, entry->ip));
           }
           return OSIP_SUCCESS;
         }
@@ -1048,7 +1048,7 @@ eXosip_set_option (struct eXosip_t *excontext, int opt, const void *value)
           /* add entry */
           snprintf (excontext->dns_entries[i].host, sizeof (entry->host), "%s", entry->host);
           snprintf (excontext->dns_entries[i].ip, sizeof (entry->ip), "%s", entry->ip);
-          OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO2, NULL, "eXosip option set: dns cache added:%s -> %s\n", entry->host, entry->ip));
+          OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO2, NULL, "[eXosip] option set: dns cache added [%s] -> [%s]\n", entry->host, entry->ip));
           return OSIP_SUCCESS;
         }
       }
@@ -1067,7 +1067,7 @@ eXosip_set_option (struct eXosip_t *excontext, int opt, const void *value)
       for (i = 0; i < MAX_EXOSIP_DNS_ENTRY; i++) {
         if (excontext->dns_entries[i].host[0] != '\0' && 0 == osip_strcasecmp (excontext->dns_entries[i].host, entry->host)) {
           excontext->dns_entries[i].host[0] = '\0';
-          OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO2, NULL, "eXosip option set: dns cache deleted :%s\n", entry->host));
+          OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO2, NULL, "[eXosip] option set: dns cache deleted [%s]\n", entry->host));
           return OSIP_SUCCESS;
         }
       }
@@ -1099,7 +1099,7 @@ eXosip_set_option (struct eXosip_t *excontext, int opt, const void *value)
     memset (excontext->ipv4_for_gateway, '\0', sizeof (excontext->ipv4_for_gateway));
     if (tmp != NULL && tmp[0] != '\0')
       osip_strncpy (excontext->ipv4_for_gateway, tmp, sizeof (excontext->ipv4_for_gateway) - 1);
-    OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO1, NULL, "eXosip option set: ipv4_for_gateway:%s!\n", excontext->ipv4_for_gateway));
+    OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO1, NULL, "[eXosip] option set: ipv4_for_gateway [%s]\n", excontext->ipv4_for_gateway));
     break;
 #ifndef MINISIZE
   case EXOSIP_OPT_SET_IPV6_FOR_GATEWAY:
@@ -1107,7 +1107,7 @@ eXosip_set_option (struct eXosip_t *excontext, int opt, const void *value)
     memset (excontext->ipv6_for_gateway, '\0', sizeof (excontext->ipv6_for_gateway));
     if (tmp != NULL && tmp[0] != '\0')
       osip_strncpy (excontext->ipv6_for_gateway, tmp, sizeof (excontext->ipv6_for_gateway) - 1);
-    OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO1, NULL, "eXosip option set: ipv6_for_gateway:%s!\n", excontext->ipv6_for_gateway));
+    OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO1, NULL, "[eXosip] option set: ipv6_for_gateway [%s]\n", excontext->ipv6_for_gateway));
     break;
 #endif
   case EXOSIP_OPT_DNS_CAPABILITIES:    /*EXOSIP_OPT_SRV_WITH_NAPTR: */
@@ -1125,14 +1125,14 @@ eXosip_set_option (struct eXosip_t *excontext, int opt, const void *value)
     memset (excontext->sip_instance, '\0', sizeof (excontext->sip_instance));
     if (tmp != NULL && tmp[0] != '\0')
       osip_strncpy (excontext->sip_instance, tmp, sizeof (excontext->sip_instance) - 1);
-    OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO1, NULL, "eXosip option set: +sip.instance:%s!\n", excontext->sip_instance));
+    OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO1, NULL, "[eXosip] option set: +sip.instance [%s]\n", excontext->sip_instance));
     break;
   case EXOSIP_OPT_SET_DEFAULT_CONTACT_DISPLAYNAME:
     tmp = (char *) value;
     memset (excontext->default_contact_displayname, '\0', sizeof (excontext->default_contact_displayname));
     if (tmp != NULL && tmp[0] != '\0')
       osip_strncpy (excontext->default_contact_displayname, tmp, sizeof (excontext->default_contact_displayname) - 1);
-    OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO1, NULL, "eXosip option set: default_contact_displayname:%s!\n", excontext->default_contact_displayname));
+    OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO1, NULL, "[eXosip] option set: default_contact_displayname [%s]\n", excontext->default_contact_displayname));
     break;
   case EXOSIP_OPT_SET_SESSIONTIMERS_FORCE:
     val = *((int *) value);
@@ -1210,7 +1210,7 @@ eXosip_set_option (struct eXosip_t *excontext, int opt, const void *value)
     memset (excontext->oc_local_address, '\0', sizeof (excontext->oc_local_address));
     if (tmp != NULL && tmp[0] != '\0')
       osip_strncpy (excontext->oc_local_address, tmp, sizeof (excontext->oc_local_address) - 1);
-    OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO1, NULL, "eXosip option set: oc_local_address:%s!\n", excontext->oc_local_address));
+    OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO1, NULL, "[eXosip] option set: oc_local_address [%s]\n", excontext->oc_local_address));
     break;
   case EXOSIP_OPT_SET_OC_PORT_RANGE:
     {

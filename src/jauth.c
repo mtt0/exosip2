@@ -663,7 +663,7 @@ DigestCalcResponseAka (const char *pszPassword, const char *pszNonce,
   }
 
   /* compute the response and keys */
-  f2345 (k, rnd, res, ck, ik, ak);
+  f2345 (k, rnd, (u8*)res, ck, ik, ak);
   /* no check for sqn is performed, so no AUTS synchronization performed */
 
   /* Format data for output in the SIP message */
@@ -711,16 +711,16 @@ _eXosip_create_proxy_authorization_header (osip_proxy_authenticate_t * wa, const
     return OSIP_BADPARAMETER;
 
   if (wa->auth_type == NULL || wa->nonce == NULL) {
-    OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "www_authenticate header is not acceptable.\n"));
+    OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "[eXosip] www_authenticate header is not acceptable\n"));
     return OSIP_SYNTAXERROR;
   }
 
   if (wa->realm == NULL) {
-    OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "www_authenticate header contains an empty realm: contact your admin!\n"));
+    OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "[eXosip] www_authenticate header contains an empty realm [contact your admin]\n"));
   }
 
   if (0 != osip_strcasecmp ("Digest", wa->auth_type)) {
-    OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "Authentication auth_type not supported. [Digest only].\n"));
+    OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "[eXosip] authentication auth_type not supported [Digest only]\n"));
     return OSIP_UNDEFINED_ERROR;
   }
 
@@ -737,9 +737,9 @@ _eXosip_create_proxy_authorization_header (osip_proxy_authenticate_t * wa, const
       Alg = "AKAv2-MD5";
     } else {
 #ifdef HAVE_OPENSSL_SSL_H
-      OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "skip authentication [algorithm not supported] [SHA-256, MD5, AKAv1-MD5, AKAv2-MD5]\n"));
+      OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "[eXosip] skip authentication [algorithm not supported] [SHA-256, MD5, AKAv1-MD5, AKAv2-MD5]\n"));
 #else
-      OSIP_TRACE(osip_trace(__FILE__, __LINE__, OSIP_ERROR, NULL, "skip authentication [algorithm not supported] [MD5, AKAv1-MD5, AKAv2-MD5]\n"));
+      OSIP_TRACE(osip_trace(__FILE__, __LINE__, OSIP_ERROR, NULL, "[eXosip] skip authentication [algorithm not supported] [MD5, AKAv1-MD5, AKAv2-MD5]\n"));
 #endif
       return OSIP_UNDEFINED_ERROR;
     }
@@ -747,7 +747,7 @@ _eXosip_create_proxy_authorization_header (osip_proxy_authenticate_t * wa, const
 
   i = osip_proxy_authorization_init (&aut);
   if (i != 0) {
-    OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "allocation failed [osip_proxy_authorization_init]\n"));
+    OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "[eXosip] allocation failed [osip_proxy_authorization_init]\n"));
     return i;
   }
 
@@ -910,7 +910,7 @@ _eXosip_create_proxy_authorization_header (osip_proxy_authenticate_t * wa, const
       respponse_len = MD5HEXLEN + 1;
     }
 
-    OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO4, NULL, "Response in proxy_authorization |%s|\n", Response));
+    OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO4, NULL, "[eXosip] response in proxy_authorization |%s|\n", Response));
     {
       char *resp = osip_malloc (respponse_len+2);
 
@@ -977,7 +977,7 @@ _eXosip_store_nonce (struct eXosip_t *excontext, const char *call_id, osip_proxy
     }
   }
 
-  OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "Compile with higher MAX_EXOSIP_HTTP_AUTH value (current=%i)\n", MAX_EXOSIP_HTTP_AUTH));
+  OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "[eXosip] compile with higher MAX_EXOSIP_HTTP_AUTH value (current=%i)\n", MAX_EXOSIP_HTTP_AUTH));
   return OSIP_UNDEFINED_ERROR;
 }
 

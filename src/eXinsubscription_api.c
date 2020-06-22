@@ -89,7 +89,7 @@ eXosip_insubscription_remove (struct eXosip_t *excontext, int did)
     _eXosip_notify_dialog_find (excontext, did, &jn, &jd);
   }
   if (jd == NULL || jn == NULL) {
-    OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "eXosip: No incoming subscription here?\n"));
+    OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "[eXosip] no incoming subscription here\n"));
     return OSIP_NOTFOUND;
   }
   REMOVE_ELEMENT (excontext->j_notifies, jn);
@@ -114,19 +114,19 @@ eXosip_insubscription_build_answer (struct eXosip_t *excontext, int tid, int sta
     _eXosip_insubscription_transaction_find (excontext, tid, &jn, &jd, &tr);
   }
   if (tr == NULL || jd == NULL || jn == NULL) {
-    OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "eXosip: No incoming subscription here?\n"));
+    OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "[eXosip] no incoming subscription here\n"));
     return OSIP_NOTFOUND;
   }
 
   if (status < 101 || status > 699) {
-    OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "eXosip: wrong status code (101<status<699)\n"));
+    OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "[eXosip] wrong status code (101<status<699)\n"));
     return OSIP_BADPARAMETER;
   }
 
   i = _eXosip_build_response_default (excontext, answer, jd->d_dialog, status, tr->orig_request);
 
   if (i != 0) {
-    OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "ERROR: Could not create response for %s\n", tr->orig_request->sip_method));
+    OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "[eXosip] cannot create response for [%s]\n", tr->orig_request->sip_method));
     return i;
   }
 
@@ -156,7 +156,7 @@ eXosip_insubscription_send_answer (struct eXosip_t *excontext, int tid, int stat
     _eXosip_insubscription_transaction_find (excontext, tid, &jn, &jd, &tr);
   }
   if (jd == NULL || tr == NULL || tr->orig_request == NULL || tr->orig_request->sip_method == NULL) {
-    OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "eXosip: No incoming subscription here?\n"));
+    OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "[eXosip] no incoming subscription here\n"));
     osip_message_free (answer);
     return OSIP_NOTFOUND;
   }
@@ -164,7 +164,7 @@ eXosip_insubscription_send_answer (struct eXosip_t *excontext, int tid, int stat
   if (answer == NULL) {
     if (0 == osip_strcasecmp (tr->orig_request->sip_method, "SUBSCRIBE") || 0 == osip_strcasecmp (tr->orig_request->sip_method, "REFER")) {
       if (status >= 200 && status <= 299) {
-        OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "eXosip: provide a prepared answer\n"));
+        OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "[eXosip] provide a prepared answer\n"));
         return OSIP_BADPARAMETER;
       }
     }
@@ -172,7 +172,7 @@ eXosip_insubscription_send_answer (struct eXosip_t *excontext, int tid, int stat
 
   /* is the transaction already answered? */
   if (tr->state == NIST_COMPLETED || tr->state == NIST_TERMINATED) {
-    OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "eXosip: transaction already answered\n"));
+    OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "[eXosip] transaction already answered\n"));
     osip_message_free (answer);
     return OSIP_WRONG_STATE;
   }
@@ -184,13 +184,13 @@ eXosip_insubscription_send_answer (struct eXosip_t *excontext, int tid, int stat
       else
         i = _eXosip_insubscription_answer_3456xx (excontext, jn, jd, status);
       if (i != 0) {
-        OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "eXosip: cannot send response!\n"));
+        OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "[eXosip] cannot send response\n"));
         return i;
       }
     }
     else {
       /* TODO */
-      OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "eXosip: a response must be given!\n"));
+      OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "[eXosip] a response must be given\n"));
       return OSIP_BADPARAMETER;
     }
     return OSIP_SUCCESS;
@@ -210,7 +210,7 @@ eXosip_insubscription_send_answer (struct eXosip_t *excontext, int tid, int stat
       i = 0;
     }
     else {
-      OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "eXosip: wrong status code (101<status<699)\n"));
+      OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "[eXosip] wrong status code (101<status<699)\n"));
       osip_message_free (answer);
       return OSIP_BADPARAMETER;
     }
@@ -246,7 +246,7 @@ eXosip_insubscription_build_notify (struct eXosip_t *excontext, int did, int sub
     _eXosip_notify_dialog_find (excontext, did, &jn, &jd);
   }
   if (jd == NULL || jn == NULL) {
-    OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "eXosip: No incoming subscription here?\n"));
+    OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "[eXosip] no incoming subscription here\n"));
     return OSIP_NOTFOUND;
   }
 
@@ -306,7 +306,7 @@ eXosip_insubscription_build_request (struct eXosip_t *excontext, int did, const 
   _eXosip_notify_dialog_find (excontext, did, &jn, &jd);
 
   if (jd == NULL || jn == NULL) {
-    OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "eXosip: No incoming subscription here?\n"));
+    OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "[eXosip] no incoming subscription here\n"));
     return OSIP_NOTFOUND;
   }
 
@@ -345,7 +345,7 @@ eXosip_insubscription_send_request (struct eXosip_t *excontext, int did, osip_me
     _eXosip_notify_dialog_find (excontext, did, &jn, &jd);
   }
   if (jd == NULL || jn == NULL) {
-    OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "eXosip: No incoming subscription here?\n"));
+    OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "[eXosip] no incoming subscription here\n"));
     osip_message_free (request);
     return OSIP_NOTFOUND;
   }
@@ -405,14 +405,14 @@ _eXosip_insubscription_send_request_with_credential (struct eXosip_t *excontext,
 
   i = osip_message_clone (out_tr->orig_request, &msg);
   if (i != 0) {
-    OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "eXosip: could not clone msg for authentication\n"));
+    OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "[eXosip] cannot clone msg for authentication\n"));
     return i;
   }
 
   via = (osip_via_t *) osip_list_get (&msg->vias, 0);
   if (via == NULL || msg->cseq == NULL || msg->cseq->number == NULL) {
     osip_message_free (msg);
-    OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "eXosip: missing via or cseq header\n"));
+    OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "[eXosip] missing via or cseq header\n"));
     return OSIP_SYNTAXERROR;
   }
 
@@ -432,7 +432,7 @@ _eXosip_insubscription_send_request_with_credential (struct eXosip_t *excontext,
   i = _eXosip_update_top_via (msg);
   if (i != 0) {
     osip_message_free (msg);
-    OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "eXosip: unsupported protocol\n"));
+    OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "[eXosip] unsupported protocol\n"));
     return i;
   }
 
@@ -559,7 +559,7 @@ eXosip_insubscription_automatic (struct eXosip_t *excontext, eXosip_event_t * ev
 
   _eXosip_notify_dialog_find (excontext, evt->did, &jn, &jd);
   if (jd == NULL || jn == NULL) {
-    OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "eXosip: No incoming subscription here?\n"));
+    OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "[eXosip] no incoming subscription here\n"));
     return OSIP_NOTFOUND;
   }
 

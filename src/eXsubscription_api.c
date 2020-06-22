@@ -89,7 +89,7 @@ eXosip_subscription_remove (struct eXosip_t *excontext, int did)
     _eXosip_subscription_dialog_find (excontext, did, &js, &jd);
   }
   if (js == NULL) {
-    OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "eXosip: No outgoing subscription here?\n"));
+    OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "[eXosip] no outgoing subscription here\n"));
     return OSIP_NOTFOUND;
   }
   REMOVE_ELEMENT (excontext->j_subscribes, js);
@@ -185,7 +185,7 @@ eXosip_subscription_send_initial_request (struct eXosip_t *excontext, osip_messa
 
   i = _eXosip_subscription_init (excontext, &js);
   if (i != 0) {
-    OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "eXosip: cannot subscribe."));
+    OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "[eXosip] cannot subscribe."));
     osip_message_free (subscribe);
     return i;
   }
@@ -230,7 +230,7 @@ eXosip_subscription_build_refresh_request (struct eXosip_t *excontext, int did, 
   _eXosip_subscription_dialog_find (excontext, did, &js, &jd);
 
   if (jd == NULL) {
-    OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "eXosip: No subscribe/refer here?\n"));
+    OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "[eXosip] no subscribe/refer here\n"));
     return OSIP_NOTFOUND;
   }
 
@@ -242,7 +242,7 @@ eXosip_subscription_build_refresh_request (struct eXosip_t *excontext, int did, 
     }
   }
   if (transaction == NULL || transaction->orig_request == NULL || transaction->orig_request->cseq == NULL || transaction->orig_request->cseq->method == NULL) {
-    OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_BUG, NULL, "eXosip: is this a SUBSCRIBE or REFER?\n"));
+    OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_BUG, NULL, "[eXosip] is this a SUBSCRIBE or REFER\n"));
     return OSIP_UNDEFINED_ERROR;
   }
 
@@ -262,7 +262,7 @@ eXosip_subscription_build_refresh_request (struct eXosip_t *excontext, int did, 
 
       i = osip_header_clone (_header, &_header2);
       if (i != 0) {
-        OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "Error in Supported header\n"));
+        OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "[eXosip] error in Supported header\n"));
         break;
       }
       osip_list_add (&(*sub)->headers, _header2, -1);
@@ -278,7 +278,7 @@ eXosip_subscription_build_refresh_request (struct eXosip_t *excontext, int did, 
 
       i = osip_call_info_clone (_call_info_header, &_header2);
       if (i != 0) {
-        OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "Error in Call-Info header\n"));
+        OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "[eXosip] error in Call-Info header\n"));
         break;
       }
       osip_list_add (&(*sub)->call_infos, _header2, -1);
@@ -310,7 +310,7 @@ eXosip_subscription_send_refresh_request (struct eXosip_t *excontext, int did, o
     _eXosip_subscription_dialog_find (excontext, did, &js, &jd);
   }
   if (jd == NULL) {
-    OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "eXosip: No subscribe here?\n"));
+    OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "[eXosip] no subscribe here\n"));
     osip_message_free (sub);
     return OSIP_NOTFOUND;
   }
@@ -378,7 +378,7 @@ _eXosip_subscription_automatic_refresh (struct eXosip_t *excontext, eXosip_subsc
 
       i = osip_accept_clone (_accept, &_accept2);
       if (i != 0) {
-        OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "Error in Accept header\n"));
+        OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "[eXosip] error in Accept header\n"));
         break;
       }
       osip_list_add (&sub->accepts, _accept2, -1);
@@ -398,7 +398,7 @@ _eXosip_subscription_automatic_refresh (struct eXosip_t *excontext, eXosip_subsc
 
       i = osip_header_clone (_event, &_event2);
       if (i != 0) {
-        OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "Error in Event header\n"));
+        OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "[eXosip] error in Event header\n"));
         break;
       }
       osip_list_add (&sub->headers, _event2, -1);
@@ -439,7 +439,7 @@ _eXosip_subscription_send_request_with_credential (struct eXosip_t *excontext, e
 
   i = osip_message_clone (out_tr->orig_request, &msg);
   if (i != 0) {
-    OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "eXosip: could not clone msg for authentication\n"));
+    OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "[eXosip] cannot clone msg for authentication\n"));
     return i;
   }
 
@@ -455,7 +455,7 @@ _eXosip_subscription_send_request_with_credential (struct eXosip_t *excontext, e
   via = (osip_via_t *) osip_list_get (&msg->vias, 0);
   if (via == NULL || msg->cseq == NULL || msg->cseq->number == NULL) {
     osip_message_free (msg);
-    OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "eXosip: missing via or cseq header\n"));
+    OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "[eXosip] missing via or cseq header\n"));
     return OSIP_SYNTAXERROR;
   }
 
@@ -501,7 +501,7 @@ _eXosip_subscription_send_request_with_credential (struct eXosip_t *excontext, e
     }
     else {
       osip_message_free (msg);
-      OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "eXosip: missing Min-Expires or Expires in PUBLISH\n"));
+      OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "[eXosip] missing Min-Expires or Expires in PUBLISH\n"));
       return OSIP_SYNTAXERROR;
     }
   }

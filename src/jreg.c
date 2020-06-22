@@ -140,13 +140,13 @@ _eXosip_reg_free (struct eXosip_t *excontext, eXosip_reg_t * jreg)
       _eXosip_delete_nonce (excontext, jreg->r_last_tr->orig_request->call_id->number);
 
     if (jreg->r_last_tr->state == IST_TERMINATED || jreg->r_last_tr->state == ICT_TERMINATED || jreg->r_last_tr->state == NICT_TERMINATED || jreg->r_last_tr->state == NIST_TERMINATED) {
-      OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO1, NULL, "Release a terminated transaction\n"));
+      OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO1, NULL, "[eXosip] [tid=%i] release a terminated transaction\n", jreg->r_last_tr->transactionid));
       _eXosip_delete_reserved (jreg->r_last_tr);
       if (jreg->r_last_tr != NULL)
         osip_list_add (&excontext->j_transactions, jreg->r_last_tr, 0);
     }
     else {
-      OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO1, NULL, "Release a non-terminated transaction\n"));
+      OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO1, NULL, "[eXosip] [tid=%i] release a non-terminated transaction\n", jreg->r_last_tr->transactionid));
       _eXosip_delete_reserved (jreg->r_last_tr);
       if (jreg->r_last_tr != NULL)
         osip_list_add (&excontext->j_transactions, jreg->r_last_tr, 0);

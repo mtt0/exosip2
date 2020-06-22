@@ -59,7 +59,7 @@ jpipe ()
 
   if (fcntl (my_pipe->pipes[1], F_SETFL, O_NONBLOCK) == -1) {
     /* failed for some reason... */
-    OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "cannot set O_NONBLOCK to the pipe[1]!\n"));
+    OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "[eXosip] cannot set O_NONBLOCK to the pipe[1]\n"));
   }
 
   return my_pipe;
@@ -160,7 +160,7 @@ jpipe ()
   raddr.sin_family = AF_INET;
   raddr.sin_port = 0;
   if (bind (s, (struct sockaddr *) &raddr, sizeof (raddr)) < 0) {
-    OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "Failed to bind a local socket (port=0), aborting!\n"));
+    OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "[eXosip] failed to bind a local socket (port=0), aborting\n"));
     _eXosip_closesocket (s);
     _eXosip_closesocket (my_pipe->pipes[1]);
     osip_free (my_pipe);
@@ -170,7 +170,7 @@ jpipe ()
   len = sizeof (raddr);
   j = getsockname (s, (struct sockaddr *) &raddr, &len);
   if (j != 0) {
-    OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "Failed to getsockname on a local socket, aborting!\n"));
+    OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "[eXosip] failed to getsockname on a local socket, aborting\n"));
     _eXosip_closesocket (s);
     _eXosip_closesocket (my_pipe->pipes[1]);
     osip_free (my_pipe);
@@ -179,7 +179,7 @@ jpipe ()
 
   j = listen (s, 1);
   if (j != 0) {
-    OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "Failed to listen on a local socket, aborting!\n"));
+    OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "[eXosip] failed to listen on a local socket, aborting\n"));
     _eXosip_closesocket (s);
     _eXosip_closesocket (my_pipe->pipes[1]);
     osip_free (my_pipe);
@@ -190,7 +190,7 @@ jpipe ()
 #if defined(__arc__)
   if (j != 0) {
     /* failed for some reason... */
-    OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "udp plugin; cannot set O_NONBLOCK to the file desciptor!\n"));
+    OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "[eXosip] cannot set O_NONBLOCK to the file desciptor\n"));
     _eXosip_closesocket (s);
     _eXosip_closesocket (my_pipe->pipes[1]);
     osip_free (my_pipe);
@@ -199,7 +199,7 @@ jpipe ()
 #elif !defined(_WIN32_WCE)
   if (j != NO_ERROR) {
     /* failed for some reason... */
-    OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "udp plugin; cannot set O_NONBLOCK to the file desciptor!\n"));
+    OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "[eXosip] cannot set O_NONBLOCK to the file desciptor\n"));
     _eXosip_closesocket (s);
     _eXosip_closesocket (my_pipe->pipes[1]);
     osip_free (my_pipe);
@@ -212,7 +212,7 @@ jpipe ()
   my_pipe->pipes[0] = (int) accept (s, NULL, NULL);
 
   if (my_pipe->pipes[0] < 0) {
-    OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "udp plugin; Failed to call accept!\n"));
+    OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "[eXosip] failed to call accept\n"));
     _eXosip_closesocket (s);
     _eXosip_closesocket (my_pipe->pipes[1]);
     osip_free (my_pipe);

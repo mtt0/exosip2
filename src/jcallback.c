@@ -241,10 +241,10 @@ cb_xixt_kill_transaction (int type, osip_transaction_t * tr)
   int i;
   struct eXosip_t *excontext = (struct eXosip_t *) osip_transaction_get_reserved1 (tr);
 
-  OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO1, NULL, "cb_nict_kill_transaction (id=%i)\r\n", tr->transactionid));
+  OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO1, NULL, "[eXosip] [tid=%i] [cb_nict_kill_transaction]\n", tr->transactionid));
   i = osip_remove_transaction (excontext->j_osip, tr);
   if (i != 0) {
-    OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_BUG, NULL, "cb_nict_kill_transaction Error: Could not remove transaction from the oSIP stack? (id=%i)\r\n", tr->transactionid));
+    OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_BUG, NULL, "[eXosip] [tid=%i] [cb_nict_kill_transaction] **cannot remove transaction from the oSIP stack**\n", tr->transactionid));
   }
 
   if (MSG_IS_REGISTER (tr->orig_request)
@@ -346,7 +346,7 @@ cb_rcvcancel (int type, osip_transaction_t * tr, osip_message_t * sip)
   eXosip_call_t *jc = (eXosip_call_t *) osip_transaction_get_reserved2 (tr);
   eXosip_dialog_t *jd = (eXosip_dialog_t *) osip_transaction_get_reserved3 (tr);
 
-  OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO3, NULL, "cb_rcvcancel (id=%i)\r\n", tr->transactionid));
+  OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO3, NULL, "[eXosip] [tid=%i] [cb_rcvcancel]\n", tr->transactionid));
 
   if ((jd != NULL) && (jc != NULL)) {
     /* do propagate CANCEL to the application */
@@ -360,7 +360,7 @@ cb_rcvregister (int type, osip_transaction_t * tr, osip_message_t * sip)
   struct eXosip_t *excontext = (struct eXosip_t *) osip_transaction_get_reserved1 (tr);
   eXosip_event_t *je;
 
-  OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO3, NULL, "cb_rcvregister (id=%i)\r\n", tr->transactionid));
+  OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO3, NULL, "[eXosip] [tid=%i] [cb_rcvregister]\n", tr->transactionid));
 
   je = _eXosip_event_init_for_message (EXOSIP_MESSAGE_NEW, tr);
   _eXosip_event_add (excontext, je);
@@ -379,10 +379,10 @@ cb_rcvrequest (int type, osip_transaction_t * tr, osip_message_t * sip)
   eXosip_notify_t *jn = (eXosip_notify_t *) osip_transaction_get_reserved4 (tr);
 #endif
 
-  OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO3, NULL, "cb_rcvunkrequest (id=%i)\r\n", tr->transactionid));
+  OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO3, NULL, "[eXosip] [tid=%i] [cb_rcvrequest]\n", tr->transactionid));
 
   if (jc != NULL) {
-    OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO3, NULL, "cb_rcv? (id=%i)\r\n", tr->transactionid));
+    OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO3, NULL, "[eXosip] [tid=%i] [cb_rcvrequest]\n", tr->transactionid));
 
     if (MSG_IS_BYE (sip)) {
       if (excontext->autoanswer_bye == 0) {
@@ -449,13 +449,13 @@ cb_rcv1xx (int type, osip_transaction_t * tr, osip_message_t * sip)
   eXosip_notify_t *jn = (eXosip_notify_t *) osip_transaction_get_reserved4 (tr);
 #endif
 
-  OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO3, NULL, "cb_rcv1xx (id=%i)\r\n", tr->transactionid));
+  OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO3, NULL, "[eXosip] [tid=%i] [cb_rcv1xx]\n", tr->transactionid));
 
   if (MSG_IS_RESPONSE_FOR (sip, "OPTIONS")) {
     if (jc == NULL) {
       eXosip_event_t *je;
 
-      OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO3, NULL, "cb_rcv1xx (id=%i) OPTIONS outside of any call\r\n", tr->transactionid));
+      OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO3, NULL, "[eXosip] [tid=%i] [cb_rcv1xx] OPTIONS outside of any call\n", tr->transactionid));
 
       je = _eXosip_event_init_for_message (EXOSIP_MESSAGE_PROCEEDING, tr);
       _eXosip_event_add (excontext, je);
@@ -503,7 +503,7 @@ cb_rcv1xx (int type, osip_transaction_t * tr, osip_message_t * sip)
       if (i == 0 && tag != NULL && tag->gvalue != NULL) {
         for (jd = js->s_dialogs; jd != NULL; jd = jd->next) {
           if (0 == strcmp (jd->d_dialog->remote_tag, tag->gvalue)) {
-            OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO1, NULL, "eXosip: found established early dialog for this subscription\n"));
+            OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO1, NULL, "[eXosip] [tid=%i] [cb_rcv1xx] found established early dialog for this subscription\n", tr->transactionid));
             osip_transaction_set_reserved3 (tr, jd);
             break;
           }
@@ -518,7 +518,7 @@ cb_rcv1xx (int type, osip_transaction_t * tr, osip_message_t * sip)
 
       i = _eXosip_dialog_init_as_uac (&jd, sip);
       if (i != 0) {
-        OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "eXosip: cannot establish a dialog\n"));
+        OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "[eXosip] [tid=%i] [cb_rcv1xx] cannot establish a dialog\n", tr->transactionid));
         return;
       }
       if (jc != NULL) {
@@ -566,11 +566,11 @@ cb_rcv1xx (int type, osip_transaction_t * tr, osip_message_t * sip)
           osip_dialog_free (jd->d_dialog);
           i = osip_dialog_init_as_uac (&(jd->d_dialog), sip);
           if (i != 0) {
-            OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "Cannot replace the dialog.\r\n"));
+            OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "[eXosip] [tid=%i] [cb_rcv1xx] cannot replace the dialog\n", tr->transactionid));
           }
           else {
             jd->d_dialog->local_cseq = current_local_cseq;
-            OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_WARNING, NULL, "The dialog has been replaced with the new one from 1xx.\r\n"));
+            OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_WARNING, NULL, "[eXosip] [tid=%i] [cb_rcv1xx] the dialog has been replaced with the new one from 1xx\n", tr->transactionid));
           }
         }
 #endif
@@ -617,7 +617,7 @@ cb_rcv2xx_4invite (osip_transaction_t * tr, osip_message_t * sip)
     /* allocate a jd */
     i = _eXosip_dialog_init_as_uac (&jd, sip);
     if (i != 0) {
-      OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "eXosip: cannot establish a dialog\n"));
+      OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "[eXosip] [tid=%i] [cb_rcv2xx_4invite] cannot establish a dialog\n", tr->transactionid));
       return;
     }
     ADD_ELEMENT (jc->c_dialogs, jd);
@@ -676,11 +676,11 @@ cb_rcv2xx_4invite (osip_transaction_t * tr, osip_message_t * sip)
       osip_dialog_free (jd->d_dialog);
       i = osip_dialog_init_as_uac (&(jd->d_dialog), sip);
       if (i != 0) {
-        OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "Cannot replace the dialog.\r\n"));
+        OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "[eXosip] [tid=%i] [cb_rcv2xx_4invite] cannot replace the dialog\n", tr->transactionid));
       }
       else {
         jd->d_dialog->local_cseq = current_local_cseq;
-        OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_WARNING, NULL, "The dialog has been replaced with the new one from 200ok.\r\n"));
+        OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_WARNING, NULL, "[eXosip] [tid=%i] [cb_rcv2xx_4invite] the dialog has been replaced with the new one from 200ok\n", tr->transactionid));
       }
     }
   }
@@ -796,7 +796,7 @@ cb_rcv2xx_4subscribe (osip_transaction_t * tr, osip_message_t * sip)
     if (i == 0 && tag != NULL && tag->gvalue != NULL) {
       for (jd = js->s_dialogs; jd != NULL; jd = jd->next) {
         if (0 == strcmp (jd->d_dialog->remote_tag, tag->gvalue)) {
-          OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO1, NULL, "eXosip: found established early dialog for this subscription\n"));
+          OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO1, NULL, "[eXosip] [tid=%i] [cb_rcv2xx_4subscribe] found established early dialog for this subscription\n", tr->transactionid));
           osip_transaction_set_reserved3 (tr, jd);
           break;
         }
@@ -809,7 +809,7 @@ cb_rcv2xx_4subscribe (osip_transaction_t * tr, osip_message_t * sip)
     /* allocate a jd */
     i = _eXosip_dialog_init_as_uac (&jd, sip);
     if (i != 0) {
-      OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "eXosip: cannot establish a dialog\n"));
+      OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "[eXosip] [tid=%i] [cb_rcv2xx_4subscribe] cannot establish a dialog\n", tr->transactionid));
       return;
     }
     ADD_ELEMENT (js->s_dialogs, jd);
@@ -913,7 +913,7 @@ cb_rcv2xx (int type, osip_transaction_t * tr, osip_message_t * sip)
   osip_header_t *refer_sub;
   time_t now = osip_getsystemtime (NULL);
 
-  OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO3, NULL, "cb_rcv2xx (id=%i)\r\n", tr->transactionid));
+  OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO3, NULL, "[eXosip] [tid=%i] [cb_rcv2xx]\n", tr->transactionid));
 
 #ifndef MINISIZE
   if (MSG_IS_RESPONSE_FOR (sip, "PUBLISH")) {
@@ -923,7 +923,7 @@ cb_rcv2xx (int type, osip_transaction_t * tr, osip_message_t * sip)
 
     i = _eXosip_pub_update (excontext, &pub, tr, sip);
     if (i != 0) {
-      OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "cb_rcv2xx (id=%i) No publication to update\r\n", tr->transactionid));
+      OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "[eXosip] [tid=%i] [cb_rcv2xx] no publication to update\n", tr->transactionid));
     }
     if (pub != NULL) {
       /* update registration interval */
@@ -1104,7 +1104,7 @@ cb_rcv2xx (int type, osip_transaction_t * tr, osip_message_t * sip)
                 }
               }
             }
-            OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO3, NULL, "eXosip: dialog marked for ImplicitSubscription (did=%i)\n", jd->d_id));
+            OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO3, NULL, "[eXosip] [tid=%i] [cb_rcv2xx] dialog marked for implicit-subscription [did=%i]\n", tr->transactionid, jd->d_id));
           }
         }
       }
@@ -1117,7 +1117,7 @@ cb_rcv2xx (int type, osip_transaction_t * tr, osip_message_t * sip)
         if ((refer_sub != NULL) && (refer_sub->hvalue != NULL) && (0 == osip_strncasecmp (refer_sub->hvalue, "false", 5))) {
           /* implicit subscription removed */
           jd->implicit_subscription_expire_time = 0;
-          OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_WARNING, NULL, "eXosip: dialog un-marked for ImplicitSubscription (did=%i)\n", jd->d_id));
+          OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_WARNING, NULL, "[eXosip] [tid=%i] [cb_rcv2xx] dialog un-marked for implicit-subscription [did=%i]\n", tr->transactionid, jd->d_id));
         }
       }
     }
@@ -1225,7 +1225,7 @@ cb_rcv3xx (int type, osip_transaction_t * tr, osip_message_t * sip)
   eXosip_subscribe_t *js = (eXosip_subscribe_t *) osip_transaction_get_reserved5 (tr);
   eXosip_notify_t *jn = (eXosip_notify_t *) osip_transaction_get_reserved4 (tr);
 
-  OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO3, NULL, "cb_rcv3xx (id=%i)\r\n", tr->transactionid));
+  OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO3, NULL, "[eXosip] [tid=%i] [cb_rcv3xx]\n", tr->transactionid));
 
   if (MSG_IS_RESPONSE_FOR (sip, "PUBLISH")) {
     eXosip_event_t *je;
@@ -1234,7 +1234,7 @@ cb_rcv3xx (int type, osip_transaction_t * tr, osip_message_t * sip)
 
     i = _eXosip_pub_update (excontext, &pub, tr, sip);
     if (i != 0) {
-      OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "cb_rcv3xx (id=%i) No publication to update\r\n", tr->transactionid));
+      OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "[eXosip] [tid=%i] [cb_rcv3xx] no publication to update\n", tr->transactionid));
     }
     je = _eXosip_event_init_for_message (EXOSIP_MESSAGE_REDIRECTED, tr);
     _eXosip_report_event (excontext, je);
@@ -1293,7 +1293,7 @@ cb_rcv4xx (int type, osip_transaction_t * tr, osip_message_t * sip)
   eXosip_subscribe_t *js = (eXosip_subscribe_t *) osip_transaction_get_reserved5 (tr);
   eXosip_notify_t *jn = (eXosip_notify_t *) osip_transaction_get_reserved4 (tr);
 
-  OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO3, NULL, "cb_rcv4xx (id=%i)\r\n", tr->transactionid));
+  OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO3, NULL, "[eXosip] [tid=%i] [cb_rcv4xx]\n", tr->transactionid));
 
   if (MSG_IS_RESPONSE_FOR (sip, "PUBLISH")) {
     eXosip_pub_t *pub;
@@ -1302,7 +1302,7 @@ cb_rcv4xx (int type, osip_transaction_t * tr, osip_message_t * sip)
 
     i = _eXosip_pub_update (excontext, &pub, tr, sip);
     if (i != 0) {
-      OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "cb_rcv4xx (id=%i) No publication to update\r\n", tr->transactionid));
+      OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "[eXosip] [tid=%i] [cb_rcv4xx] no publication to update\n", tr->transactionid));
     }
     /* For all requests outside of calls */
     je = _eXosip_event_init_for_message (EXOSIP_MESSAGE_REQUESTFAILURE, tr);
@@ -1362,7 +1362,7 @@ cb_rcv5xx (int type, osip_transaction_t * tr, osip_message_t * sip)
   eXosip_subscribe_t *js = (eXosip_subscribe_t *) osip_transaction_get_reserved5 (tr);
   eXosip_notify_t *jn = (eXosip_notify_t *) osip_transaction_get_reserved4 (tr);
 
-  OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO3, NULL, "cb_rcv5xx (id=%i)\r\n", tr->transactionid));
+  OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO3, NULL, "[eXosip] [tid=%i] [cb_rcv5xx]\n", tr->transactionid));
 
   if (MSG_IS_RESPONSE_FOR (sip, "PUBLISH")) {
     eXosip_pub_t *pub;
@@ -1371,7 +1371,7 @@ cb_rcv5xx (int type, osip_transaction_t * tr, osip_message_t * sip)
 
     i = _eXosip_pub_update (excontext, &pub, tr, sip);
     if (i != 0) {
-      OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "cb_rcv3xx (id=%i) No publication to update\r\n", tr->transactionid));
+      OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "[eXosip] [tid=%i] [cb_rcv5xx] no publication to update\n", tr->transactionid));
     }
     je = _eXosip_event_init_for_message (EXOSIP_MESSAGE_SERVERFAILURE, tr);
     _eXosip_report_event (excontext, je);
@@ -1430,7 +1430,7 @@ cb_rcv6xx (int type, osip_transaction_t * tr, osip_message_t * sip)
   eXosip_subscribe_t *js = (eXosip_subscribe_t *) osip_transaction_get_reserved5 (tr);
   eXosip_notify_t *jn = (eXosip_notify_t *) osip_transaction_get_reserved4 (tr);
 
-  OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO3, NULL, "cb_rcv6xx (id=%i)\r\n", tr->transactionid));
+  OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO3, NULL, "[eXosip] [tid=%i] [cb_rcv6xx]\n", tr->transactionid));
 
   if (MSG_IS_RESPONSE_FOR (sip, "PUBLISH")) {
     eXosip_pub_t *pub;
@@ -1439,7 +1439,7 @@ cb_rcv6xx (int type, osip_transaction_t * tr, osip_message_t * sip)
 
     i = _eXosip_pub_update (excontext, &pub, tr, sip);
     if (i != 0) {
-      OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "cb_rcv6xx (id=%i) No publication to update\r\n", tr->transactionid));
+      OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "[eXosip] [tid=%i] [cb_rcv6xx] no publication to update\n", tr->transactionid));
     }
     je = _eXosip_event_init_for_message (EXOSIP_MESSAGE_GLOBALFAILURE, tr);
     _eXosip_report_event (excontext, je);
@@ -1501,7 +1501,7 @@ cb_rcv3456xx (int type, osip_transaction_t * tr, osip_message_t * sip, int invit
   eXosip_call_t *jc = (eXosip_call_t *) osip_transaction_get_reserved2 (tr);
   eXosip_dialog_t *jd = (eXosip_dialog_t *) osip_transaction_get_reserved3 (tr);
 
-  OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO3, NULL, "cb_rcv3456xx (id=%i)\r\n", tr->transactionid));
+  OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO3, NULL, "[eXosip] [tid=%i] [cb_rcv3456xx]\n", tr->transactionid));
 
   if (MSG_IS_RESPONSE_FOR (sip, "REGISTER")) {
     rcvregister_failure (tr, sip);
@@ -1564,7 +1564,7 @@ cb_snd123456xx (int type, osip_transaction_t * tr, osip_message_t * sip)
   eXosip_call_t *jc = (eXosip_call_t *) osip_transaction_get_reserved2 (tr);
   eXosip_dialog_t *jd = (eXosip_dialog_t *) osip_transaction_get_reserved3 (tr);
 
-  OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO3, NULL, "cb_snd123456xx (id=%i)\r\n", tr->transactionid));
+  OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO3, NULL, "[eXosip] [tid=%i] [cb_snd123456xx]\n", tr->transactionid));
   if (jd == NULL)
     return;
   if (type == OSIP_IST_STATUS_1XX_SENT || type == OSIP_NIST_STATUS_1XX_SENT) {
@@ -1595,103 +1595,103 @@ cb_snd123456xx (int type, osip_transaction_t * tr, osip_message_t * sip)
 static void
 cb_rcvinvite (int type, osip_transaction_t * tr, osip_message_t * sip)
 {
-  OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO3, NULL, "cb_rcvinvite (id=%i)\n", tr->transactionid));
+  OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO3, NULL, "[eXosip] [tid=%i] [cb_rcvinvite]\n", tr->transactionid));
 }
 
 static void
 cb_rcvack (int type, osip_transaction_t * tr, osip_message_t * sip)
 {
-  OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO3, NULL, "cb_rcvack (id=%i)\n", tr->transactionid));
+  OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO3, NULL, "[eXosip] [tid=%i] [cb_rcvack]\n", tr->transactionid));
 }
 
 static void
 cb_rcvack2 (int type, osip_transaction_t * tr, osip_message_t * sip)
 {
-  OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO3, NULL, "cb_rcvack2 (id=%i)\r\n", tr->transactionid));
+  OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO3, NULL, "[eXosip] [tid=%i] [cb_rcvack2]\n", tr->transactionid));
 }
 
 static void
 cb_sndinvite (int type, osip_transaction_t * tr, osip_message_t * sip)
 {
-  OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO3, NULL, "cb_sndinvite (id=%i)\r\n", tr->transactionid));
+  OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO3, NULL, "[eXosip] [tid=%i] [cb_sndinvite]\n", tr->transactionid));
 }
 
 static void
 cb_sndack (int type, osip_transaction_t * tr, osip_message_t * sip)
 {
-  OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO3, NULL, "cb_sndack (id=%i)\r\n", tr->transactionid));
+  OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO3, NULL, "[eXosip] [tid=%i] [cb_sndack]\n", tr->transactionid));
 }
 
 static void
 cb_sndregister (int type, osip_transaction_t * tr, osip_message_t * sip)
 {
-  OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO3, NULL, "cb_sndregister (id=%i)\r\n", tr->transactionid));
+  OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO3, NULL, "[eXosip] [tid=%i] [cb_sndregister]\n", tr->transactionid));
 }
 
 static void
 cb_sndbye (int type, osip_transaction_t * tr, osip_message_t * sip)
 {
-  OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO3, NULL, "cb_sndbye (id=%i)\r\n", tr->transactionid));
+  OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO3, NULL, "[eXosip] [tid=%i] [cb_sndbye]\n", tr->transactionid));
 }
 
 static void
 cb_sndcancel (int type, osip_transaction_t * tr, osip_message_t * sip)
 {
-  OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO3, NULL, "cb_sndcancel (id=%i)\r\n", tr->transactionid));
+  OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO3, NULL, "[eXosip] [tid=%i] [cb_sndcancel]\n", tr->transactionid));
 }
 
 static void
 cb_sndinfo (int type, osip_transaction_t * tr, osip_message_t * sip)
 {
-  OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO3, NULL, "cb_sndinfo (id=%i)\r\n", tr->transactionid));
+  OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO3, NULL, "[eXosip] [tid=%i] [cb_sndinfo]\n", tr->transactionid));
 }
 
 static void
 cb_sndoptions (int type, osip_transaction_t * tr, osip_message_t * sip)
 {
-  OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO3, NULL, "cb_sndoptions (id=%i)\r\n", tr->transactionid));
+  OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO3, NULL, "[eXosip] [tid=%i] [cb_sndoptions]\n", tr->transactionid));
 }
 
 static void
 cb_sndnotify (int type, osip_transaction_t * tr, osip_message_t * sip)
 {
-  OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO3, NULL, "cb_sndnotify (id=%i)\r\n", tr->transactionid));
+  OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO3, NULL, "[eXosip] [tid=%i] [cb_sndnotify]\n", tr->transactionid));
 }
 
 static void
 cb_sndsubscribe (int type, osip_transaction_t * tr, osip_message_t * sip)
 {
-  OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO3, NULL, "cb_sndsubscribe (id=%i)\r\n", tr->transactionid));
+  OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO3, NULL, "[eXosip] [tid=%i] [cb_sndsubscribe]\n", tr->transactionid));
 }
 
 static void
 cb_sndunkrequest (int type, osip_transaction_t * tr, osip_message_t * sip)
 {
-  OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO3, NULL, "cb_sndunkrequest (id=%i)\r\n", tr->transactionid));
+  OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO3, NULL, "[eXosip] [tid=%i] [cb_sndunkrequest]\n", tr->transactionid));
 }
 
 static void
 cb_rcvresp_retransmission (int type, osip_transaction_t * tr, osip_message_t * sip)
 {
-  OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO1, NULL, "cb_rcvresp_retransmission (id=%i)\r\n", tr->transactionid));
+  OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO1, NULL, "[eXosip] [tid=%i] [cb_rcvresp_retransmission]\n", tr->transactionid));
 }
 
 static void
 cb_sndreq_retransmission (int type, osip_transaction_t * tr, osip_message_t * sip)
 {
-  OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO1, NULL, "cb_sndreq_retransmission (id=%i)\r\n", tr->transactionid));
+  OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO1, NULL, "[eXosip] [tid=%i] [cb_sndreq_retransmission]\n", tr->transactionid));
 }
 
 static void
 cb_sndresp_retransmission (int type, osip_transaction_t * tr, osip_message_t * sip)
 {
-  OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO1, NULL, "cb_sndresp_retransmission (id=%i)\r\n", tr->transactionid));
+  OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO1, NULL, "[eXosip] [tid=%i] [cb_sndresp_retransmission]\n", tr->transactionid));
 }
 
 static void
 cb_rcvreq_retransmission (int type, osip_transaction_t * tr, osip_message_t * sip)
 {
-  OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO1, NULL, "cb_rcvreq_retransmission (id=%i)\r\n", tr->transactionid));
+  OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO1, NULL, "[eXosip] [tid=%i] [cb_rcvreq_retransmission]\n", tr->transactionid));
 }
 
 #endif
@@ -1706,7 +1706,7 @@ cb_transport_error (int type, osip_transaction_t * tr, int error)
   eXosip_notify_t *jn = (eXosip_notify_t *) osip_transaction_get_reserved4 (tr);
 #endif
 
-  OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO1, NULL, "cb_transport_error (id=%i)\r\n", tr->transactionid));
+  OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_INFO1, NULL, "[eXosip] [tid=%i] [cb_transport_error]\n", tr->transactionid));
   if (type == OSIP_ICT_TRANSPORT_ERROR) {
     eXosip_call_t *jc = (eXosip_call_t *) osip_transaction_get_reserved2 (tr);
     eXosip_dialog_t *jd = (eXosip_dialog_t *) osip_transaction_get_reserved3 (tr);

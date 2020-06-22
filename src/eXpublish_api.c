@@ -60,7 +60,7 @@ eXosip_build_publish (struct eXosip_t *excontext, osip_message_t ** message, con
 
   i = _eXosip_generating_publish (excontext, message, to, from, route);
   if (i != 0) {
-    OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "eXosip: cannot send message (cannot build PUBLISH)! "));
+    OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "[eXosip] cannot send message (cannot build PUBLISH)\n"));
     return i;
   }
 
@@ -108,7 +108,7 @@ eXosip_publish (struct eXosip_t *excontext, osip_message_t * message, const char
 
     osip_message_get_expires (message, 0, &expires);
     if (expires == NULL || expires->hvalue == NULL) {
-      OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "eXosip: missing expires header in PUBLISH!"));
+      OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "[eXosip] missing expires header in PUBLISH\n"));
       osip_message_free (message);
       return OSIP_SYNTAXERROR;
     }
@@ -134,7 +134,7 @@ eXosip_publish (struct eXosip_t *excontext, osip_message_t * message, const char
 
       osip_message_get_expires (message, 0, &expires);
       if (expires == NULL || expires->hvalue == NULL) {
-        OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "eXosip: missing expires header in PUBLISH!"));
+        OSIP_TRACE (osip_trace (__FILE__, __LINE__, OSIP_ERROR, NULL, "[eXosip] missing expires header in PUBLISH\n"));
         osip_message_free (message);
         return OSIP_SYNTAXERROR;
       }
