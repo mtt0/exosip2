@@ -1,17 +1,17 @@
 /*
   eXosip - This is the eXtended osip library.
   Copyright (C) 2001-2020 Aymeric MOIZARD amoizard@antisip.com
-  
+
   eXosip is free software; you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
   the Free Software Foundation; either version 2 of the License, or
   (at your option) any later version.
-  
+
   eXosip is distributed in the hope that it will be useful,
   but WITHOUT ANY WARRANTY; without even the implied warranty of
   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
   GNU General Public License for more details.
-  
+
   You should have received a copy of the GNU General Public License
   along with this program; if not, write to the Free Software
   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
@@ -51,8 +51,7 @@ extern "C" {
  * @file eX_publish.h
  * @brief eXosip publish request API
  *
- * This file provide the API needed to control PUBLISH requests. You can
- * use it to:
+ * This file provide the API needed to control PUBLISH requests. You can use it to:
  *
  * <ul>
  * <li>build PUBLISH requests.</li>
@@ -68,8 +67,8 @@ extern "C" {
 
 /**
  * build publication for a user. (PUBLISH request)
- * 
- * @param excontext    eXosip_t instance.
+ *
+ * @param excontext eXosip_t instance.
  * @param message   returned published request.
  * @param to        SIP url for callee.
  * @param from      SIP url for caller.
@@ -77,18 +76,19 @@ extern "C" {
  * @param event     SIP Event header.
  * @param expires   SIP Expires header.
  * @param ctype     Content-Type of body.
- * @param body     body for publication.
+ * @param body      body for publication.
  */
-  int eXosip_build_publish (struct eXosip_t *excontext, osip_message_t ** message, const char *to, const char *from, const char *route, const char *event, const char *expires, const char *ctype, const char *body);
+int eXosip_build_publish(struct eXosip_t *excontext, osip_message_t **message, const char *to, const char *from, const char *route, const char *event, const char *expires, const char *ctype,
+                         const char *body);
 
 /**
  * Send an Publication Message (PUBLISH request).
- * 
+ *
  * @param excontext    eXosip_t instance.
- * @param message is a ready to be sent publish message .
- * @param to the aor of the publish request 
+ * @param message      a ready to be sent publish message .
+ * @param to           the aor of the publish request
  */
-  int eXosip_publish (struct eXosip_t *excontext, osip_message_t * message, const char *to);
+int eXosip_publish(struct eXosip_t *excontext, osip_message_t *message, const char *to);
 
 
 /** @} */

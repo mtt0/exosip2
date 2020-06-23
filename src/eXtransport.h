@@ -1,17 +1,17 @@
 /*
   eXosip - This is the eXtended osip library.
   Copyright (C) 2001-2020 Aymeric MOIZARD amoizard@antisip.com
-  
+
   eXosip is free software; you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
   the Free Software Foundation; either version 2 of the License, or
   (at your option) any later version.
-  
+
   eXosip is distributed in the hope that it will be useful,
   but WITHOUT ANY WARRANTY; without even the implied warranty of
   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
   GNU General Public License for more details.
-  
+
   You should have received a copy of the GNU General Public License
   along with this program; if not, write to the Free Software
   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
@@ -60,29 +60,29 @@ struct eXtl_protocol {
   int proto_reliable;
   int proto_local_port;
 
-  int (*tl_init) (struct eXosip_t * excontext);
-  int (*tl_free) (struct eXosip_t * excontext);
-  int (*tl_open) (struct eXosip_t * excontext);
-  int (*tl_set_fdset) (struct eXosip_t * excontext, fd_set * osip_fdset, fd_set * osip_wrset, int *fd_max);
-  int (*tl_read_message) (struct eXosip_t * excontext, fd_set * osip_fdset, fd_set * osip_wrset);
+  int (*tl_init)(struct eXosip_t *excontext);
+  int (*tl_free)(struct eXosip_t *excontext);
+  int (*tl_open)(struct eXosip_t *excontext);
+  int (*tl_set_fdset)(struct eXosip_t *excontext, fd_set *osip_fdset, fd_set *osip_wrset, int *fd_max);
+  int (*tl_read_message)(struct eXosip_t *excontext, fd_set *osip_fdset, fd_set *osip_wrset);
 
 #ifdef HAVE_SYS_EPOLL_H
-  int (*tl_epoll_read_message) (struct eXosip_t *excontext, int nfds, struct epoll_event* ep_array);
+  int (*tl_epoll_read_message)(struct eXosip_t *excontext, int nfds, struct epoll_event *ep_array);
 #endif
-  int (*tl_send_message) (struct eXosip_t * excontext, osip_transaction_t * tr, osip_message_t * sip, char *host, int port, int out_socket);
-  int (*tl_keepalive) (struct eXosip_t * excontext);
-  int (*tl_set_socket) (struct eXosip_t * excontext, int socket);
-  int (*tl_masquerade_contact) (struct eXosip_t * excontext, const char *ip, int port);
-  int (*tl_get_masquerade_contact) (struct eXosip_t * excontext, char *ip, int ip_size, char *port, int port_size);
-  int (*_tl_update_contact) (struct eXosip_t * excontext, osip_message_t * sip);
-  int (*tl_reset) (struct eXosip_t * excontext);
-  int (*tl_check_connection) (struct eXosip_t * excontext);
+  int (*tl_send_message)(struct eXosip_t *excontext, osip_transaction_t *tr, osip_message_t *sip, char *host, int port, int out_socket);
+  int (*tl_keepalive)(struct eXosip_t *excontext);
+  int (*tl_set_socket)(struct eXosip_t *excontext, int socket);
+  int (*tl_masquerade_contact)(struct eXosip_t *excontext, const char *ip, int port);
+  int (*tl_get_masquerade_contact)(struct eXosip_t *excontext, char *ip, int ip_size, char *port, int port_size);
+  int (*_tl_update_contact)(struct eXosip_t *excontext, osip_message_t *sip);
+  int (*tl_reset)(struct eXosip_t *excontext);
+  int (*tl_check_connection)(struct eXosip_t *excontext);
 };
 
-void eXosip_transport_udp_init (struct eXosip_t *excontext);
-void eXosip_transport_tcp_init (struct eXosip_t *excontext);
-void eXosip_transport_tls_init (struct eXosip_t *excontext);
-void eXosip_transport_dtls_init (struct eXosip_t *excontext);
+void eXosip_transport_udp_init(struct eXosip_t *excontext);
+void eXosip_transport_tcp_init(struct eXosip_t *excontext);
+void eXosip_transport_tls_init(struct eXosip_t *excontext);
+void eXosip_transport_dtls_init(struct eXosip_t *excontext);
 
 #if defined (HAVE_WINSOCK2_H)
 #define eXFD_SET(A, B)   FD_SET((unsigned int) A, B)

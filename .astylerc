@@ -1,0 +1,15 @@
+--indent=spaces=2
+--style=google
+--convert-tabs
+--break-blocks=all
+--pad-oper
+--pad-header
+--unpad-paren
+--keep-one-line-blocks
+--align-pointer=name
+--align-reference=name
+--attach-return-type
+--attach-return-type-decl
+--suffix=none
+--lineend=linux
+--max-code-length=200
