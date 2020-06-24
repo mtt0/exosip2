@@ -75,11 +75,6 @@
 #include "pcre2posix.h"
 #endif
 
-#ifdef TSC_SUPPORT
-#include "tsc_socket_api.h"
-#include "tsc_control_api.h"
-#endif
-
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
 #endif
@@ -635,18 +630,6 @@ _eXosip_guess_ip_for_destination(struct eXosip_t *excontext, int family, char *d
   if (destination == NULL && family == AF_INET6)
     destination = excontext->ipv6_for_gateway;
 
-#ifdef TSC_SUPPORT
-
-  if (excontext->tunnel_handle) {
-    tsc_config config;
-
-    tsc_get_config(excontext->tunnel_handle, &config);
-    tsc_ip_address_to_str(&(config.internal_address), address, TSC_ADDR_STR_LEN);
-    return 0;
-  }
-
-#endif
-
   type = SOCK_DGRAM;
 #if defined(SOCK_CLOEXEC)
   type = SOCK_CLOEXEC | SOCK_DGRAM;
@@ -703,18 +686,6 @@ _eXosip_guess_ip_for_destinationsock(struct eXosip_t *excontext, int family, int
 
   if (destination == NULL && family == AF_INET6)
     destination = excontext->ipv6_for_gateway;
-
-#ifdef TSC_SUPPORT
-
-  if (excontext->tunnel_handle) {
-    tsc_config config;
-
-    tsc_get_config(excontext->tunnel_handle, &config);
-    tsc_ip_address_to_str(&(config.internal_address), address, TSC_ADDR_STR_LEN);
-    return 0;
-  }
-
-#endif
 
   _eXosip_get_addrinfo(excontext, &addrf, destination, 0, proto);
 
@@ -1232,13 +1203,6 @@ _eXosip_get_addrinfo(struct eXosip_t *excontext, struct addrinfo **addrinfo, con
       _eXosip_getnameinfo(elem->ai_addr, (socklen_t) elem->ai_addrlen, tmp, sizeof(tmp), porttmp, sizeof(porttmp), NI_NUMERICHOST | NI_NUMERICSERV);
       OSIP_TRACE(osip_trace(__FILE__, __LINE__, OSIP_INFO2, NULL, "[eXosip] [getaddrinfo] returned [%s][%s]\n", tmp, porttmp));
     }
-  }
-
-  /* only one address (?) */
-  if (excontext->tunnel_handle) {
-    (*addrinfo)->ai_next = 0;
-
-    return 0;
   }
 
   return OSIP_SUCCESS;

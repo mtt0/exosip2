@@ -528,7 +528,6 @@ struct eXosip_t {
   int epfdctl; /* epoll ctrl fd for exosip wait/get events */
 #endif
 
-  void *tunnel_handle;
   char transport[10];
   char *user_agent;
 

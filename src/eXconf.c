@@ -1294,10 +1294,7 @@ int eXosip_set_option(struct eXosip_t *excontext, int opt, const void *value) {
     return OSIP_UNDEFINED_ERROR; /* obsolete */
 
   case EXOSIP_OPT_SET_TSC_SERVER:
-#ifdef TSC_SUPPORT
-    excontext->tunnel_handle = (void *) value;
-#endif
-    break;
+    return OSIP_UNDEFINED_ERROR; /* obsolete */
 
   case EXOSIP_OPT_ENABLE_AUTOANSWERBYE:
     val = *((int *) value);

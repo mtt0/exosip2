@@ -145,7 +145,7 @@ int eXosip_execute(struct eXosip_t *excontext);
 
 /* non standard option: need a compilation flag to activate */
 #define EXOSIP_OPT_KEEP_ALIVE_OPTIONS_METHOD (EXOSIP_OPT_BASE_OPTION+1000)
-#define EXOSIP_OPT_SET_TSC_SERVER (EXOSIP_OPT_BASE_OPTION+1001) /**< void*: set the tsc tunnel handle */
+#define EXOSIP_OPT_SET_TSC_SERVER (EXOSIP_OPT_BASE_OPTION+1001) /**< deprecated */
 
 #define EXOSIP_OPT_GET_STATISTICS (EXOSIP_OPT_BASE_OPTION+2000) /**< struct eXosip_stats*: retreive numerous statistics about transactions, registrations, calls, publications and subscriptions... */
 
