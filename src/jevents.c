@@ -453,11 +453,7 @@ eXosip_event_t *eXosip_event_wait(struct eXosip_t *excontext, int tv_s, int tv_m
 #endif
 
   FD_ZERO(&fdset);
-#if defined (WIN32) || defined (_WIN32_WCE)
-  FD_SET((unsigned int) jpipe_get_read_descr(excontext->j_socketctl_event), &fdset);
-#else
-  FD_SET(jpipe_get_read_descr(excontext->j_socketctl_event), &fdset);
-#endif
+  eXFD_SET(jpipe_get_read_descr(excontext->j_socketctl_event), &fdset);
   max = jpipe_get_read_descr(excontext->j_socketctl_event);
 
   tv.tv_sec = 0;
@@ -475,11 +471,7 @@ eXosip_event_t *eXosip_event_wait(struct eXosip_t *excontext, int tv_s, int tv_m
   eXosip_unlock(excontext);
 
   FD_ZERO(&fdset);
-#if defined (WIN32) || defined (_WIN32_WCE)
-  FD_SET((unsigned int) jpipe_get_read_descr(excontext->j_socketctl_event), &fdset);
-#else
-  FD_SET(jpipe_get_read_descr(excontext->j_socketctl_event), &fdset);
-#endif
+  eXFD_SET(jpipe_get_read_descr(excontext->j_socketctl_event), &fdset);
   tv.tv_sec = tv_s;
   tv.tv_usec = tv_ms * 1000;
 
@@ -544,11 +536,7 @@ eXosip_event_t *eXosip_event_get(struct eXosip_t *excontext) {
 #endif
 
   FD_ZERO(&fdset);
-#if defined (WIN32) || defined (_WIN32_WCE)
-  FD_SET((unsigned int) jpipe_get_read_descr(excontext->j_socketctl_event), &fdset);
-#else
-  FD_SET(jpipe_get_read_descr(excontext->j_socketctl_event), &fdset);
-#endif
+  eXFD_SET(jpipe_get_read_descr(excontext->j_socketctl_event), &fdset);
   max = jpipe_get_read_descr(excontext->j_socketctl_event);
 
   tv.tv_sec = 0;
