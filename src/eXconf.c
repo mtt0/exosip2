@@ -422,7 +422,7 @@ int eXosip_find_free_port(struct eXosip_t *excontext, int free_port, int transpo
         res1 = bind(sock, curinfo_rtp->ai_addr, (socklen_t) curinfo_rtp->ai_addrlen);
 
         if (res1 < 0) {
-          OSIP_TRACE(osip_trace(__FILE__, __LINE__, OSIP_WARNING, NULL, "[eXosip] cannot bind socket node: [0.0.0.0] [family:%d]\n", curinfo_rtp->ai_family));
+          OSIP_TRACE(osip_trace(__FILE__, __LINE__, OSIP_WARNING, NULL, "[eXosip] cannot bind socket [0.0.0.0] [family:%d]\n", curinfo_rtp->ai_family));
           _eXosip_closesocket(sock);
           sock = -1;
           continue;
@@ -477,7 +477,7 @@ int eXosip_find_free_port(struct eXosip_t *excontext, int free_port, int transpo
         res1 = bind(sock, curinfo_rtcp->ai_addr, (socklen_t) curinfo_rtcp->ai_addrlen);
 
         if (res1 < 0) {
-          OSIP_TRACE(osip_trace(__FILE__, __LINE__, OSIP_WARNING, NULL, "[eXosip] cannot bind socket node: [0.0.0.0] [family:%d]\n", curinfo_rtp->ai_family));
+          OSIP_TRACE(osip_trace(__FILE__, __LINE__, OSIP_WARNING, NULL, "[eXosip] cannot bind socket [0.0.0.0] [family:%d]\n", curinfo_rtp->ai_family));
           _eXosip_closesocket(sock);
           sock = -1;
           continue;
@@ -548,7 +548,7 @@ int eXosip_find_free_port(struct eXosip_t *excontext, int free_port, int transpo
       res1 = bind(sock, curinfo_rtp->ai_addr, (socklen_t) curinfo_rtp->ai_addrlen);
 
       if (res1 < 0) {
-        OSIP_TRACE(osip_trace(__FILE__, __LINE__, OSIP_WARNING, NULL, "[eXosip] cannot bind socket node: [0.0.0.0] family:[%d]\n", curinfo_rtp->ai_family));
+        OSIP_TRACE(osip_trace(__FILE__, __LINE__, OSIP_WARNING, NULL, "[eXosip] cannot bind socket [0.0.0.0] family:[%d]\n", curinfo_rtp->ai_family));
         _eXosip_closesocket(sock);
         sock = -1;
         continue;
@@ -1004,7 +1004,6 @@ int eXosip_execute(struct eXosip_t *excontext) {
     }
   }
 
-
   _eXosip_keep_alive(excontext);
 
   eXosip_unlock(excontext);
@@ -1036,7 +1035,7 @@ int eXosip_set_option(struct eXosip_t *excontext, int opt, const void *value) {
 
           snprintf(excontext->account_entries[i].nat_ip, sizeof(excontext->account_entries[i].nat_ip), "%s", ainfo->nat_ip);
           excontext->account_entries[i].nat_port = ainfo->nat_port;
-          OSIP_TRACE(osip_trace(__FILE__, __LINE__, OSIP_INFO1, NULL, "[eXosip] option set: account info updated [%s] -> [%s:%i]\n", ainfo->proxy, ainfo->nat_ip, ainfo->nat_port));
+          OSIP_TRACE(osip_trace(__FILE__, __LINE__, OSIP_INFO1, NULL, "[eXosip] option set: account info updated [%s] -> [%s][%d]\n", ainfo->proxy, ainfo->nat_ip, ainfo->nat_port));
 
         } else {
           excontext->account_entries[i].proxy[0] = '\0';
@@ -1058,7 +1057,7 @@ int eXosip_set_option(struct eXosip_t *excontext, int opt, const void *value) {
         snprintf(excontext->account_entries[i].proxy, sizeof(ainfo->proxy), "%s", ainfo->proxy);
         snprintf(excontext->account_entries[i].nat_ip, sizeof(ainfo->nat_ip), "%s", ainfo->nat_ip);
         excontext->account_entries[i].nat_port = ainfo->nat_port;
-        OSIP_TRACE(osip_trace(__FILE__, __LINE__, OSIP_INFO1, NULL, "[eXosip] option set: account info added [%s] -> [%s:%i]\n", ainfo->proxy, ainfo->nat_ip, ainfo->nat_port));
+        OSIP_TRACE(osip_trace(__FILE__, __LINE__, OSIP_INFO1, NULL, "[eXosip] option set: account info added [%s] -> [%s][%d]\n", ainfo->proxy, ainfo->nat_ip, ainfo->nat_port));
         return OSIP_SUCCESS;
       }
     }
@@ -1396,16 +1395,16 @@ static void _eXosip_keep_alive(struct eXosip_t *excontext) {
   if (excontext->cc_timer.tv_sec == 0 && excontext->cc_timer.tv_usec == 0) {
     /* first init */
     osip_gettimeofday(&excontext->cc_timer, NULL);
-    add_gettimeofday(&excontext->cc_timer, 2);
+    add_gettimeofday(&excontext->cc_timer, 5000);
   }
 
   if (osip_timercmp(&now, &excontext->cc_timer, >=)) {
     /* reset timer */
     osip_gettimeofday(&excontext->cc_timer, NULL);
-    add_gettimeofday(&excontext->cc_timer, 2);
+    add_gettimeofday(&excontext->cc_timer, 5000);
 
     if (excontext->eXtl_transport.tl_check_connection != NULL)
-      excontext->eXtl_transport.tl_check_connection(excontext);
+      excontext->eXtl_transport.tl_check_connection(excontext, -1);
   }
 
   if (excontext->ka_timer.tv_sec == 0 && excontext->ka_timer.tv_usec == 0) {

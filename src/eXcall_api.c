@@ -441,44 +441,41 @@ int eXosip_call_send_ack(struct eXosip_t *excontext, int tid, osip_message_t *ac
     }
   }
 
-  if (host == NULL) {
-    osip_message_get_route(ack, 0, &route);
+  osip_message_get_route(ack, 0, &route);
 
-    if (route != NULL) {
-      osip_uri_param_t *lr_param = NULL;
+  if (route != NULL) {
+    osip_uri_param_t *lr_param = NULL;
 
-      osip_uri_uparam_get_byname(route->url, "lr", &lr_param);
+    osip_uri_uparam_get_byname(route->url, "lr", &lr_param);
 
-      if (lr_param == NULL)
-        route = NULL;
-    }
+    if (lr_param == NULL)
+      route = NULL;
+  }
 
-    if (route != NULL) {
-      port = 5060;
+  if (route != NULL) {
+    port = 5060;
 
-      if (route->url->port != NULL)
-        port = osip_atoi(route->url->port);
+    if (route->url->port != NULL)
+      port = osip_atoi(route->url->port);
 
-      host = route->url->host;
+    host = route->url->host;
 
-    } else {
-      /* search for maddr parameter */
-      osip_uri_param_t *maddr_param = NULL;
+  } else {
+    /* search for maddr parameter */
+    osip_uri_param_t *maddr_param = NULL;
 
-      osip_uri_uparam_get_byname(ack->req_uri, "maddr", &maddr_param);
-      host = NULL;
+    osip_uri_uparam_get_byname(ack->req_uri, "maddr", &maddr_param);
 
-      if (maddr_param != NULL && maddr_param->gvalue != NULL)
-        host = maddr_param->gvalue;
+    if (maddr_param != NULL && maddr_param->gvalue != NULL)
+      host = maddr_param->gvalue;
 
-      port = 5060;
+    port = 5060;
 
-      if (ack->req_uri->port != NULL)
-        port = osip_atoi(ack->req_uri->port);
+    if (ack->req_uri->port != NULL)
+      port = osip_atoi(ack->req_uri->port);
 
-      if (host == NULL)
-        host = ack->req_uri->host;
-    }
+    if (host == NULL)
+      host = ack->req_uri->host;
   }
 
   i = _eXosip_snd_message(excontext, NULL, ack, host, port, -1);
@@ -491,6 +488,7 @@ int eXosip_call_send_ack(struct eXosip_t *excontext, int tid, osip_message_t *ac
     jd->d_ack = ack;
   }
 
+  _eXosip_wakeup(excontext);
   if (i < 0)
     return i;
 

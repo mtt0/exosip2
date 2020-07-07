@@ -30,11 +30,10 @@
   files in the program, then also delete it here.
 */
 
-
 #ifndef __EXOSIP2_H__
 #define __EXOSIP2_H__
 
-#if defined (HAVE_CONFIG_H)
+#if defined(HAVE_CONFIG_H)
 #include <exosip-config.h>
 #endif
 
@@ -68,7 +67,7 @@
 #define HAVE_TIME_H 1
 #define HAVE_STDARG_H 1
 
-#define snprintf  _snprintf
+#define snprintf _snprintf
 
 #undef HAVE_INET_NTOP
 
@@ -136,9 +135,9 @@
 #define HAVE_ARPA_INET_H
 #endif
 
-#if defined (HAVE_STRING_H)
+#if defined(HAVE_STRING_H)
 #include <string.h>
-#elif defined (HAVE_STRINGS_H)
+#elif defined(HAVE_STRINGS_H)
 #include <strings.h>
 #else
 #include <string.h>
@@ -146,11 +145,11 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#if defined (HAVE_LIMITS_H)
+#if defined(HAVE_LIMITS_H)
 #include <limits.h>
 #endif
 
-#if defined (HAVE_SYS_TYPES_H)
+#if defined(HAVE_SYS_TYPES_H)
 #include <sys/types.h>
 #endif
 
@@ -158,26 +157,25 @@
 #include <time.h>
 #endif
 
-#if defined (HAVE_SYS_TIME_H)
+#if defined(HAVE_SYS_TIME_H)
 #include <sys/time.h>
 #endif
 
 #if defined(__arc__)
+#include <posix_time_pub.h>
+
 #include "includes_api.h"
 #include "os_cfg_pub.h"
-#include <posix_time_pub.h>
 #define USE_GETHOSTBYNAME
 #endif
 
 #ifdef __PSOS__
-#define VA_START(a, f)  va_start(a, f)
+#define VA_START(a, f) va_start(a, f)
 #include "pna.h"
 #include "stdlib.h"
 #include "time.h"
-#define timercmp(tvp, uvp, cmp) \
-((tvp)->tv_sec cmp (uvp)->tv_sec || \
-(tvp)->tv_sec == (uvp)->tv_sec && (tvp)->tv_usec cmp (uvp)->tv_usec)
-#define snprintf  osip_snprintf
+#define timercmp(tvp, uvp, cmp) ((tvp)->tv_sec cmp(uvp)->tv_sec || (tvp)->tv_sec == (uvp)->tv_sec && (tvp)->tv_usec cmp(uvp)->tv_usec)
+#define snprintf osip_snprintf
 #ifndef INT_MAX
 #define INT_MAX 0x7FFFFFFF
 #endif
@@ -207,15 +205,14 @@
 #include <sys/epoll.h>
 #endif
 
+#include <eXosip2/eXosip.h>
 #include <osip2/osip.h>
 #include <osip2/osip_dialog.h>
 
-#include <eXosip2/eXosip.h>
 #include "eXtransport.h"
-
 #include "jpipe.h"
 
-#define EXOSIP_VERSION  "5.1.1"
+#define EXOSIP_VERSION "5.1.1"
 
 #ifdef HAVE_WINSOCK2_H
 #define SOCKET_TYPE SOCKET
@@ -223,24 +220,41 @@
 #define SOCKET_TYPE int
 #endif
 
+#if (defined(__STDC__) && __STDC__ && __STDC_VERSION__ >= 199901L)
+#include <stdint.h>
+#elif defined(HAVE_STDINT_H)
+#include <stdint.h>
+#elif defined(_WIN32) && defined(_MSC_VER) && (_MSC_VER < 1600)
+typedef unsigned __int8 uint8_t;
+typedef unsigned __int32 uint32_t;
+typedef unsigned __int64 uint64_t;
+#else
+#include <stdint.h>
+#endif
+
 #ifdef __cplusplus
 extern "C" {
 #endif
 
+/* I advise to use ERRBSIZ as a size */
+#define ERRBSIZ 64
+char *_ex_strerror(int errnum, char *buf, size_t buflen);
+char *_ex_gai_strerror(int errnum, char *buf, size_t buflen);
+
 #if defined(USE_GETHOSTBYNAME)
 
-#define NI_MAXHOST      1025
-#define NI_MAXSERV      32
-#define NI_NUMERICHOST  1
+#define NI_MAXHOST 1025
+#define NI_MAXSERV 32
+#define NI_NUMERICHOST 1
 
 #ifndef PF_INET6
-#define PF_INET6        AF_INET6
+#define PF_INET6 AF_INET6
 #endif
 
 #define _SS_MAXSIZE 128
-#define _SS_ALIGNSIZE (sizeof (int64_t))
-#define _SS_PAD1SIZE (_SS_ALIGNSIZE - sizeof (unsigned short))
-#define _SS_PAD2SIZE (_SS_MAXSIZE - (sizeof (unsigned short)+ _SS_PAD1SIZE + _SS_ALIGNSIZE))
+#define _SS_ALIGNSIZE (sizeof(int64_t))
+#define _SS_PAD1SIZE (_SS_ALIGNSIZE - sizeof(unsigned short))
+#define _SS_PAD2SIZE (_SS_MAXSIZE - (sizeof(unsigned short) + _SS_PAD1SIZE + _SS_ALIGNSIZE))
 struct sockaddr_storage {
   unsigned short ss_family;
   char _ss_pad1[_SS_PAD1SIZE];
@@ -249,14 +263,14 @@ struct sockaddr_storage {
 };
 
 struct addrinfo {
-  int ai_flags;               /* Input flags.  */
-  int ai_family;              /* Protocol family for socket.  */
-  int ai_socktype;            /* Socket type.  */
-  int ai_protocol;            /* Protocol for socket.  */
-  socklen_t ai_addrlen;       /* Length of socket address.  */
-  struct sockaddr *ai_addr;   /* Socket address for socket.  */
-  char *ai_canonname;         /* Canonical name for service location.  */
-  struct addrinfo *ai_next;   /* Pointer to next in list.  */
+  int ai_flags;             /* Input flags.  */
+  int ai_family;            /* Protocol family for socket.  */
+  int ai_socktype;          /* Socket type.  */
+  int ai_protocol;          /* Protocol for socket.  */
+  socklen_t ai_addrlen;     /* Length of socket address.  */
+  struct sockaddr *ai_addr; /* Socket address for socket.  */
+  char *ai_canonname;       /* Canonical name for service location.  */
+  struct addrinfo *ai_next; /* Pointer to next in list.  */
 };
 
 void _eXosip_freeaddrinfo(struct addrinfo *ai);
@@ -274,9 +288,9 @@ void _eXosip_wakeup(struct eXosip_t *excontext);
 #define __eXosip_sockaddr sockaddr_storage
 #else
 #define _SS_MAXSIZE 128
-#define _SS_ALIGNSIZE (sizeof (int64_t))
-#define _SS_PAD1SIZE (_SS_ALIGNSIZE - sizeof (unsigned short))
-#define _SS_PAD2SIZE (_SS_MAXSIZE - (sizeof (unsigned short)+ _SS_PAD1SIZE + _SS_ALIGNSIZE))
+#define _SS_ALIGNSIZE (sizeof(int64_t))
+#define _SS_PAD1SIZE (_SS_ALIGNSIZE - sizeof(unsigned short))
+#define _SS_PAD2SIZE (_SS_MAXSIZE - (sizeof(unsigned short) + _SS_PAD1SIZE + _SS_ALIGNSIZE))
 struct sockaddr_storage {
   unsigned short ss_family;
   char _ss_pad1[_SS_PAD1SIZE];
@@ -288,11 +302,10 @@ struct sockaddr_storage {
 typedef struct eXosip_dialog_t eXosip_dialog_t;
 
 struct eXosip_dialog_t {
-
   int d_id;
-  osip_dialog_t *d_dialog;    /* active dialog */
+  osip_dialog_t *d_dialog; /* active dialog */
 
-  time_t d_session_timer_start;       /* session-timer helper */
+  time_t d_session_timer_start; /* session-timer helper */
   int d_session_timer_length;
   int d_refresher;
   int d_session_timer_use_update;
@@ -304,8 +317,8 @@ struct eXosip_dialog_t {
 
   osip_list_t *d_inc_trs;
   osip_list_t *d_out_trs;
-  int d_retry;                /* avoid too many unsuccessful retry */
-  int d_mincseq;              /* remember cseq after PRACK and UPDATE during setup */
+  int d_retry;   /* avoid too many unsuccessful retry */
+  int d_mincseq; /* remember cseq after PRACK and UPDATE during setup */
 
   time_t implicit_subscription_expire_time;
 
@@ -316,13 +329,12 @@ struct eXosip_dialog_t {
 typedef struct eXosip_call_t eXosip_call_t;
 
 struct eXosip_call_t {
-
   int c_id;
   eXosip_dialog_t *c_dialogs;
   osip_transaction_t *c_inc_tr;
   osip_transaction_t *c_out_tr;
   osip_transaction_t *c_cancel_tr;
-  int c_retry;                /* avoid too many unsuccessful retry */
+  int c_retry; /* avoid too many unsuccessful retry */
   void *external_reference;
 
   time_t expire_time;
@@ -331,54 +343,64 @@ struct eXosip_call_t {
   eXosip_call_t *parent;
 };
 
+struct osip_stun {
+  uint16_t type;
+  uint16_t length;
+  uint32_t magic_cookie;
+  unsigned char tr_id[12];
+};
 
 typedef struct eXosip_reg_t eXosip_reg_t;
 
 struct eXosip_reg_t {
-
   int r_id;
 
-  int r_reg_period;           /* delay between registration (modified by server) */
-  int r_reg_expire;           /* delay between registration (requested by client) */
+  int r_reg_period; /* delay between registration (modified by server) */
+  int r_reg_expire; /* delay between registration (requested by client) */
 
-  char *r_aor;                /* sip identity */
-  char *r_registrar;          /* registrar */
-  char *r_contact;            /* list of contacts string */
+  char *r_aor;       /* sip identity */
+  char *r_registrar; /* registrar */
+  char *r_contact;   /* list of contacts string */
 
-  char r_line[16];            /* line identifier */
-  char r_qvalue[16];          /* the q value used for routing */
+  char r_line[16];   /* line identifier */
+  char r_qvalue[16]; /* the q value used for routing */
 
   osip_transaction_t *r_last_tr;
-  int r_retry;                /* avoid too many unsuccessful retry */
-  int r_retryfailover;        /* avoid too many unsuccessful retry */
+  int r_retry;         /* avoid too many unsuccessful retry */
+  int r_retryfailover; /* avoid too many unsuccessful retry */
 #define RS_DELETIONREQUIRED 2
 #define RS_DELETIONPROCEEDING 3
 #define RS_MASQUERADINGREQUIRED 4
 #define RS_MASQUERADINGPROCEEDING 5
-  int registration_step;      /* registration step for learning contact header binding */
-  time_t r_last_deletion;     /* prevent loop for automasquerade: no more than one per minute. */
+  int registration_step;  /* registration step for learning contact header binding */
+  time_t r_last_deletion; /* prevent loop for automasquerade: no more than one per minute. */
 
-  struct __eXosip_sockaddr addr;
-  socklen_t len;
+  /* used for STUN on UDP connections */
+  struct __eXosip_sockaddr stun_addr;
+  socklen_t stun_len;
+  struct osip_stun stun_binding;
+  char stun_ipbuf[INET6_ADDRSTRLEN];
+  uint16_t stun_nport;
+  time_t ping_rfc5626;
+  int pong_supported;
+
 
   eXosip_reg_t *next;
   eXosip_reg_t *parent;
 };
-
 
 #ifndef MINISIZE
 
 typedef struct eXosip_subscribe_t eXosip_subscribe_t;
 
 struct eXosip_subscribe_t {
-
   int s_id;
   int s_ss_status;
   int s_ss_reason;
   int s_reg_period;
   eXosip_dialog_t *s_dialogs;
 
-  int s_retry;                /* avoid too many unsuccessful retry */
+  int s_retry; /* avoid too many unsuccessful retry */
   osip_transaction_t *s_inc_tr;
   osip_transaction_t *s_out_tr;
 
@@ -389,7 +411,6 @@ struct eXosip_subscribe_t {
 typedef struct eXosip_notify_t eXosip_notify_t;
 
 struct eXosip_notify_t {
-
   int n_id;
   int n_online_status;
 
@@ -410,9 +431,9 @@ typedef struct eXosip_pub_t eXosip_pub_t;
 struct eXosip_pub_t {
   int p_id;
 
-  int p_period;               /* delay between registration */
-  char p_aor[256];            /* sip identity */
-  char p_sip_etag[64];        /* sip_etag from 200ok */
+  int p_period;        /* delay between registration */
+  char p_aor[256];     /* sip identity */
+  char p_sip_etag[64]; /* sip_etag from 200ok */
 
   osip_transaction_t *p_last_tr;
   int p_retry;
@@ -441,7 +462,7 @@ struct jauthinfo_t {
 };
 
 int _eXosip_create_proxy_authorization_header(osip_proxy_authenticate_t *wa, const char *rquri, const char *username, const char *passwd, const char *ha1, osip_proxy_authorization_t **auth,
-    const char *method, const char *pszCNonce, int iNonceCount);
+                                              const char *method, const char *pszCNonce, int iNonceCount);
 int _eXosip_store_nonce(struct eXosip_t *excontext, const char *call_id, osip_proxy_authenticate_t *wa, int answer_code);
 int _eXosip_delete_nonce(struct eXosip_t *excontext, const char *call_id);
 
@@ -468,7 +489,6 @@ char *_eXosip_transport_protocol(osip_message_t *msg);
 int _eXosip_find_protocol(osip_message_t *msg);
 int setsockopt_ipv6only(int sock);
 
-
 #ifndef MAX_EXOSIP_DNS_ENTRY
 #define MAX_EXOSIP_DNS_ENTRY 10
 #endif
@@ -484,8 +504,8 @@ int setsockopt_ipv6only(int sock);
 struct eXosip_counters {
   float current_average;
   unsigned int num_entries;
-  unsigned short period;      /* total max duration */
-  unsigned short interval;    /* minimum interval */
+  unsigned short period;   /* total max duration */
+  unsigned short interval; /* minimum interval */
   unsigned short *values;
   struct timeval *times;
   unsigned int index_last;
@@ -531,12 +551,12 @@ struct eXosip_t {
   char transport[10];
   char *user_agent;
 
-  eXosip_reg_t *j_reg;        /* my registrations */
-  eXosip_call_t *j_calls;     /* my calls        */
+  eXosip_reg_t *j_reg;    /* my registrations */
+  eXosip_call_t *j_calls; /* my calls        */
 #ifndef MINISIZE
-  eXosip_subscribe_t *j_subscribes;   /* my friends      */
-  eXosip_notify_t *j_notifies;        /* my susbscribers */
-  eXosip_pub_t *j_pub;        /* my publications  */
+  eXosip_subscribe_t *j_subscribes; /* my friends      */
+  eXosip_notify_t *j_notifies;      /* my susbscribers */
+  eXosip_pub_t *j_pub;              /* my publications  */
 #endif
   osip_list_t j_transactions;
 
@@ -609,7 +629,7 @@ struct eXosip_t {
   int outgoing_wake_lock_state;
   int incoming_wake_lock_state;
 
-  char sip_instance[37];      /* can only be used if ONE excontext is used for ONE registration only */
+  char sip_instance[37]; /* can only be used if ONE excontext is used for ONE registration only */
   char default_contact_displayname[256];
   int opt_sessiontimers_force;
 };
@@ -644,8 +664,10 @@ int _eXosip_request_add_via(struct eXosip_t *excontext, osip_message_t *request)
 
 void _eXosip_mark_all_registrations_expired(struct eXosip_t *excontext);
 void _eXosip_mark_registration_expired(struct eXosip_t *excontext, const char *call_id);
-int _eXosip_mark_registration_ready(struct eXosip_t *excontext, const char *call_id);
-
+int _eXosip_mark_all_transaction_ready(struct eXosip_t *excontext, fd_set *osip_fdset, fd_set *osip_wrset, fd_set *osip_exceptset, int *osip_fd_table);
+#ifdef HAVE_SYS_EPOLL_H
+int _eXosip_mark_all_transaction_ready_epoll(struct eXosip_t *excontext, int nfds, int *osip_fd_table);
+#endif
 int _eXosip_check_allow_header(eXosip_dialog_t *jd, osip_message_t *message);
 
 int _eXosip_add_authentication_information(struct eXosip_t *excontext, osip_message_t *req, osip_message_t *last_response);
@@ -721,6 +743,12 @@ int _eXosip_transaction_init(struct eXosip_t *excontext, osip_transaction_t **tr
 void _eXosip_transaction_free(struct eXosip_t *excontext, osip_transaction_t *transaction);
 
 int _eXosip_srv_lookup(struct eXosip_t *excontext, osip_message_t *sip, osip_naptr_t **naptr_record);
+const char *_eXosip_dnsutils_find_sni(struct eXosip_t *excontext, const char *hostname);
+int _eXosip_dnsutils_getsock(struct eXosip_t *excontext, fd_set *read_fds, fd_set *write_fds);
+int _eXosip_dnsutils_checksock(struct eXosip_t *excontext, fd_set *read_fds, fd_set *write_fds);
+int _eXosip_dnsutils_checksock_epoll(struct eXosip_t *excontext, int nfds);
+int _eXosip_dnsutils_addsock_epoll(struct eXosip_t *excontext, int *cares_fd_table);
+int _eXosip_dnsutils_delsock_epoll(struct eXosip_t *excontext, int *cares_fd_table);
 
 int _eXosip_handle_incoming_message(struct eXosip_t *excontext, char *buf, size_t len, int socket, char *host, int port, char *received_host, int *rport_port);
 
@@ -733,16 +761,26 @@ int _eXosip_transport_set_dscp(struct eXosip_t *excontext, int family, int sock)
 eXosip_tls_ctx_error eXosip_set_tls_ctx(struct eXosip_t *excontext, eXosip_tls_ctx_t *ctx);
 
 /**
-  * Configure to accept/reject self signed and expired certificates.
-  */
+ * Configure to accept/reject self signed and expired certificates.
+ */
 eXosip_tls_ctx_error eXosip_tls_verify_certificate(struct eXosip_t *excontext, int _tls_verify_client_certificate);
 
+/**
+ * Shared method for TCP and TLS
+ * check if a socket is connected or broken
+ */
+int _tcptls_tl_is_connected(int epoll_method, int sock);
+
+/**
+ * Resolv destination using NAPTR/SRV record
+ */
+int _tl_resolv_naptr_destination(struct eXosip_t *excontext, osip_transaction_t *tr, osip_message_t *sip, char **out_host, int *out_port, osip_naptr_t **out_naptr_record);
 
 #ifndef EXOSIP_STATS_PERIOD
-#define EXOSIP_STATS_PERIOD 3600        /* default period in seconds */
+#define EXOSIP_STATS_PERIOD 3600 /* default period in seconds */
 #endif
 #ifndef EXOSIP_STATS_INTERVAL
-#define EXOSIP_STATS_INTERVAL 60        /* default interval in seconds */
+#define EXOSIP_STATS_INTERVAL 60 /* default interval in seconds */
 #endif
 
 #ifndef MINISIZE

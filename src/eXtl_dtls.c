@@ -37,12 +37,44 @@
 #include "inet_ntop.h"
 #endif
 
-#if defined(_WIN32_WCE)
-#define strerror(X) "-1"
+#ifdef HAVE_SYS_STAT_H
+#include <sys/stat.h>
+#endif
+
+#ifdef HAVE_MSTCPIP_H
+#include <Mstcpip.h>
+#endif
+
+#ifdef HAVE_FCNTL_H
+#include <fcntl.h>
+#endif
+
+#ifdef HAVE_WINCRYPT_H
+#include <wincrypt.h>
 #endif
 
 #if !defined(_WIN32_WCE)
 #include <errno.h>
+#endif
+
+#if defined(HAVE_NETINET_TCP_H)
+#include <netinet/tcp.h>
+#endif
+
+#ifdef HAVE_UNISTD_H
+#include <unistd.h>
+#endif
+
+#if defined(HAVE_WINSOCK2_H)
+#define ex_errno WSAGetLastError()
+#define is_wouldblock_error(r) ((r) == WSAEINTR || (r) == WSAEWOULDBLOCK)
+#define is_connreset_error(r) ((r) == WSAECONNRESET || (r) == WSAECONNABORTED || (r) == WSAETIMEDOUT || (r) == WSAENETRESET || (r) == WSAENOTCONN)
+#else
+#define ex_errno errno
+#endif
+#ifndef is_wouldblock_error
+#define is_wouldblock_error(r) ((r) == EINTR || (r) == EWOULDBLOCK || (r) == EAGAIN)
+#define is_connreset_error(r) ((r) == ECONNRESET || (r) == ECONNABORTED || (r) == ETIMEDOUT || (r) == ENETRESET || (r) == ENOTCONN)
 #endif
 
 #ifdef HAVE_OPENSSL_SSL_H
@@ -90,11 +122,6 @@ struct _dtls_stream {
   int ssl_state;
   int ssl_type;
 };
-
-
-#ifndef EXOSIP_MAX_SOCKETS
-#define EXOSIP_MAX_SOCKETS 200
-#endif
 
 struct eXtldtls {
   eXosip_tls_ctx_t eXosip_dtls_ctx_params;
@@ -331,6 +358,7 @@ static int dtls_tl_open(struct eXosip_t *excontext) {
   struct addrinfo *addrinfo = NULL;
   struct addrinfo *curinfo;
   int sock = -1;
+  char eb[ERRBSIZ];
 
   if (reserved == NULL) {
     OSIP_TRACE(osip_trace(__FILE__, __LINE__, OSIP_ERROR, NULL, "[eXosip] [DTLS] wrong state: create transport layer first\n"));
@@ -367,7 +395,7 @@ static int dtls_tl_open(struct eXosip_t *excontext) {
     sock = (int) socket(curinfo->ai_family, type, curinfo->ai_protocol);
 
     if (sock < 0) {
-      OSIP_TRACE(osip_trace(__FILE__, __LINE__, OSIP_ERROR, NULL, "[eXosip] [DTLS] cannot create socket %s\n", strerror(errno)));
+      OSIP_TRACE(osip_trace(__FILE__, __LINE__, OSIP_ERROR, NULL, "[eXosip] [DTLS] cannot create socket %s\n", _ex_strerror(ex_errno, eb, ERRBSIZ)));
       continue;
     }
 
@@ -375,9 +403,9 @@ static int dtls_tl_open(struct eXosip_t *excontext) {
 #ifdef IPV6_V6ONLY
 
       if (setsockopt_ipv6only(sock)) {
+        OSIP_TRACE(osip_trace(__FILE__, __LINE__, OSIP_ERROR, NULL, "[eXosip] [DTLS] cannot set socket option %s\n", _ex_strerror(ex_errno, eb, ERRBSIZ)));
         _eXosip_closesocket(sock);
         sock = -1;
-        OSIP_TRACE(osip_trace(__FILE__, __LINE__, OSIP_ERROR, NULL, "[eXosip] [DTLS] cannot set socket option %s\n", strerror(errno)));
         continue;
       }
 
@@ -387,7 +415,8 @@ static int dtls_tl_open(struct eXosip_t *excontext) {
     res = bind(sock, curinfo->ai_addr, (socklen_t) curinfo->ai_addrlen);
 
     if (res < 0) {
-      OSIP_TRACE(osip_trace(__FILE__, __LINE__, OSIP_ERROR, NULL, "[eXosip] [DTLS] cannot bind socket node:%s family:%d %s\n", excontext->eXtl_transport.proto_ifs, curinfo->ai_family, strerror(errno)));
+      OSIP_TRACE(osip_trace(__FILE__, __LINE__, OSIP_ERROR, NULL, "[eXosip] [DTLS] cannot bind socket [%s][%s] %s\n", excontext->eXtl_transport.proto_ifs,
+                            (curinfo->ai_family == AF_INET) ? "AF_INET" : "AF_INET6", _ex_strerror(ex_errno, eb, ERRBSIZ)));
       _eXosip_closesocket(sock);
       sock = -1;
       continue;
@@ -397,7 +426,7 @@ static int dtls_tl_open(struct eXosip_t *excontext) {
     res = getsockname(sock, (struct sockaddr *) &reserved->ai_addr, &len);
 
     if (res != 0) {
-      OSIP_TRACE(osip_trace(__FILE__, __LINE__, OSIP_ERROR, NULL, "[eXosip] [DTLS] cannot get socket name (%s)\n", strerror(errno)));
+      OSIP_TRACE(osip_trace(__FILE__, __LINE__, OSIP_ERROR, NULL, "[eXosip] [DTLS] cannot get socket name %s\n", _ex_strerror(ex_errno, eb, ERRBSIZ)));
       memcpy(&reserved->ai_addr, curinfo->ai_addr, curinfo->ai_addrlen);
     }
 
@@ -405,7 +434,8 @@ static int dtls_tl_open(struct eXosip_t *excontext) {
       res = listen(sock, SOMAXCONN);
 
       if (res < 0) {
-        OSIP_TRACE(osip_trace(__FILE__, __LINE__, OSIP_ERROR, NULL, "[eXosip] [DTLS] cannot bind socket node:%s family:%d %s\n", excontext->eXtl_transport.proto_ifs, curinfo->ai_family, strerror(errno)));
+        OSIP_TRACE(osip_trace(__FILE__, __LINE__, OSIP_ERROR, NULL, "[eXosip] [DTLS] cannot bind socket [%s][%s] %s\n", excontext->eXtl_transport.proto_ifs,
+                              (curinfo->ai_family == AF_INET) ? "AF_INET" : "AF_INET6", _ex_strerror(ex_errno, eb, ERRBSIZ)));
         _eXosip_closesocket(sock);
         sock = -1;
         continue;
@@ -418,7 +448,7 @@ static int dtls_tl_open(struct eXosip_t *excontext) {
   _eXosip_freeaddrinfo(addrinfo);
 
   if (sock < 0) {
-    OSIP_TRACE(osip_trace(__FILE__, __LINE__, OSIP_ERROR, NULL, "[eXosip] [DTLS] cannot bind on port: %i\n", excontext->eXtl_transport.proto_local_port));
+    OSIP_TRACE(osip_trace(__FILE__, __LINE__, OSIP_ERROR, NULL, "[eXosip] [DTLS] cannot bind on port [%i]\n", excontext->eXtl_transport.proto_local_port));
     return -1;
   }
 
@@ -432,7 +462,7 @@ static int dtls_tl_open(struct eXosip_t *excontext) {
     else
       excontext->eXtl_transport.proto_local_port = ntohs(((struct sockaddr_in6 *) &reserved->ai_addr)->sin6_port);
 
-    OSIP_TRACE(osip_trace(__FILE__, __LINE__, OSIP_INFO1, NULL, "[eXosip] [DTLS] binding on port %i\n", excontext->eXtl_transport.proto_local_port));
+    OSIP_TRACE(osip_trace(__FILE__, __LINE__, OSIP_INFO1, NULL, "[eXosip] [DTLS] binding on port [%i]\n", excontext->eXtl_transport.proto_local_port));
   }
 
   return OSIP_SUCCESS;
@@ -441,8 +471,9 @@ static int dtls_tl_open(struct eXosip_t *excontext) {
 #define EXOSIP_AS_A_SERVER 1
 #define EXOSIP_AS_A_CLIENT 2
 
-static int dtls_tl_set_fdset(struct eXosip_t *excontext, fd_set *osip_fdset, fd_set *osip_wrset, int *fd_max) {
+static int dtls_tl_set_fdset(struct eXosip_t *excontext, fd_set *osip_fdset, fd_set *osip_wrset, fd_set *osip_exceptset, int *fd_max, int *osip_fd_table) {
   struct eXtldtls *reserved = (struct eXtldtls *) excontext->eXtldtls_reserved;
+  int pos_fd = 0;
 
   if (reserved == NULL) {
     OSIP_TRACE(osip_trace(__FILE__, __LINE__, OSIP_ERROR, NULL, "[eXosip] [DTLS] wrong state: create transport layer first\n"));
@@ -452,7 +483,10 @@ static int dtls_tl_set_fdset(struct eXosip_t *excontext, fd_set *osip_fdset, fd_
   if (reserved->dtls_socket <= 0)
     return -1;
 
-  eXFD_SET(reserved->dtls_socket, osip_fdset);
+  if (osip_fdset != NULL)
+    eXFD_SET(reserved->dtls_socket, osip_fdset);
+  osip_fd_table[pos_fd] = reserved->dtls_socket;
+  pos_fd++;
 
   if (reserved->dtls_socket > *fd_max)
     *fd_max = reserved->dtls_socket;
@@ -496,7 +530,7 @@ static int _dtls_read_udp_main_socket(struct eXosip_t *excontext) {
     memset(src6host, 0, NI_MAXHOST);
     recvport = _eXosip_getport((struct sockaddr *) &sa);
     _eXosip_getnameinfo((struct sockaddr *) &sa, slen, src6host, NI_MAXHOST, NULL, 0, NI_NUMERICHOST);
-    OSIP_TRACE(osip_trace(__FILE__, __LINE__, OSIP_INFO1, NULL, "[eXosip] [DTLS] message received from [%s:%i]\n", src6host, recvport));
+    OSIP_TRACE(osip_trace(__FILE__, __LINE__, OSIP_INFO1, NULL, "[eXosip] [DTLS] message received from [%s][%d]\n", src6host, recvport));
 
     for (pos = 0; pos < EXOSIP_MAX_SOCKETS; pos++) {
       if (reserved->socket_tab[pos].ssl_conn != NULL) {
@@ -515,7 +549,7 @@ static int _dtls_read_udp_main_socket(struct eXosip_t *excontext) {
         }
       }
 
-      OSIP_TRACE(osip_trace(__FILE__, __LINE__, OSIP_INFO3, NULL, "[eXosip] [DTLS] creating DTLS-UDP socket at index: %i\n", pos));
+      OSIP_TRACE(osip_trace(__FILE__, __LINE__, OSIP_INFO3, NULL, "[eXosip] [DTLS] creating DTLS-UDP socket at index %i\n", pos));
 
       if (pos < 0) {
         /* delete an old one! */
@@ -1136,7 +1170,7 @@ static int dtls_tl_send_message(struct eXosip_t *excontext, osip_transaction_t *
     return -1;
   }
 
-  OSIP_TRACE(osip_trace(__FILE__, __LINE__, OSIP_INFO1, NULL, "[eXosip] [DTLS] [tid=%i] message sent [len=%d] to [%s:%i]\n%s\n", tid, length, ipbuf, port, message));
+  OSIP_TRACE(osip_trace(__FILE__, __LINE__, OSIP_INFO1, NULL, "[eXosip] [DTLS] [tid=%i] message sent [len=%d] to [%s][%d]\n%s\n", tid, length, ipbuf, port, message));
 
   i = SSL_write(reserved->socket_tab[pos].ssl_conn, message, (int) length);
 
@@ -1174,8 +1208,8 @@ static int dtls_tl_send_message(struct eXosip_t *excontext, osip_transaction_t *
       eXosip_reg_t *reg = NULL;
 
       if (_eXosip_reg_find(excontext, &reg, tr) == 0) {
-        memcpy(&(reg->addr), &addr, len);
-        reg->len = len;
+        memcpy(&(reg->stun_addr), &addr, len);
+        reg->stun_len = len;
       }
     }
   }
@@ -1201,9 +1235,9 @@ static int dtls_tl_keepalive(struct eXosip_t *excontext) {
     return OSIP_UNDEFINED_ERROR;
 
   for (jr = excontext->j_reg; jr != NULL; jr = jr->next) {
-    if (jr->len > 0) {
-      if (sendto(reserved->dtls_socket, (const void *) excontext->ka_crlf, 4, 0, (struct sockaddr *) & (jr->addr), jr->len) > 0) {
-        OSIP_TRACE(osip_trace(__FILE__, __LINE__, OSIP_INFO1, NULL, "[eXosip] [DTLS] keep alive sent on DTLS-UDP\n"));
+    if (jr->stun_len > 0) {
+      if (sendto(reserved->dtls_socket, (const void *)excontext->ka_crlf, 4, 0, (struct sockaddr *)&(jr->stun_addr), jr->stun_len) > 0) {
+        OSIP_TRACE(osip_trace(__FILE__, __LINE__, OSIP_INFO1, NULL, "[eXosip] [DTLS] [keepalive] keep alive sent on DTLS-UDP\n"));
       }
     }
   }

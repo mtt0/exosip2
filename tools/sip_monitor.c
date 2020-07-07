@@ -211,19 +211,21 @@ static void __osip_trace_func(const char *fi, int li, osip_trace_level_t level, 
       printf("%s", buffer);
     }
 
-    if (strstr(buffer, "[getaddrinfo] failure [") != NULL) {
+    if (strstr(buffer, "[getaddrinfo] dns") != NULL && strstr(buffer, "failure") != NULL) {
       char *tmp = strstr(buffer, "[getaddrinfo");
       add_log(LOG_ERR, tmp);
 
       if (error_reason[0] == '\0') {
-        snprintf(error_reason, sizeof(error_reason), "DNS FAILURE %s", tmp + strlen("[getaddrinfo] failure "));
+        snprintf(error_reason, sizeof(error_reason), tmp);
       }
 
-    } else if (strstr(buffer, "socket node:") != NULL && strstr(buffer, "], connected")) {
-      add_log(LOG_ERR, "socket is connected");
+    } else if (strstr(buffer, "socket [") != NULL && strstr(buffer, "] connected")) {
+      char *tmp = strstr(buffer, "socket [");
+      add_log(LOG_ERR, tmp);
 
-    } else if (strstr(buffer, "SSL_connect succeeded") != NULL) {
-      syslog_wrapper(LOG_INFO, "ssl is established");
+    } else if (strstr(buffer, "[ssl connect] succeeded") != NULL) {
+      char *tmp = strstr(buffer, "[ssl connect] succeeded");
+      add_log(LOG_INFO, tmp);
 
     } else if (strstr(buffer, "[TLS] invalid  depth[") != NULL) {
       char *tmp = strstr(buffer, "[TLS] invalid  depth[");
@@ -233,15 +235,16 @@ static void __osip_trace_func(const char *fi, int li, osip_trace_level_t level, 
         snprintf(error_reason, sizeof(error_reason), tmp);
       }
 
-    } else if (strstr(buffer, "SSL_connect error") != NULL) {
-      add_log(LOG_ERR, "ssl handshake failure");
+    } else if (strstr(buffer, "[ssl connect] error") != NULL) {
+      char *tmp = strstr(buffer, "[ssl connect] error");
+      add_log(LOG_ERR, tmp);
 
       if (error_reason[0] == '\0') {
-        snprintf(error_reason, sizeof(error_reason), "ssl handshake failure");
+        snprintf(error_reason, sizeof(error_reason), tmp);
       }
 
-    } else if (strstr(buffer, "cannot connect socket node / ") != NULL && strstr(buffer, "[") && !strstr(buffer, "timeout")) {
-      char *tmp = strstr(buffer, "[epoll] cannot connect socket node / ");
+    } else if (strstr(buffer, "cannot connect socket ") != NULL && strstr(buffer, "terminated") != NULL) {
+      char *tmp = strstr(buffer, "cannot connect socket ");
       add_log(LOG_ERR, tmp);
 
       if (error_reason[0] == '\0') {
@@ -250,6 +253,8 @@ static void __osip_trace_func(const char *fi, int li, osip_trace_level_t level, 
     }
   }
 }
+
+#ifdef TEST_NAPTR
 
 static int _naptr_lookup(const char *sip_server, struct osip_naptr *naptr_lookup, int keep_in_cache) {
   osip_naptr_t *naptr_record;
@@ -368,6 +373,8 @@ static int _resolv_naptr(const char *domain) {
   syslog_wrapper(LOG_ERR, "NAPTR REPORT:[FAILURE] [duration:%li,%03lis] no NAPTR/no SRV record for %s", time_sub.tv_sec, time_sub.tv_usec / 1000, domain);
   return 0;
 }
+
+#endif
 
 int main(int argc, char *argv[]) {
   int exit_code = 1;
@@ -580,13 +587,15 @@ int main(int argc, char *argv[]) {
     syslog_wrapper(LOG_INFO, "automasquerade enabled");
   }
 
+#ifdef TEST_NAPTR
   if (osip_strncasecmp(proxy, "sip:", 4) == 0) {
     _resolv_naptr(proxy + 4);
 
   } else if (osip_strncasecmp(proxy, "sips:", 4) == 0) {
     _resolv_naptr(proxy + 4);
   }
-
+#endif
+  
   osip_gettimeofday(&time_start, NULL);
 
   err = -1;
