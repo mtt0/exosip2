@@ -212,7 +212,7 @@
 #include "eXtransport.h"
 #include "jpipe.h"
 
-#define EXOSIP_VERSION "5.1.1"
+#define EXOSIP_VERSION "5.1.2"
 
 #ifdef HAVE_WINSOCK2_H
 #define SOCKET_TYPE SOCKET

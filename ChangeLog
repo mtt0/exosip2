@@ -1,4 +1,22 @@
-eXosip2 (5.1.0) - 2020-01-16
+eXosip2 (5.1.2) - 2020-07-24
+	* new format style using clang-format.
+	* reduce and rewrite logs for readability.
+	* fix broken epoll implementation. (DO NOT USE 5.1.1 with epoll)
+	* rewrite UDP/TCP/TLS (and DTLS untested) for both select and epoll mode.
+	complete rewrite of socket (c-ares and UDP/TCP/TLS) in order to accelerate
+	socket esablishement, and correctly handle socket failure. The change also
+	help to recover faster after a socket failure and to switch to the next SRV
+	record available. This last feature was previously broken.
+
+	* Fix NAPTR/SRV on windows when CARES is not used. (not advised)
+	* ACK sent out of transaction with no existing connection may be sent later. (TCP/TLS)
+	* Upon TLS loss, try to use domain or NAPTR SNI when TLS connection is not initiated by an outgoing transaction.
+	* sip_monitor: new tool to monitor sip service
+	* add support for authentication using SHA-256 (openssl required)
+	* only use first supported proposed authentication when same realm is used
+	* fix: upon UDP errors, like ICMP buffer size may reach abnormal values (avoid useless reallocation)
+
+eXosip2 (5.1.1) - 2020-01-16
 	* new API:
 	Generate random string: (low entropy, only hexa)
 	int eXosip_hexa_generate_random(char *val, int val_size);

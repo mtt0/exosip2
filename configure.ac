@@ -1,11 +1,11 @@
 AC_PREREQ([2.69])
-AC_INIT([libeXosip2],[5.1.1])
+AC_INIT([libeXosip2],[5.1.2])
 AC_CONFIG_SRCDIR([include/eXosip2/eXosip.h])
 
 AC_MSG_NOTICE([libeXosip2              The Extended Open SIP library.])
 AC_MSG_NOTICE([Copyright (C) 2002-2020 Aymeric MOIZARD - <amoizard@antisip.com>])
 
-AC_SUBST(LIBEXOSIP_SO_VERSION, 12:1:1)
+AC_SUBST(LIBEXOSIP_SO_VERSION, 12:1:2)
 AC_SUBST(EXOSIP_VERSION, $VERSION)
 
 AC_MSG_RESULT([Configuring ${PACKAGE} ${EXOSIP_VERSION}])
