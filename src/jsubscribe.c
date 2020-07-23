@@ -56,7 +56,7 @@ osip_transaction_t *_eXosip_find_last_out_subscribe(eXosip_subscribe_t *js, eXos
   }
 
   if (out_tr == NULL)
-    return js->s_out_tr;        /* can be NULL */
+    return js->s_out_tr; /* can be NULL */
 
   return out_tr;
 }

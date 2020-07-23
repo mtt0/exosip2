@@ -8,7 +8,6 @@
  *
  */
 
-
 #if !defined(WIN32)
 #include <stdio.h>
 #include <stdlib.h>
@@ -74,17 +73,20 @@ static void syslog_wrapper(int a, const char *fmt, ...) {
 
 #elif defined(LOG_PERROR)
 /* If we can, we use syslog() to emit the debugging messages to stderr. */
-#define syslog_wrapper    syslog
+#define syslog_wrapper syslog
 #else
-#define syslog_wrapper(a,b...) fprintf(stderr,b);fprintf(stderr,"\n")
+#define syslog_wrapper(a, b...) \
+  fprintf(stderr, b);           \
+  fprintf(stderr, "\n")
 #endif
-
 
 static void usage(void);
 
 static void usage(void) {
-  printf(PROG_NAME " v%s\n"
-         "\nUsage: " PROG_NAME " [required_options] [optional_options]\n"
+  printf(PROG_NAME
+         " v%s\n"
+         "\nUsage: " PROG_NAME
+         " [required_options] [optional_options]\n"
          "\n[required_options]\n"
          "  -r --proxy       sip:proxyhost[:port]\n"
          "  -u --from        sip:user@host[:port]\n"
@@ -138,7 +140,6 @@ static void add_log(int level, char *_log) {
 }
 
 static void dump_logs() {
-
   while (!osip_list_eol(&monitored_logs, 0)) {
     struct monitored_log *ml = (struct monitored_log *) osip_list_get(&monitored_logs, 0);
     syslog_wrapper(ml->log_level, "[count=%i] %s", ml->count, ml->log);
@@ -152,9 +153,8 @@ static void dump_logs() {
 #endif
 #define MAX_LENGTH_TR 2024
 
-
 static void __osip_trace_func(const char *fi, int li, osip_trace_level_t level, const char *chfr, va_list args) {
-  char time_buffer[80] = { '\0' };
+  char time_buffer[80] = {'\0'};
 #if defined(HAVE_LOCALTIME)
   {
     time_t timestamp;
@@ -167,9 +167,7 @@ static void __osip_trace_func(const char *fi, int li, osip_trace_level_t level, 
     tenths_ms = now.tv_usec / (100L);
     ptm = localtime(&timestamp);
 
-    snprintf(time_buffer, 80, "%04d-%02d-%02d %02d:%02d:%02d.%04d",
-             1900 + ptm->tm_year, ptm->tm_mon + 1, ptm->tm_mday,
-             ptm->tm_hour, ptm->tm_min, ptm->tm_sec, tenths_ms);
+    snprintf(time_buffer, 80, "%04d-%02d-%02d %02d:%02d:%02d.%04d", 1900 + ptm->tm_year, ptm->tm_mon + 1, ptm->tm_mday, ptm->tm_hour, ptm->tm_min, ptm->tm_sec, tenths_ms);
   }
 #endif
 
@@ -207,7 +205,7 @@ static void __osip_trace_func(const char *fi, int li, osip_trace_level_t level, 
     vsnprintf(buffer + in, MAX_LENGTH_TR - 1 - in, chfr, args);
     buffer[MAX_LENGTH_TR - 1] = '\0';
 
-    if (debug > (int)level) {
+    if (debug > (int) level) {
       printf("%s", buffer);
     }
 
@@ -361,8 +359,7 @@ static int _resolv_naptr(const char *domain) {
 
         osip_gettimeofday(&time_end, NULL);
         timersub(&time_end, &time_start, &time_sub);
-        syslog_wrapper(LOG_INFO, "NAPTR REPORT:[SUCCESS] [duration:%li,%03lis] best service for %s -> [%s] [%s:%i]", time_sub.tv_sec, time_sub.tv_usec / 1000, naptr_lookup.domain, best->protocol,
-                       best->srventry[0].srv, best->srventry[0].port);
+        syslog_wrapper(LOG_INFO, "NAPTR REPORT:[SUCCESS] [duration:%li,%03lis] best service for %s -> [%s] [%s:%i]", time_sub.tv_sec, time_sub.tv_usec / 1000, naptr_lookup.domain, best->protocol, best->srventry[0].srv, best->srventry[0].port);
         return 0;
       }
     }
@@ -390,7 +387,7 @@ int main(int argc, char *argv[]) {
   char *username = NULL;
   char *password = NULL;
   char sslrootcapath[1024];
-  struct regparam_t regparam = { 0, -1, 0 };
+  struct regparam_t regparam = {0, -1, 0};
   int fork = 0;
   int log_perror = 0;
   int err;
@@ -419,26 +416,24 @@ int main(int argc, char *argv[]) {
 #ifdef _GNU_SOURCE
     int option_index = 0;
 
-    static struct option long_options[] = {
-      {"deamon", no_argument, NULL, 'd'},
-      {"from", required_argument, NULL, 'u'},
-      {"proxy", required_argument, NULL, 'r'},
-      {"username", required_argument, NULL, 'U'},
-      {"password", required_argument, NULL, 'P'},
+    static struct option long_options[] = {{"deamon", no_argument, NULL, 'd'},
+                                           {"from", required_argument, NULL, 'u'},
+                                           {"proxy", required_argument, NULL, 'r'},
+                                           {"username", required_argument, NULL, 'U'},
+                                           {"password", required_argument, NULL, 'P'},
 
-      {"sslrootcapath", required_argument, NULL, 'S'},
-      {"transport", required_argument, NULL, 't'},
-      {"port", required_argument, NULL, 'p'},
-      {"contact", required_argument, NULL, 'c'},
-      {"expiry", required_argument, NULL, 'e'},
-      {"automasquerade", no_argument, NULL, 'm'},
-      {"syslogandconsole", no_argument, NULL, 's'},
-      {"verbose", required_argument, NULL, 'v'},
+                                           {"sslrootcapath", required_argument, NULL, 'S'},
+                                           {"transport", required_argument, NULL, 't'},
+                                           {"port", required_argument, NULL, 'p'},
+                                           {"contact", required_argument, NULL, 'c'},
+                                           {"expiry", required_argument, NULL, 'e'},
+                                           {"automasquerade", no_argument, NULL, 'm'},
+                                           {"syslogandconsole", no_argument, NULL, 's'},
+                                           {"verbose", required_argument, NULL, 'v'},
 
-      {"help", no_argument, NULL, 'h'},
+                                           {"help", no_argument, NULL, 'h'},
 
-      {NULL, 0, NULL, 0}
-    };
+                                           {NULL, 0, NULL, 0}};
 
     c = getopt_long(argc, argv, short_options, long_options, &option_index);
 #else
@@ -525,8 +520,8 @@ int main(int argc, char *argv[]) {
   openlog(PROG_NAME, LOG_PID | log_perror, SYSLOG_FACILITY);
 #endif
 
-  syslog_wrapper(LOG_INFO, "%s up and running [testing on [%s] REGISTER [%s] From: [%s]%s%s%s]", prog_name, transport, proxy, fromuser,
-                 (username && password) ? " Username: [" : "", (username && password) ? username : "", (username && password) ? ":*****]" : "");
+  syslog_wrapper(LOG_INFO, "%s up and running [testing on [%s] REGISTER [%s] From: [%s]%s%s%s]", prog_name, transport, proxy, fromuser, (username && password) ? " Username: [" : "", (username && password) ? username : "",
+                 (username && password) ? ":*****]" : "");
 
   if (!proxy || !fromuser || strlen(proxy) < 7 || strlen(fromuser) < 7) {
     syslog_wrapper(LOG_ERR, "REGISTRATION REPORT:[FAILURE] [%s][duration:0,000s] missing or broken mandatory parameter", transport);
@@ -595,7 +590,7 @@ int main(int argc, char *argv[]) {
     _resolv_naptr(proxy + 4);
   }
 #endif
-  
+
   osip_gettimeofday(&time_start, NULL);
 
   err = -1;
@@ -693,8 +688,7 @@ int main(int argc, char *argv[]) {
       timersub(&time_end, &time_start, &time_sub);
 
       dump_logs();
-      syslog_wrapper(LOG_INFO, "REGISTRATION REPORT:[SUCCESS] [%s][duration:%li,%03lis] REGISTER [%i][%s]", transport, time_sub.tv_sec, time_sub.tv_usec / 1000, event->response->status_code,
-                     event->response->reason_phrase);
+      syslog_wrapper(LOG_INFO, "REGISTRATION REPORT:[SUCCESS] [%s][duration:%li,%03lis] REGISTER [%i][%s]", transport, time_sub.tv_sec, time_sub.tv_usec / 1000, event->response->status_code, event->response->reason_phrase);
       keepRunning = 0;
       exit_code = 0;
       break;
@@ -706,8 +700,7 @@ int main(int argc, char *argv[]) {
       dump_logs();
 
       if (event->response == NULL) {
-        syslog_wrapper(LOG_INFO, "REGISTRATION REPORT:[FAILURE] [%s][duration:%li,%03lis] REGISTER [408][       ] err=%s", transport, time_sub.tv_sec, time_sub.tv_usec / 1000,
-                       error_reason[0] == '\0' ? "no answer" : error_reason);
+        syslog_wrapper(LOG_INFO, "REGISTRATION REPORT:[FAILURE] [%s][duration:%li,%03lis] REGISTER [408][       ] err=%s", transport, time_sub.tv_sec, time_sub.tv_usec / 1000, error_reason[0] == '\0' ? "no answer" : error_reason);
         keepRunning = 0;
 
       } else {
@@ -719,22 +712,21 @@ int main(int argc, char *argv[]) {
             keepRunning--;
 
             if (keepRunning == 0) {
-              syslog_wrapper(LOG_INFO, "REGISTRATION REPORT:[FAILURE] [%s][duration:%li,%03lis] REGISTER [%i][%s] err=no password or unsupported algorithm", transport, time_sub.tv_sec, time_sub.tv_usec / 1000,
-                             event->response->status_code, event->response->reason_phrase);
+              syslog_wrapper(LOG_INFO, "REGISTRATION REPORT:[FAILURE] [%s][duration:%li,%03lis] REGISTER [%i][%s] err=no password or unsupported algorithm", transport, time_sub.tv_sec, time_sub.tv_usec / 1000, event->response->status_code,
+                             event->response->reason_phrase);
 
             } else {
               syslog_wrapper(LOG_INFO, "[%s][duration:%li,%03lis] REGISTER [%i][%s]", transport, time_sub.tv_sec, time_sub.tv_usec / 1000, event->response->status_code, event->response->reason_phrase);
             }
 
           } else {
-            syslog_wrapper(LOG_INFO, "REGISTRATION REPORT:[FAILURE] [%s][duration:%li,%03lis] REGISTER [%i][%s] - err=bad password", transport, time_sub.tv_sec, time_sub.tv_usec / 1000,
-                           event->response->status_code, event->response->reason_phrase);
+            syslog_wrapper(LOG_INFO, "REGISTRATION REPORT:[FAILURE] [%s][duration:%li,%03lis] REGISTER [%i][%s] - err=bad password", transport, time_sub.tv_sec, time_sub.tv_usec / 1000, event->response->status_code, event->response->reason_phrase);
             keepRunning = 0; /* most probably a bad password */
           }
 
         } else {
-          syslog_wrapper(LOG_INFO, "REGISTRATION REPORT:[FAILURE] [%s][duration:%li,%03lis] REGISTER [%i][%s] err=%s", transport, time_sub.tv_sec, time_sub.tv_usec / 1000, event->response->status_code,
-                         event->response->reason_phrase, event->response->reason_phrase);
+          syslog_wrapper(LOG_INFO, "REGISTRATION REPORT:[FAILURE] [%s][duration:%li,%03lis] REGISTER [%i][%s] err=%s", transport, time_sub.tv_sec, time_sub.tv_usec / 1000, event->response->status_code, event->response->reason_phrase,
+                         event->response->reason_phrase);
           keepRunning = 0;
         }
       }
@@ -815,13 +807,11 @@ int main(int argc, char *argv[]) {
 
     default:
       syslog_wrapper(LOG_DEBUG, "received unknown eXosip event (type, did, cid) = (%d, %d, %d)", event->type, event->did, event->cid);
-
     }
 
     eXosip_unlock(context_eXosip);
     eXosip_event_free(event);
   }
-
 
   eXosip_quit(context_eXosip);
   osip_free(context_eXosip);

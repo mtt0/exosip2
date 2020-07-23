@@ -91,197 +91,197 @@ int _eXosip_closesocket(SOCKET_TYPE sock) {
 
 char *_ex_strerror(int errnum, char *buf, size_t buflen) {
   switch (errnum) {
-    case WSAEINTR:
-      snprintf(buf, buflen, "[%d:Interrupted system call]", errnum);
-      break;
+  case WSAEINTR:
+    snprintf(buf, buflen, "[%d:Interrupted system call]", errnum);
+    break;
 
-    case WSAEBADF:
-      snprintf(buf, buflen, "[%d:Bad file number]", errnum);
-      break;
+  case WSAEBADF:
+    snprintf(buf, buflen, "[%d:Bad file number]", errnum);
+    break;
 
-    case WSAEACCES:
-      snprintf(buf, buflen, "[%d:Permission denied]", errnum);
-      break;
+  case WSAEACCES:
+    snprintf(buf, buflen, "[%d:Permission denied]", errnum);
+    break;
 
-    case WSAEFAULT:
-      snprintf(buf, buflen, "[%d:Bad address]", errnum);
-      break;
+  case WSAEFAULT:
+    snprintf(buf, buflen, "[%d:Bad address]", errnum);
+    break;
 
-    case WSAEINVAL:
-      snprintf(buf, buflen, "[%d:Invalid argument]", errnum);
-      break;
+  case WSAEINVAL:
+    snprintf(buf, buflen, "[%d:Invalid argument]", errnum);
+    break;
 
-    case WSAEMFILE:
-      snprintf(buf, buflen, "[%d:Too many open sockets]", errnum);
-      break;
+  case WSAEMFILE:
+    snprintf(buf, buflen, "[%d:Too many open sockets]", errnum);
+    break;
 
-    case WSAEWOULDBLOCK:
-      snprintf(buf, buflen, "[%d:Operation would block]", errnum);
-      break;
+  case WSAEWOULDBLOCK:
+    snprintf(buf, buflen, "[%d:Operation would block]", errnum);
+    break;
 
-    case WSAEINPROGRESS:
-      snprintf(buf, buflen, "[%d:Operation now in progress]", errnum);
-      break;
+  case WSAEINPROGRESS:
+    snprintf(buf, buflen, "[%d:Operation now in progress]", errnum);
+    break;
 
-    case WSAEALREADY:
-      snprintf(buf, buflen, "[%d:Operation already in progress]", errnum);
-      break;
+  case WSAEALREADY:
+    snprintf(buf, buflen, "[%d:Operation already in progress]", errnum);
+    break;
 
-    case WSAENOTSOCK:
-      snprintf(buf, buflen, "[%d:Socket operation on non-socket]", errnum);
-      break;
+  case WSAENOTSOCK:
+    snprintf(buf, buflen, "[%d:Socket operation on non-socket]", errnum);
+    break;
 
-    case WSAEDESTADDRREQ:
-      snprintf(buf, buflen, "[%d:Destination address required]", errnum);
-      break;
+  case WSAEDESTADDRREQ:
+    snprintf(buf, buflen, "[%d:Destination address required]", errnum);
+    break;
 
-    case WSAEMSGSIZE:
-      snprintf(buf, buflen, "[%d:Message too long]", errnum);
-      break;
+  case WSAEMSGSIZE:
+    snprintf(buf, buflen, "[%d:Message too long]", errnum);
+    break;
 
-    case WSAEPROTOTYPE:
-      snprintf(buf, buflen, "[%d:Protocol wrong type for socket]", errnum);
-      break;
+  case WSAEPROTOTYPE:
+    snprintf(buf, buflen, "[%d:Protocol wrong type for socket]", errnum);
+    break;
 
-    case WSAENOPROTOOPT:
-      snprintf(buf, buflen, "[%d:Bad protocol option]", errnum);
-      break;
+  case WSAENOPROTOOPT:
+    snprintf(buf, buflen, "[%d:Bad protocol option]", errnum);
+    break;
 
-    case WSAEPROTONOSUPPORT:
-      snprintf(buf, buflen, "[%d:Protocol not supported]", errnum);
-      break;
+  case WSAEPROTONOSUPPORT:
+    snprintf(buf, buflen, "[%d:Protocol not supported]", errnum);
+    break;
 
-    case WSAESOCKTNOSUPPORT:
-      snprintf(buf, buflen, "[%d:Socket type not supported]", errnum);
-      break;
+  case WSAESOCKTNOSUPPORT:
+    snprintf(buf, buflen, "[%d:Socket type not supported]", errnum);
+    break;
 
-    case WSAEOPNOTSUPP:
-      snprintf(buf, buflen, "[%d:Operation not supported on socket]", errnum);
-      break;
+  case WSAEOPNOTSUPP:
+    snprintf(buf, buflen, "[%d:Operation not supported on socket]", errnum);
+    break;
 
-    case WSAEPFNOSUPPORT:
-      snprintf(buf, buflen, "[%d:Protocol family not supported]", errnum);
-      break;
+  case WSAEPFNOSUPPORT:
+    snprintf(buf, buflen, "[%d:Protocol family not supported]", errnum);
+    break;
 
-    case WSAEAFNOSUPPORT:
-      snprintf(buf, buflen, "[%d:Address family not supported]", errnum);
-      break;
+  case WSAEAFNOSUPPORT:
+    snprintf(buf, buflen, "[%d:Address family not supported]", errnum);
+    break;
 
-    case WSAEADDRINUSE:
-      snprintf(buf, buflen, "[%d:Address already in use]", errnum);
-      break;
+  case WSAEADDRINUSE:
+    snprintf(buf, buflen, "[%d:Address already in use]", errnum);
+    break;
 
-    case WSAEADDRNOTAVAIL:
-      snprintf(buf, buflen, "[%d:Can't assign requested address]", errnum);
-      break;
+  case WSAEADDRNOTAVAIL:
+    snprintf(buf, buflen, "[%d:Can't assign requested address]", errnum);
+    break;
 
-    case WSAENETDOWN:
-      snprintf(buf, buflen, "[%d:Network is down]", errnum);
-      break;
+  case WSAENETDOWN:
+    snprintf(buf, buflen, "[%d:Network is down]", errnum);
+    break;
 
-    case WSAENETUNREACH:
-      snprintf(buf, buflen, "[%d:Network is unreachable]", errnum);
-      break;
+  case WSAENETUNREACH:
+    snprintf(buf, buflen, "[%d:Network is unreachable]", errnum);
+    break;
 
-    case WSAENETRESET:
-      snprintf(buf, buflen, "[%d:Net connection reset]", errnum);
-      break;
+  case WSAENETRESET:
+    snprintf(buf, buflen, "[%d:Net connection reset]", errnum);
+    break;
 
-    case WSAECONNABORTED:
-      snprintf(buf, buflen, "[%d:Software caused connection abort]", errnum);
-      break;
+  case WSAECONNABORTED:
+    snprintf(buf, buflen, "[%d:Software caused connection abort]", errnum);
+    break;
 
-    case WSAECONNRESET:
-      snprintf(buf, buflen, "[%d:Connection reset by peer]", errnum);
-      break;
+  case WSAECONNRESET:
+    snprintf(buf, buflen, "[%d:Connection reset by peer]", errnum);
+    break;
 
-    case WSAENOBUFS:
-      snprintf(buf, buflen, "[%d:No buffer space available]", errnum);
-      break;
+  case WSAENOBUFS:
+    snprintf(buf, buflen, "[%d:No buffer space available]", errnum);
+    break;
 
-    case WSAEISCONN:
-      snprintf(buf, buflen, "[%d:Socket is already connected]", errnum);
-      break;
+  case WSAEISCONN:
+    snprintf(buf, buflen, "[%d:Socket is already connected]", errnum);
+    break;
 
-    case WSAENOTCONN:
-      snprintf(buf, buflen, "[%d:Socket is not connected]", errnum);
-      break;
+  case WSAENOTCONN:
+    snprintf(buf, buflen, "[%d:Socket is not connected]", errnum);
+    break;
 
-    case WSAESHUTDOWN:
-      snprintf(buf, buflen, "[%d:Can't send after socket shutdown]", errnum);
-      break;
+  case WSAESHUTDOWN:
+    snprintf(buf, buflen, "[%d:Can't send after socket shutdown]", errnum);
+    break;
 
-    case WSAETOOMANYREFS:
-      snprintf(buf, buflen, "[%d:Too many references: can't splice]", errnum);
-      break;
+  case WSAETOOMANYREFS:
+    snprintf(buf, buflen, "[%d:Too many references: can't splice]", errnum);
+    break;
 
-    case WSAETIMEDOUT:
-      snprintf(buf, buflen, "[%d:Connection timed out]", errnum);
-      break;
+  case WSAETIMEDOUT:
+    snprintf(buf, buflen, "[%d:Connection timed out]", errnum);
+    break;
 
-    case WSAECONNREFUSED:
-      snprintf(buf, buflen, "[%d:Connection refused]", errnum);
-      break;
+  case WSAECONNREFUSED:
+    snprintf(buf, buflen, "[%d:Connection refused]", errnum);
+    break;
 
-    case WSAELOOP:
-      snprintf(buf, buflen, "[%d:Too many levels of symbolic links]", errnum);
-      break;
+  case WSAELOOP:
+    snprintf(buf, buflen, "[%d:Too many levels of symbolic links]", errnum);
+    break;
 
-    case WSAENAMETOOLONG:
-      snprintf(buf, buflen, "[%d:File name too long]", errnum);
-      break;
+  case WSAENAMETOOLONG:
+    snprintf(buf, buflen, "[%d:File name too long]", errnum);
+    break;
 
-    case WSAEHOSTDOWN:
-      snprintf(buf, buflen, "[%d:Host is down]", errnum);
-      break;
+  case WSAEHOSTDOWN:
+    snprintf(buf, buflen, "[%d:Host is down]", errnum);
+    break;
 
-    case WSAEHOSTUNREACH:
-      snprintf(buf, buflen, "[%d:No route to host]", errnum);
-      break;
+  case WSAEHOSTUNREACH:
+    snprintf(buf, buflen, "[%d:No route to host]", errnum);
+    break;
 
-    case WSAENOTEMPTY:
-      snprintf(buf, buflen, "[%d:Directory not empty]", errnum);
-      break;
+  case WSAENOTEMPTY:
+    snprintf(buf, buflen, "[%d:Directory not empty]", errnum);
+    break;
 
-    case WSAEPROCLIM:
-      snprintf(buf, buflen, "[%d:Too many processes]", errnum);
-      break;
+  case WSAEPROCLIM:
+    snprintf(buf, buflen, "[%d:Too many processes]", errnum);
+    break;
 
-    case WSAEUSERS:
-      snprintf(buf, buflen, "[%d:Too many users]", errnum);
-      break;
+  case WSAEUSERS:
+    snprintf(buf, buflen, "[%d:Too many users]", errnum);
+    break;
 
-    case WSAEDQUOT:
-      snprintf(buf, buflen, "[%d:Disc quota exceeded]", errnum);
-      break;
+  case WSAEDQUOT:
+    snprintf(buf, buflen, "[%d:Disc quota exceeded]", errnum);
+    break;
 
-    case WSAESTALE:
-      snprintf(buf, buflen, "[%d:Stale NFS file handle]", errnum);
-      break;
+  case WSAESTALE:
+    snprintf(buf, buflen, "[%d:Stale NFS file handle]", errnum);
+    break;
 
-    case WSAEREMOTE:
-      snprintf(buf, buflen, "[%d:Too many levels of remote in path]", errnum);
-      break;
+  case WSAEREMOTE:
+    snprintf(buf, buflen, "[%d:Too many levels of remote in path]", errnum);
+    break;
 
-    case WSASYSNOTREADY:
-      snprintf(buf, buflen, "[%d:Network system is unavailable]", errnum);
-      break;
+  case WSASYSNOTREADY:
+    snprintf(buf, buflen, "[%d:Network system is unavailable]", errnum);
+    break;
 
-    case WSAVERNOTSUPPORTED:
-      snprintf(buf, buflen, "[%d:Winsock version out of range]", errnum);
-      break;
+  case WSAVERNOTSUPPORTED:
+    snprintf(buf, buflen, "[%d:Winsock version out of range]", errnum);
+    break;
 
-    case WSANOTINITIALISED:
-      snprintf(buf, buflen, "[%d:WSAStartup not yet called]", errnum);
-      break;
+  case WSANOTINITIALISED:
+    snprintf(buf, buflen, "[%d:WSAStartup not yet called]", errnum);
+    break;
 
-    case WSAEDISCON:
-      snprintf(buf, buflen, "[%d:Graceful shutdown in progress]", errnum);
-      break;
+  case WSAEDISCON:
+    snprintf(buf, buflen, "[%d:Graceful shutdown in progress]", errnum);
+    break;
 
-    default:
-      snprintf(buf, buflen, "[%d:unknown error]", errnum);
-      break;
+  default:
+    snprintf(buf, buflen, "[%d:unknown error]", errnum);
+    break;
   }
   return buf;
 }
@@ -404,8 +404,7 @@ static int naptr_enum_match_and_replace(osip_naptr_t *output_record, osip_srv_re
         size_t idx = (tmp_ptr[1] - '0');
 
         if (idx >= nmatch) {
-          OSIP_TRACE(osip_trace(__FILE__, __LINE__, OSIP_ERROR, NULL, "[eXosip] [NAPTR ENUM] [%s] -> regex wrong back reference index [%s|AUS=%s|%i:%i]\n", output_record->domain, srvrecord->regexp,
-                                output_record->AUS, idx, nmatch));
+          OSIP_TRACE(osip_trace(__FILE__, __LINE__, OSIP_ERROR, NULL, "[eXosip] [NAPTR ENUM] [%s] -> regex wrong back reference index [%s|AUS=%s|%i:%i]\n", output_record->domain, srvrecord->regexp, output_record->AUS, idx, nmatch));
           return -1;
         }
 
@@ -447,8 +446,7 @@ static int naptr_enum_match_and_replace(osip_naptr_t *output_record, osip_srv_re
               size_t idx = (tmp_ptr[1] - '0');
 
               if (idx >= 2) {
-                OSIP_TRACE(osip_trace(__FILE__, __LINE__, OSIP_ERROR, NULL, "[eXosip] [NAPTR ENUM] [%s] -> regex wrong back reference index [%s|AUS=%s|%i]\n", output_record->domain, srvrecord->regexp,
-                                      output_record->AUS, idx));
+                OSIP_TRACE(osip_trace(__FILE__, __LINE__, OSIP_ERROR, NULL, "[eXosip] [NAPTR ENUM] [%s] -> regex wrong back reference index [%s|AUS=%s|%i]\n", output_record->domain, srvrecord->regexp, output_record->AUS, idx));
                 return -1;
               }
 
@@ -511,7 +509,7 @@ static struct addrinfo *osip_he2ai(struct hostent *he, int port, int protocol) {
   if (!he) /* no input == no output! */
     return NULL;
 
-  for (i = 0; (curr = (struct in_addr *)he->h_addr_list[i]); i++) {
+  for (i = 0; (curr = (struct in_addr *) he->h_addr_list[i]); i++) {
     ai = calloc(1, sizeof(struct addrinfo) + sizeof(struct sockaddr_in));
 
     if (!ai)
@@ -534,15 +532,15 @@ static struct addrinfo *osip_he2ai(struct hostent *he, int port, int protocol) {
     ai->ai_addrlen = sizeof(struct sockaddr_in);
     /* make the ai_addr point to the address immediately following this struct
        and use that area to store the address */
-    ai->ai_addr = (struct sockaddr *)((char *)ai + sizeof(struct addrinfo));
+    ai->ai_addr = (struct sockaddr *) ((char *) ai + sizeof(struct addrinfo));
 
     /* leave the rest of the struct filled with zero */
 
-    addr = (struct sockaddr_in *)ai->ai_addr; /* storage area for this info */
+    addr = (struct sockaddr_in *) ai->ai_addr; /* storage area for this info */
 
-    memcpy((char *)&(addr->sin_addr), curr, sizeof(struct in_addr));
+    memcpy((char *) &(addr->sin_addr), curr, sizeof(struct in_addr));
     addr->sin_family = he->h_addrtype;
-    addr->sin_port = htons((unsigned short)port);
+    addr->sin_port = htons((unsigned short) port);
 
     prevai = ai;
   }
@@ -570,7 +568,7 @@ static struct addrinfo *osip_ip2addr(in_addr_t num, const char *hostname, int po
   h->h_addr_list = &buf->h_addr_list[0];
   addrentry = &buf->addrentry;
   addrentry->s_addr = num;
-  h->h_addr_list[0] = (char *)addrentry;
+  h->h_addr_list[0] = (char *) addrentry;
   h->h_addr_list[1] = NULL;
   h->h_addrtype = AF_INET;
   h->h_length = sizeof(*addrentry);
@@ -578,7 +576,7 @@ static struct addrinfo *osip_ip2addr(in_addr_t num, const char *hostname, int po
   h->h_aliases = NULL;
 
   /* Now store the dotted version of the address */
-  snprintf((char *)h->h_name, 16, "%s", hostname);
+  snprintf((char *) h->h_name, 16, "%s", hostname);
 
   ai = osip_he2ai(h, port, protocol);
   return ai;
@@ -646,7 +644,7 @@ int _eXosip_get_addrinfo(struct eXosip_t *excontext, struct addrinfo **addrinfo,
 
     int res = ERANGE;
 
-    buf = (struct hostent *)calloc(CURL_HOSTENT_SIZE, 1);
+    buf = (struct hostent *) calloc(CURL_HOSTENT_SIZE, 1);
 
     if (!buf)
       return NULL; /* major failure */
@@ -659,8 +657,8 @@ int _eXosip_get_addrinfo(struct eXosip_t *excontext, struct addrinfo **addrinfo,
 
 #ifdef HAVE_GETHOSTBYNAME_R_5
     /* Solaris, IRIX and more */
-    (void)res; /* prevent compiler warning */
-    h = gethostbyname_r(hostname, (struct hostent *)buf, (char *)buf + sizeof(struct hostent), CURL_HOSTENT_SIZE - sizeof(struct hostent), &h_errnop);
+    (void) res; /* prevent compiler warning */
+    h = gethostbyname_r(hostname, (struct hostent *) buf, (char *) buf + sizeof(struct hostent), CURL_HOSTENT_SIZE - sizeof(struct hostent), &h_errnop);
 
     /* If the buffer is too small, it returns NULL and sets errno to
      * ERANGE. The errno is thread safe if this is compiled with
@@ -676,7 +674,7 @@ int _eXosip_get_addrinfo(struct eXosip_t *excontext, struct addrinfo **addrinfo,
 #ifdef HAVE_GETHOSTBYNAME_R_6
       /* Linux */
 
-      res = gethostbyname_r(hostname, (struct hostent *)buf, (char *)buf + sizeof(struct hostent), CURL_HOSTENT_SIZE - sizeof(struct hostent), &h, /* DIFFERENCE */
+      res = gethostbyname_r(hostname, (struct hostent *) buf, (char *) buf + sizeof(struct hostent), CURL_HOSTENT_SIZE - sizeof(struct hostent), &h, /* DIFFERENCE */
                             &h_errnop);
 
     /* Redhat 8, using glibc 2.2.93 changed the behavior. Now all of a
@@ -740,7 +738,7 @@ int _eXosip_get_addrinfo(struct eXosip_t *excontext, struct addrinfo **addrinfo,
          * size dilemma.
          */
 
-        res = gethostbyname_r(hostname, (struct hostent *)buf, (struct hostent_data *)((char *)buf + sizeof(struct hostent)));
+        res = gethostbyname_r(hostname, (struct hostent *) buf, (struct hostent_data *) ((char *) buf + sizeof(struct hostent)));
         h_errnop = errno; /* we don't deal with this, but set it anyway */
 
       } else
@@ -799,15 +797,15 @@ int _eXosip_get_addrinfo(struct eXosip_t *excontext, struct addrinfo **addrinfo,
 
 int _eXosip_getport(const struct sockaddr *sa) {
   if (sa->sa_family == AF_INET)
-    return ntohs(((struct sockaddr_in *)sa)->sin_port);
+    return ntohs(((struct sockaddr_in *) sa)->sin_port);
 
-  return ntohs(((struct sockaddr_in6 *)sa)->sin6_port);
+  return ntohs(((struct sockaddr_in6 *) sa)->sin6_port);
 }
 
 #if defined(__arc__)
 
 int _eXosip_getnameinfo(const struct sockaddr *sa, socklen_t salen, char *host, socklen_t hostlen, char *serv, socklen_t servlen, int flags) {
-  struct sockaddr_in *fromsa = (struct sockaddr_in *)sa;
+  struct sockaddr_in *fromsa = (struct sockaddr_in *) sa;
   char *tmp;
 
   tmp = inet_ntoa(fromsa->sin_addr);
@@ -826,7 +824,7 @@ int _eXosip_getnameinfo(const struct sockaddr *sa, socklen_t salen, char *host, 
 int _eXosip_getnameinfo(const struct sockaddr *sa, socklen_t salen, char *host, socklen_t hostlen, char *serv, socklen_t servlen, int flags) {
   int err;
 
-  err = getnameinfo((struct sockaddr *)sa, salen, host, hostlen, serv, servlen, flags);
+  err = getnameinfo((struct sockaddr *) sa, salen, host, hostlen, serv, servlen, flags);
 
   if (err != 0) {
     OSIP_TRACE(osip_trace(__FILE__, __LINE__, OSIP_ERROR, NULL, "[eXosip] [getnameinfo] failure [%i]\n", err));
@@ -888,7 +886,7 @@ int _eXosip_guess_ip_for_destination(struct eXosip_t *excontext, int family, cha
     return OSIP_NO_NETWORK;
   }
 
-  if (WSAIoctl(sock, SIO_ROUTING_INTERFACE_QUERY, addrf->ai_addr, (DWORD)addrf->ai_addrlen, &local_addr, sizeof(local_addr), &local_addr_len, NULL, NULL) != 0) {
+  if (WSAIoctl(sock, SIO_ROUTING_INTERFACE_QUERY, addrf->ai_addr, (DWORD) addrf->ai_addrlen, &local_addr, sizeof(local_addr), &local_addr_len, NULL, NULL) != 0) {
     _eXosip_closesocket(sock);
     _eXosip_freeaddrinfo(addrf);
     snprintf(address, size, (family == AF_INET) ? "127.0.0.1" : "::1");
@@ -898,7 +896,7 @@ int _eXosip_guess_ip_for_destination(struct eXosip_t *excontext, int family, cha
   _eXosip_closesocket(sock);
   _eXosip_freeaddrinfo(addrf);
 
-  if (_eXosip_getnameinfo((const struct sockaddr *)&local_addr, local_addr_len, address, size, NULL, 0, NI_NUMERICHOST)) {
+  if (_eXosip_getnameinfo((const struct sockaddr *) &local_addr, local_addr_len, address, size, NULL, 0, NI_NUMERICHOST)) {
     snprintf(address, size, (family == AF_INET) ? "127.0.0.1" : "::1");
     return OSIP_NO_NETWORK;
   }
@@ -937,7 +935,7 @@ int _eXosip_guess_ip_for_destinationsock(struct eXosip_t *excontext, int family,
     return OSIP_NO_NETWORK;
   }
 
-  if (WSAIoctl(sock, SIO_ROUTING_INTERFACE_QUERY, addrf->ai_addr, (DWORD)addrf->ai_addrlen, &local_addr, sizeof(local_addr), &local_addr_len, NULL, NULL) != 0) {
+  if (WSAIoctl(sock, SIO_ROUTING_INTERFACE_QUERY, addrf->ai_addr, (DWORD) addrf->ai_addrlen, &local_addr, sizeof(local_addr), &local_addr_len, NULL, NULL) != 0) {
     _eXosip_freeaddrinfo(addrf);
     snprintf(address, size, (family == AF_INET) ? "127.0.0.1" : "::1");
     return OSIP_NO_NETWORK;
@@ -945,7 +943,7 @@ int _eXosip_guess_ip_for_destinationsock(struct eXosip_t *excontext, int family,
 
   _eXosip_freeaddrinfo(addrf);
 
-  if (_eXosip_getnameinfo((const struct sockaddr *)&local_addr, (socklen_t)local_addr_len, address, size, NULL, 0, NI_NUMERICHOST)) {
+  if (_eXosip_getnameinfo((const struct sockaddr *) &local_addr, (socklen_t) local_addr_len, address, size, NULL, 0, NI_NUMERICHOST)) {
     snprintf(address, size, (family == AF_INET) ? "127.0.0.1" : "::1");
     return OSIP_NO_NETWORK;
   }
@@ -1026,7 +1024,7 @@ static int _eXosip_default_gateway_ipv4(char *destination, char *address, int si
     return OSIP_NO_NETWORK;
   }
 
-  if (connect(sock_rt, (struct sockaddr *)&remote, sizeof(struct sockaddr_in)) == -1) {
+  if (connect(sock_rt, (struct sockaddr *) &remote, sizeof(struct sockaddr_in)) == -1) {
     _eXosip_closesocket(sock_rt);
     snprintf(address, size, "127.0.0.1");
     return OSIP_NO_NETWORK;
@@ -1034,7 +1032,7 @@ static int _eXosip_default_gateway_ipv4(char *destination, char *address, int si
 
   len = sizeof(iface_out);
 
-  if (getsockname(sock_rt, (struct sockaddr *)&iface_out, &len) == -1) {
+  if (getsockname(sock_rt, (struct sockaddr *) &iface_out, &len) == -1) {
     _eXosip_closesocket(sock_rt);
     snprintf(address, size, "127.0.0.1");
     return OSIP_NO_NETWORK;
@@ -1083,21 +1081,21 @@ static int _eXosip_default_gateway_ipv6(char *destination, char *address, int si
     return OSIP_NO_NETWORK;
   }
 
-  if (connect(sock_rt, (struct sockaddr *)&remote, sizeof(struct sockaddr_in6)) == -1) {
+  if (connect(sock_rt, (struct sockaddr *) &remote, sizeof(struct sockaddr_in6)) == -1) {
     _eXosip_closesocket(sock_rt);
     return OSIP_NO_NETWORK;
   }
 
   len = sizeof(iface_out);
 
-  if (getsockname(sock_rt, (struct sockaddr *)&iface_out, &len) == -1) {
+  if (getsockname(sock_rt, (struct sockaddr *) &iface_out, &len) == -1) {
     _eXosip_closesocket(sock_rt);
     return OSIP_NO_NETWORK;
   }
 
   _eXosip_closesocket(sock_rt);
 
-  inet_ntop(AF_INET6, (const void *)&iface_out.sin6_addr, address, size - 1);
+  inet_ntop(AF_INET6, (const void *) &iface_out.sin6_addr, address, size - 1);
   return OSIP_SUCCESS;
 }
 
@@ -1150,19 +1148,19 @@ static int _eXosip_default_gateway_ipv4sock(int proto, struct sockaddr_storage *
 #endif
     sock = socket(AF_INET, type, proto);
 
-    if (bind(sock, (struct sockaddr *)&iface_out, len) < 0) {
+    if (bind(sock, (struct sockaddr *) &iface_out, len) < 0) {
       _eXosip_closesocket(sock);
       return OSIP_NO_NETWORK;
     }
 
-    if (connect(sock, (struct sockaddr *)&remote, sizeof(struct sockaddr_in)) == -1) {
+    if (connect(sock, (struct sockaddr *) &remote, sizeof(struct sockaddr_in)) == -1) {
       _eXosip_closesocket(sock);
       return OSIP_NO_NETWORK;
     }
 
     len = sizeof(iface_out);
 
-    if (getsockname(sock, (struct sockaddr *)&iface_out, &len) == -1) {
+    if (getsockname(sock, (struct sockaddr *) &iface_out, &len) == -1) {
       _eXosip_closesocket(sock);
       return OSIP_NO_NETWORK;
     }
@@ -1180,7 +1178,7 @@ static int _eXosip_default_gateway_ipv4sock(int proto, struct sockaddr_storage *
   memset(&iface_out, 0, sizeof(iface_out));
   len = sizeof(iface_out);
 
-  if (getsockname(sock, (struct sockaddr *)&iface_out, &len) == -1) {
+  if (getsockname(sock, (struct sockaddr *) &iface_out, &len) == -1) {
     return OSIP_NO_NETWORK;
   }
 
@@ -1221,37 +1219,37 @@ static int _eXosip_default_gateway_ipv6sock(int proto, struct sockaddr_storage *
 #endif
     sock = socket(AF_INET6, type, proto);
 
-    if (bind(sock, (struct sockaddr *)&iface_out, len) < 0) {
+    if (bind(sock, (struct sockaddr *) &iface_out, len) < 0) {
       _eXosip_closesocket(sock);
       return OSIP_NO_NETWORK;
     }
 
-    if (connect(sock, (struct sockaddr *)&remote, sizeof(struct sockaddr_in6)) == -1) {
+    if (connect(sock, (struct sockaddr *) &remote, sizeof(struct sockaddr_in6)) == -1) {
       _eXosip_closesocket(sock);
       return OSIP_NO_NETWORK;
     }
 
     len = sizeof(iface_out);
 
-    if (getsockname(sock, (struct sockaddr *)&iface_out, &len) == -1) {
+    if (getsockname(sock, (struct sockaddr *) &iface_out, &len) == -1) {
       _eXosip_closesocket(sock);
       return OSIP_NO_NETWORK;
     }
 
     _eXosip_closesocket(sock);
 
-    inet_ntop(AF_INET6, (const void *)&iface_out.sin6_addr, address, size - 1);
+    inet_ntop(AF_INET6, (const void *) &iface_out.sin6_addr, address, size - 1);
     return OSIP_SUCCESS;
   }
 
   memset(&iface_out, 0, sizeof(iface_out));
   len = sizeof(iface_out);
 
-  if (getsockname(sock, (struct sockaddr *)&iface_out, &len) == -1) {
+  if (getsockname(sock, (struct sockaddr *) &iface_out, &len) == -1) {
     return OSIP_NO_NETWORK;
   }
 
-  inet_ntop(AF_INET6, (const void *)&iface_out.sin6_addr, address, size - 1);
+  inet_ntop(AF_INET6, (const void *) &iface_out.sin6_addr, address, size - 1);
   return OSIP_SUCCESS;
 }
 
@@ -1318,7 +1316,8 @@ static int _exosip_isipv4addr(const char *ip) {
   int i;
 
   for (i = 0; i < 4 && *ip != '\0'; i++) {
-    while (*ip != '\0' && (*ip >= '0') && (*ip <= '9')) ip++;
+    while (*ip != '\0' && (*ip >= '0') && (*ip <= '9'))
+      ip++;
 
     if (*ip != '\0') {
       if (*ip == '.' && i < 3)
@@ -1428,7 +1427,7 @@ int _eXosip_get_addrinfo(struct eXosip_t *excontext, struct addrinfo **addrinfo,
     size_log += snprintf(tmplog + size_log, sizeof(tmplog) - size_log, " = ");
 
     for (elem = *addrinfo; elem != NULL; elem = elem->ai_next) {
-      _eXosip_getnameinfo(elem->ai_addr, (socklen_t)elem->ai_addrlen, tmp, sizeof(tmp), porttmp, sizeof(porttmp), NI_NUMERICHOST | NI_NUMERICSERV);
+      _eXosip_getnameinfo(elem->ai_addr, (socklen_t) elem->ai_addrlen, tmp, sizeof(tmp), porttmp, sizeof(porttmp), NI_NUMERICHOST | NI_NUMERICSERV);
       size_log += snprintf(tmplog + size_log, sizeof(tmplog) - size_log, " [%s][%s]", tmp, porttmp);
     }
 
@@ -1468,7 +1467,7 @@ int _eXosip_srv_lookup(struct eXosip_t *excontext, osip_message_t *sip, osip_nap
   char *host;
   osip_via_t *via;
 
-  via = (osip_via_t *)osip_list_get(&sip->vias, 0);
+  via = (osip_via_t *) osip_list_get(&sip->vias, 0);
 
   if (via == NULL || via->protocol == NULL)
     return OSIP_BADPARAMETER;
@@ -1609,7 +1608,7 @@ const char *_eXosip_dnsutils_find_sni(struct eXosip_t *excontext, const char *ho
   if (dnsutils_list == NULL)
     return NULL;
 
-  naptr_record = (osip_naptr_t *)osip_list_get_first(dnsutils_list, &it);
+  naptr_record = (osip_naptr_t *) osip_list_get_first(dnsutils_list, &it);
 
   while (naptr_record != NULL) {
     if (naptr_record->naptr_state == OSIP_NAPTR_STATE_SRVDONE) {
@@ -1620,7 +1619,7 @@ const char *_eXosip_dnsutils_find_sni(struct eXosip_t *excontext, const char *ho
       }
     }
 
-    naptr_record = (osip_naptr_t *)osip_list_get_next(&it);
+    naptr_record = (osip_naptr_t *) osip_list_get_next(&it);
   }
 
   return NULL;
@@ -1688,8 +1687,8 @@ const char *_eXosip_dnsutils_find_sni(struct eXosip_t *excontext, const char *ho
 #endif
 
 #ifdef USE_WINSOCK
-#define SOCKERRNO ((int)WSAGetLastError())
-#define SET_SOCKERRNO(x) (WSASetLastError((int)(x)))
+#define SOCKERRNO ((int) WSAGetLastError())
+#define SET_SOCKERRNO(x) (WSASetLastError((int) (x)))
 #else
 #define SOCKERRNO (errno)
 #define SET_SOCKERRNO(x) (errno = (x))
@@ -1757,60 +1756,60 @@ static const unsigned char *save_A(osip_naptr_t *output_record, const unsigned c
   ares_free_string(name.as_char);
 
   switch (type) {
-    case T_A:
-      /* The RR data is a four-byte Internet address. */
-      {
-        int n;
-        osip_srv_entry_t *srventry;
+  case T_A:
+    /* The RR data is a four-byte Internet address. */
+    {
+      int n;
+      osip_srv_entry_t *srventry;
 
-        if (dlen != 4)
-          return NULL;
-
-        inet_ntop(AF_INET, aptr, addr, sizeof(addr));
-        OSIP_TRACE(osip_trace(__FILE__, __LINE__, OSIP_INFO2, NULL, "[eXosip] [save_A record] [%s] -> [%s]\n", rr_name, addr));
-
-        for (n = 0; n < 10; n++) {
-          if (osip_strcasecmp(rr_name, output_record->sipudp_record.srventry[n].srv) == 0) {
-            srventry = &output_record->sipudp_record.srventry[n];
-            snprintf(srventry->ipaddress, sizeof(srventry->ipaddress), "%s", addr);
-          }
-
-          if (osip_strcasecmp(rr_name, output_record->siptcp_record.srventry[n].srv) == 0) {
-            srventry = &output_record->siptcp_record.srventry[n];
-            snprintf(srventry->ipaddress, sizeof(srventry->ipaddress), "%s", addr);
-          }
-
-          if (osip_strcasecmp(rr_name, output_record->siptls_record.srventry[n].srv) == 0) {
-            srventry = &output_record->siptls_record.srventry[n];
-            snprintf(srventry->ipaddress, sizeof(srventry->ipaddress), "%s", addr);
-          }
-
-          if (osip_strcasecmp(rr_name, output_record->sipdtls_record.srventry[n].srv) == 0) {
-            srventry = &output_record->sipdtls_record.srventry[n];
-            snprintf(srventry->ipaddress, sizeof(srventry->ipaddress), "%s", addr);
-          }
-
-          if (osip_strcasecmp(rr_name, output_record->sipsctp_record.srventry[n].srv) == 0) {
-            srventry = &output_record->sipsctp_record.srventry[n];
-            snprintf(srventry->ipaddress, sizeof(srventry->ipaddress), "%s", addr);
-          }
-        }
-      }
-
-      break;
-
-    case T_AAAA:
-
-      /* The RR data is a 16-byte IPv6 address. */
-      if (dlen != 16)
+      if (dlen != 4)
         return NULL;
 
-      inet_ntop(AF_INET6, aptr, addr, sizeof(addr));
-      OSIP_TRACE(osip_trace(__FILE__, __LINE__, OSIP_INFO2, NULL, "[eXosip] [save_AAAA record] [%s] -> [%s]\n", rr_name, addr));
-      break;
+      inet_ntop(AF_INET, aptr, addr, sizeof(addr));
+      OSIP_TRACE(osip_trace(__FILE__, __LINE__, OSIP_INFO2, NULL, "[eXosip] [save_A record] [%s] -> [%s]\n", rr_name, addr));
 
-    default:
-      break;
+      for (n = 0; n < 10; n++) {
+        if (osip_strcasecmp(rr_name, output_record->sipudp_record.srventry[n].srv) == 0) {
+          srventry = &output_record->sipudp_record.srventry[n];
+          snprintf(srventry->ipaddress, sizeof(srventry->ipaddress), "%s", addr);
+        }
+
+        if (osip_strcasecmp(rr_name, output_record->siptcp_record.srventry[n].srv) == 0) {
+          srventry = &output_record->siptcp_record.srventry[n];
+          snprintf(srventry->ipaddress, sizeof(srventry->ipaddress), "%s", addr);
+        }
+
+        if (osip_strcasecmp(rr_name, output_record->siptls_record.srventry[n].srv) == 0) {
+          srventry = &output_record->siptls_record.srventry[n];
+          snprintf(srventry->ipaddress, sizeof(srventry->ipaddress), "%s", addr);
+        }
+
+        if (osip_strcasecmp(rr_name, output_record->sipdtls_record.srventry[n].srv) == 0) {
+          srventry = &output_record->sipdtls_record.srventry[n];
+          snprintf(srventry->ipaddress, sizeof(srventry->ipaddress), "%s", addr);
+        }
+
+        if (osip_strcasecmp(rr_name, output_record->sipsctp_record.srventry[n].srv) == 0) {
+          srventry = &output_record->sipsctp_record.srventry[n];
+          snprintf(srventry->ipaddress, sizeof(srventry->ipaddress), "%s", addr);
+        }
+      }
+    }
+
+    break;
+
+  case T_AAAA:
+
+    /* The RR data is a 16-byte IPv6 address. */
+    if (dlen != 16)
+      return NULL;
+
+    inet_ntop(AF_INET6, aptr, addr, sizeof(addr));
+    OSIP_TRACE(osip_trace(__FILE__, __LINE__, OSIP_INFO2, NULL, "[eXosip] [save_AAAA record] [%s] -> [%s]\n", rr_name, addr));
+    break;
+
+  default:
+    break;
   }
 
   return aptr + dlen;
@@ -1854,71 +1853,71 @@ static const unsigned char *save_SRV(osip_naptr_t *output_record, const unsigned
   ares_free_string(name.as_char);
 
   switch (type) {
-    case T_SRV:
-      /* The RR data is three two-byte numbers representing the
-       * priority, weight, and port, followed by a domain name.
-       */
-      {
-        osip_srv_record_t *srvrecord = NULL;
-        osip_srv_entry_t *srventry = NULL;
-        int n;
+  case T_SRV:
+    /* The RR data is three two-byte numbers representing the
+     * priority, weight, and port, followed by a domain name.
+     */
+    {
+      osip_srv_record_t *srvrecord = NULL;
+      osip_srv_entry_t *srventry = NULL;
+      int n;
 
-        if (osip_strcasecmp(rr_name, output_record->sipudp_record.name) == 0)
-          srvrecord = &output_record->sipudp_record;
+      if (osip_strcasecmp(rr_name, output_record->sipudp_record.name) == 0)
+        srvrecord = &output_record->sipudp_record;
 
-        else if (osip_strcasecmp(rr_name, output_record->siptcp_record.name) == 0)
-          srvrecord = &output_record->siptcp_record;
+      else if (osip_strcasecmp(rr_name, output_record->siptcp_record.name) == 0)
+        srvrecord = &output_record->siptcp_record;
 
-        else if (osip_strcasecmp(rr_name, output_record->siptls_record.name) == 0)
-          srvrecord = &output_record->siptls_record;
+      else if (osip_strcasecmp(rr_name, output_record->siptls_record.name) == 0)
+        srvrecord = &output_record->siptls_record;
 
-        else if (osip_strcasecmp(rr_name, output_record->sipdtls_record.name) == 0)
-          srvrecord = &output_record->sipdtls_record;
+      else if (osip_strcasecmp(rr_name, output_record->sipdtls_record.name) == 0)
+        srvrecord = &output_record->sipdtls_record;
 
-        else if (osip_strcasecmp(rr_name, output_record->sipsctp_record.name) == 0)
-          srvrecord = &output_record->sipsctp_record;
+      else if (osip_strcasecmp(rr_name, output_record->sipsctp_record.name) == 0)
+        srvrecord = &output_record->sipsctp_record;
 
-        else
-          break;
+      else
+        break;
 
-        n = 0;
+      n = 0;
 
-        while (n < 10 && srvrecord->srventry[n].srv[0] != '\0') n++;
+      while (n < 10 && srvrecord->srventry[n].srv[0] != '\0')
+        n++;
 
-        if (n == 10)
-          break; /* skip... */
+      if (n == 10)
+        break; /* skip... */
 
-        srventry = &srvrecord->srventry[n];
+      srventry = &srvrecord->srventry[n];
 
-        srventry->priority = DNS__16BIT(aptr);
-        srventry->weight = DNS__16BIT(aptr + 2);
-        srventry->port = DNS__16BIT(aptr + 4);
+      srventry->priority = DNS__16BIT(aptr);
+      srventry->weight = DNS__16BIT(aptr + 2);
+      srventry->port = DNS__16BIT(aptr + 4);
 
-        if (srventry->weight)
-          srventry->rweight = 1 + rand() % (10000 * srventry->weight);
+      if (srventry->weight)
+        srventry->rweight = 1 + rand() % (10000 * srventry->weight);
 
-        else
-          srventry->rweight = 0;
+      else
+        srventry->rweight = 0;
 
-        status = ares_expand_name(aptr + 6, abuf, alen, &name.as_char, &len);
+      status = ares_expand_name(aptr + 6, abuf, alen, &name.as_char, &len);
 
-        if (status != ARES_SUCCESS)
-          return NULL;
+      if (status != ARES_SUCCESS)
+        return NULL;
 
-        snprintf(srventry->srv, sizeof(srventry->srv), "%s", name.as_char);
+      snprintf(srventry->srv, sizeof(srventry->srv), "%s", name.as_char);
 
-        srvrecord->srv_state = OSIP_SRV_STATE_COMPLETED;
+      srvrecord->srv_state = OSIP_SRV_STATE_COMPLETED;
 
-        OSIP_TRACE(osip_trace(__FILE__, __LINE__, OSIP_INFO2, NULL, "[eXosip] [save_SRV record] [%s] IN SRV -> [%s][%i][%i][%i][%i]\n", rr_name, srventry->srv, srventry->port, srventry->priority,
-                              srventry->weight, srventry->rweight));
+      OSIP_TRACE(osip_trace(__FILE__, __LINE__, OSIP_INFO2, NULL, "[eXosip] [save_SRV record] [%s] IN SRV -> [%s][%i][%i][%i][%i]\n", rr_name, srventry->srv, srventry->port, srventry->priority, srventry->weight, srventry->rweight));
 
-        osip_srv_record_sort(srvrecord, n + 1);
-        ares_free_string(name.as_char);
-      }
-      break;
+      osip_srv_record_sort(srvrecord, n + 1);
+      ares_free_string(name.as_char);
+    }
+    break;
 
-    default:
-      break;
+  default:
+    break;
   }
 
   return aptr + dlen;
@@ -1963,98 +1962,97 @@ static const unsigned char *save_NAPTR(osip_naptr_t *output_record, const unsign
   ares_free_string(name.as_char);
 
   switch (type) {
-    case T_NAPTR: {
-      osip_srv_record_t srvrecord;
+  case T_NAPTR: {
+    osip_srv_record_t srvrecord;
 
-      memset(&srvrecord, 0, sizeof(osip_srv_record_t));
+    memset(&srvrecord, 0, sizeof(osip_srv_record_t));
 
-      srvrecord.order = DNS__16BIT(aptr);
-      srvrecord.preference = DNS__16BIT(aptr + 2);
+    srvrecord.order = DNS__16BIT(aptr);
+    srvrecord.preference = DNS__16BIT(aptr + 2);
 
-      p = aptr + 4;
+    p = aptr + 4;
 
-      status = ares_expand_string(p, abuf, alen, &name.as_uchar, &len);
+    status = ares_expand_string(p, abuf, alen, &name.as_uchar, &len);
 
-      if (status != ARES_SUCCESS)
-        return NULL;
+    if (status != ARES_SUCCESS)
+      return NULL;
 
-      snprintf(srvrecord.flag, sizeof(srvrecord.flag), "%s", name.as_char);
-      ares_free_string(name.as_char);
-      p += len;
+    snprintf(srvrecord.flag, sizeof(srvrecord.flag), "%s", name.as_char);
+    ares_free_string(name.as_char);
+    p += len;
 
-      status = ares_expand_string(p, abuf, alen, &name.as_uchar, &len);
+    status = ares_expand_string(p, abuf, alen, &name.as_uchar, &len);
 
-      if (status != ARES_SUCCESS)
-        return NULL;
+    if (status != ARES_SUCCESS)
+      return NULL;
 
-      snprintf(srvrecord.protocol, sizeof(srvrecord.protocol), "%s", name.as_char);
-      ares_free_string(name.as_char);
-      p += len;
+    snprintf(srvrecord.protocol, sizeof(srvrecord.protocol), "%s", name.as_char);
+    ares_free_string(name.as_char);
+    p += len;
 
-      status = ares_expand_string(p, abuf, alen, &name.as_uchar, &len);
+    status = ares_expand_string(p, abuf, alen, &name.as_uchar, &len);
 
-      if (status != ARES_SUCCESS)
-        return NULL;
+    if (status != ARES_SUCCESS)
+      return NULL;
 
-      snprintf(srvrecord.regexp, sizeof(srvrecord.regexp), "%s", name.as_uchar);
-      ares_free_string(name.as_char);
-      p += len;
+    snprintf(srvrecord.regexp, sizeof(srvrecord.regexp), "%s", name.as_uchar);
+    ares_free_string(name.as_char);
+    p += len;
 
-      status = ares_expand_name(p, abuf, alen, &name.as_char, &len);
+    status = ares_expand_name(p, abuf, alen, &name.as_char, &len);
 
-      if (status != ARES_SUCCESS)
-        return NULL;
+    if (status != ARES_SUCCESS)
+      return NULL;
 
-      snprintf(srvrecord.replacement, sizeof(srvrecord.replacement), "%s", name.as_char);
-      ares_free_string(name.as_char);
+    snprintf(srvrecord.replacement, sizeof(srvrecord.replacement), "%s", name.as_char);
+    ares_free_string(name.as_char);
 
-      if (srvrecord.flag[0] == 's' || srvrecord.flag[0] == 'S') {
-        snprintf(srvrecord.name, sizeof(srvrecord.name), "%s", srvrecord.replacement);
-      }
+    if (srvrecord.flag[0] == 's' || srvrecord.flag[0] == 'S') {
+      snprintf(srvrecord.name, sizeof(srvrecord.name), "%s", srvrecord.replacement);
+    }
 
-      if (srvrecord.flag[0] == 'a' || srvrecord.flag[0] == 'A') {
-        snprintf(srvrecord.name, sizeof(srvrecord.name), "%s", srvrecord.replacement);
-      }
+    if (srvrecord.flag[0] == 'a' || srvrecord.flag[0] == 'A') {
+      snprintf(srvrecord.name, sizeof(srvrecord.name), "%s", srvrecord.replacement);
+    }
 
-      if (srvrecord.flag[0] == 'u' || srvrecord.flag[0] == 'U') {
-        naptr_enum_match_and_replace(output_record, &srvrecord);
-      }
+    if (srvrecord.flag[0] == 'u' || srvrecord.flag[0] == 'U') {
+      naptr_enum_match_and_replace(output_record, &srvrecord);
+    }
 
-      srvrecord.srv_state = OSIP_SRV_STATE_UNKNOWN;
+    srvrecord.srv_state = OSIP_SRV_STATE_UNKNOWN;
 
-      if (osip_strncasecmp(srvrecord.name, "_sip._udp.", 10) == 0 || osip_strncasecmp(srvrecord.protocol, "SIP+D2U", 8) == 0) { /* udp */
-        memcpy(&output_record->sipudp_record, &srvrecord, sizeof(osip_srv_record_t));
+    if (osip_strncasecmp(srvrecord.name, "_sip._udp.", 10) == 0 || osip_strncasecmp(srvrecord.protocol, "SIP+D2U", 8) == 0) { /* udp */
+      memcpy(&output_record->sipudp_record, &srvrecord, sizeof(osip_srv_record_t));
 
-      } else if (osip_strncasecmp(srvrecord.name, "_sip._tcp.", 10) == 0 || osip_strncasecmp(srvrecord.protocol, "SIP+D2T", 8) == 0) { /* tcp */
-        memcpy(&output_record->siptcp_record, &srvrecord, sizeof(osip_srv_record_t));
+    } else if (osip_strncasecmp(srvrecord.name, "_sip._tcp.", 10) == 0 || osip_strncasecmp(srvrecord.protocol, "SIP+D2T", 8) == 0) { /* tcp */
+      memcpy(&output_record->siptcp_record, &srvrecord, sizeof(osip_srv_record_t));
 
-      } else if (osip_strncasecmp(srvrecord.protocol, "SIPS+D2T", 9) == 0) { /* tls */
-        memcpy(&output_record->siptls_record, &srvrecord, sizeof(osip_srv_record_t));
+    } else if (osip_strncasecmp(srvrecord.protocol, "SIPS+D2T", 9) == 0) { /* tls */
+      memcpy(&output_record->siptls_record, &srvrecord, sizeof(osip_srv_record_t));
 
-      } else if (osip_strncasecmp(srvrecord.protocol, "SIPS+D2U", 9) == 0) { /* dtls-udp */
-        memcpy(&output_record->sipdtls_record, &srvrecord, sizeof(osip_srv_record_t));
+    } else if (osip_strncasecmp(srvrecord.protocol, "SIPS+D2U", 9) == 0) { /* dtls-udp */
+      memcpy(&output_record->sipdtls_record, &srvrecord, sizeof(osip_srv_record_t));
 
-      } else if (osip_strncasecmp(srvrecord.protocol, "SIP+D2S", 8) == 0) { /* sctp */
-        memcpy(&output_record->sipsctp_record, &srvrecord, sizeof(osip_srv_record_t));
+    } else if (osip_strncasecmp(srvrecord.protocol, "SIP+D2S", 8) == 0) { /* sctp */
+      memcpy(&output_record->sipsctp_record, &srvrecord, sizeof(osip_srv_record_t));
 
-      } else if (osip_strncasecmp(srvrecord.protocol, "E2U+SIP", 8) == 0 || osip_strncasecmp(srvrecord.protocol, "SIP+E2U", 8) == 0) { /* enum result // SIP+E2U is from rfc2916 and obsolete */
-        srvrecord.srv_state = OSIP_SRV_STATE_COMPLETED;
-        memcpy(&output_record->sipenum_record, &srvrecord, sizeof(osip_srv_record_t));
-      }
+    } else if (osip_strncasecmp(srvrecord.protocol, "E2U+SIP", 8) == 0 || osip_strncasecmp(srvrecord.protocol, "SIP+E2U", 8) == 0) { /* enum result // SIP+E2U is from rfc2916 and obsolete */
+      srvrecord.srv_state = OSIP_SRV_STATE_COMPLETED;
+      memcpy(&output_record->sipenum_record, &srvrecord, sizeof(osip_srv_record_t));
+    }
 
-      OSIP_TRACE(osip_trace(__FILE__, __LINE__, OSIP_INFO2, NULL, "[eXosip] [save_NAPTR record] [%s] -> [%i][%i][%s][%s][%s]\n", rr_name, srvrecord.order, srvrecord.preference, srvrecord.protocol,
-                            srvrecord.regexp, srvrecord.name));
-    } break;
+    OSIP_TRACE(osip_trace(__FILE__, __LINE__, OSIP_INFO2, NULL, "[eXosip] [save_NAPTR record] [%s] -> [%i][%i][%s][%s][%s]\n", rr_name, srvrecord.order, srvrecord.preference, srvrecord.protocol, srvrecord.regexp, srvrecord.name));
+  } break;
 
-    default:
-      break;
+  default:
+    break;
   }
 
   return aptr + dlen;
 }
 
 static void _store_A(void *arg, int status, int timeouts, unsigned char *abuf, int alen, int verbose) {
-  osip_naptr_t *output_record = (osip_naptr_t *)arg;
+  osip_naptr_t *output_record = (osip_naptr_t *) arg;
 
 #if 0
   int qr, aa, tc, rd, ra, opcode, rcode;        /* , id; */
@@ -2062,7 +2060,7 @@ static void _store_A(void *arg, int status, int timeouts, unsigned char *abuf, i
   unsigned int qdcount, ancount, nscount, arcount, i;
   const unsigned char *aptr;
 
-  (void)timeouts;
+  (void) timeouts;
 
   if (status != ARES_SUCCESS) {
     if (verbose) {
@@ -2127,7 +2125,7 @@ static void _store_A(void *arg, int status, int timeouts, unsigned char *abuf, i
 }
 
 static void _store_srv(void *arg, int status, int timeouts, unsigned char *abuf, int alen, int verbose) {
-  osip_naptr_t *output_record = (osip_naptr_t *)arg;
+  osip_naptr_t *output_record = (osip_naptr_t *) arg;
 
 #if 0
   int qr, aa, tc, rd, ra, opcode, rcode;        /* , id; */
@@ -2135,7 +2133,7 @@ static void _store_srv(void *arg, int status, int timeouts, unsigned char *abuf,
   unsigned int qdcount, ancount, nscount, arcount, i;
   const unsigned char *aptr;
 
-  (void)timeouts;
+  (void) timeouts;
 
   if (status != ARES_SUCCESS) {
     if (verbose) {
@@ -2200,7 +2198,7 @@ static void _store_srv(void *arg, int status, int timeouts, unsigned char *abuf,
 }
 
 static void _store_naptr(void *arg, int status, int timeouts, unsigned char *abuf, int alen, int verbose) {
-  osip_naptr_t *output_record = (osip_naptr_t *)arg;
+  osip_naptr_t *output_record = (osip_naptr_t *) arg;
 
 #if 0
   int qr, aa, tc, rd, ra, opcode, rcode;        /* , id; */
@@ -2208,7 +2206,7 @@ static void _store_naptr(void *arg, int status, int timeouts, unsigned char *abu
   unsigned int qdcount, ancount, nscount, arcount, i;
   const unsigned char *aptr;
 
-  (void)timeouts;
+  (void) timeouts;
 
   if (status != ARES_SUCCESS) {
     if (verbose) {
@@ -2278,7 +2276,7 @@ static void _srv_callback(void *arg, int status, int timeouts, unsigned char *ab
 }
 
 static void _naptr_callback(void *arg, int status, int timeouts, unsigned char *abuf, int alen) {
-  osip_naptr_t *output_record = (osip_naptr_t *)arg;
+  osip_naptr_t *output_record = (osip_naptr_t *) arg;
 
   if (status != ARES_SUCCESS && output_record->AUS[0] != '\0') {
     OSIP_TRACE(osip_trace(__FILE__, __LINE__, OSIP_INFO2, NULL, "[eXosip] [NAPTR callback] [%s] [%s]\n", output_record->domain, ares_strerror(status)));
@@ -2345,8 +2343,7 @@ static void _naptr_callback(void *arg, int status, int timeouts, unsigned char *
       snprintf(srvrecord.name, sizeof(srvrecord.name), "_sips._udp.%s", output_record->domain);
       memcpy(&output_record->sipdtls_record, &srvrecord, sizeof(osip_srv_record_t));
 
-      OSIP_TRACE(osip_trace(__FILE__, __LINE__, OSIP_INFO2, NULL, "[eXosip] [NAPTR callback] no NAPTR answer // SRV record created manually -> [%i][%i][%s]\n", srvrecord.order, srvrecord.preference,
-                            srvrecord.name));
+      OSIP_TRACE(osip_trace(__FILE__, __LINE__, OSIP_INFO2, NULL, "[eXosip] [NAPTR callback] no NAPTR answer // SRV record created manually -> [%i][%i][%s]\n", srvrecord.order, srvrecord.preference, srvrecord.name));
 
       return;
     }
@@ -2398,8 +2395,8 @@ static void _naptr_callback(void *arg, int status, int timeouts, unsigned char *
   }
 
   /* check if something was found? */
-  if (status == ARES_SUCCESS && output_record->sipudp_record.name[0] == '\0' && output_record->siptcp_record.name[0] == '\0' && output_record->siptls_record.name[0] == '\0'
-      && output_record->sipdtls_record.name[0] == '\0' && output_record->sipsctp_record.name[0] == '\0' && output_record->sipenum_record.name[0] == '\0') {
+  if (status == ARES_SUCCESS && output_record->sipudp_record.name[0] == '\0' && output_record->siptcp_record.name[0] == '\0' && output_record->siptls_record.name[0] == '\0' && output_record->sipdtls_record.name[0] == '\0' &&
+      output_record->sipsctp_record.name[0] == '\0' && output_record->sipenum_record.name[0] == '\0') {
     osip_srv_record_t srvrecord;
 
     OSIP_TRACE(osip_trace(__FILE__, __LINE__, OSIP_INFO2, NULL, "[eXosip] [NAPTR callback] [%s] [%s] [but missing NAPTR data]\n", output_record->domain, ares_strerror(status)));
@@ -2435,8 +2432,7 @@ static void _naptr_callback(void *arg, int status, int timeouts, unsigned char *
     snprintf(srvrecord.name, sizeof(srvrecord.name), "_sips._udp.%s", output_record->domain);
     memcpy(&output_record->sipdtls_record, &srvrecord, sizeof(osip_srv_record_t));
 
-    OSIP_TRACE(osip_trace(__FILE__, __LINE__, OSIP_INFO2, NULL, "[eXosip] [NAPTR callback] no NAPTR answer // SRV record created manually -> [%i][%i][%s]\n", srvrecord.order, srvrecord.preference,
-                          srvrecord.name));
+    OSIP_TRACE(osip_trace(__FILE__, __LINE__, OSIP_INFO2, NULL, "[eXosip] [NAPTR callback] no NAPTR answer // SRV record created manually -> [%i][%i][%s]\n", srvrecord.order, srvrecord.preference, srvrecord.name));
     return;
   }
 }
@@ -2569,7 +2565,7 @@ int _eXosip_dnsutils_addsock_epoll(struct eXosip_t *excontext, int *cares_fd_tab
   osip_transaction_t *tr;
   int pos_fd = 0;
 
-  tr = (osip_transaction_t *)osip_list_get_first(&excontext->j_osip->osip_ict_transactions, &iterator);
+  tr = (osip_transaction_t *) osip_list_get_first(&excontext->j_osip->osip_ict_transactions, &iterator);
 
   while (osip_list_iterator_has_elem(iterator)) {
     ares_channel channel = NULL;
@@ -2607,10 +2603,10 @@ int _eXosip_dnsutils_addsock_epoll(struct eXosip_t *excontext, int *cares_fd_tab
         }
       }
     }
-    tr = (osip_transaction_t *)osip_list_get_next(&iterator);
+    tr = (osip_transaction_t *) osip_list_get_next(&iterator);
   }
 
-  tr = (osip_transaction_t *)osip_list_get_first(&excontext->j_osip->osip_nict_transactions, &iterator);
+  tr = (osip_transaction_t *) osip_list_get_first(&excontext->j_osip->osip_nict_transactions, &iterator);
 
   while (osip_list_iterator_has_elem(iterator)) {
     ares_channel channel = NULL;
@@ -2648,7 +2644,7 @@ int _eXosip_dnsutils_addsock_epoll(struct eXosip_t *excontext, int *cares_fd_tab
         }
       }
     }
-    tr = (osip_transaction_t *)osip_list_get_next(&iterator);
+    tr = (osip_transaction_t *) osip_list_get_next(&iterator);
   }
 
   return OSIP_SUCCESS;
@@ -2660,7 +2656,7 @@ int _eXosip_dnsutils_checksock_epoll(struct eXosip_t *excontext, int nfds) {
   osip_transaction_t *tr;
   int nbtransaction = 0;
 
-  tr = (osip_transaction_t *)osip_list_get_first(&excontext->j_osip->osip_ict_transactions, &iterator);
+  tr = (osip_transaction_t *) osip_list_get_first(&excontext->j_osip->osip_ict_transactions, &iterator);
 
   while (osip_list_iterator_has_elem(iterator)) {
     ares_channel channel = NULL;
@@ -2707,10 +2703,10 @@ int _eXosip_dnsutils_checksock_epoll(struct eXosip_t *excontext, int nfds) {
         }
       }
     }
-    tr = (osip_transaction_t *)osip_list_get_next(&iterator);
+    tr = (osip_transaction_t *) osip_list_get_next(&iterator);
   }
 
-  tr = (osip_transaction_t *)osip_list_get_first(&excontext->j_osip->osip_nict_transactions, &iterator);
+  tr = (osip_transaction_t *) osip_list_get_first(&excontext->j_osip->osip_nict_transactions, &iterator);
 
   while (osip_list_iterator_has_elem(iterator)) {
     ares_channel channel = NULL;
@@ -2758,7 +2754,7 @@ int _eXosip_dnsutils_checksock_epoll(struct eXosip_t *excontext, int nfds) {
         }
       }
     }
-    tr = (osip_transaction_t *)osip_list_get_next(&iterator);
+    tr = (osip_transaction_t *) osip_list_get_next(&iterator);
   }
 
   return nbtransaction;
@@ -2791,7 +2787,7 @@ int _eXosip_dnsutils_getsock(struct eXosip_t *excontext, fd_set *read_fds, fd_se
   osip_transaction_t *tr;
   int nfds = 0;
   int max = 0;
-  tr = (osip_transaction_t *)osip_list_get_first(&excontext->j_osip->osip_ict_transactions, &iterator);
+  tr = (osip_transaction_t *) osip_list_get_first(&excontext->j_osip->osip_ict_transactions, &iterator);
 
   while (osip_list_iterator_has_elem(iterator)) {
     ares_channel channel = NULL;
@@ -2803,10 +2799,10 @@ int _eXosip_dnsutils_getsock(struct eXosip_t *excontext, fd_set *read_fds, fd_se
           max = nfds;
       }
     }
-    tr = (osip_transaction_t *)osip_list_get_next(&iterator);
+    tr = (osip_transaction_t *) osip_list_get_next(&iterator);
   }
 
-  tr = (osip_transaction_t *)osip_list_get_first(&excontext->j_osip->osip_nict_transactions, &iterator);
+  tr = (osip_transaction_t *) osip_list_get_first(&excontext->j_osip->osip_nict_transactions, &iterator);
 
   while (osip_list_iterator_has_elem(iterator)) {
     ares_channel channel = NULL;
@@ -2818,7 +2814,7 @@ int _eXosip_dnsutils_getsock(struct eXosip_t *excontext, fd_set *read_fds, fd_se
           max = nfds;
       }
     }
-    tr = (osip_transaction_t *)osip_list_get_next(&iterator);
+    tr = (osip_transaction_t *) osip_list_get_next(&iterator);
   }
 
   return max;
@@ -2830,7 +2826,7 @@ int _eXosip_dnsutils_checksock(struct eXosip_t *excontext, fd_set *read_fds, fd_
   osip_transaction_t *tr;
   int nbtransaction = 0;
 
-  tr = (osip_transaction_t *)osip_list_get_first(&excontext->j_osip->osip_ict_transactions, &iterator);
+  tr = (osip_transaction_t *) osip_list_get_first(&excontext->j_osip->osip_ict_transactions, &iterator);
 
   while (osip_list_iterator_has_elem(iterator)) {
     ares_channel channel = NULL;
@@ -2868,10 +2864,10 @@ int _eXosip_dnsutils_checksock(struct eXosip_t *excontext, fd_set *read_fds, fd_
         }
       }
     }
-    tr = (osip_transaction_t *)osip_list_get_next(&iterator);
+    tr = (osip_transaction_t *) osip_list_get_next(&iterator);
   }
 
-  tr = (osip_transaction_t *)osip_list_get_first(&excontext->j_osip->osip_nict_transactions, &iterator);
+  tr = (osip_transaction_t *) osip_list_get_first(&excontext->j_osip->osip_nict_transactions, &iterator);
 
   while (osip_list_iterator_has_elem(iterator)) {
     ares_channel channel = NULL;
@@ -2909,7 +2905,7 @@ int _eXosip_dnsutils_checksock(struct eXosip_t *excontext, fd_set *read_fds, fd_
         }
       }
     }
-    tr = (osip_transaction_t *)osip_list_get_next(&iterator);
+    tr = (osip_transaction_t *) osip_list_get_next(&iterator);
   }
 
   return nbtransaction;
@@ -2974,8 +2970,7 @@ static int eXosip_dnsutils_srv_lookup(struct osip_naptr *output_record, const ch
   if (output_record->naptr_state != OSIP_NAPTR_STATE_NAPTRDONE)
     return OSIP_SUCCESS;
 
-  if (output_record->sipudp_record.name[0] == '\0' && output_record->siptcp_record.name[0] == '\0' && output_record->siptls_record.name[0] == '\0' && output_record->sipdtls_record.name[0] == '\0'
-      && output_record->sipsctp_record.name[0] == '\0') {
+  if (output_record->sipudp_record.name[0] == '\0' && output_record->siptcp_record.name[0] == '\0' && output_record->siptls_record.name[0] == '\0' && output_record->sipdtls_record.name[0] == '\0' && output_record->sipsctp_record.name[0] == '\0') {
     output_record->naptr_state = OSIP_NAPTR_STATE_NOTSUPPORTED;
 
     if (output_record->arg != NULL) {
@@ -3024,22 +3019,22 @@ static int eXosip_dnsutils_srv_lookup(struct osip_naptr *output_record, const ch
   output_record->naptr_state = OSIP_NAPTR_STATE_SRVINPROGRESS;
 
   if (output_record->sipudp_record.name[0] != '\0' && output_record->sipudp_record.srv_state != OSIP_SRV_STATE_COMPLETED) {
-    ares_query(channel, output_record->sipudp_record.name, C_IN, T_SRV, _srv_callback, (void *)output_record);
+    ares_query(channel, output_record->sipudp_record.name, C_IN, T_SRV, _srv_callback, (void *) output_record);
     OSIP_TRACE(osip_trace(__FILE__, __LINE__, OSIP_INFO2, NULL, "[eXosip] [SRV LOOKUP] about to ask for [%s SRV]\n", output_record->sipudp_record.name));
   }
 
   if (output_record->siptcp_record.name[0] != '\0' && output_record->siptcp_record.srv_state != OSIP_SRV_STATE_COMPLETED) {
-    ares_query(channel, output_record->siptcp_record.name, C_IN, T_SRV, _srv_callback, (void *)output_record);
+    ares_query(channel, output_record->siptcp_record.name, C_IN, T_SRV, _srv_callback, (void *) output_record);
     OSIP_TRACE(osip_trace(__FILE__, __LINE__, OSIP_INFO2, NULL, "[eXosip] [SRV LOOKUP] about to ask for [%s SRV]\n", output_record->siptcp_record.name));
   }
 
   if (output_record->siptls_record.name[0] != '\0' && output_record->siptls_record.srv_state != OSIP_SRV_STATE_COMPLETED) {
-    ares_query(channel, output_record->siptls_record.name, C_IN, T_SRV, _srv_callback, (void *)output_record);
+    ares_query(channel, output_record->siptls_record.name, C_IN, T_SRV, _srv_callback, (void *) output_record);
     OSIP_TRACE(osip_trace(__FILE__, __LINE__, OSIP_INFO2, NULL, "[eXosip] [SRV LOOKUP] about to ask for [%s SRV]\n", output_record->siptls_record.name));
   }
 
   if (output_record->sipdtls_record.name[0] != '\0' && output_record->sipdtls_record.srv_state != OSIP_SRV_STATE_COMPLETED) {
-    ares_query(channel, output_record->sipdtls_record.name, C_IN, T_SRV, _srv_callback, (void *)output_record);
+    ares_query(channel, output_record->sipdtls_record.name, C_IN, T_SRV, _srv_callback, (void *) output_record);
     OSIP_TRACE(osip_trace(__FILE__, __LINE__, OSIP_INFO2, NULL, "[eXosip] [SRV LOOKUP] about to ask for [%s SRV]\n", output_record->sipdtls_record.name));
   }
 
@@ -3137,7 +3132,7 @@ static int eXosip_dnsutils_naptr_lookup(osip_naptr_t *output_record, const char 
 
   output_record->arg = channel;
   output_record->naptr_state = OSIP_NAPTR_STATE_INPROGRESS;
-  ares_query(channel, domain, C_IN, T_NAPTR, _naptr_callback, (void *)output_record);
+  ares_query(channel, domain, C_IN, T_NAPTR, _naptr_callback, (void *) output_record);
 
   OSIP_TRACE(osip_trace(__FILE__, __LINE__, OSIP_INFO2, NULL, "[eXosip] [NAPTR LOOKUP] about to ask for [%s NAPTR]\n", domain));
 
@@ -3242,7 +3237,7 @@ struct osip_naptr *eXosip_dnsutils_naptr(struct eXosip_t *excontext, const char 
   }
 
   if (dnsutils_list == NULL) {
-    dnsutils_list = (osip_list_t *)osip_malloc(sizeof(osip_list_t));
+    dnsutils_list = (osip_list_t *) osip_malloc(sizeof(osip_list_t));
     osip_list_init(dnsutils_list);
 
     i = ares_library_init(ARES_LIB_INIT_ALL);
@@ -3254,7 +3249,7 @@ struct osip_naptr *eXosip_dnsutils_naptr(struct eXosip_t *excontext, const char 
   }
 
   if (keep_in_cache < 0) {
-    naptr_record = (osip_naptr_t *)osip_list_get_first(dnsutils_list, &it);
+    naptr_record = (osip_naptr_t *) osip_list_get_first(dnsutils_list, &it);
 
     while (naptr_record != NULL) {
       if (osip_strcasecmp(domain, naptr_record->domain) == 0) {
@@ -3272,7 +3267,7 @@ struct osip_naptr *eXosip_dnsutils_naptr(struct eXosip_t *excontext, const char 
       if (it.pos == 9)
         break;
 
-      naptr_record = (osip_naptr_t *)osip_list_get_next(&it);
+      naptr_record = (osip_naptr_t *) osip_list_get_next(&it);
     }
 
     return NULL;
@@ -3306,7 +3301,7 @@ struct osip_naptr *eXosip_dnsutils_naptr(struct eXosip_t *excontext, const char 
     return NULL;
   }
 
-  for (i = 0; (DWORD)i < dns_servers->AddrCount; i++) {
+  for (i = 0; (DWORD) i < dns_servers->AddrCount; i++) {
     char ipaddress[512];
     DWORD val = dns_servers->AddrArray[i];
 
@@ -3317,7 +3312,7 @@ struct osip_naptr *eXosip_dnsutils_naptr(struct eXosip_t *excontext, const char 
   osip_free(dns_servers);
 #endif
 
-  naptr_record = (osip_naptr_t *)osip_list_get_first(dnsutils_list, &it);
+  naptr_record = (osip_naptr_t *) osip_list_get_first(dnsutils_list, &it);
 
   while (naptr_record != NULL) {
     /* process all */
@@ -3329,11 +3324,11 @@ struct osip_naptr *eXosip_dnsutils_naptr(struct eXosip_t *excontext, const char 
     if (it.pos == 9)
       break;
 
-    naptr_record = (osip_naptr_t *)osip_list_get_next(&it);
+    naptr_record = (osip_naptr_t *) osip_list_get_next(&it);
   }
 
   it.pos = 0;
-  naptr_record = (osip_naptr_t *)osip_list_get_first(dnsutils_list, &it);
+  naptr_record = (osip_naptr_t *) osip_list_get_first(dnsutils_list, &it);
 
   while (naptr_record != NULL) {
     if (osip_strcasecmp(domain, naptr_record->domain) == 0) {
@@ -3351,7 +3346,7 @@ struct osip_naptr *eXosip_dnsutils_naptr(struct eXosip_t *excontext, const char 
     if (it.pos == 9)
       break;
 
-    naptr_record = (osip_naptr_t *)osip_list_get_next(&it);
+    naptr_record = (osip_naptr_t *) osip_list_get_next(&it);
   }
 
   if (it.pos == 9 && keep_in_cache > 0) {
@@ -3373,13 +3368,13 @@ struct osip_naptr *eXosip_dnsutils_naptr(struct eXosip_t *excontext, const char 
 
     keep_in_cache = 0;
 
-    naptr_record = (osip_naptr_t *)osip_malloc(sizeof(osip_naptr_t));
+    naptr_record = (osip_naptr_t *) osip_malloc(sizeof(osip_naptr_t));
     memset(naptr_record, 0, sizeof(osip_naptr_t));
     naptr_record->keep_in_cache = keep_in_cache;
     snprintf(naptr_record->AUS, sizeof(naptr_record->AUS), "%s", AUS);
 
   } else if (naptr_record == NULL) {
-    naptr_record = (osip_naptr_t *)osip_malloc(sizeof(osip_naptr_t));
+    naptr_record = (osip_naptr_t *) osip_malloc(sizeof(osip_naptr_t));
     memset(naptr_record, 0, sizeof(osip_naptr_t));
     naptr_record->keep_in_cache = keep_in_cache;
     not_in_list = 1;
@@ -3535,7 +3530,7 @@ static int _eXosip_dnsutils_srv_lookup(struct osip_srv_record *output_srv) {
 
   n = 0;
 
-  for (tmp = (PDNS_RECORDA)answer; tmp != NULL; tmp = tmp->pNext) {
+  for (tmp = (PDNS_RECORDA) answer; tmp != NULL; tmp = tmp->pNext) {
     struct osip_srv_entry *srventry;
 
     DNS_SRV_DATAA *data;
@@ -3558,8 +3553,7 @@ static int _eXosip_dnsutils_srv_lookup(struct osip_srv_record *output_srv) {
 
     srventry->port = data->wPort;
 
-    OSIP_TRACE(osip_trace(__FILE__, __LINE__, OSIP_INFO2, NULL, "[eXosip] [save_SRV record] [%s] IN SRV -> [%s/%i/%i/%i/%i]\n", output_srv->name, srventry->srv, srventry->port, srventry->priority,
-                          srventry->weight, srventry->rweight));
+    OSIP_TRACE(osip_trace(__FILE__, __LINE__, OSIP_INFO2, NULL, "[eXosip] [save_SRV record] [%s] IN SRV -> [%s/%i/%i/%i/%i]\n", output_srv->name, srventry->srv, srventry->port, srventry->priority, srventry->weight, srventry->rweight));
 
     output_srv->srv_state = OSIP_SRV_STATE_COMPLETED;
 
@@ -3724,8 +3718,8 @@ static int eXosip_dnsutils_naptr_lookup(osip_naptr_t *output_record, const char 
     return OSIP_UNDEFINED_ERROR;
   }
 
-  for (tmp = (PDNS_RECORDA)answer; tmp != NULL; tmp = tmp->pNext) {
-    char *buf = (char *)&tmp->Data;
+  for (tmp = (PDNS_RECORDA) answer; tmp != NULL; tmp = tmp->pNext) {
+    char *buf = (char *) &tmp->Data;
 
     int len;
     OSVERSIONINFOEX ovi;
@@ -3737,7 +3731,7 @@ static int eXosip_dnsutils_naptr_lookup(osip_naptr_t *output_record, const char 
     memset(&srvrecord, 0, sizeof(osip_srv_record_t));
     memset(&ovi, 0, sizeof(ovi));
     ovi.dwOSVersionInfoSize = sizeof(ovi);
-    GetVersionEx((LPOSVERSIONINFO)&ovi);
+    GetVersionEx((LPOSVERSIONINFO) &ovi);
 
     /* Minimum: client: Windows 2000 Professional */
     /* Minimum: server: Windows 2000 Server */
@@ -3756,10 +3750,10 @@ static int eXosip_dnsutils_naptr_lookup(osip_naptr_t *output_record, const char 
 #endif
 
     } else {
-      memcpy((void *)&srvrecord.order, buf, 2);
+      memcpy((void *) &srvrecord.order, buf, 2);
       srvrecord.order = ntohs(srvrecord.order); /* ((unsigned short)buf[0] << 8) | ((unsigned short)buf[1]); */
       buf += sizeof(unsigned short);
-      memcpy((void *)&srvrecord.preference, buf, 2);
+      memcpy((void *) &srvrecord.preference, buf, 2);
       srvrecord.preference = ntohs(srvrecord.preference); /* ((unsigned short)buf[0] << 8) | ((unsigned short)buf[1]); */
       buf += sizeof(unsigned short);
 
@@ -3793,7 +3787,7 @@ static int eXosip_dnsutils_naptr_lookup(osip_naptr_t *output_record, const char 
       srvrecord.regexp[len] = '\0';
       buf += len;
 
-      len = _eX_dn_expand((char *)&tmp->Data, ((char *)&tmp->Data) + tmp->wDataLength, buf, srvrecord.replacement, 1024 - 1);
+      len = _eX_dn_expand((char *) &tmp->Data, ((char *) &tmp->Data) + tmp->wDataLength, buf, srvrecord.replacement, 1024 - 1);
 
       if (len < 0)
         break;
@@ -3841,11 +3835,10 @@ static int eXosip_dnsutils_naptr_lookup(osip_naptr_t *output_record, const char 
       output_record->naptr_state = OSIP_NAPTR_STATE_SRVDONE;
     }
 
-    OSIP_TRACE(osip_trace(__FILE__, __LINE__, OSIP_INFO2, NULL, "[eXosip] [save_NAPTR record] [%s] -> [%i][%i][%s][%s][%s]\n", output_record->domain, srvrecord.order, srvrecord.preference,
-                          srvrecord.protocol, srvrecord.regexp, srvrecord.name));
+    OSIP_TRACE(osip_trace(__FILE__, __LINE__, OSIP_INFO2, NULL, "[eXosip] [save_NAPTR record] [%s] -> [%i][%i][%s][%s][%s]\n", output_record->domain, srvrecord.order, srvrecord.preference, srvrecord.protocol, srvrecord.regexp, srvrecord.name));
   }
 
-  for (tmp = (PDNS_RECORDA)answer; tmp != NULL; tmp = tmp->pNext) {
+  for (tmp = (PDNS_RECORDA) answer; tmp != NULL; tmp = tmp->pNext) {
     struct osip_srv_entry *srventry;
     struct osip_srv_record *srvrecord;
     DNS_SRV_DATAA *data;
@@ -3874,7 +3867,8 @@ static int eXosip_dnsutils_naptr_lookup(osip_naptr_t *output_record, const char 
 
     n = 0;
 
-    while (n < 10 && srvrecord->srventry[n].srv[0] != '\0') n++;
+    while (n < 10 && srvrecord->srventry[n].srv[0] != '\0')
+      n++;
 
     if (n == 10)
       continue; /* skip... */
@@ -3895,14 +3889,13 @@ static int eXosip_dnsutils_naptr_lookup(osip_naptr_t *output_record, const char 
 
     srventry->port = data->wPort;
 
-    OSIP_TRACE(osip_trace(__FILE__, __LINE__, OSIP_INFO2, NULL, "[eXosip] [save_SRV record] [%s] IN SRV -> [%s/%i/%i/%i/%i]\n", tmp->pName, srventry->srv, srventry->port, srventry->priority,
-                          srventry->weight, srventry->rweight));
+    OSIP_TRACE(osip_trace(__FILE__, __LINE__, OSIP_INFO2, NULL, "[eXosip] [save_SRV record] [%s] IN SRV -> [%s/%i/%i/%i/%i]\n", tmp->pName, srventry->srv, srventry->port, srventry->priority, srventry->weight, srventry->rweight));
     osip_srv_record_sort(srvrecord, n + 1);
 
     output_record->naptr_state = OSIP_NAPTR_STATE_SRVDONE;
   }
-  
-  for (tmp = (PDNS_RECORDA)answer; tmp != NULL; tmp = tmp->pNext) {
+
+  for (tmp = (PDNS_RECORDA) answer; tmp != NULL; tmp = tmp->pNext) {
     struct osip_srv_entry *srventry;
     DNS_A_DATA *data;
     DWORD val;
@@ -3938,8 +3931,7 @@ static int eXosip_dnsutils_naptr_lookup(osip_naptr_t *output_record, const char 
       snprintf(srventry->ipaddress, sizeof(srventry->ipaddress), "%d.%d.%d.%d", (val >> 0) & 0x000000FF, (val >> 8) & 0x000000FF, (val >> 16) & 0x000000FF, (val >> 24) & 0x000000FF);
     }
 
-    OSIP_TRACE(osip_trace(__FILE__, __LINE__, OSIP_INFO2, NULL, "[eXosip] A record [%s] -> [%d.%d.%d.%d]\n", tmp->pName, (val >> 0) & 0x000000FF, (val >> 8) & 0x000000FF, (val >> 16) & 0x000000FF,
-                          (val >> 24) & 0x000000FF));
+    OSIP_TRACE(osip_trace(__FILE__, __LINE__, OSIP_INFO2, NULL, "[eXosip] A record [%s] -> [%d.%d.%d.%d]\n", tmp->pName, (val >> 0) & 0x000000FF, (val >> 8) & 0x000000FF, (val >> 16) & 0x000000FF, (val >> 24) & 0x000000FF));
   }
 
   DnsRecordListFree(answer, DnsFreeRecordList);
@@ -4019,12 +4011,12 @@ struct osip_naptr *eXosip_dnsutils_naptr(struct eXosip_t *excontext, const char 
   }
 
   if (dnsutils_list == NULL) {
-    dnsutils_list = (osip_list_t *)osip_malloc(sizeof(osip_list_t));
+    dnsutils_list = (osip_list_t *) osip_malloc(sizeof(osip_list_t));
     osip_list_init(dnsutils_list);
   }
 
   if (keep_in_cache < 0) {
-    naptr_record = (osip_naptr_t *)osip_list_get_first(dnsutils_list, &it);
+    naptr_record = (osip_naptr_t *) osip_list_get_first(dnsutils_list, &it);
 
     while (naptr_record != NULL) {
       if (osip_strcasecmp(domain, naptr_record->domain) == 0) {
@@ -4042,7 +4034,7 @@ struct osip_naptr *eXosip_dnsutils_naptr(struct eXosip_t *excontext, const char 
       if (it.pos == 9)
         break;
 
-      naptr_record = (osip_naptr_t *)osip_list_get_next(&it);
+      naptr_record = (osip_naptr_t *) osip_list_get_next(&it);
     }
 
     return NULL;
@@ -4075,7 +4067,7 @@ struct osip_naptr *eXosip_dnsutils_naptr(struct eXosip_t *excontext, const char 
     return NULL;
   }
 
-  for (i = 0; (DWORD)i < dns_servers->AddrCount; i++) {
+  for (i = 0; (DWORD) i < dns_servers->AddrCount; i++) {
     char ipaddress[512];
     DWORD val = dns_servers->AddrArray[i];
 
@@ -4083,7 +4075,7 @@ struct osip_naptr *eXosip_dnsutils_naptr(struct eXosip_t *excontext, const char 
     OSIP_TRACE(osip_trace(__FILE__, __LINE__, OSIP_INFO2, NULL, "[eXosip] [NAPTR LOOKUP] dns server [%i] [%s]\n", i, ipaddress));
   }
 
-  naptr_record = (osip_naptr_t *)osip_list_get_first(dnsutils_list, &it);
+  naptr_record = (osip_naptr_t *) osip_list_get_first(dnsutils_list, &it);
 
   while (naptr_record != NULL) {
     /* process all */
@@ -4095,11 +4087,11 @@ struct osip_naptr *eXosip_dnsutils_naptr(struct eXosip_t *excontext, const char 
     if (it.pos == 9)
       break;
 
-    naptr_record = (osip_naptr_t *)osip_list_get_next(&it);
+    naptr_record = (osip_naptr_t *) osip_list_get_next(&it);
   }
 
   it.pos = 0;
-  naptr_record = (osip_naptr_t *)osip_list_get_first(dnsutils_list, &it);
+  naptr_record = (osip_naptr_t *) osip_list_get_first(dnsutils_list, &it);
 
   while (naptr_record != NULL) {
     if (osip_strcasecmp(domain, naptr_record->domain) == 0) {
@@ -4117,7 +4109,7 @@ struct osip_naptr *eXosip_dnsutils_naptr(struct eXosip_t *excontext, const char 
     if (it.pos == 9)
       break;
 
-    naptr_record = (osip_naptr_t *)osip_list_get_next(&it);
+    naptr_record = (osip_naptr_t *) osip_list_get_next(&it);
   }
 
   if (it.pos == 9 && keep_in_cache > 0) {
@@ -4139,13 +4131,13 @@ struct osip_naptr *eXosip_dnsutils_naptr(struct eXosip_t *excontext, const char 
 
     keep_in_cache = 0;
 
-    naptr_record = (osip_naptr_t *)osip_malloc(sizeof(osip_naptr_t));
+    naptr_record = (osip_naptr_t *) osip_malloc(sizeof(osip_naptr_t));
     memset(naptr_record, 0, sizeof(osip_naptr_t));
     naptr_record->keep_in_cache = keep_in_cache;
     snprintf(naptr_record->AUS, sizeof(naptr_record->AUS), "%s", AUS);
 
   } else if (naptr_record == NULL) {
-    naptr_record = (osip_naptr_t *)osip_malloc(sizeof(osip_naptr_t));
+    naptr_record = (osip_naptr_t *) osip_malloc(sizeof(osip_naptr_t));
     memset(naptr_record, 0, sizeof(osip_naptr_t));
     naptr_record->keep_in_cache = keep_in_cache;
     not_in_list = 1;
@@ -4234,23 +4226,23 @@ static int _eXosip_dnsutils_srv_lookup(struct osip_srv_record *output_srv) {
 
   OSIP_TRACE(osip_trace(__FILE__, __LINE__, OSIP_INFO2, NULL, "[eXosip] about to ask for [%s SRV]\n", output_srv->name));
 
-  n = res_query(output_srv->name, C_IN, T_SRV, (unsigned char *)&answer, sizeof(answer));
+  n = res_query(output_srv->name, C_IN, T_SRV, (unsigned char *) &answer, sizeof(answer));
 
-  if (n < (int)sizeof(HEADER)) {
+  if (n < (int) sizeof(HEADER)) {
     return OSIP_UNKNOWN_HOST;
   }
 
   /* browse message and search for DNS answers part */
-  hp = (HEADER *)&answer;
+  hp = (HEADER *) &answer;
   qdcount = ntohs(hp->qdcount);
   ancount = ntohs(hp->ancount);
 
-  msg = (unsigned char *)(&answer);
-  eom = (unsigned char *)(&answer) + n;
-  cp = (unsigned char *)(&answer) + sizeof(HEADER);
+  msg = (unsigned char *) (&answer);
+  eom = (unsigned char *) (&answer) + n;
+  cp = (unsigned char *) (&answer) + sizeof(HEADER);
 
   while (qdcount-- > 0 && cp < eom) {
-    n = dn_expand(msg, eom, cp, (char *)hostbuf, 256);
+    n = dn_expand(msg, eom, cp, (char *) hostbuf, 256);
 
     if (n < 0) {
       OSIP_TRACE(osip_trace(__FILE__, __LINE__, OSIP_ERROR, NULL, "[eXosip] invalid SRV record answer for [%s SRV] [bad format]\n", output_srv->name));
@@ -4267,7 +4259,7 @@ static int _eXosip_dnsutils_srv_lookup(struct osip_srv_record *output_srv) {
   while (ancount-- > 0 && cp < eom) {
     struct osip_srv_entry *srventry;
 
-    n = dn_expand(msg, eom, cp, (char *)hostbuf, 256);
+    n = dn_expand(msg, eom, cp, (char *) hostbuf, 256);
 
     if (n < 0) {
       OSIP_TRACE(osip_trace(__FILE__, __LINE__, OSIP_ERROR, NULL, "[eXosip] invalid SRV record answer for [%s SRV] [bad format]\n", output_srv->name));
@@ -4348,7 +4340,7 @@ static int _eXosip_dnsutils_srv_lookup(struct osip_srv_record *output_srv) {
     NS_GET16(port, cp);
 #endif
 
-    n = dn_expand(msg, eom, cp, (char *)hostbuf, 256);
+    n = dn_expand(msg, eom, cp, (char *) hostbuf, 256);
 
     if (n < 0)
       break;
@@ -4362,15 +4354,14 @@ static int _eXosip_dnsutils_srv_lookup(struct osip_srv_record *output_srv) {
     srventry->weight = weight;
 
     if (weight)
-      srventry->rweight = (int)(1 + random() % (10000 * srventry->weight));
+      srventry->rweight = (int) (1 + random() % (10000 * srventry->weight));
 
     else
       srventry->rweight = 0;
 
     srventry->port = port;
 
-    OSIP_TRACE(osip_trace(__FILE__, __LINE__, OSIP_INFO2, NULL, "[eXosip] [save_SRV record] [%s] IN SRV -> [%s/%i/%i/%i/%i]\n", output_srv->name, srventry->srv, srventry->port, srventry->priority,
-                          srventry->weight, srventry->rweight));
+    OSIP_TRACE(osip_trace(__FILE__, __LINE__, OSIP_INFO2, NULL, "[eXosip] [save_SRV record] [%s] IN SRV -> [%s/%i/%i/%i/%i]\n", output_srv->name, srventry->srv, srventry->port, srventry->priority, srventry->weight, srventry->rweight));
 
     output_srv->srv_state = OSIP_SRV_STATE_COMPLETED;
 
@@ -4449,11 +4440,11 @@ static int eXosip_dnsutils_naptr_lookup(osip_naptr_t *output_record, const char 
 
   output_record->naptr_state = OSIP_NAPTR_STATE_INPROGRESS;
 
-  n = res_query(domain, C_IN, T_NAPTR, (unsigned char *)&answer, sizeof(answer));
+  n = res_query(domain, C_IN, T_NAPTR, (unsigned char *) &answer, sizeof(answer));
 
   OSIP_TRACE(osip_trace(__FILE__, __LINE__, OSIP_INFO2, NULL, "[eXosip] [NAPTR LOOKUP] about to ask for [%s NAPTR]\n", domain));
 
-  if (n < (int)sizeof(HEADER)) {
+  if (n < (int) sizeof(HEADER)) {
     int hstatus = h_errno;
 
     OSIP_TRACE(osip_trace(__FILE__, __LINE__, OSIP_ERROR, NULL, "[eXosip] [NAPTR LOOKUP] res_query failed [%s NAPTR]\n", domain));
@@ -4471,18 +4462,18 @@ static int eXosip_dnsutils_naptr_lookup(osip_naptr_t *output_record, const char 
   }
 
   /* browse message and search for DNS answers part */
-  hp = (HEADER *)&answer;
+  hp = (HEADER *) &answer;
   qdcount = ntohs(hp->qdcount);
   ancount = ntohs(hp->ancount);
   /* nscount = ntohs (hp->ancount); */
   /* arcount = ntohs (hp->arcount); */
 
-  msg = (unsigned char *)(&answer);
-  eom = (unsigned char *)(&answer) + n;
-  cp = (unsigned char *)(&answer) + sizeof(HEADER);
+  msg = (unsigned char *) (&answer);
+  eom = (unsigned char *) (&answer) + n;
+  cp = (unsigned char *) (&answer) + sizeof(HEADER);
 
   while (qdcount-- > 0 && cp < eom) {
-    n = dn_expand(msg, eom, cp, (char *)rr_name, 512);
+    n = dn_expand(msg, eom, cp, (char *) rr_name, 512);
 
     if (n < 0) {
       OSIP_TRACE(osip_trace(__FILE__, __LINE__, OSIP_ERROR, NULL, "[eXosip] [NAPTR LOOKUP] invalid SRV record answer for [%s NAPTR] [bad format]\n", domain));
@@ -4501,7 +4492,7 @@ static int eXosip_dnsutils_naptr_lookup(osip_naptr_t *output_record, const char 
     int len;
     osip_srv_record_t srvrecord;
 
-    n = dn_expand(msg, eom, cp, (char *)rr_name, 512);
+    n = dn_expand(msg, eom, cp, (char *) rr_name, 512);
 
     if (n < 0) {
       OSIP_TRACE(osip_trace(__FILE__, __LINE__, OSIP_ERROR, NULL, "[eXosip] [NAPTR LOOKUP] invalid NAPTR answer for [%s NAPTR] [bad format]\n", domain));
@@ -4558,28 +4549,28 @@ static int eXosip_dnsutils_naptr_lookup(osip_naptr_t *output_record, const char 
 
     memset(&srvrecord, 0, sizeof(osip_srv_record_t));
 
-    memcpy((void *)&srvrecord.order, cp, 2);
+    memcpy((void *) &srvrecord.order, cp, 2);
     srvrecord.order = ntohs(srvrecord.order); /*((unsigned short)cp[0] << 8) | ((unsigned short)cp[1]); */
     cp += sizeof(unsigned short);
-    memcpy((void *)&srvrecord.preference, cp, 2);
+    memcpy((void *) &srvrecord.preference, cp, 2);
     srvrecord.preference = ntohs(srvrecord.preference); /* ((unsigned short)cp[0] << 8) | ((unsigned short)cp[1]); */
     cp += sizeof(unsigned short);
 
     len = *cp;
     cp++;
-    strncpy(srvrecord.flag, (char *)cp, len);
+    strncpy(srvrecord.flag, (char *) cp, len);
     srvrecord.flag[len] = '\0';
     cp += len;
 
     len = *cp;
     cp++;
-    strncpy(srvrecord.protocol, (char *)cp, len);
+    strncpy(srvrecord.protocol, (char *) cp, len);
     srvrecord.protocol[len] = '\0';
     cp += len;
 
     len = *cp;
     cp++;
-    strncpy(srvrecord.regexp, (char *)cp, len);
+    strncpy(srvrecord.regexp, (char *) cp, len);
     srvrecord.regexp[len] = '\0';
     cp += len;
 
@@ -4630,8 +4621,7 @@ static int eXosip_dnsutils_naptr_lookup(osip_naptr_t *output_record, const char 
       output_record->naptr_state = OSIP_NAPTR_STATE_NAPTRDONE;
     }
 
-    OSIP_TRACE(osip_trace(__FILE__, __LINE__, OSIP_INFO2, NULL, "[eXosip] [save_NAPTR record] [%s] -> [%i][%i][%s][%s][%s]\n", rr_name, srvrecord.order, srvrecord.preference, srvrecord.protocol,
-                          srvrecord.regexp, srvrecord.name));
+    OSIP_TRACE(osip_trace(__FILE__, __LINE__, OSIP_INFO2, NULL, "[eXosip] [save_NAPTR record] [%s] -> [%i][%i][%s][%s][%s]\n", rr_name, srvrecord.order, srvrecord.preference, srvrecord.protocol, srvrecord.regexp, srvrecord.name));
 
     answerno++;
   }
@@ -4721,12 +4711,12 @@ struct osip_naptr *eXosip_dnsutils_naptr(struct eXosip_t *excontext, const char 
   }
 
   if (dnsutils_list == NULL) {
-    dnsutils_list = (osip_list_t *)osip_malloc(sizeof(osip_list_t));
+    dnsutils_list = (osip_list_t *) osip_malloc(sizeof(osip_list_t));
     osip_list_init(dnsutils_list);
   }
 
   if (keep_in_cache < 0) {
-    naptr_record = (osip_naptr_t *)osip_list_get_first(dnsutils_list, &it);
+    naptr_record = (osip_naptr_t *) osip_list_get_first(dnsutils_list, &it);
 
     while (naptr_record != NULL) {
       if (osip_strcasecmp(domain, naptr_record->domain) == 0) {
@@ -4744,13 +4734,13 @@ struct osip_naptr *eXosip_dnsutils_naptr(struct eXosip_t *excontext, const char 
       if (it.pos == 9)
         break;
 
-      naptr_record = (osip_naptr_t *)osip_list_get_next(&it);
+      naptr_record = (osip_naptr_t *) osip_list_get_next(&it);
     }
 
     return NULL;
   }
 
-  naptr_record = (osip_naptr_t *)osip_list_get_first(dnsutils_list, &it);
+  naptr_record = (osip_naptr_t *) osip_list_get_first(dnsutils_list, &it);
 
   while (naptr_record != NULL) {
     /* process all */
@@ -4762,11 +4752,11 @@ struct osip_naptr *eXosip_dnsutils_naptr(struct eXosip_t *excontext, const char 
     if (it.pos == 9)
       break;
 
-    naptr_record = (osip_naptr_t *)osip_list_get_next(&it);
+    naptr_record = (osip_naptr_t *) osip_list_get_next(&it);
   }
 
   it.pos = 0;
-  naptr_record = (osip_naptr_t *)osip_list_get_first(dnsutils_list, &it);
+  naptr_record = (osip_naptr_t *) osip_list_get_first(dnsutils_list, &it);
 
   while (naptr_record != NULL) {
     if (osip_strcasecmp(domain, naptr_record->domain) == 0) {
@@ -4784,7 +4774,7 @@ struct osip_naptr *eXosip_dnsutils_naptr(struct eXosip_t *excontext, const char 
     if (it.pos == 9)
       break;
 
-    naptr_record = (osip_naptr_t *)osip_list_get_next(&it);
+    naptr_record = (osip_naptr_t *) osip_list_get_next(&it);
   }
 
   if (it.pos == 9 && keep_in_cache > 0) {
@@ -4806,13 +4796,13 @@ struct osip_naptr *eXosip_dnsutils_naptr(struct eXosip_t *excontext, const char 
 
     keep_in_cache = 0;
 
-    naptr_record = (osip_naptr_t *)osip_malloc(sizeof(osip_naptr_t));
+    naptr_record = (osip_naptr_t *) osip_malloc(sizeof(osip_naptr_t));
     memset(naptr_record, 0, sizeof(osip_naptr_t));
     naptr_record->keep_in_cache = keep_in_cache;
     snprintf(naptr_record->AUS, sizeof(naptr_record->AUS), "%s", AUS);
 
   } else if (naptr_record == NULL) {
-    naptr_record = (osip_naptr_t *)osip_malloc(sizeof(osip_naptr_t));
+    naptr_record = (osip_naptr_t *) osip_malloc(sizeof(osip_naptr_t));
     memset(naptr_record, 0, sizeof(osip_naptr_t));
     naptr_record->keep_in_cache = keep_in_cache;
     not_in_list = 1;

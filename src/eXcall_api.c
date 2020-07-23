@@ -289,7 +289,7 @@ int eXosip_call_send_initial_invite(struct eXosip_t *excontext, osip_message_t *
   jc->external_reference = NULL;
   ADD_ELEMENT(excontext->j_calls, jc);
 
-  _eXosip_update(excontext);    /* fixed? */
+  _eXosip_update(excontext); /* fixed? */
   _eXosip_wakeup(excontext);
   return jc->c_id;
 }
@@ -525,7 +525,7 @@ int eXosip_call_build_request(struct eXosip_t *excontext, int jid, const char *m
   if (0 == osip_strcasecmp(method, "INVITE")) {
     transaction = _eXosip_find_last_invite(jc, jd);
 
-  } else {                      /* OPTIONS, UPDATE, INFO, REFER, ?... */
+  } else { /* OPTIONS, UPDATE, INFO, REFER, ?... */
 
     transaction = _eXosip_find_last_transaction(jc, jd, method);
   }
@@ -592,7 +592,7 @@ int eXosip_call_send_request(struct eXosip_t *excontext, int jid, osip_message_t
   if (0 == osip_strcasecmp(request->sip_method, "INVITE")) {
     transaction = _eXosip_find_last_invite(jc, jd);
 
-  } else {                      /* OPTIONS, UPDATE, INFO, REFER, ?... */
+  } else { /* OPTIONS, UPDATE, INFO, REFER, ?... */
 
     transaction = _eXosip_find_last_transaction(jc, jd, request->sip_method);
   }
@@ -735,7 +735,7 @@ int eXosip_call_build_notify(struct eXosip_t *excontext, int did, int subscripti
 
     else if (reason == NORESOURCE)
 #endif
-      osip_strncpy(subscription_state, "terminated;reason=noresource", 29);
+    osip_strncpy(subscription_state, "terminated;reason=noresource", 29);
   }
 
   tmp = subscription_state + strlen(subscription_state);
@@ -951,15 +951,14 @@ int eXosip_call_send_answer(struct eXosip_t *excontext, int tid, int status, osi
     }
   }
 
-  if (0 == osip_strcasecmp(tr->orig_request->sip_method, "INVITE")
-      || 0 == osip_strcasecmp(tr->orig_request->sip_method, "UPDATE")) {
+  if (0 == osip_strcasecmp(tr->orig_request->sip_method, "INVITE") || 0 == osip_strcasecmp(tr->orig_request->sip_method, "UPDATE")) {
     if (MSG_IS_STATUS_2XX(answer) && jd != NULL) {
       osip_header_t *supported = NULL;
 
       /* look for timer in supported header: must be added by user-application */
       supported = _eXosip_header_strcasestr(answer, "supported", "k", "timer");
 
-      if (supported != NULL) {  /* timer is supported */
+      if (supported != NULL) { /* timer is supported */
         /* copy session-expires */
         /* add refresher=uas, if it's not already there */
         osip_header_t *se_exp = NULL;
@@ -1026,11 +1025,10 @@ int eXosip_call_send_answer(struct eXosip_t *excontext, int tid, int status, osi
 
             exp_h = NULL;
 
-
             /* add Require only if remote UA support "timer" */
             supported = _eXosip_header_strcasestr(tr->orig_request, "supported", "k", "timer");
 
-            if (supported != NULL) {    /* timer is supported */
+            if (supported != NULL) { /* timer is supported */
               osip_message_set_header(answer, "Require", "timer");
             }
           }
@@ -1134,7 +1132,7 @@ int eXosip_call_terminate_with_header(struct eXosip_t *excontext, int cid, int d
     /*this may not be enough if it's a re-INVITE! */
     tr = _eXosip_find_last_inc_invite(jc, jd);
 
-    if (tr != NULL && tr->last_response != NULL && MSG_IS_STATUS_1XX(tr->last_response)) {      /* answer with 603 */
+    if (tr != NULL && tr->last_response != NULL && MSG_IS_STATUS_1XX(tr->last_response)) { /* answer with 603 */
       osip_generic_param_t *to_tag;
 
       osip_from_param_get_byname(tr->orig_request->to, "tag", &to_tag);
@@ -1182,7 +1180,7 @@ int eXosip_call_terminate_with_header(struct eXosip_t *excontext, int cid, int d
     jd->d_dialog = NULL;
   }
 
-  _eXosip_update(excontext);    /* AMD 30/09/05 */
+  _eXosip_update(excontext); /* AMD 30/09/05 */
   return OSIP_SUCCESS;
 }
 
@@ -1235,8 +1233,7 @@ int eXosip_call_build_prack(struct eXosip_t *excontext, int tid, osip_message_t 
   old_prack_tr = (osip_transaction_t *) osip_list_get_first(jd->d_out_trs, &it);
 
   while (old_prack_tr != NULL) {
-    if (old_prack_tr->orig_request != NULL && 0 == osip_strcasecmp(old_prack_tr->orig_request->sip_method, "PRACK")
-        && OSIP_SUCCESS == osip_to_tag_match(old_prack_tr->orig_request->to, response1xx->to)) {
+    if (old_prack_tr->orig_request != NULL && 0 == osip_strcasecmp(old_prack_tr->orig_request->sip_method, "PRACK") && OSIP_SUCCESS == osip_to_tag_match(old_prack_tr->orig_request->to, response1xx->to)) {
       osip_header_t *rack_header = NULL;
 
       osip_message_header_get_byname(old_prack_tr->orig_request, "RAck", 0, &rack_header);
@@ -1388,10 +1385,10 @@ int _eXosip_call_retry_request(struct eXosip_t *excontext, eXosip_call_t *jc, eX
 
         if (u_param == NULL || u_param->gname == NULL || u_param->gvalue == NULL) {
           if (0 == osip_strcasecmp(excontext->transport, "udp"))
-            break;              /* no transport param in uri & we want udp */
+            break; /* no transport param in uri & we want udp */
 
         } else if (0 == osip_strcasecmp(u_param->gvalue, excontext->transport)) {
-          break;                /* transport param in uri & match our protocol */
+          break; /* transport param in uri & match our protocol */
         }
 
         if (co_usable == NULL)
@@ -1468,12 +1465,11 @@ int _eXosip_call_retry_request(struct eXosip_t *excontext, eXosip_call_t *jc, eX
         head = (osip_header_t *) osip_list_get_next(&it);
       }
     }
-
   }
 
   /* remove all previous authentication headers */
-  osip_list_special_free(&msg->authorizations, (void (*)(void *)) &osip_authorization_free);
-  osip_list_special_free(&msg->proxy_authorizations, (void (*)(void *)) &osip_proxy_authorization_free);
+  osip_list_special_free(&msg->authorizations, (void (*)(void *)) & osip_authorization_free);
+  osip_list_special_free(&msg->proxy_authorizations, (void (*)(void *)) & osip_proxy_authorization_free);
 
   /* increment cseq */
   cseq = atoi(msg->cseq->number);
@@ -1622,7 +1618,7 @@ int _eXosip_call_retry_request(struct eXosip_t *excontext, eXosip_call_t *jc, eX
 
   osip_transaction_add_event(tr, sipevent);
 
-  _eXosip_update(excontext);    /* fixed? */
+  _eXosip_update(excontext); /* fixed? */
   _eXosip_wakeup(excontext);
   return OSIP_SUCCESS;
 }
@@ -1719,27 +1715,27 @@ int eXosip_call_find_by_replaces(struct eXosip_t *excontext, char *replaces_str)
     for (jd = jc->c_dialogs; jd != NULL; jd = jd->next) {
       if (jd->d_dialog == NULL) {
         /* skip */
-      } else if (((0 == strcmp(jd->d_dialog->call_id, call_id)) && (0 == strcmp(jd->d_dialog->remote_tag, to_tag)) && (0 == strcmp(jd->d_dialog->local_tag, from_tag)))
-                 || ((0 == strcmp(jd->d_dialog->call_id, call_id)) && (0 == strcmp(jd->d_dialog->local_tag, to_tag)) && (0 == strcmp(jd->d_dialog->remote_tag, from_tag)))) {
+      } else if (((0 == strcmp(jd->d_dialog->call_id, call_id)) && (0 == strcmp(jd->d_dialog->remote_tag, to_tag)) && (0 == strcmp(jd->d_dialog->local_tag, from_tag))) ||
+                 ((0 == strcmp(jd->d_dialog->call_id, call_id)) && (0 == strcmp(jd->d_dialog->local_tag, to_tag)) && (0 == strcmp(jd->d_dialog->remote_tag, from_tag)))) {
         /* This dialog match! */
         if (jd->d_dialog->state == DIALOG_CONFIRMED && early_flag != NULL) {
           osip_free(call_id);
-          return OSIP_WRONG_STATE;      /* confirmed dialog but already answered with 486 */
+          return OSIP_WRONG_STATE; /* confirmed dialog but already answered with 486 */
         }
 
         if (jd->d_dialog->state == DIALOG_EARLY && jd->d_dialog->type == CALLEE) {
           osip_free(call_id);
-          return OSIP_BADPARAMETER;     /* confirmed dialog but already answered with 481 */
+          return OSIP_BADPARAMETER; /* confirmed dialog but already answered with 481 */
         }
 
         osip_free(call_id);
-        return jc->c_id;        /* match anyway */
+        return jc->c_id; /* match anyway */
       }
     }
   }
 
   osip_free(call_id);
-  return OSIP_NOTFOUND;         /* answer with 481 */
+  return OSIP_NOTFOUND; /* answer with 481 */
 }
 
 #endif

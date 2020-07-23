@@ -30,7 +30,6 @@
   files in the program, then also delete it here.
 */
 
-
 #ifdef ENABLE_MPATROL
 #include <mpatrol.h>
 #endif
@@ -44,7 +43,6 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-
 
 /**
  * @file eX_register.h
@@ -120,7 +118,6 @@ int eXosip_register_send_register(struct eXosip_t *excontext, int rid, osip_mess
 int eXosip_register_remove(struct eXosip_t *excontext, int rid);
 
 /** @} */
-
 
 #ifdef __cplusplus
 }

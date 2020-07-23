@@ -120,12 +120,12 @@ int _eXosip_dialog_init_as_uac(eXosip_dialog_t **_jd, osip_message_t *_200Ok) {
 
   memset(jd, 0, sizeof(eXosip_dialog_t));
 
-  jd->d_id = -1;                /* not yet available to user */
+  jd->d_id = -1; /* not yet available to user */
 
   if (MSG_IS_REQUEST(_200Ok)) {
     i = osip_dialog_init_as_uac_with_remote_request(&(jd->d_dialog), _200Ok, -1);
 
-  } else {                      /* normal usage with response */
+  } else { /* normal usage with response */
     i = osip_dialog_init_as_uac(&(jd->d_dialog), _200Ok);
   }
 
@@ -137,7 +137,7 @@ int _eXosip_dialog_init_as_uac(eXosip_dialog_t **_jd, osip_message_t *_200Ok) {
   jd->d_count = 0;
   jd->d_session_timer_start = 0;
   jd->d_session_timer_length = 0;
-  jd->d_refresher = -1;         /* 0 -> me / 1 -> remote */
+  jd->d_refresher = -1; /* 0 -> me / 1 -> remote */
   jd->d_timer = osip_getsystemtime(NULL);
   jd->d_200Ok = NULL;
   jd->d_ack = NULL;
@@ -180,7 +180,7 @@ int _eXosip_dialog_init_as_uas(eXosip_dialog_t **_jd, osip_message_t *_invite, o
     return OSIP_NOMEM;
 
   memset(jd, 0, sizeof(eXosip_dialog_t));
-  jd->d_id = -1;                /* not yet available to user */
+  jd->d_id = -1; /* not yet available to user */
   i = osip_dialog_init_as_uas(&(jd->d_dialog), _invite, _200Ok);
 
   if (i != 0) {
@@ -192,7 +192,7 @@ int _eXosip_dialog_init_as_uas(eXosip_dialog_t **_jd, osip_message_t *_invite, o
   jd->d_session_timer_start = 0;
   jd->d_session_timer_length = 0;
   jd->d_session_timer_use_update = -1;
-  jd->d_refresher = -1;         /* 0 -> me / 1 -> remote */
+  jd->d_refresher = -1; /* 0 -> me / 1 -> remote */
   jd->d_timer = osip_getsystemtime(NULL);
   jd->d_200Ok = NULL;
   jd->d_ack = NULL;

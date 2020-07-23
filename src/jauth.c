@@ -54,7 +54,7 @@
 #define MAXHEXLEN 64
 
 /* AKA */
-#define MAX_HEADER_LEN  2049
+#define MAX_HEADER_LEN 2049
 #define KLEN 16
 typedef unsigned char K[KLEN];
 
@@ -95,10 +95,9 @@ AMF amf = "\0\0";
 /* Private functions */
 void CvtHex(char *input_binary, size_t input_len, char *output_hexa);
 static void DigestCalcHA1(const char *pszAlg, const char *pszUserName, const char *pszRealm, const char *pszPassword, const char *pszNonce, const char *pszCNonce, char SessionKey[MD5HEXLEN + 1]);
-static void DigestCalcResponse(char HA1[MD5HEXLEN + 1], const char *pszNonce,
-                               const char *pszNonceCount, const char *pszCNonce, const char *pszQop, int Aka, const char *pszMethod, const char *pszDigestUri, char HEntity[MD5HEXLEN + 1], char Response[MD5HEXLEN + 1]);
-static void DigestCalcResponseAka(const char *pszPassword, const char *pszNonce, const char *pszCNonce, const char *pszQop, const char *pszMethod, const char *pszDigestUri, int version,
-                                  char resp_hex[AKA2HEXLEN + 1]);
+static void DigestCalcResponse(char HA1[MD5HEXLEN + 1], const char *pszNonce, const char *pszNonceCount, const char *pszCNonce, const char *pszQop, int Aka, const char *pszMethod, const char *pszDigestUri, char HEntity[MD5HEXLEN + 1],
+                               char Response[MD5HEXLEN + 1]);
+static void DigestCalcResponseAka(const char *pszPassword, const char *pszNonce, const char *pszCNonce, const char *pszQop, const char *pszMethod, const char *pszDigestUri, int version, char resp_hex[AKA2HEXLEN + 1]);
 
 void CvtHex(char *input_binary, size_t input_len, char *output_hexa) {
   unsigned short i;
@@ -127,8 +126,7 @@ void CvtHex(char *input_binary, size_t input_len, char *output_hexa) {
 
 #ifdef HAVE_OPENSSL_SSL_H
 
-static void SHA256DigestCalcHA1(const char *pszAlg, const char *pszUserName, const char *pszRealm, const char *pszPassword, const char *pszNonce, const char *pszCNonce,
-                                char SessionKey[SHA256HEXLEN + 1]) {
+static void SHA256DigestCalcHA1(const char *pszAlg, const char *pszUserName, const char *pszRealm, const char *pszPassword, const char *pszNonce, const char *pszCNonce, char SessionKey[SHA256HEXLEN + 1]) {
   SHA256_CTX SHA256Ctx;
   char HA1[SHA256HASHLEN];
   char HA1Hex[SHA256HEXLEN + 1];
@@ -155,15 +153,7 @@ static void SHA256DigestCalcHA1(const char *pszAlg, const char *pszUserName, con
   CvtHex(HA1, SHA256HASHLEN, SessionKey);
 }
 
-static void SHA256DigestCalcResponse(char HA1[SHA256HEXLEN + 1],
-                                     const char *pszNonce,
-                                     const char *pszNonceCount,
-                                     const char *pszCNonce,
-                                     const char *pszQop,
-                                     int Aka,
-                                     const char *pszMethod,
-                                     const char *pszDigestUri,
-                                     char HEntity[SHA256HEXLEN + 1],
+static void SHA256DigestCalcResponse(char HA1[SHA256HEXLEN + 1], const char *pszNonce, const char *pszNonceCount, const char *pszCNonce, const char *pszQop, int Aka, const char *pszMethod, const char *pszDigestUri, char HEntity[SHA256HEXLEN + 1],
                                      char Response[SHA256HEXLEN + 1]) {
   SHA256_CTX SHA256Ctx;
   char HA2[SHA256HASHLEN];
@@ -172,9 +162,9 @@ static void SHA256DigestCalcResponse(char HA1[SHA256HEXLEN + 1],
 
   /* calculate H(A2) */
   SHA256_Init(&SHA256Ctx);
-  SHA256_Update(&SHA256Ctx, (unsigned char *)pszMethod, (unsigned int)strlen(pszMethod));
+  SHA256_Update(&SHA256Ctx, (unsigned char *) pszMethod, (unsigned int) strlen(pszMethod));
   SHA256_Update(&SHA256Ctx, (unsigned char *) ":", 1);
-  SHA256_Update(&SHA256Ctx, (unsigned char *)pszDigestUri, (unsigned int)strlen(pszDigestUri));
+  SHA256_Update(&SHA256Ctx, (unsigned char *) pszDigestUri, (unsigned int) strlen(pszDigestUri));
 
   if (pszQop == NULL) {
     goto auth_withoutqop;
@@ -187,14 +177,14 @@ static void SHA256DigestCalcResponse(char HA1[SHA256HEXLEN + 1],
   }
 
 auth_withoutqop:
-  SHA256_Final((unsigned char *)HA2, &SHA256Ctx);
+  SHA256_Final((unsigned char *) HA2, &SHA256Ctx);
   CvtHex(HA2, SHA256HASHLEN, HA2Hex);
 
   /* calculate response */
   SHA256_Init(&SHA256Ctx);
-  SHA256_Update(&SHA256Ctx, (unsigned char *)HA1, SHA256HEXLEN);
+  SHA256_Update(&SHA256Ctx, (unsigned char *) HA1, SHA256HEXLEN);
   SHA256_Update(&SHA256Ctx, (unsigned char *) ":", 1);
-  SHA256_Update(&SHA256Ctx, (unsigned char *)pszNonce, (unsigned int)strlen(pszNonce));
+  SHA256_Update(&SHA256Ctx, (unsigned char *) pszNonce, (unsigned int) strlen(pszNonce));
   SHA256_Update(&SHA256Ctx, (unsigned char *) ":", 1);
 
   goto end;
@@ -202,31 +192,31 @@ auth_withoutqop:
 auth_withauth_int:
 
   SHA256_Update(&SHA256Ctx, (unsigned char *) ":", 1);
-  SHA256_Update(&SHA256Ctx, (unsigned char *)HEntity, SHA256HEXLEN);
+  SHA256_Update(&SHA256Ctx, (unsigned char *) HEntity, SHA256HEXLEN);
 
 auth_withauth:
-  SHA256_Final((unsigned char *)HA2, &SHA256Ctx);
+  SHA256_Final((unsigned char *) HA2, &SHA256Ctx);
   CvtHex(HA2, SHA256HASHLEN, HA2Hex);
 
   /* calculate response */
   SHA256_Init(&SHA256Ctx);
-  SHA256_Update(&SHA256Ctx, (unsigned char *)HA1, SHA256HEXLEN);
+  SHA256_Update(&SHA256Ctx, (unsigned char *) HA1, SHA256HEXLEN);
   SHA256_Update(&SHA256Ctx, (unsigned char *) ":", 1);
-  SHA256_Update(&SHA256Ctx, (unsigned char *)pszNonce, (unsigned int)strlen(pszNonce));
+  SHA256_Update(&SHA256Ctx, (unsigned char *) pszNonce, (unsigned int) strlen(pszNonce));
   SHA256_Update(&SHA256Ctx, (unsigned char *) ":", 1);
 
   if (Aka == 0) {
-    SHA256_Update(&SHA256Ctx, (unsigned char *)pszNonceCount, (unsigned int)strlen(pszNonceCount));
+    SHA256_Update(&SHA256Ctx, (unsigned char *) pszNonceCount, (unsigned int) strlen(pszNonceCount));
     SHA256_Update(&SHA256Ctx, (unsigned char *) ":", 1);
-    SHA256_Update(&SHA256Ctx, (unsigned char *)pszCNonce, (unsigned int)strlen(pszCNonce));
+    SHA256_Update(&SHA256Ctx, (unsigned char *) pszCNonce, (unsigned int) strlen(pszCNonce));
     SHA256_Update(&SHA256Ctx, (unsigned char *) ":", 1);
-    SHA256_Update(&SHA256Ctx, (unsigned char *)pszQop, (unsigned int)strlen(pszQop));
+    SHA256_Update(&SHA256Ctx, (unsigned char *) pszQop, (unsigned int) strlen(pszQop));
     SHA256_Update(&SHA256Ctx, (unsigned char *) ":", 1);
   }
 
 end:
-  SHA256_Update(&SHA256Ctx, (unsigned char *)HA2Hex, SHA256HEXLEN);
-  SHA256_Final((unsigned char *)RespHash, &SHA256Ctx);
+  SHA256_Update(&SHA256Ctx, (unsigned char *) HA2Hex, SHA256HEXLEN);
+  SHA256_Final((unsigned char *) RespHash, &SHA256Ctx);
   CvtHex(RespHash, SHA256HASHLEN, Response);
 }
 #endif
@@ -238,36 +228,36 @@ static void DigestCalcHA1(const char *pszAlg, const char *pszUserName, const cha
   char HA1Hex[MD5HEXLEN + 1];
 
   osip_MD5Init(&Md5Ctx);
-  osip_MD5Update(&Md5Ctx, (unsigned char *)pszUserName, (unsigned int)strlen(pszUserName));
+  osip_MD5Update(&Md5Ctx, (unsigned char *) pszUserName, (unsigned int) strlen(pszUserName));
   osip_MD5Update(&Md5Ctx, (unsigned char *) ":", 1);
-  osip_MD5Update(&Md5Ctx, (unsigned char *)pszRealm, (unsigned int)strlen(pszRealm));
+  osip_MD5Update(&Md5Ctx, (unsigned char *) pszRealm, (unsigned int) strlen(pszRealm));
   osip_MD5Update(&Md5Ctx, (unsigned char *) ":", 1);
-  osip_MD5Update(&Md5Ctx, (unsigned char *)pszPassword, (unsigned int)strlen(pszPassword));
-  osip_MD5Final((unsigned char *)HA1, &Md5Ctx);
+  osip_MD5Update(&Md5Ctx, (unsigned char *) pszPassword, (unsigned int) strlen(pszPassword));
+  osip_MD5Final((unsigned char *) HA1, &Md5Ctx);
 
   if ((pszAlg != NULL) && osip_strcasecmp(pszAlg, "md5-sess") == 0) {
     CvtHex(HA1, MD5HASHLEN, HA1Hex);
     osip_MD5Init(&Md5Ctx);
-    osip_MD5Update(&Md5Ctx, (unsigned char *)HA1Hex, MD5HEXLEN);
+    osip_MD5Update(&Md5Ctx, (unsigned char *) HA1Hex, MD5HEXLEN);
     osip_MD5Update(&Md5Ctx, (unsigned char *) ":", 1);
-    osip_MD5Update(&Md5Ctx, (unsigned char *)pszNonce, (unsigned int)strlen(pszNonce));
+    osip_MD5Update(&Md5Ctx, (unsigned char *) pszNonce, (unsigned int) strlen(pszNonce));
     osip_MD5Update(&Md5Ctx, (unsigned char *) ":", 1);
-    osip_MD5Update(&Md5Ctx, (unsigned char *)pszCNonce, (unsigned int)strlen(pszCNonce));
-    osip_MD5Final((unsigned char *)HA1, &Md5Ctx);
+    osip_MD5Update(&Md5Ctx, (unsigned char *) pszCNonce, (unsigned int) strlen(pszCNonce));
+    osip_MD5Final((unsigned char *) HA1, &Md5Ctx);
   }
 
   CvtHex(HA1, MD5HASHLEN, SessionKey);
 }
 
 /* calculate request-digest/response-digest as per HTTP Digest spec */
-static void DigestCalcResponse(char HA1[MD5HEXLEN + 1],      /* H(A1) */
-                               const char *pszNonce,    /* nonce from server */
-                               const char *pszNonceCount,       /* 8 hex digits */
-                               const char *pszCNonce,   /* client nonce */
-                               const char *pszQop,      /* qop-value: "", "auth", "auth-int" */
-                               int Aka, /* Calculating AKAv1-MD5 response */
-                               const char *pszMethod,   /* method from the request */
-                               const char *pszDigestUri,        /* requested URL */
+static void DigestCalcResponse(char HA1[MD5HEXLEN + 1],     /* H(A1) */
+                               const char *pszNonce,        /* nonce from server */
+                               const char *pszNonceCount,   /* 8 hex digits */
+                               const char *pszCNonce,       /* client nonce */
+                               const char *pszQop,          /* qop-value: "", "auth", "auth-int" */
+                               int Aka,                     /* Calculating AKAv1-MD5 response */
+                               const char *pszMethod,       /* method from the request */
+                               const char *pszDigestUri,    /* requested URL */
                                char HEntity[MD5HEXLEN + 1], /* H(entity body) if qop="auth-int" */
                                char Response[MD5HEXLEN + 1]
                                /* request-digest or response-digest */) {
@@ -539,7 +529,6 @@ static int base64_val(char x) {
   return OSIP_SUCCESS;
 }
 
-
 static char *base64_decode_string(const char *buf, unsigned int len, int *newlen) {
   unsigned int i, j;
   int x1, x2, x3, x4;
@@ -592,7 +581,6 @@ static char *base64_decode_string(const char *buf, unsigned int len, int *newlen
         }
       }
     }
-
   }
 
   out[j++] = 0;
@@ -683,17 +671,9 @@ static char *base64_encode_string(const char *buf, unsigned int len, int *newlen
 }
 #endif
 
-
 char hexa[16] = "0123456789abcdef";
 
-static void DigestCalcResponseAka(const char *pszPassword, const char *pszNonce,
-                                  const char *pszCNonce,
-                                  const char *pszQop,
-                                  const char *pszMethod,
-                                  const char *pszDigestUri,
-                                  int version,
-                                  char resp_hex[AKA2HEXLEN + 1]) {
-
+static void DigestCalcResponseAka(const char *pszPassword, const char *pszNonce, const char *pszCNonce, const char *pszQop, const char *pszMethod, const char *pszDigestUri, int version, char resp_hex[AKA2HEXLEN + 1]) {
   char tmp[MAX_HEADER_LEN];
 
   char *nonce64, *nonce;
@@ -707,7 +687,6 @@ static void DigestCalcResponseAka(const char *pszPassword, const char *pszNonce,
   IK ik;
   AK ak;
   int i, j;
-
 
   /* Compute the AKA response */
   resp_hex[0] = 0;
@@ -747,7 +726,7 @@ static void DigestCalcResponseAka(const char *pszPassword, const char *pszNonce,
   }
 
   /* compute the response and keys */
-  f2345(k, rnd, (u8 *)res, ck, ik, ak);
+  f2345(k, rnd, (u8 *) res, ck, ik, ak);
   /* no check for sqn is performed, so no AUTS synchronization performed */
 
   /* Format data for output in the SIP message */
@@ -784,8 +763,7 @@ done:
   }
 }
 
-int _eXosip_create_proxy_authorization_header(osip_proxy_authenticate_t *wa, const char *rquri, const char *username, const char *passwd, const char *ha1, osip_proxy_authorization_t **auth,
-    const char *method, const char *pCNonce, int iNonceCount) {
+int _eXosip_create_proxy_authorization_header(osip_proxy_authenticate_t *wa, const char *rquri, const char *username, const char *passwd, const char *ha1, osip_proxy_authorization_t **auth, const char *method, const char *pCNonce, int iNonceCount) {
   osip_proxy_authorization_t *aut;
 
   char *qop = NULL;
@@ -897,7 +875,7 @@ int _eXosip_create_proxy_authorization_header(osip_proxy_authenticate_t *wa, con
     char *pszRealm = NULL;
     const char *pszPass = NULL;
     char *szNonceCount = NULL;
-    char *pszMethod = (char *) method;  /* previous_answer->cseq->method; */
+    char *pszMethod = (char *) method; /* previous_answer->cseq->method; */
     char *pszQop = NULL;
     const char *pszURI = rquri;
 
@@ -999,7 +977,7 @@ int _eXosip_create_proxy_authorization_header(osip_proxy_authenticate_t *wa, con
       SHA256DigestCalcHA1("SHA-256", pszUser, pszRealm, pszPass, pszNonce, pszCNonce, HA1);
       version = 0;
       pha1 = HA1;
-      SHA256DigestCalcResponse((char *)pha1, pszNonce, szNonceCount, pszCNonce, pszQop, version, pszMethod, pszURI, HA2, Response);
+      SHA256DigestCalcResponse((char *) pha1, pszNonce, szNonceCount, pszCNonce, pszQop, version, pszMethod, pszURI, HA2, Response);
       respponse_len = SHA256HEXLEN + 1;
 #endif
 
@@ -1065,8 +1043,7 @@ int _eXosip_store_nonce(struct eXosip_t *excontext, const char *call_id, osip_pr
     if (http_auth->pszCallId[0] == '\0')
       continue;
 
-    if (osip_strcasecmp(http_auth->pszCallId, call_id) == 0 && ((http_auth->wa->realm == NULL && wa->realm == NULL)
-        || (http_auth->wa->realm != NULL && wa->realm != NULL && osip_strcasecmp(http_auth->wa->realm, wa->realm) == 0))) {
+    if (osip_strcasecmp(http_auth->pszCallId, call_id) == 0 && ((http_auth->wa->realm == NULL && wa->realm == NULL) || (http_auth->wa->realm != NULL && wa->realm != NULL && osip_strcasecmp(http_auth->wa->realm, wa->realm) == 0))) {
       osip_proxy_authenticate_free(http_auth->wa);
       http_auth->wa = NULL;
       osip_proxy_authenticate_clone(wa, &(http_auth->wa));

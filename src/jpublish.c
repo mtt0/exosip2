@@ -40,10 +40,10 @@ int _eXosip_pub_update(struct eXosip_t *excontext, eXosip_pub_t **pub, osip_tran
   *pub = NULL;
 
   for (jpub = excontext->j_pub; jpub != NULL; jpub = jpub->next) {
-    if (jpub->p_last_tr == NULL) {      /*bug? */
+    if (jpub->p_last_tr == NULL) { /*bug? */
     } else if (tr == jpub->p_last_tr) {
       /* update the sip_etag parameter */
-      if (answer == NULL) {     /* bug? */
+      if (answer == NULL) { /* bug? */
       } else if (MSG_IS_STATUS_2XX(answer)) {
         osip_header_t *sip_etag = NULL;
 
@@ -97,7 +97,7 @@ int _eXosip_pub_init(struct eXosip_t *excontext, eXosip_pub_t **pub, const char 
   static int p_id = 0;
   eXosip_pub_t *jpub;
 
-  if (p_id == INT_MAX)          /* keep it non-negative */
+  if (p_id == INT_MAX) /* keep it non-negative */
     p_id = 0;
 
   *pub = NULL;

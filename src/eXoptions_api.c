@@ -30,7 +30,6 @@
   files in the program, then also delete it here.
 */
 
-
 #include "eXosip2.h"
 
 #ifndef MINISIZE

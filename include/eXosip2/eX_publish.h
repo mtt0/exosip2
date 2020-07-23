@@ -30,7 +30,6 @@
   files in the program, then also delete it here.
 */
 
-
 #ifdef ENABLE_MPATROL
 #include <mpatrol.h>
 #endif
@@ -78,8 +77,7 @@ extern "C" {
  * @param ctype     Content-Type of body.
  * @param body      body for publication.
  */
-int eXosip_build_publish(struct eXosip_t *excontext, osip_message_t **message, const char *to, const char *from, const char *route, const char *event, const char *expires, const char *ctype,
-                         const char *body);
+int eXosip_build_publish(struct eXosip_t *excontext, osip_message_t **message, const char *to, const char *from, const char *route, const char *event, const char *expires, const char *ctype, const char *body);
 
 /**
  * Send an Publication Message (PUBLISH request).
@@ -90,9 +88,7 @@ int eXosip_build_publish(struct eXosip_t *excontext, osip_message_t **message, c
  */
 int eXosip_publish(struct eXosip_t *excontext, osip_message_t *message, const char *to);
 
-
 /** @} */
-
 
 #ifdef __cplusplus
 }

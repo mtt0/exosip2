@@ -55,7 +55,6 @@ sdp_message_t *eXosip_get_remote_sdp_from_tid(struct eXosip_t *excontext, int ti
   return _eXosip_get_remote_sdp(tr);
 }
 
-
 sdp_message_t *eXosip_get_local_sdp_from_tid(struct eXosip_t *excontext, int tid) {
   eXosip_dialog_t *jd = NULL;
   eXosip_call_t *jc = NULL;
@@ -204,7 +203,7 @@ sdp_message_t *eXosip_get_sdp_info(osip_message_t *message) {
   ctt = osip_message_get_content_type(message);
 
   if (ctt == NULL)
-    return NULL;                /* previous message was not correct or empty */
+    return NULL; /* previous message was not correct or empty */
 
   if (ctt->type == NULL || ctt->subtype == NULL)
     return NULL;
@@ -233,7 +232,6 @@ sdp_message_t *eXosip_get_sdp_info(osip_message_t *message) {
   return NULL;
 }
 
-
 sdp_connection_t *eXosip_get_audio_connection(sdp_message_t *sdp) {
   int pos = 0;
   sdp_media_t *med = (sdp_media_t *) osip_list_get(&sdp->m_medias, 0);
@@ -247,7 +245,7 @@ sdp_connection_t *eXosip_get_audio_connection(sdp_message_t *sdp) {
   }
 
   if (med == NULL)
-    return NULL;                /* no audio stream */
+    return NULL; /* no audio stream */
 
   if (osip_list_eol(&med->c_connections, 0))
     return sdp->c_connection;
@@ -255,7 +253,6 @@ sdp_connection_t *eXosip_get_audio_connection(sdp_message_t *sdp) {
   /* just return the first one... */
   return (sdp_connection_t *) osip_list_get(&med->c_connections, 0);
 }
-
 
 sdp_media_t *eXosip_get_audio_media(sdp_message_t *sdp) {
   int pos = 0;
@@ -285,7 +282,7 @@ sdp_connection_t *eXosip_get_video_connection(sdp_message_t *sdp) {
   }
 
   if (med == NULL)
-    return NULL;                /* no video stream */
+    return NULL; /* no video stream */
 
   if (osip_list_eol(&med->c_connections, 0))
     return sdp->c_connection;
@@ -293,7 +290,6 @@ sdp_connection_t *eXosip_get_video_connection(sdp_message_t *sdp) {
   /* just return the first one... */
   return (sdp_connection_t *) osip_list_get(&med->c_connections, 0);
 }
-
 
 sdp_media_t *eXosip_get_video_media(sdp_message_t *sdp) {
   int pos = 0;
@@ -323,7 +319,7 @@ sdp_connection_t *eXosip_get_connection(sdp_message_t *sdp, const char *media) {
   }
 
   if (med == NULL)
-    return NULL;                /* no video stream */
+    return NULL; /* no video stream */
 
   if (osip_list_eol(&med->c_connections, 0))
     return sdp->c_connection;

@@ -60,8 +60,7 @@ int _eXosip_call_init(struct eXosip_t *excontext, eXosip_call_t **jc) {
 
   memset(*jc, 0, sizeof(eXosip_call_t));
 
-  (*jc)->c_id = -1;             /* make sure the _eXosip_update will assign a valid id to the call */
-
+  (*jc)->c_id = -1; /* make sure the _eXosip_update will assign a valid id to the call */
 
 #ifndef MINISIZE
   {
@@ -83,7 +82,6 @@ void _eXosip_call_remove_dialog_reference_in_call(eXosip_call_t *jc, eXosip_dial
 
   if (jd == NULL)
     return;
-
 
   for (_jd = jc->c_dialogs; _jd != NULL; _jd = _jd->next) {
     if (jd == _jd)

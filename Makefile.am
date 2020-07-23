@@ -13,10 +13,10 @@ upload: dist
 	gpg -b $(PACKAGE)-$(VERSION).tar.gz
 
 indent:
-	@type astyle --version >/dev/null 2>&1 || astyle --project=.astylerc $(top_srcdir)/include/eXosip2/*.h
-	@type astyle --version >/dev/null 2>&1 || astyle --project=.astylerc $(top_srcdir)/src/*.h
-	@type astyle --version >/dev/null 2>&1 || astyle --project=.astylerc $(top_srcdir)/src/*.c
-	@type astyle --version >/dev/null 2>&1 || astyle --project=.astylerc $(top_srcdir)/tools/*.c
+	@type clang-format --version >/dev/null 2>&1 || clang-format -i $(top_srcdir)/include/eXosip2/*.h
+	@type clang-format --version >/dev/null 2>&1 || clang-format -i $(top_srcdir)/src/*.h
+	@type clang-format --version >/dev/null 2>&1 || clang-format -i $(top_srcdir)/src/*.c
+	@type clang-format --version >/dev/null 2>&1 || clang-format -i $(top_srcdir)/tools/*.c
 	rm -rf $(top_srcdir)/*/*/*.h~
 	rm -rf $(top_srcdir)/*/*.h~
 	rm -rf $(top_srcdir)/*/*.c~

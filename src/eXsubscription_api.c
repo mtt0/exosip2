@@ -225,7 +225,7 @@ int eXosip_subscription_send_initial_request(struct eXosip_t *excontext, osip_me
   osip_transaction_add_event(transaction, sipevent);
 
   ADD_ELEMENT(excontext->j_subscribes, js);
-  _eXosip_update(excontext);    /* fixed? */
+  _eXosip_update(excontext); /* fixed? */
   _eXosip_wakeup(excontext);
   return js->s_id;
 }
@@ -510,15 +510,14 @@ int _eXosip_subscription_send_request_with_credential(struct eXosip_t *excontext
     return i;
   }
 
-  osip_list_special_free(&msg->authorizations, (void (*)(void *)) &osip_authorization_free);
-  osip_list_special_free(&msg->proxy_authorizations, (void (*)(void *)) &osip_proxy_authorization_free);
+  osip_list_special_free(&msg->authorizations, (void (*)(void *)) & osip_authorization_free);
+  osip_list_special_free(&msg->proxy_authorizations, (void (*)(void *)) & osip_proxy_authorization_free);
 
   if (out_tr->last_response->status_code == 401 || out_tr->last_response->status_code == 407) {
     _eXosip_add_authentication_information(excontext, msg, out_tr->last_response);
 
   } else
     _eXosip_add_authentication_information(excontext, msg, NULL);
-
 
   if (out_tr != NULL && out_tr->last_response != NULL && out_tr->last_response->status_code == 423) {
     /* increase expires value to "min-expires" value */
@@ -538,7 +537,6 @@ int _eXosip_subscription_send_request_with_credential(struct eXosip_t *excontext
       return OSIP_SYNTAXERROR;
     }
   }
-
 
   osip_message_force_update(msg);
 
@@ -566,7 +564,7 @@ int _eXosip_subscription_send_request_with_credential(struct eXosip_t *excontext
 
   osip_transaction_add_event(tr, sipevent);
 
-  _eXosip_update(excontext);    /* fixed? */
+  _eXosip_update(excontext); /* fixed? */
   _eXosip_wakeup(excontext);
   return OSIP_SUCCESS;
 }

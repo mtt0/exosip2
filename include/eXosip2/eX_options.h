@@ -30,7 +30,6 @@
   files in the program, then also delete it here.
 */
 
-
 #ifdef ENABLE_MPATROL
 #include <mpatrol.h>
 #endif
@@ -108,7 +107,6 @@ int eXosip_options_build_answer(struct eXosip_t *excontext, int tid, int status,
 int eXosip_options_send_answer(struct eXosip_t *excontext, int tid, int status, osip_message_t *answer);
 
 /** @} */
-
 
 #ifdef __cplusplus
 }

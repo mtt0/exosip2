@@ -73,7 +73,6 @@ int jpipe_close(jpipe_t *apipe) {
   return OSIP_SUCCESS;
 }
 
-
 /**
  * Write in a pipe.
  */
@@ -240,7 +239,6 @@ int jpipe_close(jpipe_t *apipe) {
   return OSIP_SUCCESS;
 }
 
-
 /**
  * Write in a pipe.
  */
@@ -258,7 +256,7 @@ int jpipe_read(jpipe_t *apipe, void *buf, int count) {
   if (apipe == NULL)
     return OSIP_BADPARAMETER;
 
-  return recv(apipe->pipes[0], buf, count, 0 /* MSG_DONTWAIT */);       /* BUG?? */
+  return recv(apipe->pipes[0], buf, count, 0 /* MSG_DONTWAIT */); /* BUG?? */
 }
 
 /**

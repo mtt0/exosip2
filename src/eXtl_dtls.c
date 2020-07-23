@@ -33,7 +33,7 @@
 #include "eXosip2.h"
 #include "eXtransport.h"
 
-#if !defined (HAVE_INET_NTOP)
+#if !defined(HAVE_INET_NTOP)
 #include "inet_ntop.h"
 #endif
 
@@ -99,7 +99,7 @@
 #define SERVER_KEYFILE "skey.pem"
 #define SERVER_CERTFILE "s.pem"
 #define CA_LIST "cacert.pem"
-#define RANDOM  "random.pem"
+#define RANDOM "random.pem"
 #define DHFILE "dh1024.pem"
 
 #if OPENSSL_VERSION_NUMBER < 0x10100000L
@@ -218,7 +218,6 @@ static int shutdown_free_server_dtls(struct eXosip_t *excontext, int pos) {
 #ifdef SSLDEBUG
         OSIP_TRACE(osip_trace(__FILE__, __LINE__, OSIP_INFO3, NULL, "[eXosip] [DTLS] DTLS-UDP server shutdown > 0\n"));
 #endif
-
       }
 
       SSL_free(reserved->socket_tab[pos].ssl_conn);
@@ -253,7 +252,6 @@ static int shutdown_free_client_dtls(struct eXosip_t *excontext, int pos) {
 
   if (reserved->socket_tab[pos].ssl_type == 2) {
     if (reserved->socket_tab[pos].ssl_conn != NULL) {
-
       i = _eXosip_get_addrinfo(excontext, &addrinfo, reserved->socket_tab[pos].remote_ip, reserved->socket_tab[pos].remote_port, IPPROTO_UDP);
 
       if (i != 0) {
@@ -284,7 +282,6 @@ static int shutdown_free_client_dtls(struct eXosip_t *excontext, int pos) {
 #ifdef SSLDEBUG
         OSIP_TRACE(osip_trace(__FILE__, __LINE__, OSIP_INFO3, NULL, "[eXosip] [DTLS] DTLS-UDP client shutdown > 0\n"));
 #endif
-
       }
 
       SSL_free(reserved->socket_tab[pos].ssl_conn);
@@ -351,7 +348,6 @@ static int dtls_tl_free(struct eXosip_t *excontext) {
   return OSIP_SUCCESS;
 }
 
-
 static int dtls_tl_open(struct eXosip_t *excontext) {
   struct eXtldtls *reserved = (struct eXtldtls *) excontext->eXtldtls_reserved;
   int res;
@@ -415,8 +411,8 @@ static int dtls_tl_open(struct eXosip_t *excontext) {
     res = bind(sock, curinfo->ai_addr, (socklen_t) curinfo->ai_addrlen);
 
     if (res < 0) {
-      OSIP_TRACE(osip_trace(__FILE__, __LINE__, OSIP_ERROR, NULL, "[eXosip] [DTLS] cannot bind socket [%s][%s] %s\n", excontext->eXtl_transport.proto_ifs,
-                            (curinfo->ai_family == AF_INET) ? "AF_INET" : "AF_INET6", _ex_strerror(ex_errno, eb, ERRBSIZ)));
+      OSIP_TRACE(
+          osip_trace(__FILE__, __LINE__, OSIP_ERROR, NULL, "[eXosip] [DTLS] cannot bind socket [%s][%s] %s\n", excontext->eXtl_transport.proto_ifs, (curinfo->ai_family == AF_INET) ? "AF_INET" : "AF_INET6", _ex_strerror(ex_errno, eb, ERRBSIZ)));
       _eXosip_closesocket(sock);
       sock = -1;
       continue;
@@ -434,8 +430,8 @@ static int dtls_tl_open(struct eXosip_t *excontext) {
       res = listen(sock, SOMAXCONN);
 
       if (res < 0) {
-        OSIP_TRACE(osip_trace(__FILE__, __LINE__, OSIP_ERROR, NULL, "[eXosip] [DTLS] cannot bind socket [%s][%s] %s\n", excontext->eXtl_transport.proto_ifs,
-                              (curinfo->ai_family == AF_INET) ? "AF_INET" : "AF_INET6", _ex_strerror(ex_errno, eb, ERRBSIZ)));
+        OSIP_TRACE(
+            osip_trace(__FILE__, __LINE__, OSIP_ERROR, NULL, "[eXosip] [DTLS] cannot bind socket [%s][%s] %s\n", excontext->eXtl_transport.proto_ifs, (curinfo->ai_family == AF_INET) ? "AF_INET" : "AF_INET6", _ex_strerror(ex_errno, eb, ERRBSIZ)));
         _eXosip_closesocket(sock);
         sock = -1;
         continue;
@@ -605,7 +601,6 @@ static int _dtls_read_udp_main_socket(struct eXosip_t *excontext) {
       reserved->socket_tab[pos].remote_port = recvport;
 
       OSIP_TRACE(osip_trace(__FILE__, __LINE__, OSIP_INFO1, NULL, "[eXosip] [DTLS] incoming DTLS-UDP connection accepted\n"));
-
     }
 
     dec_buf = (char *) osip_malloc(SIP_MESSAGE_MAX_LENGTH * sizeof(char) + 1);
@@ -718,7 +713,6 @@ static int _dtls_tl_update_contact(struct eXosip_t *excontext, osip_message_t *r
   }
 
   if (excontext->dtls_firewall_ip[0] != '\0' || excontext->auto_masquerade_contact > 0) {
-
     osip_list_iterator_t it;
     osip_contact_t *co = (osip_contact_t *) osip_list_get_first(&req->contacts, &it);
 
@@ -890,8 +884,8 @@ static int dtls_tl_send_message(struct eXosip_t *excontext, osip_transaction_t *
         osip_srv_entry_t *srv;
         int n = 0;
 
-        for (srv = &naptr_record->sipdtls_record.srventry[naptr_record->sipdtls_record.index];
-             n < 10 && naptr_record->sipdtls_record.srventry[naptr_record->sipdtls_record.index].srv[0]; srv = &naptr_record->sipdtls_record.srventry[naptr_record->sipdtls_record.index]) {
+        for (srv = &naptr_record->sipdtls_record.srventry[naptr_record->sipdtls_record.index]; n < 10 && naptr_record->sipdtls_record.srventry[naptr_record->sipdtls_record.index].srv[0];
+             srv = &naptr_record->sipdtls_record.srventry[naptr_record->sipdtls_record.index]) {
           if (srv->ipaddress[0])
             i = _eXosip_get_addrinfo(excontext, &addrinfo, srv->ipaddress, srv->port, IPPROTO_UDP);
 
@@ -971,8 +965,8 @@ static int dtls_tl_send_message(struct eXosip_t *excontext, osip_transaction_t *
         osip_srv_entry_t *srv;
         int n = 0;
 
-        for (srv = &naptr_record->sipdtls_record.srventry[naptr_record->sipdtls_record.index];
-             n < 10 && naptr_record->sipdtls_record.srventry[naptr_record->sipdtls_record.index].srv[0]; srv = &naptr_record->sipdtls_record.srventry[naptr_record->sipdtls_record.index]) {
+        for (srv = &naptr_record->sipdtls_record.srventry[naptr_record->sipdtls_record.index]; n < 10 && naptr_record->sipdtls_record.srventry[naptr_record->sipdtls_record.index].srv[0];
+             srv = &naptr_record->sipdtls_record.srventry[naptr_record->sipdtls_record.index]) {
           if (srv->ipaddress[0])
             i = _eXosip_get_addrinfo(excontext, &addrinfo, srv->ipaddress, srv->port, IPPROTO_UDP);
 
@@ -1187,14 +1181,13 @@ static int dtls_tl_send_message(struct eXosip_t *excontext, osip_transaction_t *
       }
 
       memset(&reserved->socket_tab[pos], 0, sizeof(struct _dtls_stream));
-
     }
 
     if (naptr_record != NULL) {
       /* rotate on failure! */
       if (eXosip_dnsutils_rotate_srv(&naptr_record->sipdtls_record) > 0) {
         osip_free(message);
-        return OSIP_SUCCESS;    /* retry for next retransmission! */
+        return OSIP_SUCCESS; /* retry for next retransmission! */
       }
     }
 
@@ -1236,7 +1229,7 @@ static int dtls_tl_keepalive(struct eXosip_t *excontext) {
 
   for (jr = excontext->j_reg; jr != NULL; jr = jr->next) {
     if (jr->stun_len > 0) {
-      if (sendto(reserved->dtls_socket, (const void *)excontext->ka_crlf, 4, 0, (struct sockaddr *)&(jr->stun_addr), jr->stun_len) > 0) {
+      if (sendto(reserved->dtls_socket, (const void *) excontext->ka_crlf, 4, 0, (struct sockaddr *) &(jr->stun_addr), jr->stun_len) > 0) {
         OSIP_TRACE(osip_trace(__FILE__, __LINE__, OSIP_INFO1, NULL, "[eXosip] [DTLS] [keepalive] keep alive sent on DTLS-UDP\n"));
       }
     }
@@ -1294,34 +1287,32 @@ static int dtls_tl_get_masquerade_contact(struct eXosip_t *excontext, char *ip, 
   return OSIP_SUCCESS;
 }
 
-static struct eXtl_protocol eXtl_dtls = {
-  1,
-  5061,
-  "DTLS-UDP",
-  "0.0.0.0",
-  IPPROTO_UDP,
-  AF_INET,
-  0,
-  0,
-  0,
+static struct eXtl_protocol eXtl_dtls = {1,
+                                         5061,
+                                         "DTLS-UDP",
+                                         "0.0.0.0",
+                                         IPPROTO_UDP,
+                                         AF_INET,
+                                         0,
+                                         0,
+                                         0,
 
-  &dtls_tl_init,
-  &dtls_tl_free,
-  &dtls_tl_open,
-  &dtls_tl_set_fdset,
-  &dtls_tl_read_message,
+                                         &dtls_tl_init,
+                                         &dtls_tl_free,
+                                         &dtls_tl_open,
+                                         &dtls_tl_set_fdset,
+                                         &dtls_tl_read_message,
 #ifdef HAVE_SYS_EPOLL_H
-  NULL,
+                                         NULL,
 #endif
-  &dtls_tl_send_message,
-  &dtls_tl_keepalive,
-  &dtls_tl_set_socket,
-  &dtls_tl_masquerade_contact,
-  &dtls_tl_get_masquerade_contact,
-  &dtls_tl_update_contact,
-  NULL,
-  NULL
-};
+                                         &dtls_tl_send_message,
+                                         &dtls_tl_keepalive,
+                                         &dtls_tl_set_socket,
+                                         &dtls_tl_masquerade_contact,
+                                         &dtls_tl_get_masquerade_contact,
+                                         &dtls_tl_update_contact,
+                                         NULL,
+                                         NULL};
 
 void eXosip_transport_dtls_init(struct eXosip_t *excontext) {
   memcpy(&excontext->eXtl_transport, &eXtl_dtls, sizeof(struct eXtl_protocol));

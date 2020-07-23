@@ -113,9 +113,9 @@ int _eXosip_build_response_default(struct eXosip_t *excontext, osip_message_t **
 
   i = osip_to_get_tag(response->to, &tag);
 
-  if (i != 0) {                 /* we only add a tag if it does not already contains one! */
+  if (i != 0) { /* we only add a tag if it does not already contains one! */
     if ((dialog != NULL) && (dialog->local_tag != NULL))
-      /* it should contain the local TAG we created */
+    /* it should contain the local TAG we created */
     {
       osip_to_set_tag(response->to, osip_strdup(dialog->local_tag));
 
@@ -318,7 +318,7 @@ int _eXosip_answer_invite_123456xx(struct eXosip_t *excontext, eXosip_call_t *jc
     return OSIP_NOTFOUND;
   }
 
-  if (code >= 200 && code < 300 && jd != NULL && jd->d_dialog == NULL) {        /* element previously removed */
+  if (code >= 200 && code < 300 && jd != NULL && jd->d_dialog == NULL) { /* element previously removed */
     OSIP_TRACE(osip_trace(__FILE__, __LINE__, OSIP_ERROR, NULL, "[eXosip] cannot answer this closed transaction\n"));
     return OSIP_WRONG_STATE;
   }
@@ -352,7 +352,6 @@ int _eXosip_answer_invite_123456xx(struct eXosip_t *excontext, eXosip_call_t *jc
       return i;
     }
   }
-
 
   if (send == 1) {
     osip_event_t *evt_answer;

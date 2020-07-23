@@ -355,7 +355,7 @@ int _eXosip_event_add(struct eXosip_t *excontext, eXosip_event_t *je) {
   int i = osip_fifo_add(excontext->j_events, (void *) je);
 
 #ifndef OSIP_MONOTHREAD
-#if !defined (_WIN32_WCE)
+#if !defined(_WIN32_WCE)
   osip_cond_signal((struct osip_cond *) excontext->j_cond);
 #endif
 #endif

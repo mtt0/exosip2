@@ -30,7 +30,6 @@
   files in the program, then also delete it here.
 */
 
-
 #ifndef _JPIPE_H_
 #define _JPIPE_H_
 

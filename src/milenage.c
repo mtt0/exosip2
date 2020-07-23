@@ -18,24 +18,17 @@
 #include "milenage.h"
 #include "rijndael.h"
 
-
-
 /*--------- Operator Variant Algorithm Configuration Field --------*/
 
 /*------- Insert your value of OP here -------*/
 /*u8 OP[16] = {0x63, 0xbf, 0xa5, 0x0e, 0xe6, 0x52, 0x33, 0x65,
              0xff, 0x14, 0xc1, 0xf4, 0x5f, 0x88, 0x73, 0x7d};
 */
-u8 OP[16] = { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-              0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
-            };
+u8 OP[16] = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
 
 /*------- Insert your value of OP here -------*/
 
-
 /*--------------------------- prototypes --------------------------*/
-
-
 
 /*-------------------------------------------------------------------
  *                            Algorithm f1
@@ -94,9 +87,7 @@ void f1(u8 k[16], u8 rand[16], u8 sqn[6], u8 amf[2], u8 mac_a[8]) {
     mac_a[i] = out1[i];
 
   return;
-}                               /* end of function f1 */
-
-
+} /* end of function f1 */
 
 /*-------------------------------------------------------------------
  *                            Algorithms f2-f5
@@ -178,8 +169,7 @@ void f2345(u8 k[16], u8 rand[16], u8 res[8], u8 ck[16], u8 ik[16], u8 ak[6]) {
     ik[i] = out[i];
 
   return;
-}                               /* end of function f2345 */
-
+} /* end of function f2345 */
 
 /*-------------------------------------------------------------------
  *                            Algorithm f1*
@@ -238,8 +228,7 @@ void f1star(u8 k[16], u8 rand[16], u8 sqn[6], u8 amf[2], u8 mac_s[8]) {
     mac_s[i] = out1[i + 8];
 
   return;
-}                               /* end of function f1star */
-
+} /* end of function f1star */
 
 /*-------------------------------------------------------------------
  *                            Algorithm f5*
@@ -284,8 +273,7 @@ void f5star(u8 k[16], u8 rand[16], u8 ak[6]) {
     ak[i] = out[i];
 
   return;
-}                               /* end of function f5star */
-
+} /* end of function f5star */
 
 /*-------------------------------------------------------------------
  *  Function to compute OPc from OP and K.  Assumes key schedule has
@@ -301,4 +289,4 @@ void ComputeOPc(u8 op_c[16]) {
     op_c[i] ^= OP[i];
 
   return;
-}                               /* end of function ComputeOPc */
+} /* end of function ComputeOPc */

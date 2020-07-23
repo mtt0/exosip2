@@ -384,7 +384,6 @@ struct eXosip_reg_t {
   time_t ping_rfc5626;
   int pong_supported;
 
-
   eXosip_reg_t *next;
   eXosip_reg_t *parent;
 };
@@ -461,8 +460,7 @@ struct jauthinfo_t {
   jauthinfo_t *next;
 };
 
-int _eXosip_create_proxy_authorization_header(osip_proxy_authenticate_t *wa, const char *rquri, const char *username, const char *passwd, const char *ha1, osip_proxy_authorization_t **auth,
-                                              const char *method, const char *pszCNonce, int iNonceCount);
+int _eXosip_create_proxy_authorization_header(osip_proxy_authenticate_t *wa, const char *rquri, const char *username, const char *passwd, const char *ha1, osip_proxy_authorization_t **auth, const char *method, const char *pszCNonce, int iNonceCount);
 int _eXosip_store_nonce(struct eXosip_t *excontext, const char *call_id, osip_proxy_authenticate_t *wa, int answer_code);
 int _eXosip_delete_nonce(struct eXosip_t *excontext, const char *call_id);
 

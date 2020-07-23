@@ -77,7 +77,7 @@ int eXosip_message_send_request(struct eXosip_t *excontext, osip_message_t *mess
   osip_transaction_add_event(transaction, sipevent);
 
   _eXosip_wakeup(excontext);
-  return transaction->transactionid;    /* return TID (>0) instead of OSIP_SUCCESS; */
+  return transaction->transactionid; /* return TID (>0) instead of OSIP_SUCCESS; */
 }
 
 int eXosip_message_build_answer(struct eXosip_t *excontext, int tid, int status, osip_message_t **answer) {
@@ -103,16 +103,16 @@ int eXosip_message_build_answer(struct eXosip_t *excontext, int tid, int status,
 
   i = -1;
 
-  if (status < 300) {           /* 2xx answer */
+  if (status < 300) { /* 2xx answer */
     i = _eXosip_build_response_default(excontext, answer, NULL, status, tr->orig_request);
 
-  } else if (status > 300)      /* 3456xx answer */
+  } else if (status > 300) /* 3456xx answer */
     i = _eXosip_build_response_default(excontext, answer, NULL, status, tr->orig_request);
 
   if (i != 0)
     return i;
 
-  if (status < 300) {           /* 2xx answer */
+  if (status < 300) { /* 2xx answer */
     osip_header_t *refer_sub;
 
     osip_message_header_get_byname(tr->orig_request, "Refer-Sub", 0, &refer_sub);
@@ -168,7 +168,7 @@ int eXosip_message_send_answer(struct eXosip_t *excontext, int tid, int status, 
     if (i != 0)
       return i;
 
-    if (status < 300) {         /* 2xx answer */
+    if (status < 300) { /* 2xx answer */
       osip_header_t *refer_sub;
 
       osip_message_header_get_byname(tr->orig_request, "Refer-Sub", 0, &refer_sub);

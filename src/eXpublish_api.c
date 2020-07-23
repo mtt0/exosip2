@@ -36,8 +36,7 @@
 
 #include <eXosip2/eXosip.h>
 
-int eXosip_build_publish(struct eXosip_t *excontext, osip_message_t **message, const char *to, const char *from, const char *route, const char *event, const char *expires, const char *ctype,
-                         const char *body) {
+int eXosip_build_publish(struct eXosip_t *excontext, osip_message_t **message, const char *to, const char *from, const char *route, const char *event, const char *expires, const char *ctype, const char *body) {
   int i;
 
   *message = NULL;
@@ -158,7 +157,7 @@ int eXosip_publish(struct eXosip_t *excontext, osip_message_t *message, const ch
 
       osip_cseq_num++;
       osip_free(message->cseq->number);
-      message->cseq->number = (char *) osip_malloc(length + 2);         /* +2 like for 9 to 10 */
+      message->cseq->number = (char *) osip_malloc(length + 2); /* +2 like for 9 to 10 */
 
       if (message->cseq->number == NULL) {
         osip_message_free(message);

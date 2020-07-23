@@ -81,12 +81,12 @@ int eXosip_hexa_generate_random(char *val, int val_size, char *str1, char *str2,
   char Key[MD5HEXLEN + 1];
 
   osip_MD5Init(&Md5Ctx);
-  osip_MD5Update(&Md5Ctx, (unsigned char *)str1, (unsigned int)strlen(str1));
+  osip_MD5Update(&Md5Ctx, (unsigned char *) str1, (unsigned int) strlen(str1));
   osip_MD5Update(&Md5Ctx, (unsigned char *) ":", 1);
-  osip_MD5Update(&Md5Ctx, (unsigned char *)str2, (unsigned int)strlen(str2));
+  osip_MD5Update(&Md5Ctx, (unsigned char *) str2, (unsigned int) strlen(str2));
   osip_MD5Update(&Md5Ctx, (unsigned char *) ":", 1);
-  osip_MD5Update(&Md5Ctx, (unsigned char *)str3, (unsigned int)strlen(str3));
-  osip_MD5Final((unsigned char *)HA1, &Md5Ctx);
+  osip_MD5Update(&Md5Ctx, (unsigned char *) str3, (unsigned int) strlen(str3));
+  osip_MD5Final((unsigned char *) HA1, &Md5Ctx);
   CvtHex(HA1, MD5HASHLEN, Key);
   osip_strncpy(val, Key, val_size - 1);
   return 0;
@@ -94,7 +94,7 @@ int eXosip_hexa_generate_random(char *val, int val_size, char *str1, char *str2,
 
 int eXosip_byte_generate_random(char *buf, int buf_size) {
 #ifdef HAVE_OPENSSL_SSL_H
-  return RAND_bytes((unsigned char *)buf, buf_size) > 0 ? 0 : -1;
+  return RAND_bytes((unsigned char *) buf, buf_size) > 0 ? 0 : -1;
 #else
   eXosip_generate_random(buf, 16);
   eXosip_hexa_generate_random(buf, buf_size, buf, "key", "crypto");
@@ -127,12 +127,12 @@ int _eXosip_dialog_add_contact(struct eXosip_t *excontext, osip_message_t *reque
     snprintf(scheme, sizeof(scheme), "sip");
 
   if (a_from->url->username != NULL)
-    len = (int)(2 + 4 + (strlen(a_from->url->username) * 3) + 1 + 100 + 6 + 10 + 3 + strlen(excontext->transport));
+    len = (int) (2 + 4 + (strlen(a_from->url->username) * 3) + 1 + 100 + 6 + 10 + 3 + strlen(excontext->transport));
 
   else
-    len = (int)(2 + 4 + 100 + 6 + 10 + 3 + strlen(excontext->transport));
+    len = (int) (2 + 4 + 100 + 6 + 10 + 3 + strlen(excontext->transport));
 
-  len++;                        /* if using sips instead of sip */
+  len++; /* if using sips instead of sip */
 
   if (excontext->sip_instance[0] != 0)
     len += 65;
@@ -141,7 +141,6 @@ int _eXosip_dialog_add_contact(struct eXosip_t *excontext, osip_message_t *reque
 
   if (contact == NULL)
     return OSIP_NOMEM;
-
 
   /* special values to be replaced in transport layer (eXtl_*.c files) */
   if (a_from->url->username != NULL) {
@@ -389,7 +388,7 @@ int _eXosip_generating_request_out_of_dialog(struct eXosip_t *excontext, osip_me
       }
     }
 
-    if (proxy != NULL && proxy[0] != 0) {       /* equal to a pre-existing route set */
+    if (proxy != NULL && proxy[0] != 0) { /* equal to a pre-existing route set */
       /* if the pre-existing route set contains a "lr" (compliance
          with bis-08) then the req_uri should contains the remote target
          URI */
@@ -407,7 +406,7 @@ int _eXosip_generating_request_out_of_dialog(struct eXosip_t *excontext, osip_me
 
       osip_uri_uparam_get_byname(o_proxy->url, "lr", &lr_param);
 
-      if (lr_param != NULL) {   /* to is the remote target URI in this case! */
+      if (lr_param != NULL) { /* to is the remote target URI in this case! */
         i = osip_uri_clone(request->to->url, &(request->req_uri));
 
         if (i != 0) {
@@ -421,8 +420,8 @@ int _eXosip_generating_request_out_of_dialog(struct eXosip_t *excontext, osip_me
         osip_list_add(&request->routes, o_proxy, 0);
 
       } else
-        /* if the first URI of route set does not contain "lr", the req_uri
-           is set to the first uri of route set */
+      /* if the first URI of route set does not contain "lr", the req_uri
+         is set to the first uri of route set */
       {
         request->req_uri = o_proxy->url;
         o_proxy->url = NULL;
@@ -436,7 +435,7 @@ int _eXosip_generating_request_out_of_dialog(struct eXosip_t *excontext, osip_me
         osip_message_set_route(request, to);
       }
 
-    } else {                    /* No route set (outbound proxy) is used */
+    } else { /* No route set (outbound proxy) is used */
 
       /* The UAC must put the remote target URI (to field) in the req_uri */
       i = osip_uri_clone(request->to->url, &(request->req_uri));
@@ -570,7 +569,7 @@ int _eXosip_generating_request_out_of_dialog(struct eXosip_t *excontext, osip_me
   }
 
   /* always add the Max-Forward header */
-  osip_message_set_max_forwards(request, "70");         /* a UA should start a request with 70 */
+  osip_message_set_max_forwards(request, "70"); /* a UA should start a request with 70 */
 
   if (0 == strcmp("REGISTER", method)) {
   } else if (0 == strcmp("INFO", method)) {
@@ -623,7 +622,7 @@ static int dialog_fill_route_set(osip_dialog_t *dialog, osip_message_t *request)
 
   osip_uri_uparam_get_byname(route->url, "lr", &lr_param);
 
-  if (lr_param != NULL) {       /* the remote target URI is the req_uri! */
+  if (lr_param != NULL) { /* the remote target URI is the req_uri! */
     i = osip_uri_clone(dialog->remote_contact_uri->url, &(request->req_uri));
 
     if (i != 0)
@@ -650,7 +649,6 @@ static int dialog_fill_route_set(osip_dialog_t *dialog, osip_message_t *request)
   /* if the first URI of route set does not contain "lr", the req_uri
      is set to the first uri of route set */
 
-
   i = osip_uri_clone(route->url, &(request->req_uri));
 
   if (i != 0)
@@ -659,7 +657,7 @@ static int dialog_fill_route_set(osip_dialog_t *dialog, osip_message_t *request)
   /* add the route set */
   /* "The UAC MUST add a route header field containing
      the remainder of the route set values in order. */
-  route = (osip_route_t *) osip_list_get_next(&it);     /* yes it is, skip first */
+  route = (osip_route_t *) osip_list_get_next(&it); /* yes it is, skip first */
 
   while (route != NULL) {
     osip_route_t *route2;
@@ -815,7 +813,7 @@ int _eXosip_build_request_within_dialog(struct eXosip_t *excontext, osip_message
       return i;
     }
 
-    dialog->local_cseq++;       /* we should we do that?? */
+    dialog->local_cseq++; /* we should we do that?? */
     tmp = osip_malloc(20);
 
     if (tmp == NULL) {
@@ -831,7 +829,7 @@ int _eXosip_build_request_within_dialog(struct eXosip_t *excontext, osip_message
   }
 
   /* always add the Max-Forward header */
-  osip_message_set_max_forwards(request, "70");         /* a UA should start a request with 70 */
+  osip_message_set_max_forwards(request, "70"); /* a UA should start a request with 70 */
 
   i = _eXosip_request_add_via(excontext, request);
 
@@ -847,7 +845,6 @@ int _eXosip_build_request_within_dialog(struct eXosip_t *excontext, osip_message
 
   if (0 == strcmp("NOTIFY", method)) {
   } else if (0 == strcmp("INFO", method)) {
-
   } else if (0 == strcmp("OPTIONS", method)) {
     osip_message_set_accept(request, "application/sdp");
 
@@ -984,7 +981,7 @@ int _eXosip_generating_cancel(struct eXosip_t *excontext, osip_message_t **dest,
     }
   }
 
-  osip_message_set_max_forwards(request, "70");         /* a UA should start a request with 70 */
+  osip_message_set_max_forwards(request, "70"); /* a UA should start a request with 70 */
   osip_message_set_user_agent(request, excontext->user_agent);
 
   *dest = request;
@@ -1005,7 +1002,7 @@ int _eXosip_request_viamanager(struct eXosip_t *excontext, osip_message_t *sip, 
   char *via_port = NULL;
 
   if (MSG_IS_RESPONSE(sip))
-    return OSIP_SUCCESS;        /* not needed */
+    return OSIP_SUCCESS; /* not needed */
 
   via = (osip_via_t *) osip_list_get(&sip->vias, 0);
 
@@ -1043,11 +1040,11 @@ int _eXosip_request_viamanager(struct eXosip_t *excontext, osip_message_t *sip, 
 
   } else
 #endif
-    if (excontext->masquerade_via > 0) {
-      if (masquerade_ip[0] != '\0') {
-        via_ip = masquerade_ip;
-      }
+      if (excontext->masquerade_via > 0) {
+    if (masquerade_ip[0] != '\0') {
+      via_ip = masquerade_ip;
     }
+  }
 
   if (via_ip == NULL) {
     masquerade_ip[0] = '\0';
@@ -1103,7 +1100,6 @@ int _eXosip_message_contactmanager(struct eXosip_t *excontext, osip_message_t *s
 
   if (osip_strcasecmp(acontact->url->host, "999.999.999.999") != 0 && acontact->url->port != NULL && osip_strcasecmp(acontact->url->port, "99999") != 0)
     return OSIP_SUCCESS;
-
 
   /* firewall ip & firewall port configured by APPLICATION layer */
   masquerade_ip[0] = '\0';

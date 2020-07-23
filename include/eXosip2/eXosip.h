@@ -30,7 +30,6 @@
   files in the program, then also delete it here.
 */
 
-
 #ifdef ENABLE_MPATROL
 #include <mpatrol.h>
 #endif
@@ -156,11 +155,11 @@ void eXosip_automatic_action(struct eXosip_t *excontext);
 
 #ifndef MINISIZE
 /**
-* Automatic internal handling of dialog package.
-*
-* @param excontext    eXosip_t instance.
-* @param evt          Incoming SUBSCRIBE for dialog package.
-*/
+ * Automatic internal handling of dialog package.
+ *
+ * @param excontext    eXosip_t instance.
+ * @param evt          Incoming SUBSCRIBE for dialog package.
+ */
 int eXosip_insubscription_automatic(struct eXosip_t *excontext, eXosip_event_t *evt);
 #endif
 
@@ -192,7 +191,6 @@ int eXosip_hexa_generate_random(char *buf, int buf_size, char *str1, char *str2,
 int eXosip_byte_generate_random(char *buf, int buf_size);
 
 /** @} */
-
 
 /**
  * @defgroup eXosip2_sdp eXosip2 SDP helper API.
@@ -305,69 +303,69 @@ sdp_media_t *eXosip_get_media(sdp_message_t *sdp, const char *media);
  */
 typedef enum eXosip_event_type {
   /* REGISTER related events */
-  EXOSIP_REGISTRATION_SUCCESS,           /**< user is successfully registred.  */
-  EXOSIP_REGISTRATION_FAILURE,           /**< user is not registred.           */
+  EXOSIP_REGISTRATION_SUCCESS, /**< user is successfully registred.  */
+  EXOSIP_REGISTRATION_FAILURE, /**< user is not registred.           */
 
   /* INVITE related events within calls */
-  EXOSIP_CALL_INVITE,                    /**< announce a new call                   */
-  EXOSIP_CALL_REINVITE,                  /**< announce a new INVITE within call     */
+  EXOSIP_CALL_INVITE,   /**< announce a new call                   */
+  EXOSIP_CALL_REINVITE, /**< announce a new INVITE within call     */
 
-  EXOSIP_CALL_NOANSWER,                  /**< announce no answer within the timeout */
-  EXOSIP_CALL_PROCEEDING,                /**< announce processing by a remote app   */
-  EXOSIP_CALL_RINGING,                   /**< announce ringback                     */
-  EXOSIP_CALL_ANSWERED,                  /**< announce start of call                */
-  EXOSIP_CALL_REDIRECTED,                /**< announce a redirection                */
-  EXOSIP_CALL_REQUESTFAILURE,            /**< announce a request failure            */
-  EXOSIP_CALL_SERVERFAILURE,             /**< announce a server failure             */
-  EXOSIP_CALL_GLOBALFAILURE,             /**< announce a global failure             */
-  EXOSIP_CALL_ACK,                       /**< ACK received for 200ok to INVITE      */
+  EXOSIP_CALL_NOANSWER,       /**< announce no answer within the timeout */
+  EXOSIP_CALL_PROCEEDING,     /**< announce processing by a remote app   */
+  EXOSIP_CALL_RINGING,        /**< announce ringback                     */
+  EXOSIP_CALL_ANSWERED,       /**< announce start of call                */
+  EXOSIP_CALL_REDIRECTED,     /**< announce a redirection                */
+  EXOSIP_CALL_REQUESTFAILURE, /**< announce a request failure            */
+  EXOSIP_CALL_SERVERFAILURE,  /**< announce a server failure             */
+  EXOSIP_CALL_GLOBALFAILURE,  /**< announce a global failure             */
+  EXOSIP_CALL_ACK,            /**< ACK received for 200ok to INVITE      */
 
-  EXOSIP_CALL_CANCELLED,                 /**< announce that call has been cancelled */
+  EXOSIP_CALL_CANCELLED, /**< announce that call has been cancelled */
 
   /* request related events within calls (except INVITE) */
-  EXOSIP_CALL_MESSAGE_NEW,               /**< announce new incoming request. */
-  EXOSIP_CALL_MESSAGE_PROCEEDING,        /**< announce a 1xx for request. */
-  EXOSIP_CALL_MESSAGE_ANSWERED,          /**< announce a 200ok  */
-  EXOSIP_CALL_MESSAGE_REDIRECTED,        /**< announce a failure. */
-  EXOSIP_CALL_MESSAGE_REQUESTFAILURE,    /**< announce a failure. */
-  EXOSIP_CALL_MESSAGE_SERVERFAILURE,     /**< announce a failure. */
-  EXOSIP_CALL_MESSAGE_GLOBALFAILURE,     /**< announce a failure. */
+  EXOSIP_CALL_MESSAGE_NEW,            /**< announce new incoming request. */
+  EXOSIP_CALL_MESSAGE_PROCEEDING,     /**< announce a 1xx for request. */
+  EXOSIP_CALL_MESSAGE_ANSWERED,       /**< announce a 200ok  */
+  EXOSIP_CALL_MESSAGE_REDIRECTED,     /**< announce a failure. */
+  EXOSIP_CALL_MESSAGE_REQUESTFAILURE, /**< announce a failure. */
+  EXOSIP_CALL_MESSAGE_SERVERFAILURE,  /**< announce a failure. */
+  EXOSIP_CALL_MESSAGE_GLOBALFAILURE,  /**< announce a failure. */
 
-  EXOSIP_CALL_CLOSED,                    /**< a BYE was received for this call      */
+  EXOSIP_CALL_CLOSED, /**< a BYE was received for this call      */
 
   /* for both UAS & UAC events */
-  EXOSIP_CALL_RELEASED,                  /**< call context is cleared.            */
+  EXOSIP_CALL_RELEASED, /**< call context is cleared.            */
 
   /* events received for request outside calls */
-  EXOSIP_MESSAGE_NEW,                    /**< announce new incoming request. */
-  EXOSIP_MESSAGE_PROCEEDING,             /**< announce a 1xx for request. */
-  EXOSIP_MESSAGE_ANSWERED,               /**< announce a 200ok  */
-  EXOSIP_MESSAGE_REDIRECTED,             /**< announce a failure. */
-  EXOSIP_MESSAGE_REQUESTFAILURE,         /**< announce a failure. */
-  EXOSIP_MESSAGE_SERVERFAILURE,          /**< announce a failure. */
-  EXOSIP_MESSAGE_GLOBALFAILURE,          /**< announce a failure. */
+  EXOSIP_MESSAGE_NEW,            /**< announce new incoming request. */
+  EXOSIP_MESSAGE_PROCEEDING,     /**< announce a 1xx for request. */
+  EXOSIP_MESSAGE_ANSWERED,       /**< announce a 200ok  */
+  EXOSIP_MESSAGE_REDIRECTED,     /**< announce a failure. */
+  EXOSIP_MESSAGE_REQUESTFAILURE, /**< announce a failure. */
+  EXOSIP_MESSAGE_SERVERFAILURE,  /**< announce a failure. */
+  EXOSIP_MESSAGE_GLOBALFAILURE,  /**< announce a failure. */
 
   /* Presence and Instant Messaging */
-  EXOSIP_SUBSCRIPTION_NOANSWER,          /**< announce no answer              */
-  EXOSIP_SUBSCRIPTION_PROCEEDING,        /**< announce a 1xx                  */
-  EXOSIP_SUBSCRIPTION_ANSWERED,          /**< announce a 200ok                */
-  EXOSIP_SUBSCRIPTION_REDIRECTED,        /**< announce a redirection          */
-  EXOSIP_SUBSCRIPTION_REQUESTFAILURE,    /**< announce a request failure      */
-  EXOSIP_SUBSCRIPTION_SERVERFAILURE,     /**< announce a server failure       */
-  EXOSIP_SUBSCRIPTION_GLOBALFAILURE,     /**< announce a global failure       */
-  EXOSIP_SUBSCRIPTION_NOTIFY,            /**< announce new NOTIFY request     */
+  EXOSIP_SUBSCRIPTION_NOANSWER,       /**< announce no answer              */
+  EXOSIP_SUBSCRIPTION_PROCEEDING,     /**< announce a 1xx                  */
+  EXOSIP_SUBSCRIPTION_ANSWERED,       /**< announce a 200ok                */
+  EXOSIP_SUBSCRIPTION_REDIRECTED,     /**< announce a redirection          */
+  EXOSIP_SUBSCRIPTION_REQUESTFAILURE, /**< announce a request failure      */
+  EXOSIP_SUBSCRIPTION_SERVERFAILURE,  /**< announce a server failure       */
+  EXOSIP_SUBSCRIPTION_GLOBALFAILURE,  /**< announce a global failure       */
+  EXOSIP_SUBSCRIPTION_NOTIFY,         /**< announce new NOTIFY request     */
 
-  EXOSIP_IN_SUBSCRIPTION_NEW,            /**< announce new incoming SUBSCRIBE/REFER.*/
+  EXOSIP_IN_SUBSCRIPTION_NEW, /**< announce new incoming SUBSCRIBE/REFER.*/
 
-  EXOSIP_NOTIFICATION_NOANSWER,          /**< announce no answer              */
-  EXOSIP_NOTIFICATION_PROCEEDING,        /**< announce a 1xx                  */
-  EXOSIP_NOTIFICATION_ANSWERED,          /**< announce a 200ok                */
-  EXOSIP_NOTIFICATION_REDIRECTED,        /**< announce a redirection          */
-  EXOSIP_NOTIFICATION_REQUESTFAILURE,    /**< announce a request failure      */
-  EXOSIP_NOTIFICATION_SERVERFAILURE,     /**< announce a server failure       */
-  EXOSIP_NOTIFICATION_GLOBALFAILURE,     /**< announce a global failure       */
+  EXOSIP_NOTIFICATION_NOANSWER,       /**< announce no answer              */
+  EXOSIP_NOTIFICATION_PROCEEDING,     /**< announce a 1xx                  */
+  EXOSIP_NOTIFICATION_ANSWERED,       /**< announce a 200ok                */
+  EXOSIP_NOTIFICATION_REDIRECTED,     /**< announce a redirection          */
+  EXOSIP_NOTIFICATION_REQUESTFAILURE, /**< announce a request failure      */
+  EXOSIP_NOTIFICATION_SERVERFAILURE,  /**< announce a server failure       */
+  EXOSIP_NOTIFICATION_GLOBALFAILURE,  /**< announce a global failure       */
 
-  EXOSIP_EVENT_COUNT                     /**< MAX number of events              */
+  EXOSIP_EVENT_COUNT /**< MAX number of events              */
 } eXosip_event_type_t;
 
 /**
@@ -375,13 +373,13 @@ typedef enum eXosip_event_type {
  * @struct eXosip_event
  */
 struct eXosip_event {
-  eXosip_event_type_t type;      /**< type of the event */
-  char textinfo[256];            /**< text description of event */
-  void *external_reference;      /**< external reference (for calls) */
+  eXosip_event_type_t type; /**< type of the event */
+  char textinfo[256];       /**< text description of event */
+  void *external_reference; /**< external reference (for calls) */
 
-  osip_message_t *request;       /**< request within current transaction */
-  osip_message_t *response;      /**< last response within current transaction */
-  osip_message_t *ack;           /**< ack within current transaction */
+  osip_message_t *request;  /**< request within current transaction */
+  osip_message_t *response; /**< last response within current transaction */
+  osip_message_t *ack;      /**< ack within current transaction */
 
   int tid; /**< unique id for transactions (to be used for answers) */
   int did; /**< unique id for SIP dialogs */
@@ -391,8 +389,8 @@ struct eXosip_event {
   int sid; /**< unique id for outgoing subscriptions */
   int nid; /**< unique id for incoming subscriptions */
 
-  int ss_status;  /**< current Subscription-State for subscription */
-  int ss_reason;  /**< current Reason status for subscription */
+  int ss_status; /**< current Subscription-State for subscription */
+  int ss_reason; /**< current Reason status for subscription */
 };
 
 /**
@@ -410,7 +408,6 @@ void eXosip_event_free(eXosip_event_t *je);
  * @param tv_ms     timeout value (mseconds).
  */
 eXosip_event_t *eXosip_event_wait(struct eXosip_t *excontext, int tv_s, int tv_ms);
-
 
 /**
  * Wait for next eXosip event.

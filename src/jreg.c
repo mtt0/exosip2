@@ -47,14 +47,14 @@ int _eXosip_reg_init(struct eXosip_t *excontext, eXosip_reg_t **jr, const char *
   if (*jr == NULL)
     return OSIP_NOMEM;
 
-  if (r_id == INT_MAX)          /* keep it non-negative */
+  if (r_id == INT_MAX) /* keep it non-negative */
     r_id = 0;
 
   memset(*jr, '\0', sizeof(eXosip_reg_t));
 
   (*jr)->r_id = ++r_id;
-  (*jr)->r_reg_period = 3600;   /* delay between registration */
-  (*jr)->r_aor = osip_strdup(from);     /* sip identity */
+  (*jr)->r_reg_period = 3600;       /* delay between registration */
+  (*jr)->r_aor = osip_strdup(from); /* sip identity */
 
   if ((*jr)->r_aor == NULL) {
     osip_free(*jr);
@@ -62,8 +62,8 @@ int _eXosip_reg_init(struct eXosip_t *excontext, eXosip_reg_t **jr, const char *
     return OSIP_NOMEM;
   }
 
-  (*jr)->r_contact = osip_strdup(contact);      /* sip identity */
-  (*jr)->r_registrar = osip_strdup(proxy);      /* registrar */
+  (*jr)->r_contact = osip_strdup(contact); /* sip identity */
+  (*jr)->r_registrar = osip_strdup(proxy); /* registrar */
 
   if ((*jr)->r_registrar == NULL) {
     osip_free((*jr)->r_contact);
@@ -131,7 +131,6 @@ int _eXosip_reg_init(struct eXosip_t *excontext, eXosip_reg_t **jr, const char *
 }
 
 void _eXosip_reg_free(struct eXosip_t *excontext, eXosip_reg_t *jreg) {
-
   osip_free(jreg->r_aor);
   osip_free(jreg->r_contact);
   osip_free(jreg->r_registrar);
@@ -180,7 +179,6 @@ int _eXosip_reg_find(struct eXosip_t *excontext, eXosip_reg_t **reg, osip_transa
 
   return OSIP_NOTFOUND;
 }
-
 
 int _eXosip_reg_find_id(struct eXosip_t *excontext, eXosip_reg_t **reg, int rid) {
   eXosip_reg_t *jreg;

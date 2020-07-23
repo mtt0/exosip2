@@ -40,7 +40,7 @@ int _eXosip_remove_transaction_from_call(osip_transaction_t *tr, eXosip_call_t *
   eXosip_dialog_t *jd;
 
   if (jc->c_inc_tr == tr) {
-    jc->c_inc_tr = NULL;        /* can be NULL */
+    jc->c_inc_tr = NULL; /* can be NULL */
     return OSIP_SUCCESS;
   }
 
@@ -60,7 +60,7 @@ int _eXosip_remove_transaction_from_call(osip_transaction_t *tr, eXosip_call_t *
   }
 
   if (jc->c_out_tr == tr) {
-    jc->c_out_tr = NULL;        /* can be NULL */
+    jc->c_out_tr = NULL; /* can be NULL */
     return OSIP_SUCCESS;
   }
 
@@ -191,7 +191,7 @@ osip_transaction_t *_eXosip_find_last_inc_invite(eXosip_call_t *jc, eXosip_dialo
   }
 
   if (inc_tr == NULL)
-    return jc->c_inc_tr;        /* can be NULL */
+    return jc->c_inc_tr; /* can be NULL */
 
   return inc_tr;
 }
@@ -218,7 +218,7 @@ osip_transaction_t *_eXosip_find_last_out_invite(eXosip_call_t *jc, eXosip_dialo
   }
 
   if (out_tr == NULL)
-    return jc->c_out_tr;        /* can be NULL */
+    return jc->c_out_tr; /* can be NULL */
 
   return out_tr;
 }
@@ -248,7 +248,7 @@ osip_transaction_t *_eXosip_find_previous_invite(eXosip_call_t *jc, eXosip_dialo
   }
 
   if (inc_tr == NULL)
-    inc_tr = jc->c_inc_tr;      /* can be NULL */
+    inc_tr = jc->c_inc_tr; /* can be NULL */
 
   if (inc_tr == last_invite) {
     /* we don't want the current one */
@@ -275,7 +275,7 @@ osip_transaction_t *_eXosip_find_previous_invite(eXosip_call_t *jc, eXosip_dialo
   }
 
   if (out_tr == NULL)
-    out_tr = jc->c_out_tr;      /* can be NULL */
+    out_tr = jc->c_out_tr; /* can be NULL */
 
   if (out_tr == last_invite) {
     /* we don't want the current one */

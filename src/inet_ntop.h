@@ -32,7 +32,7 @@
 
 #include "eXosip2.h"
 
-#if !defined (HAVE_INET_NTOP)
+#if !defined(HAVE_INET_NTOP)
 /* This is windows replacement for inet_ntop */
 
 #if defined(__cplusplus)

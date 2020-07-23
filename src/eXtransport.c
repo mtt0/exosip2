@@ -57,9 +57,9 @@ int _eXosip_find_protocol(osip_message_t *msg) {
   else if (0 == osip_strcasecmp(via->protocol, "TCP"))
     return IPPROTO_TCP;
 
-  return -1;;
+  return -1;
+  ;
 }
-
 
 int eXosip_transport_set(osip_message_t *msg, const char *transport) {
   osip_via_t *via;

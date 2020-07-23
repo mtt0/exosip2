@@ -36,7 +36,7 @@
 #include <osip2/osip_mt.h>
 #include <osip2/osip_condv.h>
 
-#if !defined (HAVE_INET_NTOP)
+#if !defined(HAVE_INET_NTOP)
 #include "inet_ntop.h"
 #endif
 
@@ -98,25 +98,10 @@ int eXosip_guess_localip(struct eXosip_t *excontext, int family, char *address, 
 }
 
 int _eXosip_is_public_address(const char *c_address) {
-  return (0 != strncmp(c_address, "192.168", 7)
-          && 0 != strncmp(c_address, "10.", 3)
-          && 0 != strncmp(c_address, "172.16.", 7)
-          && 0 != strncmp(c_address, "172.17.", 7)
-          && 0 != strncmp(c_address, "172.18.", 7)
-          && 0 != strncmp(c_address, "172.19.", 7)
-          && 0 != strncmp(c_address, "172.20.", 7)
-          && 0 != strncmp(c_address, "172.21.", 7)
-          && 0 != strncmp(c_address, "172.22.", 7)
-          && 0 != strncmp(c_address, "172.23.", 7)
-          && 0 != strncmp(c_address, "172.24.", 7)
-          && 0 != strncmp(c_address, "172.25.", 7)
-          && 0 != strncmp(c_address, "172.26.", 7)
-          && 0 != strncmp(c_address, "172.27.", 7)
-          && 0 != strncmp(c_address, "172.28.", 7)
-          && 0 != strncmp(c_address, "172.29.", 7)
-          && 0 != strncmp(c_address, "172.30.", 7)
-          && 0 != strncmp(c_address, "172.31.", 7)
-          && 0 != strncmp(c_address, "169.254", 7));
+  return (0 != strncmp(c_address, "192.168", 7) && 0 != strncmp(c_address, "10.", 3) && 0 != strncmp(c_address, "172.16.", 7) && 0 != strncmp(c_address, "172.17.", 7) && 0 != strncmp(c_address, "172.18.", 7) &&
+          0 != strncmp(c_address, "172.19.", 7) && 0 != strncmp(c_address, "172.20.", 7) && 0 != strncmp(c_address, "172.21.", 7) && 0 != strncmp(c_address, "172.22.", 7) && 0 != strncmp(c_address, "172.23.", 7) &&
+          0 != strncmp(c_address, "172.24.", 7) && 0 != strncmp(c_address, "172.25.", 7) && 0 != strncmp(c_address, "172.26.", 7) && 0 != strncmp(c_address, "172.27.", 7) && 0 != strncmp(c_address, "172.28.", 7) &&
+          0 != strncmp(c_address, "172.29.", 7) && 0 != strncmp(c_address, "172.30.", 7) && 0 != strncmp(c_address, "172.31.", 7) && 0 != strncmp(c_address, "169.254", 7));
 }
 
 void eXosip_set_user_agent(struct eXosip_t *excontext, const char *user_agent) {
@@ -161,7 +146,7 @@ void eXosip_quit(struct eXosip_t *excontext) {
     return;
   }
 
-  excontext->j_stop_ua = 1;     /* ask to quit the application */
+  excontext->j_stop_ua = 1; /* ask to quit the application */
   _eXosip_wakeup(excontext);
   eXosip_wakeup_event(excontext);
 
@@ -204,7 +189,7 @@ void eXosip_quit(struct eXosip_t *excontext) {
 
 #ifndef OSIP_MONOTHREAD
   osip_mutex_destroy((struct osip_mutex *) excontext->j_mutexlock);
-#if !defined (_WIN32_WCE)
+#if !defined(_WIN32_WCE)
   osip_cond_destroy((struct osip_cond *) excontext->j_cond);
 #endif
 #endif
@@ -473,7 +458,6 @@ int eXosip_find_free_port(struct eXosip_t *excontext, int free_port, int transpo
 #endif /* IPV6_V6ONLY */
         }
 
-
         res1 = bind(sock, curinfo_rtcp->ai_addr, (socklen_t) curinfo_rtcp->ai_addrlen);
 
         if (res1 < 0) {
@@ -575,7 +559,7 @@ int eXosip_find_free_port(struct eXosip_t *excontext, int free_port, int transpo
         else
           port_found = ntohs(((struct sockaddr_in6 *) &ai_addr)->sin6_port);
 
-        if (port_found % 2 == 0) {      /* even port for RTP */
+        if (port_found % 2 == 0) { /* even port for RTP */
           _eXosip_freeaddrinfo(addrinfo_rtp);
           return port_found;
         }
@@ -636,7 +620,7 @@ int eXosip_listen_addr(struct eXosip_t *excontext, int transport, const char *ad
   if (addr != NULL)
     snprintf(excontext->eXtl_transport.proto_ifs, sizeof(excontext->eXtl_transport.proto_ifs), "%s", addr);
 
-#ifdef  AF_INET6
+#ifdef AF_INET6
 
   if (family == AF_INET6 && !addr)
     snprintf(excontext->eXtl_transport.proto_ifs, sizeof(excontext->eXtl_transport.proto_ifs), "::0");
@@ -690,8 +674,7 @@ int eXosip_reset_transports(struct eXosip_t *excontext) {
   return i;
 }
 
-struct eXosip_t *
-eXosip_malloc(void) {
+struct eXosip_t *eXosip_malloc(void) {
   struct eXosip_t *ptr = (struct eXosip_t *) osip_malloc(sizeof(eXosip_t));
 
   if (ptr) {
@@ -751,7 +734,7 @@ int eXosip_init(struct eXosip_t *excontext) {
   excontext->j_reg = NULL;
 
 #ifndef OSIP_MONOTHREAD
-#if !defined (_WIN32_WCE)
+#if !defined(_WIN32_WCE)
   excontext->j_cond = (struct osip_cond *) osip_cond_init();
 
   if (excontext->j_cond == NULL) {
@@ -767,7 +750,7 @@ int eXosip_init(struct eXosip_t *excontext) {
   if (excontext->j_mutexlock == NULL) {
     osip_free(excontext->user_agent);
     excontext->user_agent = NULL;
-#if !defined (_WIN32_WCE)
+#if !defined(_WIN32_WCE)
     osip_cond_destroy((struct osip_cond *) excontext->j_cond);
     excontext->j_cond = NULL;
 #endif
@@ -892,7 +875,6 @@ int eXosip_init(struct eXosip_t *excontext) {
   return OSIP_SUCCESS;
 }
 
-
 int eXosip_execute(struct eXosip_t *excontext) {
   struct timeval lower_tv;
   int i;
@@ -941,9 +923,9 @@ int eXosip_execute(struct eXosip_t *excontext) {
     } else {
       /* add a small amount of time on windows to avoid waking up too early. (probably a bad time precision) */
       if (lower_tv.tv_usec < 990000)
-        lower_tv.tv_usec += 10000;      /* add 10ms */
+        lower_tv.tv_usec += 10000; /* add 10ms */
       else {
-        lower_tv.tv_usec = 10000;       /* add 10ms */
+        lower_tv.tv_usec = 10000; /* add 10ms */
         lower_tv.tv_sec++;
       }
     }
@@ -1031,7 +1013,7 @@ int eXosip_set_option(struct eXosip_t *excontext, int opt, const void *value) {
         /* update ainfo */
         if (ainfo->nat_ip[0] != '\0') {
           if (0 == osip_strcasecmp(excontext->account_entries[i].nat_ip, ainfo->nat_ip) && excontext->account_entries[i].nat_port == ainfo->nat_port)
-            return OSIP_SUCCESS + 1;  /* NOT MODIFIED */
+            return OSIP_SUCCESS + 1; /* NOT MODIFIED */
 
           snprintf(excontext->account_entries[i].nat_ip, sizeof(excontext->account_entries[i].nat_ip), "%s", ainfo->nat_ip);
           excontext->account_entries[i].nat_port = ainfo->nat_port;
@@ -1063,8 +1045,7 @@ int eXosip_set_option(struct eXosip_t *excontext, int opt, const void *value) {
     }
 
     return OSIP_UNDEFINED_ERROR;
-  }
-  break;
+  } break;
 
   case EXOSIP_OPT_ADD_DNS_CACHE: {
     struct eXosip_dns_cache *entry;
@@ -1139,8 +1120,7 @@ int eXosip_set_option(struct eXosip_t *excontext, int opt, const void *value) {
     }
 
     return OSIP_UNDEFINED_ERROR;
-  }
-  break;
+  } break;
 
   case EXOSIP_OPT_DELETE_DNS_CACHE: {
     struct eXosip_dns_cache *entry;
@@ -1161,24 +1141,23 @@ int eXosip_set_option(struct eXosip_t *excontext, int opt, const void *value) {
     }
 
     return OSIP_UNDEFINED_ERROR;
-  }
-  break;
+  } break;
 
   case EXOSIP_OPT_UDP_KEEP_ALIVE:
     val = *((int *) value);
-    excontext->ka_interval = val;       /* value in ms */
+    excontext->ka_interval = val; /* value in ms */
     break;
 #ifdef ENABLE_KEEP_ALIVE_OPTIONS_METHOD
 
   case EXOSIP_OPT_KEEP_ALIVE_OPTIONS_METHOD:
     val = *((int *) value);
-    excontext->ka_options = val;        /* value 0 or 1 */
+    excontext->ka_options = val; /* value 0 or 1 */
     break;
 #endif
 
   case EXOSIP_OPT_AUTO_MASQUERADE_CONTACT:
     val = *((int *) value);
-    excontext->auto_masquerade_contact = val;   /* 1 to learn port */
+    excontext->auto_masquerade_contact = val; /* 1 to learn port */
     break;
 
   case EXOSIP_OPT_USE_RPORT:
@@ -1208,7 +1187,7 @@ int eXosip_set_option(struct eXosip_t *excontext, int opt, const void *value) {
     break;
 #endif
 
-  case EXOSIP_OPT_DNS_CAPABILITIES:    /*EXOSIP_OPT_SRV_WITH_NAPTR: */
+  case EXOSIP_OPT_DNS_CAPABILITIES: /*EXOSIP_OPT_SRV_WITH_NAPTR: */
     val = *((int *) value);
     /* 0: A request, 1: SRV support, 2: NAPTR+SRV support */
     excontext->dns_capabilities = val;
@@ -1266,8 +1245,7 @@ int eXosip_set_option(struct eXosip_t *excontext, int opt, const void *value) {
 
     else
       excontext->user_agent = osip_strdup(user_agent);
-  }
-  break;
+  } break;
 
   case EXOSIP_OPT_ENABLE_DNS_CACHE:
     val = *((int *) value);
@@ -1283,8 +1261,7 @@ int eXosip_set_option(struct eXosip_t *excontext, int opt, const void *value) {
     eXosip_tls_ctx_t *tlsval = (eXosip_tls_ctx_t *) value;
 
     eXosip_set_tls_ctx(excontext, tlsval);
-  }
-  break;
+  } break;
 
   case EXOSIP_OPT_SET_TLS_CLIENT_CERTIFICATE_NAME:
     return OSIP_UNDEFINED_ERROR; /* obsolete */
@@ -1414,7 +1391,7 @@ static void _eXosip_keep_alive(struct eXosip_t *excontext) {
   }
 
   if (osip_timercmp(&now, &excontext->ka_timer, <)) {
-    return;                     /* not yet time */
+    return; /* not yet time */
   }
 
   /* reset timer */
@@ -1479,7 +1456,7 @@ static float compute_average(struct timeval *orig, unsigned int values) {
     return 0;
 
   osip_gettimeofday(&current, NULL);
-  time = (float)(current.tv_sec - orig->tv_sec) / 3600;         /* calculate num/hour */
+  time = (float) (current.tv_sec - orig->tv_sec) / 3600; /* calculate num/hour */
 
   if (time == 0)
     return 0;

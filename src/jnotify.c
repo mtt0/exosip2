@@ -56,11 +56,10 @@ osip_transaction_t *_eXosip_find_last_inc_subscribe(eXosip_notify_t *jn, eXosip_
   }
 
   if (inc_tr == NULL)
-    return jn->n_inc_tr;        /* can be NULL */
+    return jn->n_inc_tr; /* can be NULL */
 
   return inc_tr;
 }
-
 
 osip_transaction_t *_eXosip_find_last_out_notify(eXosip_dialog_t *jd) {
   osip_transaction_t *out_tr;
@@ -167,7 +166,7 @@ int _eXosip_notify_set_refresh_interval(eXosip_notify_t *jn, osip_message_t *inc
     if (jn->n_ss_expires != -1)
       jn->n_ss_expires = now + jn->n_ss_expires;
 
-    else                        /* on error, set it to default */
+    else /* on error, set it to default */
       jn->n_ss_expires = now + default_expires;
   }
 
@@ -185,7 +184,7 @@ void _eXosip_notify_add_expires_in_2XX_for_subscribe(eXosip_notify_t *jn, osip_m
     tmp[1] = '\0';
 
   } else {
-    snprintf(tmp, 20, "%li", (long)(jn->n_ss_expires - now));
+    snprintf(tmp, 20, "%li", (long) (jn->n_ss_expires - now));
   }
 
   osip_message_set_expires(answer, tmp);

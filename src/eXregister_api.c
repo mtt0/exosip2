@@ -66,11 +66,11 @@ int eXosip_register_remove(struct eXosip_t *excontext, int rid) {
 }
 
 #if defined(HAVE_GMTIME_R) || defined(HAVE_GMTIME)
-static const char *days[] = { "Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat" };
-static const char *months[] = { "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec" };
+static const char *days[] = {"Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"};
+static const char *months[] = {"Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"};
 
 static void _eXosip_register_set_date(osip_message_t *msg) {
-  char tmp[256] = { 0 };
+  char tmp[256] = {0};
   time_t curtime = time(NULL);
   struct tm *ret;
 
@@ -96,7 +96,7 @@ static int _eXosip_register_add_contact(struct eXosip_t *excontext, eXosip_reg_t
   osip_message_get_contact(reg, 0, &new_contact);
 
   if (new_contact != NULL)
-    return OSIP_SUCCESS;        /* already a contact header */
+    return OSIP_SUCCESS; /* already a contact header */
 
   i = osip_contact_init(&new_contact);
 
@@ -134,7 +134,7 @@ static int _eXosip_register_add_contact(struct eXosip_t *excontext, eXosip_reg_t
     osip_contact_param_add(new_contact, osip_strdup("q"), osip_strdup(jreg->r_qvalue));
 
   if (excontext->sip_instance[0] != 0) {
-    char *sip_instance = (char *) osip_malloc(50);      /* "<urn:uuid:f81d4fae-7dec-11d0-a765-00a0c91e6bf6>" */
+    char *sip_instance = (char *) osip_malloc(50); /* "<urn:uuid:f81d4fae-7dec-11d0-a765-00a0c91e6bf6>" */
 
     if (sip_instance != NULL) {
       snprintf(sip_instance, 50, "\"<urn:uuid:%s>\"", excontext->sip_instance);
@@ -176,7 +176,7 @@ static int _eXosip_generating_register(struct eXosip_t *excontext, eXosip_reg_t 
   }
 
   {
-    char exp[10];               /* MUST never be ouside 1 and 3600 */
+    char exp[10]; /* MUST never be ouside 1 and 3600 */
 
     snprintf(exp, 9, "%i", expires);
     osip_message_set_expires(*reg, exp);
@@ -227,12 +227,8 @@ static int _eXosip_register_build_register(struct eXosip_t *excontext, eXosip_re
       int osip_cseq_num = osip_atoi(reg->cseq->number);
       int length = (int) strlen(reg->cseq->number);
 
-
-      osip_list_special_free(&reg->authorizations, (void (*)(void *))
-                             &osip_authorization_free);
-      osip_list_special_free(&reg->proxy_authorizations, (void (*)(void *))
-                             &osip_proxy_authorization_free);
-
+      osip_list_special_free(&reg->authorizations, (void (*)(void *)) & osip_authorization_free);
+      osip_list_special_free(&reg->proxy_authorizations, (void (*)(void *)) & osip_proxy_authorization_free);
 
       i = _eXosip_update_top_via(reg);
 
@@ -247,7 +243,7 @@ static int _eXosip_register_build_register(struct eXosip_t *excontext, eXosip_re
 
       osip_cseq_num++;
       osip_free(reg->cseq->number);
-      reg->cseq->number = (char *) osip_malloc(length + 2);     /* +2 like for 9 to 10 */
+      reg->cseq->number = (char *) osip_malloc(length + 2); /* +2 like for 9 to 10 */
 
       if (reg->cseq->number == NULL) {
         osip_message_free(reg);
@@ -259,7 +255,6 @@ static int _eXosip_register_build_register(struct eXosip_t *excontext, eXosip_re
       }
 
       snprintf(reg->cseq->number, length + 2, "%i", osip_cseq_num);
-
 
       if (last_response != NULL && last_response->status_code == 423) {
         /* increase expires value to "min-expires" value */
@@ -351,7 +346,7 @@ static int _eXosip_register_build_register(struct eXosip_t *excontext, eXosip_re
       if (excontext->eXtl_transport._tl_update_contact != NULL)
         excontext->eXtl_transport._tl_update_contact(excontext, reg);
 
-      jr->registration_step = RS_MASQUERADINGPROCEEDING + 1;    /* do only once: keep previous one after */
+      jr->registration_step = RS_MASQUERADINGPROCEEDING + 1; /* do only once: keep previous one after */
 
     } else if (jr->registration_step == 0) {
       if (excontext->eXtl_transport._tl_update_contact != NULL)
@@ -367,7 +362,6 @@ static int _eXosip_register_build_register(struct eXosip_t *excontext, eXosip_re
 
       osip_message_free(last_response);
     }
-
   }
 
   if (reg == NULL) {
@@ -430,10 +424,10 @@ int eXosip_register_build_initial_register_withqvalue(struct eXosip_t *excontext
   /* build register */
   jr->r_reg_period = expires;
 
-  if (jr->r_reg_period <= 0)    /* too low */
+  if (jr->r_reg_period <= 0) /* too low */
     jr->r_reg_period = 0;
 
-  else if (jr->r_reg_period < 30)       /* too low */
+  else if (jr->r_reg_period < 30) /* too low */
     jr->r_reg_period = 30;
 
   jr->r_reg_expire = jr->r_reg_period;
@@ -482,8 +476,8 @@ int eXosip_register_build_register(struct eXosip_t *excontext, int rid, int expi
   jr->r_reg_period = expires;
 
   if (jr->r_reg_period == 0) {
-  }                             /* unregistration */
-  else if (jr->r_reg_period < 30)       /* too low */
+  }                               /* unregistration */
+  else if (jr->r_reg_period < 30) /* too low */
     jr->r_reg_period = 30;
 
   jr->r_reg_expire = jr->r_reg_period;

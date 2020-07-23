@@ -30,7 +30,6 @@
   files in the program, then also delete it here.
 */
 
-
 /* This is from the BIND 4.9.4 release, modified to compile by itself */
 
 /* Copyright (c) 1996 by Internet Software Consortium.
@@ -51,7 +50,7 @@
 
 #include "eXosip2.h"
 
-#if !defined (HAVE_INET_NTOP)
+#if !defined(HAVE_INET_NTOP)
 /* This is windows replacement for inet_ntop */
 
 #include "inet_ntop.h"
@@ -66,10 +65,10 @@ typedef unsigned __int32 uint32_t;
 /* !added by amd */
 
 #define IN6ADDRSZ 16
-#define INT16SZ    2
+#define INT16SZ 2
 
 #ifndef AF_INET6
-#define AF_INET6  AF_MAX+1        /* just to let this compile */
+#define AF_INET6 AF_MAX + 1 /* just to let this compile */
 #endif
 
 /*
@@ -88,8 +87,7 @@ static const char *_inet_ntop6(const u_char *src, char *dst, size_t size);
  * author:
  *  Paul Vixie, 1996.
  */
-const char *_inet_ntop(af, src, dst, size)
-int af;
+const char *_inet_ntop(af, src, dst, size) int af;
 const void *src;
 char *dst;
 size_t size;
@@ -122,8 +120,7 @@ size_t size;
  * author:
  *  Paul Vixie, 1996.
  */
-static const char *_inet_ntop4(src, dst, size)
-const u_char *src;
+static const char *_inet_ntop4(src, dst, size) const u_char *src;
 char *dst;
 size_t size;
 {
@@ -149,8 +146,7 @@ size_t size;
  * author:
  *  Paul Vixie, 1996.
  */
-static const char *_inet_ntop6(src, dst, size)
-const u_char *src;
+static const char *_inet_ntop6(src, dst, size) const u_char *src;
 char *dst;
 size_t size;
 {
@@ -250,7 +246,7 @@ size_t size;
    * Check for overflow, copy, and we're done.
    */
   if ((size_t)(tp - tmp) > size) {
-#if !defined (_WIN32_WCE)
+#if !defined(_WIN32_WCE)
     errno = ENOSPC;
 #endif
     return (NULL);

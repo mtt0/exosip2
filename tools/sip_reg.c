@@ -25,7 +25,6 @@
  *
  */
 
-
 #if !defined(WIN32) && !defined(_WIN32_WCE)
 #include <stdio.h>
 #include <stdlib.h>
@@ -80,17 +79,20 @@ static void syslog_wrapper(int a, const char *fmt, ...) {
 
 #elif defined(LOG_PERROR)
 /* If we can, we use syslog() to emit the debugging messages to stderr. */
-#define syslog_wrapper    syslog
+#define syslog_wrapper syslog
 #else
-#define syslog_wrapper(a,b...) fprintf(stderr,b);fprintf(stderr,"\n")
+#define syslog_wrapper(a, b...) \
+  fprintf(stderr, b);           \
+  fprintf(stderr, "\n")
 #endif
-
 
 static void usage(void);
 
 static void usage(void) {
-  printf(PROG_NAME " v%s\n"
-         "\nUsage: " PROG_NAME " [required_options] [optional_options]\n"
+  printf(PROG_NAME
+         " v%s\n"
+         "\nUsage: " PROG_NAME
+         " [required_options] [optional_options]\n"
          "\n[required_options]\n"
          "  -r --proxy      sip:proxyhost[:port]\n"
          "  -u --from       sip:user@host[:port]\n"
@@ -132,7 +134,7 @@ int main(int argc, char *argv[]) {
   struct servent *service;
   char *username = NULL;
   char *password = NULL;
-  struct regparam_t regparam = { 0, 3600, 0 };
+  struct regparam_t regparam = {0, 3600, 0};
   int debug = 0;
   int nofork = 0;
   int err;
@@ -156,24 +158,22 @@ int main(int argc, char *argv[]) {
 #ifdef _GNU_SOURCE
     int option_index = 0;
 
-    static struct option long_options[] = {
-      {"debug", no_argument, NULL, 'd'},
-      {"from", required_argument, NULL, 'u'},
-      {"proxy", required_argument, NULL, 'r'},
-      {"username", required_argument, NULL, 'U'},
-      {"password", required_argument, NULL, 'P'},
+    static struct option long_options[] = {{"debug", no_argument, NULL, 'd'},
+                                           {"from", required_argument, NULL, 'u'},
+                                           {"proxy", required_argument, NULL, 'r'},
+                                           {"username", required_argument, NULL, 'U'},
+                                           {"password", required_argument, NULL, 'P'},
 
-      {"transport", required_argument, NULL, 't'},
-      {"port", required_argument, NULL, 'p'},
-      {"contact", required_argument, NULL, 'c'},
-      {"expiry", required_argument, NULL, 'e'},
-      {"automasquerade", no_argument, NULL, 'm'},
-      {"firewallip", required_argument, NULL, 'f'},
+                                           {"transport", required_argument, NULL, 't'},
+                                           {"port", required_argument, NULL, 'p'},
+                                           {"contact", required_argument, NULL, 'c'},
+                                           {"expiry", required_argument, NULL, 'e'},
+                                           {"automasquerade", no_argument, NULL, 'm'},
+                                           {"firewallip", required_argument, NULL, 'f'},
 
-      {"help", no_argument, NULL, 'h'},
+                                           {"help", no_argument, NULL, 'h'},
 
-      {NULL, 0, NULL, 0}
-    };
+                                           {NULL, 0, NULL, 0}};
 
     c = getopt_long(argc, argv, short_options, long_options, &option_index);
 #else
@@ -260,8 +260,8 @@ int main(int argc, char *argv[]) {
   openlog(PROG_NAME, LOG_PID | debug, SYSLOG_FACILITY);
 #endif
 
-  syslog_wrapper(LOG_INFO, "%s up and running [testing on [%s] REGISTER [%s] Expires [%d] From: [%s]%s%s%s]", prog_name, transport, proxy, regparam.expiry, fromuser,
-                 (username && password) ? " Username: [" : "", (username && password) ? username : "", (username && password) ? ":*****]" : "");
+  syslog_wrapper(LOG_INFO, "%s up and running [testing on [%s] REGISTER [%s] Expires [%d] From: [%s]%s%s%s]", prog_name, transport, proxy, regparam.expiry, fromuser, (username && password) ? " Username: [" : "",
+                 (username && password) ? username : "", (username && password) ? ":*****]" : "");
 
   if (contact != NULL)
     syslog_wrapper(LOG_INFO, "contact: %s", contact);
@@ -365,8 +365,7 @@ int main(int argc, char *argv[]) {
       eXosip_lock(context_eXosip);
       eXosip_set_option(context_eXosip, EXOSIP_OPT_GET_STATISTICS, &stats);
       eXosip_unlock(context_eXosip);
-      syslog_wrapper(LOG_INFO, "eXosip stats: inmemory=(tr:%i//reg:%i) average=(tr:%f//reg:%f)", stats.allocated_transactions, stats.allocated_registrations, stats.average_transactions,
-                     stats.average_registrations);
+      syslog_wrapper(LOG_INFO, "eXosip stats: inmemory=(tr:%i//reg:%i) average=(tr:%f//reg:%f)", stats.allocated_transactions, stats.allocated_registrations, stats.average_transactions, stats.average_registrations);
     }
 
     if (!(event = eXosip_event_wait(context_eXosip, 0, 1))) {
@@ -467,13 +466,11 @@ int main(int argc, char *argv[]) {
 
     default:
       syslog_wrapper(LOG_DEBUG, "received unknown eXosip event (type, did, cid) = (%d, %d, %d)", event->type, event->did, event->cid);
-
     }
 
     eXosip_unlock(context_eXosip);
     eXosip_event_free(event);
   }
-
 
   eXosip_quit(context_eXosip);
   osip_free(context_eXosip);

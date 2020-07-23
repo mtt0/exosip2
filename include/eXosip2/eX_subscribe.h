@@ -30,7 +30,6 @@
   files in the program, then also delete it here.
 */
 
-
 #ifdef ENABLE_MPATROL
 #include <mpatrol.h>
 #endif
@@ -70,10 +69,10 @@ extern "C" {
  * @enum eXosip_ss
  */
 enum eXosip_ss {
-  EXOSIP_SUBCRSTATE_UNKNOWN,    /**< unknown subscription-state */
-  EXOSIP_SUBCRSTATE_PENDING,    /**< pending subscription-state */
-  EXOSIP_SUBCRSTATE_ACTIVE,     /**< active subscription-state */
-  EXOSIP_SUBCRSTATE_TERMINATED  /**< terminated subscription-state */
+  EXOSIP_SUBCRSTATE_UNKNOWN,   /**< unknown subscription-state */
+  EXOSIP_SUBCRSTATE_PENDING,   /**< pending subscription-state */
+  EXOSIP_SUBCRSTATE_ACTIVE,    /**< active subscription-state */
+  EXOSIP_SUBCRSTATE_TERMINATED /**< terminated subscription-state */
 };
 
 /**
@@ -81,12 +80,12 @@ enum eXosip_ss {
  * @enum eXosip_ss_reason
  */
 enum eXosip_ss_reason {
-  DEACTIVATED,                 /**< deactivated for subscription-state */
-  PROBATION,                   /**< probation for subscription-state */
-  REJECTED,                    /**< rejected for subscription-state */
-  TIMEOUT,                     /**< timeout for subscription-state */
-  GIVEUP,                      /**< giveup for subscription-state */
-  NORESOURCE                   /**< noresource for subscription-state */
+  DEACTIVATED, /**< deactivated for subscription-state */
+  PROBATION,   /**< probation for subscription-state */
+  REJECTED,    /**< rejected for subscription-state */
+  TIMEOUT,     /**< timeout for subscription-state */
+  GIVEUP,      /**< giveup for subscription-state */
+  NORESOURCE   /**< noresource for subscription-state */
 };
 
 /**
@@ -94,16 +93,16 @@ enum eXosip_ss_reason {
  * @enum eXosip_ss_status
  */
 enum eXosip_ss_status {
-  EXOSIP_NOTIFY_UNKNOWN,   /**< unknown state for subscription */
-  EXOSIP_NOTIFY_PENDING,   /**< subscription not yet accepted */
-  EXOSIP_NOTIFY_ONLINE,    /**< online status */
-  EXOSIP_NOTIFY_BUSY,      /**< busy status */
+  EXOSIP_NOTIFY_UNKNOWN, /**< unknown state for subscription */
+  EXOSIP_NOTIFY_PENDING, /**< subscription not yet accepted */
+  EXOSIP_NOTIFY_ONLINE,  /**< online status */
+  EXOSIP_NOTIFY_BUSY,    /**< busy status */
   EXOSIP_NOTIFY_BERIGHTBACK,
   /**< be right back status */
-  EXOSIP_NOTIFY_AWAY,      /**< away status */
-  EXOSIP_NOTIFY_ONTHEPHONE,/**< on the phone status */
-  EXOSIP_NOTIFY_OUTTOLUNCH,/**< out to lunch status */
-  EXOSIP_NOTIFY_CLOSED     /**< closed status */
+  EXOSIP_NOTIFY_AWAY,       /**< away status */
+  EXOSIP_NOTIFY_ONTHEPHONE, /**< on the phone status */
+  EXOSIP_NOTIFY_OUTTOLUNCH, /**< out to lunch status */
+  EXOSIP_NOTIFY_CLOSED      /**< closed status */
 };
 
 #ifndef MINISIZE
@@ -233,11 +232,9 @@ int eXosip_insubscription_send_request(struct eXosip_t *excontext, int did, osip
  */
 int eXosip_insubscription_remove(struct eXosip_t *excontext, int did);
 
-
 #endif
 
 /** @} */
-
 
 #ifdef __cplusplus
 }

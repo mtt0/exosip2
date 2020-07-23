@@ -297,7 +297,7 @@ int eXosip_insubscription_build_notify(struct eXosip_t *excontext, int did, int 
   tmp = subscription_state + strlen(subscription_state);
 
   if (subscription_status != EXOSIP_SUBCRSTATE_TERMINATED)
-    snprintf(tmp, 50 - (tmp - subscription_state), "%li", (long)(jn->n_ss_expires - now));
+    snprintf(tmp, 50 - (tmp - subscription_state), "%li", (long) (jn->n_ss_expires - now));
 
   osip_message_set_header(*request, "Subscription-State", subscription_state);
 #endif
@@ -485,7 +485,7 @@ int _eXosip_insubscription_send_request_with_credential(struct eXosip_t *exconte
 
   osip_transaction_add_event(tr, sipevent);
 
-  _eXosip_update(excontext);    /* fixed? */
+  _eXosip_update(excontext); /* fixed? */
   _eXosip_wakeup(excontext);
   return OSIP_SUCCESS;
 }
@@ -517,13 +517,22 @@ static int _eXosip_insubscription_auto_send_notify(struct eXosip_t *excontext, i
     return i;
   }
 
-  snprintf(xml, sizeof(xml), "<?xml version=\"1.0\"?>" "\r\n" "<dialog-info xmlns=\"urn:ietf:params:xml:ns:dialog-info\"" "\r\n" "	version=\"2\" state=\"full\"" "\r\n" "	entity=\"%s\">" "\r\n", entity);
+  snprintf(xml, sizeof(xml),
+           "<?xml version=\"1.0\"?>"
+           "\r\n"
+           "<dialog-info xmlns=\"urn:ietf:params:xml:ns:dialog-info\""
+           "\r\n"
+           "	version=\"2\" state=\"full\""
+           "\r\n"
+           "	entity=\"%s\">"
+           "\r\n",
+           entity);
   osip_free(entity);
 
   /* loop over all jc/jd */
   for (jc = excontext->j_calls; jc != NULL; jc = jc->next) {
     for (jd = jc->c_dialogs; jd != NULL; jd = jd->next) {
-      if (jd->d_dialog == NULL) {       /* finished call */
+      if (jd->d_dialog == NULL) { /* finished call */
       } else {
         char tmp_dialog[2048];
         char direction[20];
@@ -549,16 +558,23 @@ static int _eXosip_insubscription_auto_send_notify(struct eXosip_t *excontext, i
         if (remote_uri != NULL) {
           /* add dialog info */
           snprintf(tmp_dialog, sizeof(tmp_dialog),
-                   "	<dialog id=\"%s\" call-id=\"%s\"" "\r\n"
+                   "	<dialog id=\"%s\" call-id=\"%s\""
+                   "\r\n"
                    "		local-tag=\"%s\" remote-tag=\"%s\""
-                   "\r\n" "		direction=\"%s\">"
+                   "\r\n"
+                   "		direction=\"%s\">"
                    "\r\n"
                    "		<state>%s</state>"
                    "\r\n"
                    "		<remote>"
                    "\r\n"
                    "			<identity>%s</identity>"
-                   "\r\n" "		</remote>" "\r\n" "	</dialog>" "\r\n", jd->d_dialog->call_id, jd->d_dialog->call_id, jd->d_dialog->local_tag, jd->d_dialog->remote_tag, direction, dlg_state, remote_uri);
+                   "\r\n"
+                   "		</remote>"
+                   "\r\n"
+                   "	</dialog>"
+                   "\r\n",
+                   jd->d_dialog->call_id, jd->d_dialog->call_id, jd->d_dialog->local_tag, jd->d_dialog->remote_tag, direction, dlg_state, remote_uri);
 
           if (strlen(xml) + strlen(tmp_dialog) < sizeof(xml))
             strcat(xml, tmp_dialog);
@@ -568,7 +584,9 @@ static int _eXosip_insubscription_auto_send_notify(struct eXosip_t *excontext, i
   }
 
   if (strlen(xml) + 16 < sizeof(xml))
-    strcat(xml, "</dialog-info>" "\r\n");
+    strcat(xml,
+           "</dialog-info>"
+           "\r\n");
 
   osip_message_set_content_type(notify, "application/dialog-info+xml");
   osip_message_set_body(notify, xml, strlen(xml));

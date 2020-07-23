@@ -44,7 +44,7 @@
 #include <openssl/opensslv.h>
 #endif
 
-#if defined (HAVE_SYS_SELECT_H)
+#if defined(HAVE_SYS_SELECT_H)
 #include <sys/select.h>
 #endif
 
@@ -88,10 +88,10 @@ void eXosip_transport_tcp_init(struct eXosip_t *excontext);
 void eXosip_transport_tls_init(struct eXosip_t *excontext);
 void eXosip_transport_dtls_init(struct eXosip_t *excontext);
 
-#if defined (HAVE_WINSOCK2_H)
-#define eXFD_SET(A, B)   FD_SET((unsigned int) A, B)
+#if defined(HAVE_WINSOCK2_H)
+#define eXFD_SET(A, B) FD_SET((unsigned int) A, B)
 #else
-#define eXFD_SET(A, B)   FD_SET(A, B)
+#define eXFD_SET(A, B) FD_SET(A, B)
 #endif
 
 #endif

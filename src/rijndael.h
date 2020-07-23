@@ -18,9 +18,7 @@
 #ifndef RIJNDAEL_H
 #define RIJNDAEL_H
 
-
 void RijndaelKeySchedule(u8 key[16]);
 void RijndaelEncrypt(u8 input[16], u8 output[16]);
-
 
 #endif
