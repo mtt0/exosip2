@@ -333,9 +333,11 @@ int main(int argc, char *argv[]) {
     osip_message_t *reg = NULL;
     int i;
 
+    eXosip_lock(context_eXosip);
     regparam.regid = eXosip_register_build_initial_register(context_eXosip, fromuser, proxy, contact, regparam.expiry * 2, &reg);
 
     if (regparam.regid < 1) {
+      eXosip_unlock(context_eXosip);
       syslog_wrapper(LOG_ERR, "eXosip_register_build_initial_register failed");
       eXosip_quit(context_eXosip);
       osip_free(context_eXosip);
@@ -343,6 +345,7 @@ int main(int argc, char *argv[]) {
     }
 
     i = eXosip_register_send_register(context_eXosip, regparam.regid, reg);
+    eXosip_unlock(context_eXosip);
 
     if (i != 0) {
       syslog_wrapper(LOG_ERR, "eXosip_register_send_register failed");
@@ -372,7 +375,9 @@ int main(int argc, char *argv[]) {
 #ifdef OSIP_MONOTHREAD
       eXosip_execute(context_eXosip);
 #endif
+      eXosip_lock(context_eXosip);
       eXosip_automatic_action(context_eXosip);
+      eXosip_unlock(context_eXosip);
       osip_usleep(10000);
       continue;
     }

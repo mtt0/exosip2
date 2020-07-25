@@ -623,6 +623,7 @@ int main(int argc, char *argv[]) {
       regparam.expiry = 300;
     }
 
+    eXosip_lock(context_eXosip);
     if (contact == NULL && regparam.expiry == -1) {
       regparam.regid = eXosip_register_build_initial_register(context_eXosip, fromuser, proxy, contact, 0, &reg);
 
@@ -631,6 +632,7 @@ int main(int argc, char *argv[]) {
     }
 
     if (regparam.regid < 1) {
+      eXosip_unlock(context_eXosip);
       syslog_wrapper(LOG_ERR, "REGISTRATION REPORT:[FAILURE] [%s][duration:0,000s] cannot prepare sip REGISTER [%i]", transport, err);
       eXosip_quit(context_eXosip);
       osip_free(context_eXosip);
@@ -651,6 +653,7 @@ int main(int argc, char *argv[]) {
     }
 
     err = eXosip_register_send_register(context_eXosip, regparam.regid, reg);
+    eXosip_unlock(context_eXosip);
 
     if (err != 0) {
       syslog_wrapper(LOG_ERR, "REGISTRATION REPORT:[FAILURE] [%s][duration:0,000s] cannot send sip REGISTER [%i]", transport, err);
@@ -670,7 +673,9 @@ int main(int argc, char *argv[]) {
 #ifdef OSIP_MONOTHREAD
       eXosip_execute(context_eXosip);
 #endif
+      eXosip_lock(context_eXosip);
       eXosip_automatic_action(context_eXosip);
+      eXosip_unlock(context_eXosip);
       osip_usleep(10000);
       continue;
     }
