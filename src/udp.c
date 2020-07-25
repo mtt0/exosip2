@@ -1818,7 +1818,9 @@ int _eXosip_read_message(struct eXosip_t *excontext, int max_message_nb, int sec
       memset(cares_fd_table, -1, sizeof(cares_fd_table));
       excontext->eXtl_transport.tl_set_fdset(excontext, NULL, NULL, NULL, &max, osip_fd_table);
 
+      eXosip_lock(excontext);
       _eXosip_dnsutils_addsock_epoll(excontext, cares_fd_table);
+      eXosip_unlock(excontext);
 
       nfds = epoll_wait(excontext->epfd, excontext->ep_array, excontext->max_fd_no, sec_max * 1000 + usec_max / 1000);
       int n;
@@ -1856,6 +1858,7 @@ int _eXosip_read_message(struct eXosip_t *excontext, int max_message_nb, int sec
         }
       }
 
+      eXosip_lock(excontext);
       i = _eXosip_dnsutils_checksock_epoll(excontext, nfds);
       if (i > 0) {
         OSIP_TRACE(osip_trace(__FILE__, __LINE__, OSIP_INFO3, NULL, "[eXosip] [socket event] a DNS result is ready\n"));
@@ -1867,6 +1870,7 @@ int _eXosip_read_message(struct eXosip_t *excontext, int max_message_nb, int sec
       }
 
       _eXosip_dnsutils_delsock_epoll(excontext, cares_fd_table);
+      eXosip_unlock(excontext);
 
       /* only check for connection/keepalive when there is no activity */
       osip_gettimeofday(&excontext->cc_timer, NULL);
@@ -1892,7 +1896,9 @@ int _eXosip_read_message(struct eXosip_t *excontext, int max_message_nb, int sec
 
 #endif
 
+      eXosip_lock(excontext);
       i = _eXosip_dnsutils_getsock(excontext, &osip_fdset, &osip_wrset);
+      eXosip_unlock(excontext);
       if (i > max)
         max = i;
 
@@ -1937,6 +1943,7 @@ int _eXosip_read_message(struct eXosip_t *excontext, int max_message_nb, int sec
           }
         }
 
+        eXosip_lock(excontext);
         i = _eXosip_dnsutils_checksock(excontext, &osip_fdset, &osip_wrset);
         if (i > 0) {
           OSIP_TRACE(osip_trace(__FILE__, __LINE__, OSIP_INFO3, NULL, "[eXosip] [socket event] a DNS result is ready\n"));
@@ -1946,6 +1953,7 @@ int _eXosip_read_message(struct eXosip_t *excontext, int max_message_nb, int sec
         if (i > 0) {
           OSIP_TRACE(osip_trace(__FILE__, __LINE__, OSIP_INFO3, NULL, "[eXosip] [socket event] a socket event happened\n"));
         }
+        eXosip_unlock(excontext);
 
         for (i = 0; i < EXOSIP_MAX_SOCKETS; i++) {
           if (osip_fd_table[i] > 0) {
