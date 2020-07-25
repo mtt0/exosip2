@@ -123,7 +123,7 @@ int eXosip_execute(struct eXosip_t *excontext);
 #define EXOSIP_OPT_SET_HEADER_USER_AGENT (EXOSIP_OPT_BASE_OPTION + 17)           /**< char *: set the User-Agent header */
 #define EXOSIP_OPT_ENABLE_DNS_CACHE (EXOSIP_OPT_BASE_OPTION + 18)                /**< int *: 0 to disable use of cache*/
 #define EXOSIP_OPT_ENABLE_AUTOANSWERBYE (EXOSIP_OPT_BASE_OPTION + 19)            /**< int *: 0 to disable automatic answer of BYE */
-#define EXOSIP_OPT_ENABLE_IPV6 (EXOSIP_OPT_BASE_OPTION + 20)                     /**< int *: 0 to disable -this is a per-eXosip_t parameter for using IPv6 DNS request */
+#define EXOSIP_OPT_ENABLE_IPV6 (EXOSIP_OPT_BASE_OPTION + 20)                     /**< int *: 0 to disable, 1 to use only IPv6, 2 to use choose the best -this is a per-eXosip_t parameter for using IPv6 DNS request */
 #define EXOSIP_OPT_ENABLE_REUSE_TCP_PORT (EXOSIP_OPT_BASE_OPTION + 21)           /**< int *: 0 to disable, 1 to enable reusing local tcp port for outgoing tcp connection */
 #define EXOSIP_OPT_ENABLE_USE_EPHEMERAL_PORT (EXOSIP_OPT_BASE_OPTION + 22)       /**< int *: 0 to disable, 1 to enable usage of emphemeral tcp port in Contact headers instead of local listening port for TCP/TLS */
 #define EXOSIP_OPT_SET_CALLBACK_WAKELOCK (EXOSIP_OPT_BASE_OPTION + 23)           /**< CbSipWakeLock *: set a callback to be called upon start/end of transaction */
