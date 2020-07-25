@@ -1,4 +1,4 @@
-eXosip2 (5.1.2) - 2020-07-24
+eXosip2 (5.1.2) - 2020-07-26
 	* new format style using clang-format.
 	* reduce and rewrite logs for readability.
 	* fix broken epoll implementation. (DO NOT USE 5.1.1 with epoll)
