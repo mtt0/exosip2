@@ -1,4 +1,5 @@
-eXosip2 (5.1.2) - 2020-07-26
+eXosip2 (5.1.2) - 2020-07-29
+	* fix possible race condition in sample code [sip_reg and sip_monitor]
 	* new format style using clang-format.
 	* reduce and rewrite logs for readability.
 	* fix broken epoll implementation. (DO NOT USE 5.1.1 with epoll)
