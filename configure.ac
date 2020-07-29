@@ -5,7 +5,8 @@ AC_CONFIG_SRCDIR([include/eXosip2/eXosip.h])
 AC_MSG_NOTICE([libeXosip2              The Extended Open SIP library.])
 AC_MSG_NOTICE([Copyright (C) 2002-2020 Aymeric MOIZARD - <amoizard@antisip.com>])
 
-AC_SUBST(LIBEXOSIP_SO_VERSION, 12:1:2)
+#increase major number for every release
+AC_SUBST(LIBEXOSIP_SO_VERSION, 13:0:0)
 AC_SUBST(EXOSIP_VERSION, $VERSION)
 
 AC_MSG_RESULT([Configuring ${PACKAGE} ${EXOSIP_VERSION}])
