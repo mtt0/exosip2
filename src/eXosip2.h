@@ -499,6 +499,10 @@ int setsockopt_ipv6only(int sock);
 #define MAX_EXOSIP_HTTP_AUTH 100
 #endif
 
+#ifndef EXOSIP_RING_TIMEOUT
+#define EXOSIP_RING_TIMEOUT 180
+#endif
+
 struct eXosip_counters {
   float current_average;
   unsigned int num_entries;

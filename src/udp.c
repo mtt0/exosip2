@@ -2232,7 +2232,7 @@ static int _eXosip_release_aborted_calls(struct eXosip_t *excontext, eXosip_call
     return OSIP_UNDEFINED_ERROR;
   }
 
-  if (tr != NULL && tr->state != IST_TERMINATED && tr->state != ICT_TERMINATED && tr->birth_time + 180 < now) { /* Wait a max of 2 minutes */
+  if (tr != NULL && tr->state != IST_TERMINATED && tr->state != ICT_TERMINATED && tr->birth_time + EXOSIP_RING_TIMEOUT < now) { /* Wait a max of 2 minutes */
     if (jd != NULL) {
       OSIP_TRACE(osip_trace(__FILE__, __LINE__, OSIP_INFO2, NULL, "[eXosip] [cid=%i][did=%i] release aborted calls [remove a dialog for an unfinished transaction]\n", jc->c_id, jd->d_id));
       _eXosip_call_remove_dialog_reference_in_call(jc, jd);
