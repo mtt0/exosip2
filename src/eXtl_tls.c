@@ -666,7 +666,6 @@ static const unsigned char dh2048_generator[] = {0x3F, 0xB3, 0x2C, 0x9B, 0x73, 0
 
 static void build_dh_params(SSL_CTX * ctx) {
 #ifndef OPENSSL_NO_DH
-  int codes = 0;
   DH *dh = DH_new();
   BIGNUM *p;
   BIGNUM *g;
