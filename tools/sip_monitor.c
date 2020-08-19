@@ -536,7 +536,11 @@ int main(int argc, char *argv[]) {
   }
 
   if (fork) {
-    daemon(1, 0);
+    err = daemon(1, 0);
+    if (err < 0) {
+      syslog_wrapper(LOG_ERR, "REGISTRATION REPORT:[FAILURE] [%s][duration:0,000s] daemon mode failed", transport);
+      exit(1);
+    }
   }
 
   osip_list_init(&monitored_logs);

@@ -253,7 +253,10 @@ int main(int argc, char *argv[]) {
   }
 
   if (!nofork) {
-    daemon(1, 0);
+    err = daemon(1, 0);
+    if (err < 0) {
+      exit(1);
+    }
   }
 
 #ifdef LOG_PERROR
