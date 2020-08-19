@@ -214,7 +214,7 @@ static void __osip_trace_func(const char *fi, int li, osip_trace_level_t level, 
       add_log(LOG_ERR, tmp);
 
       if (error_reason[0] == '\0') {
-        snprintf(error_reason, sizeof(error_reason), tmp);
+        snprintf(error_reason, sizeof(error_reason), "%s", tmp);
       }
 
     } else if (strstr(buffer, "socket [") != NULL && strstr(buffer, "] connected")) {
@@ -230,7 +230,7 @@ static void __osip_trace_func(const char *fi, int li, osip_trace_level_t level, 
       add_log(LOG_ERR, tmp);
 
       if (error_reason[0] == '\0') {
-        snprintf(error_reason, sizeof(error_reason), tmp);
+        snprintf(error_reason, sizeof(error_reason), "%s", tmp);
       }
 
     } else if (strstr(buffer, "[ssl connect] error") != NULL) {
@@ -238,7 +238,7 @@ static void __osip_trace_func(const char *fi, int li, osip_trace_level_t level, 
       add_log(LOG_ERR, tmp);
 
       if (error_reason[0] == '\0') {
-        snprintf(error_reason, sizeof(error_reason), tmp);
+        snprintf(error_reason, sizeof(error_reason), "%s", tmp);
       }
 
     } else if (strstr(buffer, "cannot connect socket ") != NULL && strstr(buffer, "terminated") != NULL) {
@@ -246,7 +246,7 @@ static void __osip_trace_func(const char *fi, int li, osip_trace_level_t level, 
       add_log(LOG_ERR, tmp);
 
       if (error_reason[0] == '\0') {
-        snprintf(error_reason, sizeof(error_reason), tmp);
+        snprintf(error_reason, sizeof(error_reason), "%s", tmp);
       }
     }
   }
