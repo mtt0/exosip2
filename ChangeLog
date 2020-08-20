@@ -1,4 +1,9 @@
-eXosip2 (5.1.2) - 2020-07-29
+eXosip2 (5.1.2) - 2020-08-20
+	* tls: use RFC 5114 dh param with 2048 bits size.
+	* tls: use 2048 bits for ephemeral RSA key genearation.
+	* tls: use SSL_OP_NO_COMPRESSION to make sure it's disabled.
+	* tls: use SSL_OP_NO_TICKET to disable ticket.
+	* tls: use HIGH:!COMPLEMENTOFDEFAULT:!kRSA:!PSK:!SRP cipher list for higher security and less ciphers
 	* fix possible race condition in sample code [sip_reg and sip_monitor]
 	* new format style using clang-format.
 	* reduce and rewrite logs for readability.
