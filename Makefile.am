@@ -8,7 +8,7 @@ doxygen:
 
 upload: dist
 	@echo "######## Maintainer only ##########";
-	@echo "building files for upload in ftp://savannah.gnu.org/incoming/savannah/exosip";
+	@echo "building files for upload and scp libexosip2-X.X.X.tar.gz xxxxxx@dl.sv.nongnu.org:/releases/exosip";
 	@echo "building: $(PACKAGE)-$(VERSION).tar.gz.sig";
 	gpg -b $(PACKAGE)-$(VERSION).tar.gz
 
