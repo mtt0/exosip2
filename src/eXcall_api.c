@@ -404,10 +404,6 @@ int eXosip_call_send_ack(struct eXosip_t *excontext, int tid, osip_message_t *ac
   osip_transaction_t *tr = NULL;
   int i;
 
-  osip_route_t *route;
-  char *host = NULL;
-  int port;
-
   if (tid <= 0) {
     if (ack != NULL)
       osip_message_free(ack);
@@ -441,44 +437,7 @@ int eXosip_call_send_ack(struct eXosip_t *excontext, int tid, osip_message_t *ac
     }
   }
 
-  osip_message_get_route(ack, 0, &route);
-
-  if (route != NULL) {
-    osip_uri_param_t *lr_param = NULL;
-
-    osip_uri_uparam_get_byname(route->url, "lr", &lr_param);
-
-    if (lr_param == NULL)
-      route = NULL;
-  }
-
-  if (route != NULL) {
-    port = 5060;
-
-    if (route->url->port != NULL)
-      port = osip_atoi(route->url->port);
-
-    host = route->url->host;
-
-  } else {
-    /* search for maddr parameter */
-    osip_uri_param_t *maddr_param = NULL;
-
-    osip_uri_uparam_get_byname(ack->req_uri, "maddr", &maddr_param);
-
-    if (maddr_param != NULL && maddr_param->gvalue != NULL)
-      host = maddr_param->gvalue;
-
-    port = 5060;
-
-    if (ack->req_uri->port != NULL)
-      port = osip_atoi(ack->req_uri->port);
-
-    if (host == NULL)
-      host = ack->req_uri->host;
-  }
-
-  i = _eXosip_snd_message(excontext, NULL, ack, host, port, -1);
+  i = _eXosip_snd_message(excontext, NULL, ack, NULL, 0, -1);
 
   if (jd != NULL) {
     /* if the call is already closed, the ACK was rebuilt with a temporary dialog, and jd==NULL */

@@ -1507,7 +1507,7 @@ static void _eXosip_process_response_out_of_transaction(struct eXosip_t *exconte
   return;
 }
 
-static int _eXosip_handle_rfc5626_ob(osip_message_t *message, char *remote_host, int remote_port) {
+static int _eXosip_handle_rfc5626_ob(struct eXosip_t *excontext, osip_message_t *message, char *remote_host, int remote_port) {
   osip_contact_t *co;
   osip_uri_param_t *u_param = NULL;
   char _remote_port[10];
@@ -1536,8 +1536,12 @@ static int _eXosip_handle_rfc5626_ob(osip_message_t *message, char *remote_host,
 
   osip_uri_uparam_get_byname(co->url, "ob", &u_param);
 
-  if (u_param == NULL || u_param->gname == NULL)
-    return OSIP_SUCCESS;
+  if (u_param == NULL || u_param->gname == NULL) {
+    if (excontext->opt_force_connectionreuse > 0)
+      osip_uri_uparam_add(co->url, osip_strdup("ob"), NULL);
+    else
+      return OSIP_SUCCESS;
+  }
 
   /* add internal x-ob parameters with connection info */
   osip_uri_uparam_add(co->url, osip_strdup("x-obr"), osip_strdup(remote_host));
@@ -1735,7 +1739,7 @@ int _eXosip_handle_incoming_message(struct eXosip_t *excontext, char *buf, size_
   }
 
   osip_message_fix_last_via_header(se->sip, host, port);
-  _eXosip_handle_rfc5626_ob(se->sip, host, port);
+  _eXosip_handle_rfc5626_ob(excontext, se->sip, host, port);
 
   if (MSG_IS_RESPONSE(se->sip)) {
     _eXosip_handle_received_rport(se->sip, received_host, rport_port);

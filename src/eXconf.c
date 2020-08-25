@@ -1224,6 +1224,11 @@ int eXosip_set_option(struct eXosip_t *excontext, int opt, const void *value) {
     excontext->opt_sessiontimers_force = val;
     break;
 
+  case EXOSIP_OPT_FORCE_CONNECTIONREUSE:
+    val = *((int *) value);
+    excontext->opt_force_connectionreuse = val;
+    break;
+
   case EXOSIP_OPT_SET_DSCP:
     val = *((int *) value);
     /* 0x1A by default */

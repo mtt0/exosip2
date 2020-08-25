@@ -137,6 +137,7 @@ int eXosip_execute(struct eXosip_t *excontext);
 #define EXOSIP_OPT_SET_DEFAULT_CONTACT_DISPLAYNAME (EXOSIP_OPT_BASE_OPTION + 31) /**< char *: define a display name to be added in Contact headers  (example: "john Doe") */
 #define EXOSIP_OPT_SET_SESSIONTIMERS_FORCE \
   (EXOSIP_OPT_BASE_OPTION + 32) /**< int *: 0 (default): activate "session timers" if supported on both side, 1: if remote side (UAS) do not indicate support for "session timers", activate feature on UAC (local) side */
+#define EXOSIP_OPT_FORCE_CONNECTIONREUSE (EXOSIP_OPT_BASE_OPTION + 33)           /**< int *: 0 to disable, 1 to force reusing established connection for ACK and dialog message */
 
 #define EXOSIP_OPT_SET_TLS_VERIFY_CERTIFICATE (EXOSIP_OPT_BASE_OPTION + 500)      /**< int *: enable verification of certificate for TLS connection */
 #define EXOSIP_OPT_SET_TLS_CERTIFICATES_INFO (EXOSIP_OPT_BASE_OPTION + 501)       /**< eXosip_tls_ctx_t *: client and/or server certificate/ca-root/key info */
