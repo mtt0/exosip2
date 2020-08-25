@@ -1,4 +1,5 @@
 eXosip2 (5.1.3) - 2020-08-25
+	* EXOSIP_OPT_FORCE_CONNECTIONREUSE; new option to force reusing established socket for ACK and dialog message
 	* tls: fix building DH parameter with 5.1.2 and openssl < 1.1.0
 
 eXosip2 (5.1.2) - 2020-08-20
