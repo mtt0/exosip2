@@ -683,7 +683,7 @@ static void build_dh_params(SSL_CTX * ctx) {
   dh->p = p;
   dh->g = g;
   dh->length = 256;
-  if (dh->p && dh->g) {
+  if (dh->p == NULL || dh->g == NULL) {
     OSIP_TRACE(osip_trace(__FILE__, __LINE__, OSIP_ERROR, NULL, "[eXosip] [TLS] DH set p g failed\n"));
     return;
   }
