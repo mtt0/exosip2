@@ -97,6 +97,7 @@ static void usage(void) {
          "\n[optional_sip_options]\n"
          "  -U --username    username                   (authentication username)\n"
          "  -P --password    password                   (authentication password)\n"
+         "  -o --outbound    sip:proxyhost[:port]       (outbound proxy)\n"
          "  -t --transport   UDP|TCP|TLS|DTLS           (default UDP)\n"
          "  -e --expiry      number                     (default 0 second - ie: fetch bindings)\n"
          "  -S --sslrootcapath /etc/path                (default /etc/ssl/certs/)\n"
@@ -373,6 +374,75 @@ static int _resolv_naptr(const char *domain) {
 
 #endif
 
+static int _am_option_route_add_lr(const char *orig_route, char *dst_route, int dst_route_size) {
+  osip_route_t *route_header = NULL;
+  char *new_route = NULL;
+  const char *tmp;
+  const char *tmp2;
+  int i;
+
+  memset(dst_route, '\0', dst_route_size);
+  if (orig_route == NULL || orig_route[0] == '\0')
+    return 0;
+
+  tmp = strstr(orig_route, "sip:");
+  tmp2 = strstr(orig_route, "sips:");
+  if (tmp == NULL && tmp2 == NULL) {
+    snprintf(dst_route, dst_route_size, "<sip:%s;lr>", orig_route);
+    return 0;
+  }
+
+  i = osip_route_init(&route_header);
+  if (i != 0 || route_header == NULL)
+    return OSIP_NOMEM;
+  i = osip_route_parse(route_header, orig_route);
+  if (i != 0 || route_header->url == NULL || route_header->url->host == NULL) {
+    osip_route_free(route_header);
+    snprintf(dst_route, dst_route_size, "%s", orig_route);
+    return i;
+  }
+
+  tmp = strstr(orig_route, ";lr");
+  if (tmp == NULL)
+    osip_uri_uparam_add(route_header->url, osip_strdup("lr"), NULL);
+
+  i = osip_route_to_str(route_header, &new_route);
+  osip_route_free(route_header);
+  if (i != 0 || new_route == NULL) {
+    return i;
+  }
+  snprintf(dst_route, dst_route_size, "%s", new_route);
+  osip_free(new_route);
+  return 0;
+}
+
+static int _prepend_route(osip_message_t *sip, const char *hvalue) {
+  osip_route_t *route;
+  int i;
+  char outbound_route[256];
+
+  if (hvalue == NULL || hvalue[0] == '\0')
+    return OSIP_SUCCESS;
+
+  memset(outbound_route, '\0', sizeof(outbound_route));
+  i = _am_option_route_add_lr(hvalue, outbound_route, sizeof(outbound_route));
+  if (i != 0)
+    return i;
+
+  i = osip_route_init(&route);
+
+  if (i != 0)
+    return i;
+  i = osip_route_parse(route, outbound_route);
+  if (i != 0) {
+    osip_route_free(route);
+    return i;
+  }
+  sip->message_property = 2;
+  osip_list_add(&sip->routes, route, 0);
+  return OSIP_SUCCESS;
+}
+
 int main(int argc, char *argv[]) {
   int exit_code = 1;
   int c;
@@ -381,6 +451,7 @@ int main(int argc, char *argv[]) {
   char *fromuser = NULL;
   int automasquerade = 0;
   char *proxy = NULL;
+  char *outbound = NULL;
   char transport[5];
 
   struct servent *service;
@@ -412,7 +483,7 @@ int main(int argc, char *argv[]) {
   snprintf(sslrootcapath, sizeof(sslrootcapath), "%s", "/etc/ssl/certs/");
 
   for (;;) {
-#define short_options "du:r:U:P:S:t:p:c:e:mv:sh"
+#define short_options "du:r:U:P:o:S:t:p:c:e:mv:sh"
 #ifdef _GNU_SOURCE
     int option_index = 0;
 
@@ -421,6 +492,7 @@ int main(int argc, char *argv[]) {
                                            {"proxy", required_argument, NULL, 'r'},
                                            {"username", required_argument, NULL, 'U'},
                                            {"password", required_argument, NULL, 'P'},
+                                           {"outbound", required_argument, NULL, 'o'},
 
                                            {"sslrootcapath", required_argument, NULL, 'S'},
                                            {"transport", required_argument, NULL, 't'},
@@ -507,6 +579,10 @@ int main(int argc, char *argv[]) {
       password = optarg;
       break;
 
+    case 'o':
+      outbound = optarg;
+      break;
+
     case 'S':
       snprintf(sslrootcapath, sizeof(sslrootcapath), "%s", optarg);
       break;
@@ -520,8 +596,8 @@ int main(int argc, char *argv[]) {
   openlog(PROG_NAME, LOG_PID | log_perror, SYSLOG_FACILITY);
 #endif
 
-  syslog_wrapper(LOG_INFO, "%s up and running [testing on [%s] REGISTER [%s] From: [%s]%s%s%s]", prog_name, transport, proxy, fromuser, (username && password) ? " Username: [" : "", (username && password) ? username : "",
-                 (username && password) ? ":*****]" : "");
+  syslog_wrapper(LOG_INFO, "%s up and running [testing on [%s] REGISTER [%s] From: [%s]%s%s%s %s%s%s", prog_name, transport, proxy, fromuser, (username && password) ? " Username: [" : "", (username && password) ? username : "",
+                 (username && password) ? ":*****]" : "", outbound? "Route: [" : "", outbound? outbound : "", outbound ? "]" : "");
 
   if (!proxy || !fromuser || strlen(proxy) < 7 || strlen(fromuser) < 7) {
     syslog_wrapper(LOG_ERR, "REGISTRATION REPORT:[FAILURE] [%s][duration:0,000s] missing or broken mandatory parameter", transport);
@@ -644,6 +720,8 @@ int main(int argc, char *argv[]) {
       exit(1);
     }
 
+    _prepend_route(reg, outbound);
+    
     if (contact == NULL && regparam.expiry == -1) {
       int pos = 0;
 
