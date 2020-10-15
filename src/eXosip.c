@@ -1591,9 +1591,11 @@ int _eXosip_mark_all_transaction_ready(struct eXosip_t *excontext, fd_set *osip_
         if (FD_ISSET(transaction->out_socket, osip_exceptset)) {
           OSIP_TRACE(osip_trace(__FILE__, __LINE__, OSIP_INFO3, NULL, "[eXosip] [socket event] except descriptor is set\n"));
         }
-        osip_gettimeofday(&transaction->nict_context->timer_e_start, NULL);
-        add_gettimeofday(&transaction->nict_context->timer_e_start, 0);
-        wakeup++;
+        if (transaction->nict_context->timer_e_length > 0) {
+          osip_gettimeofday(&transaction->nict_context->timer_e_start, NULL);
+          add_gettimeofday(&transaction->nict_context->timer_e_start, 0);
+          wakeup++;
+        }
       }
     }
 
@@ -1689,9 +1691,11 @@ int _eXosip_mark_all_transaction_ready_epoll(struct eXosip_t *excontext, int nfd
             }
           }
 
-          osip_gettimeofday(&transaction->nict_context->timer_e_start, NULL);
-          add_gettimeofday(&transaction->nict_context->timer_e_start, 0);
-          wakeup++;
+          if (transaction->nict_context->timer_e_length > 0) {
+            osip_gettimeofday(&transaction->nict_context->timer_e_start, NULL);
+            add_gettimeofday(&transaction->nict_context->timer_e_start, 0);
+            wakeup++;
+          }
           break;
         }
       }
