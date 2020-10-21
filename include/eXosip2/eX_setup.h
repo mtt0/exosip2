@@ -249,6 +249,9 @@ typedef struct eXosip_tls_ctx_s {
   char random_file[1024];          /**< absolute path to a file with random(!) data */
   char dh_param[1024];             /**< absolute path to a file necessary for diffie hellman key exchange */
   char root_ca_cert[1024];         /**< absolute path to the file with known rootCAs */
+  char cipher_list[2048];          /**< openssl cipher list (default: HIGH:!COMPLEMENTOFDEFAULT:!kRSA:!PSK:!SRP) */
+  unsigned long tls_flags;         /**< openssl additionnal flag (example: SSL_OP_NO_TLSv1, SSL_OP_NO_TLSv1_1) */
+  unsigned long dtls_flags;        /**< openssl additionnal flag (example: SSL_OP_NO_DTLSv1) */
   eXosip_tls_credentials_t client; /**< credential of the client */
   eXosip_tls_credentials_t server; /**< credential of the server */
 } eXosip_tls_ctx_t;
