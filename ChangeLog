@@ -1,3 +1,16 @@
+eXosip2 (5.2.0) - 2020-11-10
+	* fix memory and socket leak [major] [affected TCP, TLS, UDP: since 5.1.2, need update asap]
+	* fix to make sure a non yet established TLS descriptor with read descriptor set will be processed when no outgoing transaction is in a state to handle it [since 5.1.2]
+	* fix SRV rotation for TLS [was rotating TCP records instead of TLS] [since 5.1.2]
+	* fix duplicate packets for TCP and TLS when several outgoing NICT are happening at the same time [since 5.1.2]
+	* add outbound proxy parameter in sip_monitor tool
+
+	* ABI update: modification of "eXosip_tls_ctx_t"
+	  extend the structure to set
+	  - cipher list
+	  - add TLS openssl flags (to disable TLSv1, TLSv1.1, etc...)
+	  - add DTLS openssl flags (to disable DTLSv1, etc...)
+
 eXosip2 (5.1.3) - 2020-08-25
 	* EXOSIP_OPT_FORCE_CONNECTIONREUSE; new option to force reusing established socket for ACK and dialog message
 	* tls: fix building DH parameter with 5.1.2 and openssl < 1.1.0
