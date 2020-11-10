@@ -1876,6 +1876,19 @@ int _eXosip_read_message(struct eXosip_t *excontext, int max_message_nb, int sec
       _eXosip_dnsutils_delsock_epoll(excontext, cares_fd_table);
       eXosip_unlock(excontext);
 
+      for (i = 0; i < EXOSIP_MAX_SOCKETS; i++) {
+        if (osip_fd_table[i] > 0) {
+          for (n = 0; n < nfds; ++n) {
+            if (excontext->ep_array[n].events & EPOLLIN && excontext->ep_array[n].data.fd == osip_fd_table[i]) {
+              excontext->eXtl_transport.tl_check_connection(excontext, osip_fd_table[i]);
+            }
+            if (excontext->ep_array[n].events & EPOLLOUT && excontext->ep_array[n].data.fd == osip_fd_table[i]) {
+              excontext->eXtl_transport.tl_check_connection(excontext, osip_fd_table[i]);
+            }
+          }
+        }
+      }
+
       /* only check for connection/keepalive when there is no activity */
       osip_gettimeofday(&excontext->cc_timer, NULL);
       add_gettimeofday(&excontext->cc_timer, 5000);
@@ -1961,6 +1974,8 @@ int _eXosip_read_message(struct eXosip_t *excontext, int max_message_nb, int sec
 
         for (i = 0; i < EXOSIP_MAX_SOCKETS; i++) {
           if (osip_fd_table[i] > 0) {
+            if (FD_ISSET(osip_fd_table[i], &osip_fdset))
+              excontext->eXtl_transport.tl_check_connection(excontext, osip_fd_table[i]);
             if (FD_ISSET(osip_fd_table[i], &osip_wrset))
               excontext->eXtl_transport.tl_check_connection(excontext, osip_fd_table[i]);
             if (FD_ISSET(osip_fd_table[i], &osip_exceptset))
