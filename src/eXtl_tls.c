@@ -3051,7 +3051,7 @@ static int tls_tl_send_message(struct eXosip_t *excontext, osip_transaction_t *t
 
     } else {
       if (naptr_record != NULL && (MSG_IS_REGISTER(sip) || MSG_IS_OPTIONS(sip))) {
-        if (eXosip_dnsutils_rotate_srv(&naptr_record->siptcp_record) > 0) {
+        if (eXosip_dnsutils_rotate_srv(&naptr_record->siptls_record) > 0) {
         }
       }
       _eXosip_mark_registration_expired(excontext, reserved->socket_tab[pos].reg_call_id);
@@ -3069,7 +3069,7 @@ static int tls_tl_send_message(struct eXosip_t *excontext, osip_transaction_t *t
 
     if (i < 0) {
       if (naptr_record != NULL && (MSG_IS_REGISTER(sip) || MSG_IS_OPTIONS(sip))) {
-        if (eXosip_dnsutils_rotate_srv(&naptr_record->siptcp_record) > 0) {
+        if (eXosip_dnsutils_rotate_srv(&naptr_record->siptls_record) > 0) {
         }
       }
       _eXosip_mark_registration_expired(excontext, reserved->socket_tab[pos].reg_call_id);
