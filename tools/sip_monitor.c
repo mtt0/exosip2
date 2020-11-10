@@ -161,12 +161,19 @@ static void __osip_trace_func(const char *fi, int li, osip_trace_level_t level, 
     time_t timestamp;
     struct timeval now;
     struct tm *ptm;
+#ifdef __USE_POSIX
+    struct tm local_tm;
+#endif
     int tenths_ms;
     osip_gettimeofday(&now, NULL);
 
     timestamp = now.tv_sec;
     tenths_ms = now.tv_usec / (100L);
+#ifdef __USE_POSIX
+    ptm = localtime_r(&timestamp, &local_tm);
+#else
     ptm = localtime(&timestamp);
+#endif
 
     snprintf(time_buffer, 80, "%04d-%02d-%02d %02d:%02d:%02d.%04d", 1900 + ptm->tm_year, ptm->tm_mon + 1, ptm->tm_mday, ptm->tm_hour, ptm->tm_min, ptm->tm_sec, tenths_ms);
   }
