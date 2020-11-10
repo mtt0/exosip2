@@ -1,12 +1,15 @@
 AC_PREREQ([2.69])
-AC_INIT([libeXosip2],[5.1.3])
+AC_INIT([libeXosip2],[5.2.0])
 AC_CONFIG_SRCDIR([include/eXosip2/eXosip.h])
 
 AC_MSG_NOTICE([libeXosip2              The Extended Open SIP library.])
 AC_MSG_NOTICE([Copyright (C) 2002-2020 Aymeric MOIZARD - <amoizard@antisip.com>])
 
-#increase major number for every release
-AC_SUBST(LIBEXOSIP_SO_VERSION, 13:0:0)
+# format: ‘current[:revision[:age]]’. So, passing -version-info 3:12:1 sets current to 3, revision to 12, and age to 1
+# 1/ increase revision for every source code change [release]
+# 2/ increase current for every API/ABI change and revert revision to 0
+# 3/ always set age to 0 (for public release)
+AC_SUBST(LIBEXOSIP_SO_VERSION, 14:0:0)
 AC_SUBST(EXOSIP_VERSION, $VERSION)
 
 AC_MSG_RESULT([Configuring ${PACKAGE} ${EXOSIP_VERSION}])
