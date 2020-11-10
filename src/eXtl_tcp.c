@@ -1546,7 +1546,10 @@ int _tl_resolv_naptr_destination(struct eXosip_t *excontext, osip_transaction_t 
   int force_waiting = (tr == NULL) ? 1 : 0;
   osip_naptr_t *naptr_record = (tr == NULL) ? NULL : tr->naptr_record;
 
-  _eXosip_srv_lookup(excontext, sip, &naptr_record);
+  *out_naptr_record = NULL;
+  if (tr == NULL) {
+    _eXosip_srv_lookup(excontext, sip, &naptr_record);
+  }
 
   if (naptr_record == NULL) {
     /* no naptr ? */
@@ -1614,6 +1617,8 @@ int _tl_resolv_naptr_destination(struct eXosip_t *excontext, osip_transaction_t 
     *out_naptr_record = NULL;
     return OSIP_SUCCESS;
   }
+
+  *out_naptr_record = naptr_record;
 
   if (naptr_record->naptr_state == OSIP_NAPTR_STATE_SRVDONE) {
     return OSIP_SUCCESS;
