@@ -1371,7 +1371,8 @@ static int tls_tl_set_fdset(struct eXosip_t *excontext, fd_set *osip_fdset, fd_s
   if (reserved->tls_socket <= 0)
     return -1;
 
-  eXFD_SET(reserved->tls_socket, osip_fdset);
+  if (osip_fdset != NULL)
+    eXFD_SET(reserved->tls_socket, osip_fdset);
 
   if (reserved->tls_socket > *fd_max)
     *fd_max = reserved->tls_socket;
