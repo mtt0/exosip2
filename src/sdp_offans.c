@@ -208,15 +208,34 @@ sdp_message_t *eXosip_get_sdp_info(osip_message_t *message) {
   if (ctt->type == NULL || ctt->subtype == NULL)
     return NULL;
 
-  if (osip_strcasecmp(ctt->type, "multipart") == 0) {
-    /* probably within the multipart attachement */
-  } else if (osip_strcasecmp(ctt->type, "application") != 0 || osip_strcasecmp(ctt->subtype, "sdp") != 0)
+  if (osip_strcasecmp(ctt->type, "application") == 0 && osip_strcasecmp(ctt->subtype, "sdp") == 0) {
+    int i;
+    oldbody = (osip_body_t *) osip_list_get_first(&message->bodies, &it);
+    sdp_message_init(&sdp);
+    i = sdp_message_parse(sdp, oldbody->body);
+    if (i == 0)
+      return sdp;
+
+    sdp_message_free(sdp);
+    return NULL;
+  }
+
+  if (osip_strcasecmp(ctt->type, "multipart") != 0)
     return NULL;
 
   oldbody = (osip_body_t *) osip_list_get_first(&message->bodies, &it);
 
   while (oldbody != NULL) {
     int i;
+    ctt = oldbody->content_type;
+    if (ctt == NULL) {
+      oldbody = (osip_body_t *) osip_list_get_next(&it);
+      continue;
+    }
+    if (osip_strcasecmp(ctt->type, "application") != 0 || osip_strcasecmp(ctt->subtype, "sdp") != 0) {
+      oldbody = (osip_body_t *) osip_list_get_next(&it);
+      continue;
+    }
 
     sdp_message_init(&sdp);
     i = sdp_message_parse(sdp, oldbody->body);
@@ -225,8 +244,7 @@ sdp_message_t *eXosip_get_sdp_info(osip_message_t *message) {
       return sdp;
 
     sdp_message_free(sdp);
-    sdp = NULL;
-    oldbody = (osip_body_t *) osip_list_get_next(&it);
+    return NULL;
   }
 
   return NULL;
