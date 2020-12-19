@@ -804,7 +804,7 @@ static int _udp_read_udp_main_socket(struct eXosip_t *excontext) {
     int valopt = ex_errno;
     OSIP_TRACE(osip_trace(__FILE__, __LINE__, OSIP_ERROR, NULL, "[eXosip] [UDP] cannot read socket [%i] %s\n", i, _ex_strerror(valopt, eb, ERRBSIZ)));
 
-    if (valopt == 0 || valopt == 34) {
+    if (valopt == 0 || valopt == 34 || valopt == 10040 /* WSAEMSGSIZE */ ) {
       if (udp_message_max_length < 65536) {
         udp_message_max_length = udp_message_max_length * 2;
 
