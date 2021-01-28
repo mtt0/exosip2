@@ -846,7 +846,7 @@ static void _tls_load_trusted_certificates(eXosip_tls_ctx_t *exosip_tls_cfg, SSL
 
       else
         caFile = exosip_tls_cfg->root_ca_cert;
-
+      FindClose(hSearch);
     } else {
       caFile = exosip_tls_cfg->root_ca_cert;
     }
