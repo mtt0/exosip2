@@ -1380,6 +1380,14 @@ static int tls_tl_set_fdset(struct eXosip_t *excontext, fd_set *osip_fdset, fd_s
 #endif
 
   for (pos = 0; pos < EXOSIP_MAX_SOCKETS; pos++) {
+
+    if (reserved->socket_tab[pos].invalid > 0) {
+      OSIP_TRACE(osip_trace(__FILE__, __LINE__, OSIP_ERROR, NULL, "[eXosip] [TLS] [fdset] socket info:[%s][%d] [sock=%d] [pos=%d] manual reset\n", reserved->socket_tab[pos].remote_ip, reserved->socket_tab[pos].remote_port,
+                            reserved->socket_tab[pos].socket, pos));
+      _tls_tl_close_sockinfo(&reserved->socket_tab[pos]);
+      continue;
+    }
+
     if (reserved->socket_tab[pos].socket > 0) {
       if (osip_fdset != NULL)
         eXFD_SET(reserved->socket_tab[pos].socket, osip_fdset);
@@ -2848,6 +2856,15 @@ static int tls_tl_send_message(struct eXosip_t *excontext, osip_transaction_t *t
     return i;
   if (i < OSIP_SUCCESS)
     return i;
+
+  for (pos = 0; pos < EXOSIP_MAX_SOCKETS; pos++) {
+    if (reserved->socket_tab[pos].invalid > 0) {
+      OSIP_TRACE(osip_trace(__FILE__, __LINE__, OSIP_ERROR, NULL, "[eXosip] [TLS] [send] socket info:[%s][%d] [sock=%d] [pos=%d] manual reset\n", reserved->socket_tab[pos].remote_ip, reserved->socket_tab[pos].remote_port,
+                            reserved->socket_tab[pos].socket, pos));
+      _tls_tl_close_sockinfo(&reserved->socket_tab[pos]);
+      continue;
+    }
+  }
 
   if (out_socket > 0) {
     for (pos = 0; pos < EXOSIP_MAX_SOCKETS; pos++) {
