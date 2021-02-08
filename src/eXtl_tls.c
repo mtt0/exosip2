@@ -618,7 +618,9 @@ static int password_cb(char *buf, int num, int rwflag, void *userdata) {
   char *passwd = (char *) userdata;
 
   if (passwd == NULL || passwd[0] == '\0') {
-    return OSIP_SUCCESS;
+    /* Suppress blocking read from stdin if password is missing or empty */
+    OSIP_TRACE(osip_trace(__FILE__, __LINE__, OSIP_ERROR, NULL, "[eXosip] [TLS] password required but missing\n"));
+    return 0;
   }
 
   strncpy(buf, passwd, num);
@@ -887,10 +889,8 @@ static void _tls_load_trusted_certificates(eXosip_tls_ctx_t *exosip_tls_cfg, SSL
 static void _tls_use_certificate_private_key(const char *log, eXosip_tls_credentials_t *xtc, SSL_CTX *ctx) {
   /* load from file name in PEM files */
   if (xtc->cert[0] != '\0' && xtc->priv_key[0] != '\0') {
-    if (xtc->priv_key_pw[0] != '\0') {
-      SSL_CTX_set_default_passwd_cb_userdata(ctx, (void *) xtc->priv_key_pw);
-      SSL_CTX_set_default_passwd_cb(ctx, password_cb);
-    }
+    SSL_CTX_set_default_passwd_cb_userdata(ctx, (void *) xtc->priv_key_pw);
+    SSL_CTX_set_default_passwd_cb(ctx, password_cb);
 
     /* Load our keys and certificates */
     if (SSL_CTX_use_certificate_file(ctx, xtc->cert, SSL_FILETYPE_ASN1)) {
