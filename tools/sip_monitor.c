@@ -366,7 +366,7 @@ static int _resolv_naptr(const char *domain) {
         }
 
         osip_gettimeofday(&time_end, NULL);
-        timersub(&time_end, &time_start, &time_sub);
+        osip_timersub(&time_end, &time_start, &time_sub);
         syslog_wrapper(LOG_INFO, "NAPTR REPORT:[SUCCESS] [duration:%li,%03lis] best service for %s -> [%s] [%s:%i]", time_sub.tv_sec, time_sub.tv_usec / 1000, naptr_lookup.domain, best->protocol, best->srventry[0].srv, best->srventry[0].port);
         return 0;
       }
@@ -374,7 +374,7 @@ static int _resolv_naptr(const char *domain) {
   }
 
   osip_gettimeofday(&time_end, NULL);
-  timersub(&time_end, &time_start, &time_sub);
+  osip_timersub(&time_end, &time_start, &time_sub);
   syslog_wrapper(LOG_ERR, "NAPTR REPORT:[FAILURE] [duration:%li,%03lis] no NAPTR/no SRV record for %s", time_sub.tv_sec, time_sub.tv_usec / 1000, domain);
   return 0;
 }
@@ -779,7 +779,7 @@ int main(int argc, char *argv[]) {
     switch (event->type) {
     case EXOSIP_REGISTRATION_SUCCESS:
       osip_gettimeofday(&time_end, NULL);
-      timersub(&time_end, &time_start, &time_sub);
+      osip_timersub(&time_end, &time_start, &time_sub);
 
       dump_logs();
       syslog_wrapper(LOG_INFO, "REGISTRATION REPORT:[SUCCESS] [%s][duration:%li,%03lis] REGISTER [%i][%s]", transport, time_sub.tv_sec, time_sub.tv_usec / 1000, event->response->status_code, event->response->reason_phrase);
@@ -789,7 +789,7 @@ int main(int argc, char *argv[]) {
 
     case EXOSIP_REGISTRATION_FAILURE:
       osip_gettimeofday(&time_end, NULL);
-      timersub(&time_end, &time_start, &time_sub);
+      osip_timersub(&time_end, &time_start, &time_sub);
 
       dump_logs();
 
