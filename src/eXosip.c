@@ -420,7 +420,7 @@ static int _eXosip_retry_register_with_auth(struct eXosip_t *excontext, eXosip_e
     return eXosip_register_send_register(excontext, jr->r_id, NULL);
   }
 
-  return OSIP_UNDEFINED_ERROR;
+  return OSIP_RETRY_LIMIT;
 }
 
 static int _eXosip_retry_invite_with_auth(struct eXosip_t *excontext, eXosip_event_t *je) {
@@ -448,7 +448,7 @@ static int _eXosip_retry_invite_with_auth(struct eXosip_t *excontext, eXosip_eve
     return _eXosip_call_retry_request(excontext, jc, jd, tr);
   }
 
-  return OSIP_UNDEFINED_ERROR;
+  return OSIP_RETRY_LIMIT;
 }
 
 static int _eXosip_redirect_invite(struct eXosip_t *excontext, eXosip_event_t *je) {
@@ -492,7 +492,7 @@ static int _eXosip_retry_subscribe_with_auth(struct eXosip_t *excontext, eXosip_
     return _eXosip_subscription_send_request_with_credential(excontext, js, jd, tr);
   }
 
-  return OSIP_UNDEFINED_ERROR;
+  return OSIP_RETRY_LIMIT;
 }
 
 static int _eXosip_retry_publish_with_auth(struct eXosip_t *excontext, eXosip_event_t *je) {
@@ -838,7 +838,13 @@ void eXosip_automatic_action(struct eXosip_t *excontext) {
 
   for (jr = excontext->j_reg; jr != NULL; jr = jr->next) {
     if (jr->r_id >= 1 && jr->r_last_tr != NULL) {
-      if (jr->r_reg_period != 0 && now - jr->r_last_tr->birth_time > 900) {
+      
+      if (now >= jr->r_retry_after_delay)
+        jr->r_retry_after_delay = 0;
+
+      if (now < jr->r_retry_after_delay) {
+        /* skip for a while */
+      } else if (jr->r_reg_period != 0 && now - jr->r_last_tr->birth_time > 900) {
         /* automatic refresh */
         eXosip_register_send_register(excontext, jr->r_id, NULL);
 
@@ -1523,6 +1529,19 @@ void _eXosip_mark_registration_expired(struct eXosip_t *excontext, const char *c
       now = osip_getsystemtime(NULL);
 
       if (jr->r_last_tr->last_response == NULL || (!MSG_IS_STATUS_2XX(jr->r_last_tr->last_response))) {
+
+        if (jr->r_last_tr->last_response != NULL) {
+          osip_header_t *retry_after_header = NULL;
+          osip_message_header_get_byname(jr->r_last_tr->last_response, (const char *) "retry-after", 0, &retry_after_header);
+          if (retry_after_header != NULL && retry_after_header->hvalue != NULL) {
+            jr->r_retry_after_delay = osip_atoi(retry_after_header->hvalue);
+            if (jr->r_retry_after_delay < 0)
+              jr->r_retry_after_delay = 0;
+            if (jr->r_retry_after_delay > 0)
+              jr->r_retry_after_delay += now;
+          }
+        }
+
         jr->r_last_tr->birth_time = now - 120; /* after a failure, always make it exactly now-120 */
 
       } else if (jr->r_reg_period > 900) {

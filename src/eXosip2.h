@@ -368,6 +368,7 @@ struct eXosip_reg_t {
   osip_transaction_t *r_last_tr;
   int r_retry;         /* avoid too many unsuccessful retry */
   int r_retryfailover; /* avoid too many unsuccessful retry */
+  int r_retry_after_delay; /* obey to retry_after header */
 #define RS_DELETIONREQUIRED 2
 #define RS_DELETIONPROCEEDING 3
 #define RS_MASQUERADINGREQUIRED 4
