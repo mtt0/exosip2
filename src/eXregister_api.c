@@ -357,7 +357,7 @@ static int _eXosip_register_build_register(struct eXosip_t *excontext, eXosip_re
       if (last_response->status_code == 401 || last_response->status_code == 407) {
         _eXosip_add_authentication_information(excontext, reg, last_response);
 
-      } else
+      } else if (last_response->status_code != 403)
         _eXosip_add_authentication_information(excontext, reg, NULL);
 
       osip_message_free(last_response);
