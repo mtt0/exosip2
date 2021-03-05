@@ -229,20 +229,18 @@ static void __osip_trace_func(const char *fi, int li, osip_trace_level_t level, 
       char *tmp = strstr(buffer, "socket [");
       add_log(LOG_ERR, tmp);
 
-    } else if (strstr(buffer, "[ssl connect] succeeded") != NULL) {
-      char *tmp = strstr(buffer, "[ssl connect] succeeded");
+    } else if (strstr(buffer, "[ssl connect] [verification=") != NULL) {
+      char *tmp = strstr(buffer, "[ssl connect] ");
       add_log(LOG_INFO, tmp);
 
+      if (error_reason[0] == '\0') {
+	if (strstr(buffer, "[ssl connect] [verification=ENABLED] [FAILURE") != NULL) {
+	  snprintf(error_reason, sizeof(error_reason), "%s", tmp);
+	}
+      }
+      
     } else if (strstr(buffer, "[TLS] invalid  depth[") != NULL) {
       char *tmp = strstr(buffer, "[TLS] invalid  depth[");
-      add_log(LOG_ERR, tmp);
-
-      if (error_reason[0] == '\0') {
-        snprintf(error_reason, sizeof(error_reason), "%s", tmp);
-      }
-
-    } else if (strstr(buffer, "[ssl connect] error") != NULL) {
-      char *tmp = strstr(buffer, "[ssl connect] error");
       add_log(LOG_ERR, tmp);
 
       if (error_reason[0] == '\0') {

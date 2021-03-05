@@ -563,7 +563,8 @@ int verify_cb(int preverify_ok, X509_STORE_CTX *store) {
     OSIP_TRACE(osip_trace(__FILE__, __LINE__, OSIP_ERROR, NULL, "[eXosip] [TLS] issuer [%s]\n", buf));
   }
 
-  return preverify_ok;
+  return 1;
+  //return preverify_ok;
 
 #if 0
 
@@ -1016,8 +1017,7 @@ SSL_CTX *initialize_client_ctx(struct eXosip_t *excontext, eXosip_tls_ctx_t *cli
 
 #endif
 
-    if (excontext->tls_verify_client_certificate > 0)
-      verify_mode = SSL_VERIFY_PEER;
+    verify_mode = SSL_VERIFY_PEER;
 
     SSL_CTX_set_verify(ctx, verify_mode, &verify_cb);
     SSL_CTX_set_verify_depth(ctx, ex_verify_depth + 1);
@@ -1380,7 +1380,6 @@ static int tls_tl_set_fdset(struct eXosip_t *excontext, fd_set *osip_fdset, fd_s
 #endif
 
   for (pos = 0; pos < EXOSIP_MAX_SOCKETS; pos++) {
-
     if (reserved->socket_tab[pos].invalid > 0) {
       OSIP_TRACE(osip_trace(__FILE__, __LINE__, OSIP_ERROR, NULL, "[eXosip] [TLS] [fdset] socket info:[%s][%d] [sock=%d] [pos=%d] manual reset\n", reserved->socket_tab[pos].remote_ip, reserved->socket_tab[pos].remote_port,
                             reserved->socket_tab[pos].socket, pos));
@@ -1444,142 +1443,140 @@ static int _tls_print_ssl_error(int err) {
   return OSIP_SUCCESS;
 }
 
-static void tls_dump_verification_failure(long verification_result) {
-  char tmp[64];
-
-  snprintf(tmp, sizeof(tmp), "unknown errror");
+static void tls_dump_verification_failure(long verification_result, char *reason, size_t reason_len) {
+  snprintf(reason, sizeof(reason), "unknown errror");
 
   switch (verification_result) {
   case X509_V_ERR_UNABLE_TO_GET_ISSUER_CERT:
-    snprintf(tmp, sizeof(tmp), "unable to get issuer certificate");
+    snprintf(reason, sizeof(reason), "unable to get issuer certificate");
     break;
 
   case X509_V_ERR_UNABLE_TO_GET_CRL:
-    snprintf(tmp, sizeof(tmp), "unable to get certificate CRL");
+    snprintf(reason, sizeof(reason), "unable to get certificate CRL");
     break;
 
   case X509_V_ERR_UNABLE_TO_DECRYPT_CERT_SIGNATURE:
-    snprintf(tmp, sizeof(tmp), "unable to decrypt certificate's signature");
+    snprintf(reason, sizeof(reason), "unable to decrypt certificate's signature");
     break;
 
   case X509_V_ERR_UNABLE_TO_DECRYPT_CRL_SIGNATURE:
-    snprintf(tmp, sizeof(tmp), "unable to decrypt CRL's signature");
+    snprintf(reason, sizeof(reason), "unable to decrypt CRL's signature");
     break;
 
   case X509_V_ERR_UNABLE_TO_DECODE_ISSUER_PUBLIC_KEY:
-    snprintf(tmp, sizeof(tmp), "unable to decode issuer public key");
+    snprintf(reason, sizeof(reason), "unable to decode issuer public key");
     break;
 
   case X509_V_ERR_CERT_SIGNATURE_FAILURE:
-    snprintf(tmp, sizeof(tmp), "certificate signature failure");
+    snprintf(reason, sizeof(reason), "certificate signature failure");
     break;
 
   case X509_V_ERR_CRL_SIGNATURE_FAILURE:
-    snprintf(tmp, sizeof(tmp), "CRL signature failure");
+    snprintf(reason, sizeof(reason), "CRL signature failure");
     break;
 
   case X509_V_ERR_CERT_NOT_YET_VALID:
-    snprintf(tmp, sizeof(tmp), "certificate is not yet valid");
+    snprintf(reason, sizeof(reason), "certificate is not yet valid");
     break;
 
   case X509_V_ERR_CERT_HAS_EXPIRED:
-    snprintf(tmp, sizeof(tmp), "certificate has expired");
+    snprintf(reason, sizeof(reason), "certificate has expired");
     break;
 
   case X509_V_ERR_CRL_NOT_YET_VALID:
-    snprintf(tmp, sizeof(tmp), "CRL is not yet valid");
+    snprintf(reason, sizeof(reason), "CRL is not yet valid");
     break;
 
   case X509_V_ERR_CRL_HAS_EXPIRED:
-    snprintf(tmp, sizeof(tmp), "CRL has expired");
+    snprintf(reason, sizeof(reason), "CRL has expired");
     break;
 
   case X509_V_ERR_ERROR_IN_CERT_NOT_BEFORE_FIELD:
-    snprintf(tmp, sizeof(tmp), "format error in certificate's notBefore field");
+    snprintf(reason, sizeof(reason), "format error in certificate's notBefore field");
     break;
 
   case X509_V_ERR_ERROR_IN_CERT_NOT_AFTER_FIELD:
-    snprintf(tmp, sizeof(tmp), "format error in certificate's notAfter field");
+    snprintf(reason, sizeof(reason), "format error in certificate's notAfter field");
     break;
 
   case X509_V_ERR_ERROR_IN_CRL_LAST_UPDATE_FIELD:
-    snprintf(tmp, sizeof(tmp), "format error in CRL's lastUpdate field");
+    snprintf(reason, sizeof(reason), "format error in CRL's lastUpdate field");
     break;
 
   case X509_V_ERR_ERROR_IN_CRL_NEXT_UPDATE_FIELD:
-    snprintf(tmp, sizeof(tmp), "format error in CRL's nextUpdate field");
+    snprintf(reason, sizeof(reason), "format error in CRL's nextUpdate field");
     break;
 
   case X509_V_ERR_OUT_OF_MEM:
-    snprintf(tmp, sizeof(tmp), "out of memory");
+    snprintf(reason, sizeof(reason), "out of memory");
     break;
 
   case X509_V_ERR_DEPTH_ZERO_SELF_SIGNED_CERT:
-    snprintf(tmp, sizeof(tmp), "self signed certificate");
+    snprintf(reason, sizeof(reason), "self signed certificate");
     break;
 
   case X509_V_ERR_SELF_SIGNED_CERT_IN_CHAIN:
-    snprintf(tmp, sizeof(tmp), "self signed certificate in certificate chain");
+    snprintf(reason, sizeof(reason), "self signed certificate in certificate chain");
     break;
 
   case X509_V_ERR_UNABLE_TO_GET_ISSUER_CERT_LOCALLY:
-    snprintf(tmp, sizeof(tmp), "unable to get local issuer certificate");
+    snprintf(reason, sizeof(reason), "unable to get local issuer certificate");
     break;
 
   case X509_V_ERR_UNABLE_TO_VERIFY_LEAF_SIGNATURE:
-    snprintf(tmp, sizeof(tmp), "unable to verify the first certificate");
+    snprintf(reason, sizeof(reason), "unable to verify the first certificate");
     break;
 
   case X509_V_ERR_CERT_CHAIN_TOO_LONG:
-    snprintf(tmp, sizeof(tmp), "certificate chain too long");
+    snprintf(reason, sizeof(reason), "certificate chain too long");
     break;
 
   case X509_V_ERR_CERT_REVOKED:
-    snprintf(tmp, sizeof(tmp), "certificate revoked");
+    snprintf(reason, sizeof(reason), "certificate revoked");
     break;
 
   case X509_V_ERR_INVALID_CA:
-    snprintf(tmp, sizeof(tmp), "invalid CA certificate");
+    snprintf(reason, sizeof(reason), "invalid CA certificate");
     break;
 
   case X509_V_ERR_PATH_LENGTH_EXCEEDED:
-    snprintf(tmp, sizeof(tmp), "path length constraint exceeded");
+    snprintf(reason, sizeof(reason), "path length constraint exceeded");
     break;
 
   case X509_V_ERR_INVALID_PURPOSE:
-    snprintf(tmp, sizeof(tmp), "unsupported certificate purpose");
+    snprintf(reason, sizeof(reason), "unsupported certificate purpose");
     break;
 
   case X509_V_ERR_CERT_UNTRUSTED:
-    snprintf(tmp, sizeof(tmp), "certificate not trusted");
+    snprintf(reason, sizeof(reason), "certificate not trusted");
     break;
 
   case X509_V_ERR_CERT_REJECTED:
-    snprintf(tmp, sizeof(tmp), "certificate rejected");
+    snprintf(reason, sizeof(reason), "certificate rejected");
     break;
 
   case X509_V_ERR_SUBJECT_ISSUER_MISMATCH:
-    snprintf(tmp, sizeof(tmp), "subject issuer mismatch");
+    snprintf(reason, sizeof(reason), "subject issuer mismatch");
     break;
 
   case X509_V_ERR_AKID_SKID_MISMATCH:
-    snprintf(tmp, sizeof(tmp), "authority and subject key identifier mismatch");
+    snprintf(reason, sizeof(reason), "authority and subject key identifier mismatch");
     break;
 
   case X509_V_ERR_AKID_ISSUER_SERIAL_MISMATCH:
-    snprintf(tmp, sizeof(tmp), "authority and issuer serial number mismatch");
+    snprintf(reason, sizeof(reason), "authority and issuer serial number mismatch");
     break;
 
   case X509_V_ERR_KEYUSAGE_NO_CERTSIGN:
-    snprintf(tmp, sizeof(tmp), "key usage does not include certificate signing");
+    snprintf(reason, sizeof(reason), "key usage does not include certificate signing");
     break;
 
   case X509_V_ERR_APPLICATION_VERIFICATION:
-    snprintf(tmp, sizeof(tmp), "application verification failure");
+    snprintf(reason, sizeof(reason), "application verification failure");
     break;
   }
 
-  OSIP_TRACE(osip_trace(__FILE__, __LINE__, OSIP_INFO2, NULL, "[eXosip] [TLS] verification failure [%s]\n", tmp));
+  //OSIP_TRACE(osip_trace(__FILE__, __LINE__, OSIP_INFO2, NULL, "[eXosip] [TLS] verification failure [%s]\n", tmp));
 }
 
 static int pkp_pin_peer_pubkey(struct eXosip_t *excontext, SSL *ssl) {
@@ -1688,10 +1685,180 @@ static int pkp_pin_peer_pubkey(struct eXosip_t *excontext, SSL *ssl) {
   return result;
 }
 
+static const char *get_sigtype(int nid) {
+  switch (nid) {
+  case EVP_PKEY_RSA:
+    return "RSA";
+
+  case EVP_PKEY_RSA_PSS:
+    return "RSA-PSS";
+
+  case EVP_PKEY_DSA:
+    return "DSA";
+
+  case EVP_PKEY_EC:
+    return "ECDSA";
+
+  case NID_ED25519:
+    return "Ed25519";
+
+  case NID_ED448:
+    return "Ed448";
+
+  case NID_id_GostR3410_2001:
+    return "gost2001";
+
+  case NID_id_GostR3410_2012_256:
+    return "gost2012_256";
+
+  case NID_id_GostR3410_2012_512:
+    return "gost2012_512";
+
+  default:
+    return NULL;
+  }
+}
+
+static void tls_dump_info(struct eXosip_t *excontext, struct _tls_stream *sockinfo) {
+  char tmp_info[2048];
+  size_t len_info = 0;
+
+  X509 *peer = NULL;
+  const SSL_CIPHER *c;
+  long verify_err;
+  int nid;
+
+  if (excontext->tls_verify_client_certificate > 0) {
+    len_info += snprintf(tmp_info + len_info, sizeof(tmp_info) - len_info, " [verification=ENABLED]");
+  } else {
+    len_info += snprintf(tmp_info + len_info, sizeof(tmp_info) - len_info, " [verification=DISABLED]");
+  }
+
+  peer = SSL_get_peer_certificate(sockinfo->ssl_conn);
+
+  verify_err = SSL_get_verify_result(sockinfo->ssl_conn);
+  if (peer != NULL) {
+#if OPENSSL_VERSION_NUMBER >= 0x10100000L
+    if (verify_err == X509_V_OK) {
+      const char *peername = SSL_get0_peername(sockinfo->ssl_conn);
+
+      len_info += snprintf(tmp_info + len_info, sizeof(tmp_info) - len_info, " [SUCCESS");
+      if (peername != NULL)
+        len_info += snprintf(tmp_info + len_info, sizeof(tmp_info) - len_info, " peername=%s", peername);
+      len_info += snprintf(tmp_info + len_info, sizeof(tmp_info) - len_info, "]");
+    } else {
+      const char *reason = X509_verify_cert_error_string(verify_err);
+
+      len_info += snprintf(tmp_info + len_info, sizeof(tmp_info) - len_info, " [FAILURE %s]", reason);
+    }
+#else
+    if (verify_err == X509_V_OK) {
+      len_info += snprintf(tmp_info + len_info, sizeof(tmp_info) - len_info, " [SUCCESS]");
+    } else {
+      char reason[64];
+      tls_dump_verification_failure(cert_err, reason, sizeof(reason));
+
+      len_info += snprintf(tmp_info + len_info, sizeof(tmp_info) - len_info, " [FAILURE %s]", reason);
+    }
+#endif
+  } else {
+    len_info += snprintf(tmp_info + len_info, sizeof(tmp_info) - len_info, " [FAILURE no peer certificate]");
+  }
+
+  len_info += snprintf(tmp_info + len_info, sizeof(tmp_info) - len_info, " [%s]", SSL_get_version(sockinfo->ssl_conn));
+
+  len_info += snprintf(tmp_info + len_info, sizeof(tmp_info) - len_info, " [peer certificate");
+  if (peer != NULL) {
+    char tmp_buffer[128];
+
+    X509_NAME_oneline(X509_get_subject_name(peer), tmp_buffer, sizeof(tmp_buffer));
+    len_info += snprintf(tmp_info + len_info, sizeof(tmp_info) - len_info, " sub=%s", tmp_buffer);
+    X509_NAME_oneline(X509_get_issuer_name(peer), tmp_buffer, sizeof(tmp_buffer));
+    len_info += snprintf(tmp_info + len_info, sizeof(tmp_info) - len_info, " issuer=%s]", tmp_buffer);
+
+  } else {
+    len_info += snprintf(tmp_info + len_info, sizeof(tmp_info) - len_info, " NONE]");
+  }
+
+#if OPENSSL_VERSION_NUMBER >= 0x10101000L
+  len_info += snprintf(tmp_info + len_info, sizeof(tmp_info) - len_info, " [peer");
+  if (SSL_get_peer_signature_nid(sockinfo->ssl_conn, &nid) && nid != NID_undef)
+    len_info += snprintf(tmp_info + len_info, sizeof(tmp_info) - len_info, " signing digest=%s", OBJ_nid2sn(nid));
+  if (SSL_get_peer_signature_type_nid(sockinfo->ssl_conn, &nid))
+    len_info += snprintf(tmp_info + len_info, sizeof(tmp_info) - len_info, " signature type=%s", get_sigtype(nid));
+
+  {
+    EVP_PKEY *key;
+
+    if (SSL_get_peer_tmp_key(sockinfo->ssl_conn, &key)) {
+      len_info += snprintf(tmp_info + len_info, sizeof(tmp_info) - len_info, " temp key=");
+      switch (EVP_PKEY_id(key)) {
+      case EVP_PKEY_RSA:
+        len_info += snprintf(tmp_info + len_info, sizeof(tmp_info) - len_info, "RSA, %dbits", EVP_PKEY_bits(key));
+        break;
+
+      case EVP_PKEY_DH:
+        len_info += snprintf(tmp_info + len_info, sizeof(tmp_info) - len_info, "DH, %dbits", EVP_PKEY_bits(key));
+        break;
+#ifndef OPENSSL_NO_EC
+      case EVP_PKEY_EC: {
+        EC_KEY *ec = EVP_PKEY_get1_EC_KEY(key);
+        int nid;
+        const char *cname;
+        nid = EC_GROUP_get_curve_name(EC_KEY_get0_group(ec));
+        EC_KEY_free(ec);
+        cname = EC_curve_nid2nist(nid);
+        if (cname == NULL)
+          cname = OBJ_nid2sn(nid);
+        len_info += snprintf(tmp_info + len_info, sizeof(tmp_info) - len_info, "ECDH, %s, %dbits", cname, EVP_PKEY_bits(key));
+      } break;
+#endif
+      default:
+        len_info += snprintf(tmp_info + len_info, sizeof(tmp_info) - len_info, "%s, %dbits", OBJ_nid2sn(EVP_PKEY_id(key)), EVP_PKEY_bits(key));
+      }
+      EVP_PKEY_free(key);
+    }
+  }
+  len_info += snprintf(tmp_info + len_info, sizeof(tmp_info) - len_info, "]");
+#endif
+
+  c = SSL_get_current_cipher(sockinfo->ssl_conn);
+  len_info += snprintf(tmp_info + len_info, sizeof(tmp_info) - len_info, " [cipher %s:%s", SSL_CIPHER_get_version(c), SSL_CIPHER_get_name(c));
+
+  if (peer != NULL) {
+#if OPENSSL_VERSION_NUMBER >= 0x10100000L
+    EVP_PKEY *pktmp;
+
+    pktmp = X509_get0_pubkey(peer);
+    len_info += snprintf(tmp_info + len_info, sizeof(tmp_info) - len_info, " peer pub.key=%ubit", EVP_PKEY_bits(pktmp));
+#endif
+    X509_free(peer);
+  }
+
+
+#ifndef OPENSSL_NO_COMP
+  {
+    const COMP_METHOD *comp, *expansion;
+    comp = SSL_get_current_compression(sockinfo->ssl_conn);
+    expansion = SSL_get_current_expansion(sockinfo->ssl_conn);
+    len_info += snprintf(tmp_info + len_info, sizeof(tmp_info) - len_info, " Compression: %s", comp ? SSL_COMP_get_name(comp) : "NONE");
+    len_info += snprintf(tmp_info + len_info, sizeof(tmp_info) - len_info, " Expansion: %s", expansion ? SSL_COMP_get_name(expansion) : "NONE");
+  }
+#endif
+  len_info += snprintf(tmp_info + len_info, sizeof(tmp_info) - len_info, "]");
+
+#if OPENSSL_VERSION_NUMBER >= 0x10100000L
+  len_info += snprintf(tmp_info + len_info, sizeof(tmp_info) - len_info, " [handshake read=%ju write=%ju bytes]", BIO_number_read(SSL_get_rbio(sockinfo->ssl_conn)), BIO_number_written(SSL_get_wbio(sockinfo->ssl_conn)));
+#endif
+
+  OSIP_TRACE(osip_trace(__FILE__, __LINE__, OSIP_INFO2, NULL, "[eXosip] [TLS] [ssl connect]%s\n", tmp_info));
+}
+
 static int _tls_tl_ssl_connect_socket(struct eXosip_t *excontext, struct _tls_stream *sockinfo) {
-  X509 *cert;
+  X509 *peer;
   BIO *sbio;
   int res;
+  long cert_err;
 
   if (sockinfo->ssl_ctx == NULL) {
     sockinfo->ssl_ctx = initialize_client_ctx(excontext, &excontext->eXosip_tls_ctx_params, IPPROTO_TCP, sockinfo->sni_servernameindication);
@@ -1726,8 +1893,8 @@ static int _tls_tl_ssl_connect_socket(struct eXosip_t *excontext, struct _tls_st
   res = SSL_get_error(sockinfo->ssl_conn, res);
 
   if (res != SSL_ERROR_NONE && res != SSL_ERROR_WANT_READ && res != SSL_ERROR_WANT_WRITE) {
+    tls_dump_info(excontext, sockinfo);
     _tls_print_ssl_error(res);
-    OSIP_TRACE(osip_trace(__FILE__, __LINE__, OSIP_ERROR, NULL, "[eXosip] [TLS] [ssl connect] error\n"));
     return -1;
   }
 
@@ -1736,32 +1903,23 @@ static int _tls_tl_ssl_connect_socket(struct eXosip_t *excontext, struct _tls_st
     return 1;
   }
 
-  OSIP_TRACE(osip_trace(__FILE__, __LINE__, OSIP_INFO2, NULL, "[eXosip] [TLS] [ssl connect] succeeded [%s]\n", SSL_get_version(sockinfo->ssl_conn)));
+  tls_dump_info(excontext, sockinfo);
 
-  cert = SSL_get_peer_certificate(sockinfo->ssl_conn);
+  cert_err = SSL_get_verify_result(sockinfo->ssl_conn);
 
-  if (cert != 0) {
-    long cert_err;
+  if (excontext->tls_verify_client_certificate > 0 && cert_err != X509_V_OK) {
+    return -1;
+  }
 
-    tls_dump_cert_info("remote certificate", cert);
-
-    cert_err = SSL_get_verify_result(sockinfo->ssl_conn);
-
-    if (cert_err != X509_V_OK) {
-      OSIP_TRACE(osip_trace(__FILE__, __LINE__, OSIP_WARNING, NULL, "[eXosip] [TLS] failed to verify remote certificate\n"));
-      tls_dump_verification_failure(cert_err);
-    }
-
-    X509_free(cert);
-
-    if (pkp_pin_peer_pubkey(excontext, sockinfo->ssl_conn)) {
-      OSIP_TRACE(osip_trace(__FILE__, __LINE__, OSIP_ERROR, NULL, "[eXosip] [TLS] failed to verify public key for certificate\n"));
-      return -1;
-    }
-
-  } else {
+  peer = SSL_get_peer_certificate(sockinfo->ssl_conn);
+  if (peer == NULL) {
     OSIP_TRACE(osip_trace(__FILE__, __LINE__, OSIP_ERROR, NULL, "[eXosip] [TLS] no certificate received\n"));
+    return -1;
+  }
+  X509_free(peer);
 
+  if (pkp_pin_peer_pubkey(excontext, sockinfo->ssl_conn)) {
+    OSIP_TRACE(osip_trace(__FILE__, __LINE__, OSIP_ERROR, NULL, "[eXosip] [TLS] failed to verify public key for certificate\n"));
     return -1;
   }
 
