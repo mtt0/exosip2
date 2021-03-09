@@ -102,7 +102,7 @@
 #define RANDOM "random.pem"
 #define DHFILE "dh1024.pem"
 
-#if OPENSSL_VERSION_NUMBER < 0x10100000L
+#if OPENSSL_VERSION_NUMBER < 0x10100000L || defined(LIBRESSL_VERSION_NUMBER)
 
 static void SSL_set0_rbio(SSL *s, BIO *rbio) {
   BIO_free_all(s->rbio);
