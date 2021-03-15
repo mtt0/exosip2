@@ -210,7 +210,11 @@ sdp_message_t *eXosip_get_sdp_info(osip_message_t *message) {
 
   if (osip_strcasecmp(ctt->type, "application") == 0 && osip_strcasecmp(ctt->subtype, "sdp") == 0) {
     int i;
+
     oldbody = (osip_body_t *) osip_list_get_first(&message->bodies, &it);
+    if (oldbody == NULL)
+      return NULL;
+
     sdp_message_init(&sdp);
     i = sdp_message_parse(sdp, oldbody->body);
     if (i == 0)
