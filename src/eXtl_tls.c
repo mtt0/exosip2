@@ -1444,135 +1444,137 @@ static int _tls_print_ssl_error(int err) {
 }
 
 static void tls_dump_verification_failure(long verification_result, char *reason, size_t reason_len) {
-  snprintf(reason, sizeof(reason), "unknown errror");
-
   switch (verification_result) {
   case X509_V_ERR_UNABLE_TO_GET_ISSUER_CERT:
-    snprintf(reason, sizeof(reason), "unable to get issuer certificate");
+    snprintf(reason, reason_len, "unable to get issuer certificate");
     break;
 
   case X509_V_ERR_UNABLE_TO_GET_CRL:
-    snprintf(reason, sizeof(reason), "unable to get certificate CRL");
+    snprintf(reason, reason_len, "unable to get certificate CRL");
     break;
 
   case X509_V_ERR_UNABLE_TO_DECRYPT_CERT_SIGNATURE:
-    snprintf(reason, sizeof(reason), "unable to decrypt certificate's signature");
+    snprintf(reason, reason_len, "unable to decrypt certificate's signature");
     break;
 
   case X509_V_ERR_UNABLE_TO_DECRYPT_CRL_SIGNATURE:
-    snprintf(reason, sizeof(reason), "unable to decrypt CRL's signature");
+    snprintf(reason, reason_len, "unable to decrypt CRL's signature");
     break;
 
   case X509_V_ERR_UNABLE_TO_DECODE_ISSUER_PUBLIC_KEY:
-    snprintf(reason, sizeof(reason), "unable to decode issuer public key");
+    snprintf(reason, reason_len, "unable to decode issuer public key");
     break;
 
   case X509_V_ERR_CERT_SIGNATURE_FAILURE:
-    snprintf(reason, sizeof(reason), "certificate signature failure");
+    snprintf(reason, reason_len, "certificate signature failure");
     break;
 
   case X509_V_ERR_CRL_SIGNATURE_FAILURE:
-    snprintf(reason, sizeof(reason), "CRL signature failure");
+    snprintf(reason, reason_len, "CRL signature failure");
     break;
 
   case X509_V_ERR_CERT_NOT_YET_VALID:
-    snprintf(reason, sizeof(reason), "certificate is not yet valid");
+    snprintf(reason, reason_len, "certificate is not yet valid");
     break;
 
   case X509_V_ERR_CERT_HAS_EXPIRED:
-    snprintf(reason, sizeof(reason), "certificate has expired");
+    snprintf(reason, reason_len, "certificate has expired");
     break;
 
   case X509_V_ERR_CRL_NOT_YET_VALID:
-    snprintf(reason, sizeof(reason), "CRL is not yet valid");
+    snprintf(reason, reason_len, "CRL is not yet valid");
     break;
 
   case X509_V_ERR_CRL_HAS_EXPIRED:
-    snprintf(reason, sizeof(reason), "CRL has expired");
+    snprintf(reason, reason_len, "CRL has expired");
     break;
 
   case X509_V_ERR_ERROR_IN_CERT_NOT_BEFORE_FIELD:
-    snprintf(reason, sizeof(reason), "format error in certificate's notBefore field");
+    snprintf(reason, reason_len, "format error in certificate's notBefore field");
     break;
 
   case X509_V_ERR_ERROR_IN_CERT_NOT_AFTER_FIELD:
-    snprintf(reason, sizeof(reason), "format error in certificate's notAfter field");
+    snprintf(reason, reason_len, "format error in certificate's notAfter field");
     break;
 
   case X509_V_ERR_ERROR_IN_CRL_LAST_UPDATE_FIELD:
-    snprintf(reason, sizeof(reason), "format error in CRL's lastUpdate field");
+    snprintf(reason, reason_len, "format error in CRL's lastUpdate field");
     break;
 
   case X509_V_ERR_ERROR_IN_CRL_NEXT_UPDATE_FIELD:
-    snprintf(reason, sizeof(reason), "format error in CRL's nextUpdate field");
+    snprintf(reason, reason_len, "format error in CRL's nextUpdate field");
     break;
 
   case X509_V_ERR_OUT_OF_MEM:
-    snprintf(reason, sizeof(reason), "out of memory");
+    snprintf(reason, reason_len, "out of memory");
     break;
 
   case X509_V_ERR_DEPTH_ZERO_SELF_SIGNED_CERT:
-    snprintf(reason, sizeof(reason), "self signed certificate");
+    snprintf(reason, reason_len, "self signed certificate");
     break;
 
   case X509_V_ERR_SELF_SIGNED_CERT_IN_CHAIN:
-    snprintf(reason, sizeof(reason), "self signed certificate in certificate chain");
+    snprintf(reason, reason_len, "self signed certificate in certificate chain");
     break;
 
   case X509_V_ERR_UNABLE_TO_GET_ISSUER_CERT_LOCALLY:
-    snprintf(reason, sizeof(reason), "unable to get local issuer certificate");
+    snprintf(reason, reason_len, "unable to get local issuer certificate");
     break;
 
   case X509_V_ERR_UNABLE_TO_VERIFY_LEAF_SIGNATURE:
-    snprintf(reason, sizeof(reason), "unable to verify the first certificate");
+    snprintf(reason, reason_len, "unable to verify the first certificate");
     break;
 
   case X509_V_ERR_CERT_CHAIN_TOO_LONG:
-    snprintf(reason, sizeof(reason), "certificate chain too long");
+    snprintf(reason, reason_len, "certificate chain too long");
     break;
 
   case X509_V_ERR_CERT_REVOKED:
-    snprintf(reason, sizeof(reason), "certificate revoked");
+    snprintf(reason, reason_len, "certificate revoked");
     break;
 
   case X509_V_ERR_INVALID_CA:
-    snprintf(reason, sizeof(reason), "invalid CA certificate");
+    snprintf(reason, reason_len, "invalid CA certificate");
     break;
 
   case X509_V_ERR_PATH_LENGTH_EXCEEDED:
-    snprintf(reason, sizeof(reason), "path length constraint exceeded");
+    snprintf(reason, reason_len, "path length constraint exceeded");
     break;
 
   case X509_V_ERR_INVALID_PURPOSE:
-    snprintf(reason, sizeof(reason), "unsupported certificate purpose");
+    snprintf(reason, reason_len, "unsupported certificate purpose");
     break;
 
   case X509_V_ERR_CERT_UNTRUSTED:
-    snprintf(reason, sizeof(reason), "certificate not trusted");
+    snprintf(reason, reason_len, "certificate not trusted");
     break;
 
   case X509_V_ERR_CERT_REJECTED:
-    snprintf(reason, sizeof(reason), "certificate rejected");
+    snprintf(reason, reason_len, "certificate rejected");
     break;
 
   case X509_V_ERR_SUBJECT_ISSUER_MISMATCH:
-    snprintf(reason, sizeof(reason), "subject issuer mismatch");
+    snprintf(reason, reason_len, "subject issuer mismatch");
     break;
 
   case X509_V_ERR_AKID_SKID_MISMATCH:
-    snprintf(reason, sizeof(reason), "authority and subject key identifier mismatch");
+    snprintf(reason, reason_len, "authority and subject key identifier mismatch");
     break;
 
   case X509_V_ERR_AKID_ISSUER_SERIAL_MISMATCH:
-    snprintf(reason, sizeof(reason), "authority and issuer serial number mismatch");
+    snprintf(reason, reason_len, "authority and issuer serial number mismatch");
     break;
 
   case X509_V_ERR_KEYUSAGE_NO_CERTSIGN:
-    snprintf(reason, sizeof(reason), "key usage does not include certificate signing");
+    snprintf(reason, reason_len, "key usage does not include certificate signing");
     break;
 
   case X509_V_ERR_APPLICATION_VERIFICATION:
-    snprintf(reason, sizeof(reason), "application verification failure");
+    snprintf(reason, reason_len, "application verification failure");
+    break;
+
+  default:
+    snprintf(reason, reason_len, "unknown error");
     break;
   }
 
@@ -1690,29 +1692,35 @@ static const char *get_sigtype(int nid) {
   case EVP_PKEY_RSA:
     return "RSA";
 
-  case EVP_PKEY_RSA_PSS:
-    return "RSA-PSS";
-
   case EVP_PKEY_DSA:
     return "DSA";
 
   case EVP_PKEY_EC:
     return "ECDSA";
 
+#if OPENSSL_VERSION_NUMBER >= 0x10101000L
+  case EVP_PKEY_RSA_PSS:
+    return "RSA-PSS";
+
   case NID_ED25519:
     return "Ed25519";
 
   case NID_ED448:
     return "Ed448";
+#endif
 
+#if OPENSSL_VERSION_NUMBER >= 0x0090809fL
   case NID_id_GostR3410_2001:
     return "gost2001";
+#endif
 
+#if OPENSSL_VERSION_NUMBER >= 0x10100000L
   case NID_id_GostR3410_2012_256:
     return "gost2012_256";
 
   case NID_id_GostR3410_2012_512:
     return "gost2012_512";
+#endif
 
   default:
     return NULL;
@@ -1756,7 +1764,7 @@ static void tls_dump_info(struct eXosip_t *excontext, struct _tls_stream *sockin
       len_info += snprintf(tmp_info + len_info, sizeof(tmp_info) - len_info, " [SUCCESS]");
     } else {
       char reason[64];
-      tls_dump_verification_failure(cert_err, reason, sizeof(reason));
+      tls_dump_verification_failure(verify_err, reason, sizeof(reason));
 
       len_info += snprintf(tmp_info + len_info, sizeof(tmp_info) - len_info, " [FAILURE %s]", reason);
     }
