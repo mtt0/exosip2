@@ -1702,6 +1702,13 @@ static const char *get_sigtype(int nid) {
   case EVP_PKEY_RSA_PSS:
     return "RSA-PSS";
 
+#if defined(NID_Ed25519)
+#define NID_ED25519 NID_Ed25519
+#endif
+#if defined(NID_Ed448)
+#define NID_ED448 NID_Ed448
+#endif
+
   case NID_ED25519:
     return "Ed25519";
 
@@ -1714,7 +1721,7 @@ static const char *get_sigtype(int nid) {
     return "gost2001";
 #endif
 
-#if OPENSSL_VERSION_NUMBER >= 0x10100000L
+#if OPENSSL_VERSION_NUMBER >= 0x10100000L && !defined(LIBRESSL_VERSION_NUMBER)
   case NID_id_GostR3410_2012_256:
     return "gost2012_256";
 
@@ -1746,7 +1753,7 @@ static void tls_dump_info(struct eXosip_t *excontext, struct _tls_stream *sockin
 
   verify_err = SSL_get_verify_result(sockinfo->ssl_conn);
   if (peer != NULL) {
-#if OPENSSL_VERSION_NUMBER >= 0x10100000L
+#if OPENSSL_VERSION_NUMBER >= 0x10100000L && !defined(LIBRESSL_VERSION_NUMBER)
     if (verify_err == X509_V_OK) {
       const char *peername = SSL_get0_peername(sockinfo->ssl_conn);
 
@@ -1788,7 +1795,7 @@ static void tls_dump_info(struct eXosip_t *excontext, struct _tls_stream *sockin
     len_info += snprintf(tmp_info + len_info, sizeof(tmp_info) - len_info, " NONE]");
   }
 
-#if OPENSSL_VERSION_NUMBER >= 0x10101000L
+#if OPENSSL_VERSION_NUMBER >= 0x10101000L && !defined(LIBRESSL_VERSION_NUMBER)
   len_info += snprintf(tmp_info + len_info, sizeof(tmp_info) - len_info, " [peer");
   if (SSL_get_peer_signature_nid(sockinfo->ssl_conn, &nid) && nid != NID_undef)
     len_info += snprintf(tmp_info + len_info, sizeof(tmp_info) - len_info, " signing digest=%s", OBJ_nid2sn(nid));
