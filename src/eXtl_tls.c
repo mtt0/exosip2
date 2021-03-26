@@ -308,18 +308,6 @@ static int tls_tl_reset(struct eXosip_t *excontext) {
   return OSIP_SUCCESS;
 }
 
-static void tls_dump_cert_info(const char *s, X509 *cert) {
-  char *subj;
-  char *issuer;
-
-  subj = X509_NAME_oneline(X509_get_subject_name(cert), 0, 0);
-  issuer = X509_NAME_oneline(X509_get_issuer_name(cert), 0, 0);
-
-  OSIP_TRACE(osip_trace(__FILE__, __LINE__, OSIP_INFO2, NULL, "[eXosip] [TLS] [%s] [subject:%s] [issuer:%s]\n", s ? s : "", subj, issuer));
-  OPENSSL_free(subj);
-  OPENSSL_free(issuer);
-}
-
 static int _tls_add_certificates(SSL_CTX *ctx) {
   int count = 0;
 
@@ -335,8 +323,6 @@ static int _tls_add_certificates(SSL_CTX *ctx) {
     if (cert == NULL) {
       continue;
     }
-
-    /*tls_dump_cert_info("CA", cert); */
 
     x509_store = SSL_CTX_get_cert_store(ctx);
 
@@ -365,7 +351,6 @@ static int _tls_add_certificates(SSL_CTX *ctx) {
       continue;
     }
 
-    /*tls_dump_cert_info("ROOT", cert); */
     x509_store = SSL_CTX_get_cert_store(ctx);
 
     if (x509_store == NULL) {
@@ -393,7 +378,6 @@ static int _tls_add_certificates(SSL_CTX *ctx) {
       continue;
     }
 
-    /*tls_dump_cert_info("MY", cert); */
     x509_store = SSL_CTX_get_cert_store(ctx);
 
     if (x509_store == NULL) {
@@ -421,7 +405,6 @@ static int _tls_add_certificates(SSL_CTX *ctx) {
       continue;
     }
 
-    /*tls_dump_cert_info("Trustedpublisher", cert); */
     x509_store = SSL_CTX_get_cert_store(ctx);
 
     if (x509_store == NULL) {
@@ -493,7 +476,6 @@ static int _tls_add_certificates(SSL_CTX *ctx) {
           continue;
         }
 
-        /*tls_dump_cert_info("ROOT", cert); */
         x509_store = SSL_CTX_get_cert_store(ctx);
 
         if (x509_store == NULL) {
@@ -2058,8 +2040,8 @@ static size_t _tls_handle_messages(struct eXosip_t *excontext, struct _tls_strea
 }
 
 static int _tls_tl_recv(struct eXosip_t *excontext, struct _tls_stream *sockinfo) {
-  int r;
   int rlen, err;
+  size_t consumed;
 
   if (!sockinfo->buf) {
     sockinfo->buf = (char *) osip_malloc(SIP_MESSAGE_MAX_LENGTH);
@@ -2095,72 +2077,51 @@ static int _tls_tl_recv(struct eXosip_t *excontext, struct _tls_stream *sockinfo
   if (sockinfo->ssl_state != 3)
     return OSIP_SUCCESS;
 
-  r = 0;
-  rlen = 0;
+  rlen = SSL_read(sockinfo->ssl_conn, sockinfo->buf + sockinfo->buflen, (int) (sockinfo->bufsize - sockinfo->buflen));
 
-  do {
-    r = SSL_read(sockinfo->ssl_conn, sockinfo->buf + sockinfo->buflen + rlen, (int) (sockinfo->bufsize - sockinfo->buflen - rlen));
+  if (rlen <= 0) {
+    err = SSL_get_error(sockinfo->ssl_conn, rlen);
 
-    if (r <= 0) {
-      err = SSL_get_error(sockinfo->ssl_conn, r);
+    if (err != SSL_ERROR_WANT_READ && err != SSL_ERROR_WANT_WRITE) {
 
-      if (err == SSL_ERROR_WANT_READ || err == SSL_ERROR_WANT_WRITE) {
-        break;
+      _tls_print_ssl_error(err);
+      /*
+         The TLS/SSL connection has been closed.  If the protocol version
+         is SSL 3.0 or TLS 1.0, this result code is returned only if a
+         closure alert has occurred in the protocol, i.e. if the
+         connection has been closed cleanly. Note that in this case
+         SSL_ERROR_ZERO_RETURN does not necessarily indicate that the
+         underlying transport has been closed. */
+      OSIP_TRACE(osip_trace(__FILE__, __LINE__, OSIP_WARNING, NULL, "[eXosip] [TLS] [recv] TLS closed\n"));
 
-      } else {
-        _tls_print_ssl_error(err);
-        /*
-           The TLS/SSL connection has been closed.  If the protocol version
-           is SSL 3.0 or TLS 1.0, this result code is returned only if a
-           closure alert has occurred in the protocol, i.e. if the
-           connection has been closed cleanly. Note that in this case
-           SSL_ERROR_ZERO_RETURN does not necessarily indicate that the
-           underlying transport has been closed. */
-        OSIP_TRACE(osip_trace(__FILE__, __LINE__, OSIP_WARNING, NULL, "[eXosip] [TLS] [recv] TLS closed\n"));
+      _eXosip_mark_registration_expired(excontext, sockinfo->reg_call_id);
+      _tls_tl_close_sockinfo(sockinfo);
 
-        _eXosip_mark_registration_expired(excontext, sockinfo->reg_call_id);
-        _tls_tl_close_sockinfo(sockinfo);
+    }
+    return OSIP_UNDEFINED_ERROR;
+  }
 
-        rlen = 0; /* discard any remaining data ? */
-        break;
-      }
+  err = OSIP_SUCCESS;
+
+  if (SSL_pending(sockinfo->ssl_conn))
+    err = -999;
+
+  sockinfo->tcp_max_timeout = 0;
+  OSIP_TRACE(osip_trace(__FILE__, __LINE__, OSIP_INFO1, NULL, "[eXosip] [TLS] [recv] socket [%s][%d] read %d bytes\n", sockinfo->remote_ip, sockinfo->remote_port, rlen));
+  sockinfo->buflen += rlen;
+  consumed = _tls_handle_messages(excontext, sockinfo);
+
+  if (consumed != 0) {
+    if (sockinfo->buflen > consumed) {
+      memmove(sockinfo->buf, sockinfo->buf + consumed, sockinfo->buflen - consumed);
+      sockinfo->buflen -= consumed;
 
     } else {
-      rlen += r;
-      break;
+      sockinfo->buflen = 0;
     }
-  } while (SSL_pending(sockinfo->ssl_conn));
-
-  if (r == 0) {
-    return OSIP_UNDEFINED_ERROR;
-
-  } else if (r < 0) {
-    return OSIP_UNDEFINED_ERROR;
-
-  } else {
-    size_t consumed;
-    int err = OSIP_SUCCESS;
-
-    if (SSL_pending(sockinfo->ssl_conn))
-      err = -999;
-
-    sockinfo->tcp_max_timeout = 0;
-    OSIP_TRACE(osip_trace(__FILE__, __LINE__, OSIP_INFO1, NULL, "[eXosip] [TLS] [recv] socket [%s][%d] read %d bytes\n", sockinfo->remote_ip, sockinfo->remote_port, r));
-    sockinfo->buflen += rlen;
-    consumed = _tls_handle_messages(excontext, sockinfo);
-
-    if (consumed != 0) {
-      if (sockinfo->buflen > consumed) {
-        memmove(sockinfo->buf, sockinfo->buf + consumed, sockinfo->buflen - consumed);
-        sockinfo->buflen -= consumed;
-
-      } else {
-        sockinfo->buflen = 0;
-      }
-    }
-
-    return err; /* if -999 is returned, internal buffer of SSL still contains some data */
   }
+
+  return err; /* if -999 is returned, internal buffer of SSL still contains some data */
 }
 
 static int _tls_read_tls_main_socket(struct eXosip_t *excontext) {

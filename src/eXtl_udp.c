@@ -1328,7 +1328,9 @@ static int udp_tl_send_message(struct eXosip_t *excontext, osip_transaction_t *t
 
     if (excontext->ipv6_enable > 1 && curinfo == NULL) {
       /* search for an IP similar to reserved->udp_socket_family */
-      for (curinfo = addrinfo; curinfo; curinfo = curinfo->ai_next) {
+      curinfo = addrinfo;
+      
+      if (curinfo) {
         if (curinfo->ai_family == AF_INET && reserved->udp_socket_family == AF_INET6) {
           /* switch to another family */
           OSIP_TRACE(osip_trace(__FILE__, __LINE__, OSIP_INFO2, NULL, "[eXosip] [UDP] [tid=%i] switching to IPv4\n", tid));
@@ -1342,8 +1344,6 @@ static int udp_tl_send_message(struct eXosip_t *excontext, osip_transaction_t *t
           _udp_tl_reset(excontext, curinfo->ai_family);
           return OSIP_SUCCESS;
         }
-
-        break;
       }
     }
 
