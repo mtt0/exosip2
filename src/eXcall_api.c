@@ -1335,7 +1335,7 @@ int _eXosip_call_retry_request(struct eXosip_t *excontext, eXosip_call_t *jc, eX
     co = (osip_contact_t *) osip_list_get_first(&out_tr->last_response->contacts, &it);
 
     while (co != NULL) {
-      if (co->url != NULL && (osip_strcasestr(co->url->scheme, "sip") != NULL || osip_strcasestr(co->url->scheme, "tel") != NULL)) {
+      if (co->url != NULL && co->url->scheme != NULL && (osip_strcasestr(co->url->scheme, "sip") != NULL || osip_strcasestr(co->url->scheme, "tel") != NULL)) {
         /* check tranport? */
         osip_uri_param_t *u_param;
 
@@ -1357,12 +1357,12 @@ int _eXosip_call_retry_request(struct eXosip_t *excontext, eXosip_call_t *jc, eX
       co = (osip_contact_t *) osip_list_get_next(&it);
     }
 
-    if (co == NULL || co->url == NULL) {
+    if (co == NULL || co->url == NULL || co->url->scheme == NULL) {
       /* revert anyway to first(tel/sip/sips) contact // we don't care: we use our own transport with proxy */
       co = co_usable;
     }
 
-    if (co == NULL || co->url == NULL) {
+    if (co == NULL || co->url == NULL || co->url->scheme == NULL) {
       osip_message_free(msg);
       OSIP_TRACE(osip_trace(__FILE__, __LINE__, OSIP_WARNING, NULL, "[eXosip] no contact header usable for SIP redirection\n"));
       return OSIP_SYNTAXERROR;
