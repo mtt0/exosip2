@@ -286,15 +286,16 @@ char *_ex_strerror(int errnum, char *buf, size_t buflen) {
   return buf;
 }
 
-#elif (_POSIX_C_SOURCE >= 200112L || _XOPEN_SOURCE >= 600 || __APPLE__) && !_GNU_SOURCE
+#elif (_POSIX_C_SOURCE >= 200112L || _XOPEN_SOURCE >= 600 || __APPLE__ || defined(ANDROID)) && !_GNU_SOURCE
 
 char *_ex_strerror(int errnum, char *buf, size_t buflen) {
   int in = snprintf(buf, buflen, "[%d:", errnum);
-  if (strerror_r(errnum, buf + in, buflen - in)) {
-    snprintf(buf + in, buflen - in, "invalid error]");
+  int err = strerror_r(errnum, buf + in, buflen - in);
+  if (err) {
+    snprintf(buf, buflen, "[%d:invalid error]", errnum);
     return buf;
   }
-  if (buflen - strlen(buf) > 0)
+  if (buflen - strlen(buf) > 1)
     snprintf(buf + strlen(buf), buflen - strlen(buf), "]");
   return buf;
 }
@@ -303,11 +304,16 @@ char *_ex_strerror(int errnum, char *buf, size_t buflen) {
 
 char *_ex_strerror(int errnum, char *buf, size_t buflen) {
   int in = snprintf(buf, buflen, "[%d:", errnum);
-  strerror_r(errnum, buf + in, buflen - in);
-  if (buflen - strlen(buf) > 0)
+  /* fix: GNU strerror_r may return a static buffer instead of writing into buf */
+  char *tmp = strerror_r(errnum, buf + in, buflen - in);
+  if (tmp != buf) {
+    strncat(buf + strlen(buf), tmp, buflen - strlen(buf) - 1);
+  }
+  if (buflen - strlen(buf) > 1)
     snprintf(buf + strlen(buf), buflen - strlen(buf), "]");
   return buf;
 }
+
 
 #endif
 
