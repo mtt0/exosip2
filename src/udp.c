@@ -1850,6 +1850,11 @@ int _eXosip_read_message(struct eXosip_t *excontext, int max_message_nb, int sec
       }
 #endif
 
+#ifdef ENABLE_MAIN_SOCKET
+      /* we call this anyway for incoming connection on MAIN socket */
+      /* TODO: also use this code in standard version? */
+      excontext->eXtl_transport.tl_epoll_read_message(excontext, nfds, excontext->ep_array);
+#else
       for (i = 0; osip_fd_table[i] != -1; i++) {
         for (n = 0; n < nfds; ++n) {
           if (((excontext->ep_array[n].events & EPOLLIN) || (excontext->ep_array[n].events & EPOLLOUT)) && excontext->ep_array[n].data.fd == osip_fd_table[i]) {
@@ -1861,6 +1866,7 @@ int _eXosip_read_message(struct eXosip_t *excontext, int max_message_nb, int sec
           }
         }
       }
+#endif
 
       eXosip_lock(excontext);
       i = _eXosip_dnsutils_checksock_epoll(excontext, nfds);

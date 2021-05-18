@@ -685,7 +685,7 @@ static int _tcp_read_tcp_main_socket(struct eXosip_t *excontext) {
       int res;
 
       memset(&ev, 0, sizeof(struct epoll_event));
-      ev.events = EPOLLIN | EPOLLOUT;
+      ev.events = EPOLLIN;
       ev.data.fd = sock;
       res = epoll_ctl(excontext->epfd, EPOLL_CTL_ADD, sock, &ev);
 
