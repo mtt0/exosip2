@@ -546,7 +546,7 @@ int verify_cb(int preverify_ok, X509_STORE_CTX *store) {
   }
 
   return 1;
-  //return preverify_ok;
+  // return preverify_ok;
 
 #if 0
 
@@ -1560,7 +1560,7 @@ static void tls_dump_verification_failure(long verification_result, char *reason
     break;
   }
 
-  //OSIP_TRACE(osip_trace(__FILE__, __LINE__, OSIP_INFO2, NULL, "[eXosip] [TLS] verification failure [%s]\n", tmp));
+  // OSIP_TRACE(osip_trace(__FILE__, __LINE__, OSIP_INFO2, NULL, "[eXosip] [TLS] verification failure [%s]\n", tmp));
 }
 
 static int pkp_pin_peer_pubkey(struct eXosip_t *excontext, SSL *ssl) {
@@ -1832,7 +1832,6 @@ static void tls_dump_info(struct eXosip_t *excontext, struct _tls_stream *sockin
     X509_free(peer);
   }
 
-
 #ifndef OPENSSL_NO_COMP
   {
     const COMP_METHOD *comp, *expansion;
@@ -2083,7 +2082,6 @@ static int _tls_tl_recv(struct eXosip_t *excontext, struct _tls_stream *sockinfo
     err = SSL_get_error(sockinfo->ssl_conn, rlen);
 
     if (err != SSL_ERROR_WANT_READ && err != SSL_ERROR_WANT_WRITE) {
-
       _tls_print_ssl_error(err);
       /*
          The TLS/SSL connection has been closed.  If the protocol version
@@ -2096,7 +2094,6 @@ static int _tls_tl_recv(struct eXosip_t *excontext, struct _tls_stream *sockinfo
 
       _eXosip_mark_registration_expired(excontext, sockinfo->reg_call_id);
       _tls_tl_close_sockinfo(sockinfo);
-
     }
     return OSIP_UNDEFINED_ERROR;
   }
@@ -2301,6 +2298,24 @@ static int tls_tl_epoll_read_message(struct eXosip_t *excontext, int nfds, struc
     for (pos = 0; pos < EXOSIP_MAX_SOCKETS; pos++) {
       if (reserved->socket_tab[pos].socket > 0) {
         if (ep_array[n].data.fd == reserved->socket_tab[pos].socket) {
+          if ((ep_array[n].events & EPOLLIN) && reserved->socket_tab[pos].ssl_state == 2 && reserved->socket_tab[pos].is_server > 0) {
+            int r = SSL_do_handshake(reserved->socket_tab[pos].ssl_conn);
+            int err = SSL_get_error(reserved->socket_tab[pos].ssl_conn, r);
+
+            if (err == SSL_ERROR_WANT_READ || err == SSL_ERROR_WANT_WRITE)
+              continue;
+
+            if (r <= 0) {
+              _tls_print_ssl_error(err);
+              _tls_tl_close_sockinfo(&reserved->socket_tab[pos]);
+              continue;
+            }
+
+            SSL_set_mode(reserved->socket_tab[pos].ssl_conn, SSL_MODE_AUTO_RETRY);
+            reserved->socket_tab[pos].ssl_state = 3;
+            continue;
+          }
+
           if ((ep_array[n].events & EPOLLIN) || ep_array[n].events & EPOLLOUT) {
             int err = -999;
             int max = 5;
