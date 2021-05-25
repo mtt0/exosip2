@@ -1,3 +1,21 @@
+eXosip2 (5.2.1) - 2020-05-21
+	* [ENABLE_MAIN_SOCKET] fix epoll mechanism for server socket with TCP and TLS
+	* [crash] check scheme upon processing 3xx
+	* [ssl] fix to be compatible with libressl
+	* [ssl] https://savannah.nongnu.org/patch/?10046 compatibility with openssl below 1.1.0
+	* fix when Content-Type indicates application/sdp, but there is no body
+	* [TLS] modify the code for TLS validation in order to improve logs and details on the connection
+	* use time_t instead of int for r_retry_after_delay variable [fix 1367a34ca commited on March 1st]
+	* eXosip_default_action will return OSIP_RETRY_LIMIT when limit is reached
+	* make sure to obey the Retry-After header from REGISTER reply
+	* use newer osip_timersub MACRO
+	* [bug#60024] fix openssl usage to always use callback mode for private key password, even when missing
+	* eXosip_reset_transports was not effective any more since [5.1.2] [commit 705643fa  2020-07-07] [do not use unless you understand it]
+	* [windows] a HANDLE is leaked when loading trusted certificates
+	* dp layer: handle WSAEMSGSIZE when buffer is too short for complete incoming messag
+	* cleaner code to retreive an SDP from a SIP message
+	* fix crash when ENABLE_MAIN_SOCKET is defined and epoll is used
+
 eXosip2 (5.2.0) - 2020-11-10
 	* fix memory and socket leak [major] [affected TCP, TLS, UDP: since 5.1.2, need update asap]
 	* fix to make sure a non yet established TLS descriptor with read descriptor set will be processed when no outgoing transaction is in a state to handle it [since 5.1.2]
