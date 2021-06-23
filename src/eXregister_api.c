@@ -134,10 +134,19 @@ static int _eXosip_register_add_contact(struct eXosip_t *excontext, eXosip_reg_t
     osip_contact_param_add(new_contact, osip_strdup("q"), osip_strdup(jreg->r_qvalue));
 
   if (excontext->sip_instance[0] != 0) {
-    char *sip_instance = (char *) osip_malloc(50); /* "<urn:uuid:f81d4fae-7dec-11d0-a765-00a0c91e6bf6>" */
+    char *sip_instance;
+    size_t sip_instance_len = strlen(excontext->sip_instance) + 14;
+
+    sip_instance = (char *) osip_malloc(sip_instance_len); /* "urn:uuid:f81d4fae-7dec-11d0-a765-00a0c91e6bf6" */
 
     if (sip_instance != NULL) {
-      snprintf(sip_instance, 50, "\"<urn:uuid:%s>\"", excontext->sip_instance);
+      if (strlen(excontext->sip_instance) == 36 && excontext->sip_instance[8] == '-') {
+        /* compatibility with old way where uuid: was implied */
+        snprintf(sip_instance, sip_instance_len, "\"<urn:uuid:%s>\"", excontext->sip_instance);
+      } else {
+        /* new: parameter provided should now contains urn:uuid (or other) as in "urn:uuid:f81d4fae-7dec-11d0-a765-00a0c91e6bf6" */
+        snprintf(sip_instance, sip_instance_len, "\"<%s>\"", excontext->sip_instance);
+      }
       osip_contact_param_add(new_contact, osip_strdup("+sip.instance"), sip_instance);
     }
   }

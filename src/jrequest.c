@@ -135,7 +135,7 @@ int _eXosip_dialog_add_contact(struct eXosip_t *excontext, osip_message_t *reque
   len++; /* if using sips instead of sip */
 
   if (excontext->sip_instance[0] != 0)
-    len += 65;
+    len += 285;
 
   contact = (char *) osip_malloc(len + 1);
 
@@ -166,7 +166,10 @@ int _eXosip_dialog_add_contact(struct eXosip_t *excontext, osip_message_t *reque
   }
 
   if (excontext->sip_instance[0] != 0) {
-    strcat(contact, ";+sip.instance=\"<urn:uuid:");
+    strcat(contact, ";+sip.instance=\"<");
+    if (strlen(excontext->sip_instance) == 36 && excontext->sip_instance[8] == '-') {
+      strcat(contact, "urn:uuid:");
+    }
     strcat(contact, excontext->sip_instance);
     strcat(contact, ">\"");
   }

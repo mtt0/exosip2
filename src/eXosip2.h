@@ -632,7 +632,7 @@ struct eXosip_t {
   int outgoing_wake_lock_state;
   int incoming_wake_lock_state;
 
-  char sip_instance[37]; /* can only be used if ONE excontext is used for ONE registration only */
+  char sip_instance[256]; /* can only be used if ONE excontext is used for ONE registration only */
   char default_contact_displayname[256];
   int opt_sessiontimers_force;
   int opt_force_connectionreuse;

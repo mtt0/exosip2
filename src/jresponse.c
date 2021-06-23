@@ -202,7 +202,7 @@ int _eXosip_build_response_default(struct eXosip_t *excontext, osip_message_t **
 int _eXosip_complete_answer_that_establish_a_dialog(struct eXosip_t *excontext, osip_message_t *response, osip_message_t *request) {
   int i;
   int route_found = 0;
-  char contact[1024];
+  char contact[1300];
   char scheme[10];
   osip_list_iterator_t it;
   osip_record_route_t *rr;
@@ -281,8 +281,11 @@ int _eXosip_complete_answer_that_establish_a_dialog(struct eXosip_t *excontext, 
       strcat(contact, ">");
     }
 
-    if (excontext->sip_instance[0] != 0 && strlen(contact) + 64 < 1024) {
-      strcat(contact, ";+sip.instance=\"<urn:uuid:");
+    if (excontext->sip_instance[0] != 0 && strlen(contact) + 285 < 1300) {
+      strcat(contact, ";+sip.instance=\"<");
+      if (strlen(excontext->sip_instance) == 36 && excontext->sip_instance[8] == '-') {
+        strcat(contact, "urn:uuid:");
+      }
       strcat(contact, excontext->sip_instance);
       strcat(contact, ">\"");
     }
