@@ -389,13 +389,7 @@ static eXosip_event_t *eXosip_event_wait_epoll(struct eXosip_t *excontext, int t
   eXosip_event_t *je = NULL;
   struct epoll_event ep_array;
 
-  int nfds = epoll_wait(excontext->epfdctl, &ep_array, 1, tv_s * 1000 + tv_ms);
-
-  if (nfds > 0) {
-    char buf[500];
-
-    jpipe_read(excontext->j_socketctl_event, buf, 499);
-  }
+  int nfds;
 
   eXosip_lock(excontext);
   _eXosip_retransmit_lost200ok(excontext);
