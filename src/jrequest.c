@@ -136,7 +136,9 @@ int _eXosip_dialog_add_contact(struct eXosip_t *excontext, osip_message_t *reque
 
   if (excontext->sip_instance[0] != 0)
     len += 285;
-
+  if (excontext->co_dialog_extra_params[0] != 0)
+    len += 542;
+  
   contact = (char *) osip_malloc(len + 1);
 
   if (contact == NULL)
@@ -172,6 +174,11 @@ int _eXosip_dialog_add_contact(struct eXosip_t *excontext, osip_message_t *reque
     }
     strcat(contact, excontext->sip_instance);
     strcat(contact, ">\"");
+  }
+
+  if (excontext->co_dialog_extra_params[0] != 0) {
+    strcat(contact, ";");
+    strcat(contact, excontext->co_dialog_extra_params);
   }
 
   osip_message_set_contact(request, contact);

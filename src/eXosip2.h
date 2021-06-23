@@ -633,6 +633,8 @@ struct eXosip_t {
   int incoming_wake_lock_state;
 
   char sip_instance[256]; /* can only be used if ONE excontext is used for ONE registration only */
+  char co_register_extra_params[512]; /* some extra contact parameters for Contact in REGISTER "audio;video;mobility="fixed";+sip.message="TRUE";other-param=66372;" parameter must not contains initial ";" */
+  char co_dialog_extra_params[512];   /* some extra contact parameters for Contact in INVITE's dialog "audio;video;" parameter must not contains initial ";" */
   char default_contact_displayname[256];
   int opt_sessiontimers_force;
   int opt_force_connectionreuse;

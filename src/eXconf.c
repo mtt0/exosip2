@@ -1209,6 +1209,16 @@ int eXosip_set_option(struct eXosip_t *excontext, int opt, const void *value) {
     OSIP_TRACE(osip_trace(__FILE__, __LINE__, OSIP_INFO1, NULL, "[eXosip] option set: +sip.instance [%s]\n", excontext->sip_instance));
     break;
 
+  case EXOSIP_OPT_SET_CONTACT_DIALOG_EXTRA_PARAMS:
+    tmp = (char *) value;
+    memset(excontext->co_dialog_extra_params, '\0', sizeof(excontext->co_dialog_extra_params));
+
+    if (tmp != NULL && tmp[0] != '\0')
+      osip_strncpy(excontext->co_dialog_extra_params, tmp, sizeof(excontext->co_dialog_extra_params) - 1);
+
+    OSIP_TRACE(osip_trace(__FILE__, __LINE__, OSIP_INFO1, NULL, "[eXosip] option set: co_extra_dialog_params [%s]\n", excontext->co_dialog_extra_params));
+    break;
+
   case EXOSIP_OPT_SET_DEFAULT_CONTACT_DISPLAYNAME:
     tmp = (char *) value;
     memset(excontext->default_contact_displayname, '\0', sizeof(excontext->default_contact_displayname));
