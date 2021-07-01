@@ -2868,13 +2868,7 @@ static int _tls_tl_send(struct eXosip_t *excontext, SSL *ssl, const char *messag
   int i = 0;
 
   while (length > 0) {
-#if TARGET_OS_IPHONE /* avoid ssl error on large message */
-    int max = (length > 500) ? 500 : length;
-
-    i = SSL_write(ssl, (const void *) message, (int) max);
-#else
     i = SSL_write(ssl, (const void *) message, (int) length);
-#endif
 
     if (i <= 0) {
       i = SSL_get_error(ssl, i);
