@@ -136,7 +136,7 @@
 
 SSL_CTX *initialize_client_ctx(struct eXosip_t *excontext, eXosip_tls_ctx_t *client_ctx, int transport, const char *sni_servernameindication);
 
-SSL_CTX *initialize_server_ctx(eXosip_tls_ctx_t *srv_ctx, int transport);
+SSL_CTX *initialize_server_ctx(struct eXosip_t *excontext, eXosip_tls_ctx_t *srv_ctx, int transport);
 
 int verify_cb(int preverify_ok, X509_STORE_CTX *store);
 
@@ -308,8 +308,12 @@ static int tls_tl_reset(struct eXosip_t *excontext) {
   return OSIP_SUCCESS;
 }
 
-static int _tls_add_certificates(SSL_CTX *ctx) {
+static int _tls_add_certificates(struct eXosip_t *excontext, SSL_CTX *ctx) {
   int count = 0;
+
+  if (excontext->tls_verify_client_certificate & 0x04) {
+    return 0;
+  }
 
 #ifdef HAVE_WINCRYPT_H
   PCCERT_CONTEXT pCertCtx;
@@ -803,10 +807,10 @@ eXosip_tls_ctx_error eXosip_tls_verify_certificate(struct eXosip_t *excontext, i
   return TLS_OK;
 }
 
-static void _tls_load_trusted_certificates(eXosip_tls_ctx_t *exosip_tls_cfg, SSL_CTX *ctx) {
+static void _tls_load_trusted_certificates(struct eXosip_t *excontext, eXosip_tls_ctx_t *exosip_tls_cfg, SSL_CTX *ctx) {
   char *caFile = 0, *caFolder = 0;
 
-  if (_tls_add_certificates(ctx) <= 0) {
+  if (_tls_add_certificates(excontext, ctx) <= 0) {
     OSIP_TRACE(osip_trace(__FILE__, __LINE__, OSIP_WARNING, NULL, "[eXosip] [TLS] no system certificate loaded\n"));
   }
 
@@ -963,7 +967,7 @@ SSL_CTX *initialize_client_ctx(struct eXosip_t *excontext, eXosip_tls_ctx_t *cli
   _tls_use_certificate_private_key("client", &client_ctx->client, ctx);
 
   /* Load the CAs we trust */
-  _tls_load_trusted_certificates(client_ctx, ctx);
+  _tls_load_trusted_certificates(excontext, client_ctx, ctx);
 
   {
     int verify_mode = SSL_VERIFY_NONE;
@@ -986,7 +990,11 @@ SSL_CTX *initialize_client_ctx(struct eXosip_t *excontext, eXosip_tls_ctx_t *cli
         }
 
         if (X509_VERIFY_PARAM_set1_host(param_to, sni_servernameindication, 0)) {
-          X509_VERIFY_PARAM_set_hostflags(param_to, X509_CHECK_FLAG_NO_WILDCARDS);
+          if (excontext->tls_verify_client_certificate & 0x02) {
+            X509_VERIFY_PARAM_set_hostflags(param_to, X509_CHECK_FLAG_MULTI_LABEL_WILDCARDS);
+          } else {
+            X509_VERIFY_PARAM_set_hostflags(param_to, X509_CHECK_FLAG_NO_WILDCARDS);
+          }
 
         } else {
           OSIP_TRACE(osip_trace(__FILE__, __LINE__, OSIP_ERROR, NULL, "[eXosip] [TLS] PARAM_set1_host: [%s] failed\n", sni_servernameindication));
@@ -1041,7 +1049,7 @@ SSL_CTX *initialize_client_ctx(struct eXosip_t *excontext, eXosip_tls_ctx_t *cli
   return ctx;
 }
 
-SSL_CTX *initialize_server_ctx(eXosip_tls_ctx_t *srv_ctx, int transport) {
+SSL_CTX *initialize_server_ctx(struct eXosip_t *excontext, eXosip_tls_ctx_t *srv_ctx, int transport) {
   const SSL_METHOD *meth = NULL;
   SSL_CTX *ctx;
   int err;
@@ -1080,7 +1088,7 @@ SSL_CTX *initialize_server_ctx(eXosip_tls_ctx_t *srv_ctx, int transport) {
   _tls_use_certificate_private_key("server", &srv_ctx->server, ctx);
 
   /* Load the CAs we trust */
-  _tls_load_trusted_certificates(srv_ctx, ctx);
+  _tls_load_trusted_certificates(excontext, srv_ctx, ctx);
 
   if (!SSL_CTX_check_private_key(ctx)) {
     OSIP_TRACE(osip_trace(__FILE__, __LINE__, OSIP_WARNING, NULL, "[eXosip] [TLS] check_private_key: either no match or no cert/key: disable incoming TLS connection\n"));
@@ -1184,7 +1192,7 @@ static int tls_tl_open(struct eXosip_t *excontext) {
   OPENSSL_init_ssl(OPENSSL_INIT_LOAD_SSL_STRINGS | OPENSSL_INIT_LOAD_CRYPTO_STRINGS, NULL);
 #endif
 
-  reserved->server_ctx = initialize_server_ctx(&excontext->eXosip_tls_ctx_params, IPPROTO_TCP);
+  reserved->server_ctx = initialize_server_ctx(excontext, & excontext->eXosip_tls_ctx_params, IPPROTO_TCP);
 
   /* always initialize the client */
   reserved->client_ctx = initialize_client_ctx(excontext, &excontext->eXosip_tls_ctx_params, IPPROTO_TCP, NULL);

@@ -112,7 +112,7 @@ static void SSL_set0_rbio(SSL *s, BIO *rbio) {
 #endif
 
 SSL_CTX *initialize_client_ctx(struct eXosip_t *excontext, eXosip_tls_ctx_t *client_ctx, int transport);
-SSL_CTX *initialize_server_ctx(eXosip_tls_ctx_t *srv_ctx, int transport);
+SSL_CTX *initialize_server_ctx(struct eXosip_t *excontext, eXosip_tls_ctx_t *srv_ctx, int transport);
 
 /* persistent connection */
 struct _dtls_stream {
@@ -367,7 +367,7 @@ static int dtls_tl_open(struct eXosip_t *excontext) {
     excontext->eXtl_transport.proto_local_port = 5061;
 
   /* TODO: allow parameters for DTLS */
-  reserved->server_ctx = initialize_server_ctx(&reserved->eXosip_dtls_ctx_params, IPPROTO_UDP);
+  reserved->server_ctx = initialize_server_ctx(excontext , & reserved->eXosip_dtls_ctx_params, IPPROTO_UDP);
   reserved->client_ctx = initialize_client_ctx(excontext, &reserved->eXosip_dtls_ctx_params, IPPROTO_UDP);
 
   res = _eXosip_get_addrinfo(excontext, &addrinfo, excontext->eXtl_transport.proto_ifs, excontext->eXtl_transport.proto_local_port, excontext->eXtl_transport.proto_num);
