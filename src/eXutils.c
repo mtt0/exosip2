@@ -1587,6 +1587,7 @@ int _eXosip_srv_lookup(struct eXosip_t *excontext, osip_message_t *sip, osip_nap
 
 int eXosip_dnsutils_rotate_srv(osip_srv_record_t *srv_record) {
   int n;
+  int prev_idx = srv_record->index;
 
   if (srv_record->srventry[0].srv[0] == '\0')
     return -1;
@@ -1597,6 +1598,11 @@ int eXosip_dnsutils_rotate_srv(osip_srv_record_t *srv_record) {
     srv_record->index = 0;
 
   for (n = 1; n < 10 && srv_record->srventry[n].srv[0] != '\0'; n++) {
+  }
+
+  if (prev_idx != srv_record->index) {
+    OSIP_TRACE(osip_trace(__FILE__, __LINE__, OSIP_INFO1, NULL, "[eXosip] failover with SRV [%s][%d] -> [%s][%d]\n", srv_record->srventry[prev_idx].srv, srv_record->srventry[prev_idx].port,
+                          srv_record->srventry[srv_record->index].srv, srv_record->srventry[srv_record->index].port));
   }
 
   return n - 1;

@@ -1751,7 +1751,7 @@ int _eXosip_handle_incoming_message(struct eXosip_t *excontext, char *buf, size_
   if (i != 0) {
     /* this event has no transaction, */
     OSIP_TRACE(osip_trace(__FILE__, __LINE__, OSIP_INFO1, NULL, "[eXosip] no transaction for message\n"));
-    eXosip_lock(excontext);
+    // REMOVE eXosip_lock(excontext);
 
     if (MSG_IS_REQUEST(se->sip))
       _eXosip_process_newrequest(excontext, se, socket);
@@ -1759,7 +1759,7 @@ int _eXosip_handle_incoming_message(struct eXosip_t *excontext, char *buf, size_
     else if (MSG_IS_RESPONSE(se->sip))
       _eXosip_process_response_out_of_transaction(excontext, se);
 
-    eXosip_unlock(excontext);
+    //REMOVE eXosip_unlock(excontext);
 
   } else {
     /* handled by oSIP ! */
@@ -1850,6 +1850,7 @@ int _eXosip_read_message(struct eXosip_t *excontext, int max_message_nb, int sec
       }
 #endif
 
+      eXosip_lock(excontext);
 #ifdef ENABLE_MAIN_SOCKET
       /* we call this anyway for incoming connection on MAIN socket */
       /* TODO: also use this code in standard version? */
@@ -1868,32 +1869,31 @@ int _eXosip_read_message(struct eXosip_t *excontext, int max_message_nb, int sec
       }
 #endif
 
-      eXosip_lock(excontext);
+      //MOVED eXosip_lock(excontext);
       i = _eXosip_dnsutils_checksock_epoll(excontext, nfds);
       if (i > 0) {
         OSIP_TRACE(osip_trace(__FILE__, __LINE__, OSIP_INFO3, NULL, "[eXosip] [socket event] a DNS result is ready\n"));
       }
 
       i = _eXosip_mark_all_transaction_ready_epoll(excontext, nfds, osip_fd_table);
-      if (i > 0) {
-        OSIP_TRACE(osip_trace(__FILE__, __LINE__, OSIP_INFO3, NULL, "[eXosip] [socket event] a socket event happened\n"));
-      }
+      //if (i > 0) {
+      //  OSIP_TRACE(osip_trace(__FILE__, __LINE__, OSIP_INFO3, NULL, "[eXosip] [socket event] a socket event happened\n"));
+      //}
 
       _eXosip_dnsutils_delsock_epoll(excontext, cares_fd_table);
-      eXosip_unlock(excontext);
 
       for (i = 0; i < EXOSIP_MAX_SOCKETS; i++) {
         if (osip_fd_table[i] > 0) {
           for (n = 0; n < nfds; ++n) {
             if (excontext->ep_array[n].events & EPOLLIN && excontext->ep_array[n].data.fd == osip_fd_table[i]) {
               excontext->eXtl_transport.tl_check_connection(excontext, osip_fd_table[i]);
-            }
-            if (excontext->ep_array[n].events & EPOLLOUT && excontext->ep_array[n].data.fd == osip_fd_table[i]) {
+            } else if (excontext->ep_array[n].events & EPOLLOUT && excontext->ep_array[n].data.fd == osip_fd_table[i]) {
               excontext->eXtl_transport.tl_check_connection(excontext, osip_fd_table[i]);
             }
           }
         }
       }
+      eXosip_unlock(excontext);
 
       /* only check for connection/keepalive when there is no activity */
       osip_gettimeofday(&excontext->cc_timer, NULL);
@@ -1956,38 +1956,39 @@ int _eXosip_read_message(struct eXosip_t *excontext, int max_message_nb, int sec
 #endif
 
       } else {
+        eXosip_lock(excontext);
         for (i = 0; osip_fd_table[i] != -1; i++) {
-          if (FD_ISSET(osip_fd_table[i], &osip_fdset) || FD_ISSET(osip_fd_table[i], &osip_wrset)) {
+          if (FD_ISSET(osip_fd_table[i], &osip_fdset) || FD_ISSET(osip_fd_table[i], &osip_wrset) || FD_ISSET(osip_fd_table[i], &osip_exceptset)) {
             if (excontext->cbsipWakeLock != NULL && excontext->incoming_wake_lock_state == 0)
               excontext->cbsipWakeLock(++excontext->incoming_wake_lock_state);
 
-            excontext->eXtl_transport.tl_read_message(excontext, &osip_fdset, &osip_wrset);
+            excontext->eXtl_transport.tl_read_message(excontext, &osip_fdset, &osip_wrset, &osip_exceptset);
             break;
           }
         }
 
-        eXosip_lock(excontext);
+        //MOVED eXosip_lock(excontext);
         i = _eXosip_dnsutils_checksock(excontext, &osip_fdset, &osip_wrset);
         if (i > 0) {
           OSIP_TRACE(osip_trace(__FILE__, __LINE__, OSIP_INFO3, NULL, "[eXosip] [socket event] a DNS result is ready\n"));
         }
 
         i = _eXosip_mark_all_transaction_ready(excontext, &osip_fdset, &osip_wrset, &osip_exceptset, osip_fd_table);
-        if (i > 0) {
-          OSIP_TRACE(osip_trace(__FILE__, __LINE__, OSIP_INFO3, NULL, "[eXosip] [socket event] a socket event happened\n"));
-        }
-        eXosip_unlock(excontext);
+        //if (i > 0) {
+        //  OSIP_TRACE(osip_trace(__FILE__, __LINE__, OSIP_INFO3, NULL, "[eXosip] [socket event] a socket event happened\n"));
+        //}
 
         for (i = 0; i < EXOSIP_MAX_SOCKETS; i++) {
           if (osip_fd_table[i] > 0) {
             if (FD_ISSET(osip_fd_table[i], &osip_fdset))
               excontext->eXtl_transport.tl_check_connection(excontext, osip_fd_table[i]);
-            if (FD_ISSET(osip_fd_table[i], &osip_wrset))
+            else if (FD_ISSET(osip_fd_table[i], &osip_wrset))
               excontext->eXtl_transport.tl_check_connection(excontext, osip_fd_table[i]);
-            if (FD_ISSET(osip_fd_table[i], &osip_exceptset))
+            else if (FD_ISSET(osip_fd_table[i], &osip_exceptset))
               excontext->eXtl_transport.tl_check_connection(excontext, osip_fd_table[i]);
           }
         }
+        eXosip_unlock(excontext);
 
         /* only check for connection/keepalive when there is no activity */
         osip_gettimeofday(&excontext->cc_timer, NULL);

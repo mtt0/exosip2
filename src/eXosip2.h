@@ -669,6 +669,8 @@ int _eXosip_update_top_via(osip_message_t *sip);
 int _eXosip_request_add_via(struct eXosip_t *excontext, osip_message_t *request);
 
 void _eXosip_mark_all_registrations_expired(struct eXosip_t *excontext);
+void _eXosip_mark_all_transaction_force_send(struct eXosip_t *excontext, int socket);
+void _eXosip_mark_all_transaction_transport_error(struct eXosip_t *excontext, int socket);
 void _eXosip_mark_registration_expired(struct eXosip_t *excontext, const char *call_id);
 int _eXosip_mark_all_transaction_ready(struct eXosip_t *excontext, fd_set *osip_fdset, fd_set *osip_wrset, fd_set *osip_exceptset, int *osip_fd_table);
 #ifdef HAVE_SYS_EPOLL_H

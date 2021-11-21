@@ -68,7 +68,7 @@ struct eXtl_protocol {
   int (*tl_free)(struct eXosip_t *excontext);
   int (*tl_open)(struct eXosip_t *excontext);
   int (*tl_set_fdset)(struct eXosip_t *excontext, fd_set *osip_fdset, fd_set *osip_wrset, fd_set *osip_exceptset, int *fd_max, int *osip_fd_table);
-  int (*tl_read_message)(struct eXosip_t *excontext, fd_set *osip_fdset, fd_set *osip_wrset);
+  int (*tl_read_message)(struct eXosip_t *excontext, fd_set *osip_fdset, fd_set *osip_wrset, fd_set *osip_exceptset);
 
 #ifdef HAVE_SYS_EPOLL_H
   int (*tl_epoll_read_message)(struct eXosip_t *excontext, int nfds, struct epoll_event *ep_array);

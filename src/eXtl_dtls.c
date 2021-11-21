@@ -653,7 +653,7 @@ static int _dtls_read_udp_main_socket(struct eXosip_t *excontext) {
   return OSIP_SUCCESS;
 }
 
-static int dtls_tl_read_message(struct eXosip_t *excontext, fd_set *osip_fdset, fd_set *osip_wrset) {
+static int dtls_tl_read_message(struct eXosip_t *excontext, fd_set *osip_fdset, fd_set *osip_wrset, fd_set *osip_exceptset) {
   struct eXtldtls *reserved = (struct eXtldtls *) excontext->eXtldtls_reserved;
 
   if (reserved == NULL) {

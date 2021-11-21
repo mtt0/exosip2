@@ -251,12 +251,14 @@ static int cb_snd_message(osip_transaction_t *tr, osip_message_t *sip, char *hos
 static void cb_xixt_kill_transaction(int type, osip_transaction_t *tr) {
   int i;
   struct eXosip_t *excontext = (struct eXosip_t *) osip_transaction_get_reserved1(tr);
+  struct timeval time_sub; 
+  osip_timersub(&tr->destroyed_time, &tr->created_time, &time_sub);
 
-  OSIP_TRACE(osip_trace(__FILE__, __LINE__, OSIP_INFO1, NULL, "[eXosip] [tid=%i] [cb_nict_kill_transaction]\n", tr->transactionid));
+  OSIP_TRACE(osip_trace(__FILE__, __LINE__, OSIP_INFO1, NULL, "[eXosip] [tid=%i] [cb_xixt_kill_transaction] [duration=%3li,%03lis]\n", tr->transactionid, time_sub.tv_sec, time_sub.tv_usec / 1000));
   i = osip_remove_transaction(excontext->j_osip, tr);
 
   if (i != 0) {
-    OSIP_TRACE(osip_trace(__FILE__, __LINE__, OSIP_BUG, NULL, "[eXosip] [tid=%i] [cb_nict_kill_transaction] **cannot remove transaction from the oSIP stack**\n", tr->transactionid));
+    OSIP_TRACE(osip_trace(__FILE__, __LINE__, OSIP_BUG, NULL, "[eXosip] [tid=%i] [cb_xixt_kill_transaction] **cannot remove transaction from the oSIP stack**\n", tr->transactionid));
   }
 
   if (MSG_IS_REGISTER(tr->orig_request) && type == OSIP_NICT_KILL_TRANSACTION && tr->last_response == NULL) {
@@ -1736,6 +1738,20 @@ static void cb_transport_error(int type, osip_transaction_t *tr, int error) {
     _eXosip_report_call_event(excontext, EXOSIP_CALL_NOANSWER, jc, jd, tr);
   }
 
+  if (type == OSIP_NICT_TRANSPORT_ERROR) {
+    osip_naptr_t *naptr_record = tr->naptr_record;
+    if (naptr_record != NULL && naptr_record->naptr_state == OSIP_NAPTR_STATE_SRVDONE && (MSG_IS_REGISTER(tr->orig_request) || MSG_IS_OPTIONS(tr->orig_request))) {
+
+      if (osip_strcasecmp(excontext->eXtl_transport.proto_name, "UDP") == 0)
+        eXosip_dnsutils_rotate_srv(&naptr_record->sipudp_record);
+      else if (osip_strcasecmp(excontext->eXtl_transport.proto_name, "TCP") == 0)
+        eXosip_dnsutils_rotate_srv(&naptr_record->siptcp_record);
+      else if (osip_strcasecmp(excontext->eXtl_transport.proto_name, "TLS") == 0)
+        eXosip_dnsutils_rotate_srv(&naptr_record->siptls_record);
+      else if (osip_strcasecmp(excontext->eXtl_transport.proto_name, "DTLS-UDP") == 0)
+        eXosip_dnsutils_rotate_srv(&naptr_record->sipdtls_record);
+    }
+  }
 #ifndef MINISIZE
 
   if (jn == NULL && js == NULL)

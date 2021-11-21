@@ -131,7 +131,10 @@ static int tcp_tl_init(struct eXosip_t *excontext) {
   return OSIP_SUCCESS;
 }
 
-static void _tcp_tl_close_sockinfo(struct _tcp_stream *sockinfo) {
+static void _tcp_tl_close_sockinfo(struct eXosip_t *excontext, struct _tcp_stream *sockinfo) {
+
+  _eXosip_mark_all_transaction_transport_error(excontext, sockinfo->socket);
+
   _eXosip_closesocket(sockinfo->socket);
 
   if (sockinfo->buf != NULL)
@@ -171,7 +174,7 @@ static int tcp_tl_free(struct eXosip_t *excontext) {
 
   for (pos = 0; pos < EXOSIP_MAX_SOCKETS; pos++) {
     if (reserved->socket_tab[pos].socket > 0) {
-      _tcp_tl_close_sockinfo(&reserved->socket_tab[pos]);
+      _tcp_tl_close_sockinfo(excontext, &reserved->socket_tab[pos]);
     }
   }
 
@@ -375,7 +378,8 @@ static int tcp_tl_set_fdset(struct eXosip_t *excontext, fd_set *osip_fdset, fd_s
 
     if (reserved->socket_tab[pos].invalid > 0) {
       OSIP_TRACE(osip_trace(__FILE__, __LINE__, OSIP_ERROR, NULL, "[eXosip] [TCP] [fdset] socket info:[%s][%d] [sock=%d] [pos=%d] manual reset\n", reserved->socket_tab[pos].remote_ip, reserved->socket_tab[pos].remote_port, reserved->socket_tab[pos].socket, pos));
-      _tcp_tl_close_sockinfo(&reserved->socket_tab[pos]);
+      _eXosip_mark_registration_expired(excontext, reserved->socket_tab[pos].reg_call_id);
+      _tcp_tl_close_sockinfo(excontext, &reserved->socket_tab[pos]);
       continue;
     }
 
@@ -554,7 +558,7 @@ static int _tcp_tl_recv(struct eXosip_t *excontext, struct _tcp_stream *sockinfo
   if (r == 0) {
     OSIP_TRACE(osip_trace(__FILE__, __LINE__, OSIP_INFO1, NULL, "[eXosip] [TCP] socket [%s][%d] eof\n", sockinfo->remote_ip, sockinfo->remote_port));
     _eXosip_mark_registration_expired(excontext, sockinfo->reg_call_id);
-    _tcp_tl_close_sockinfo(sockinfo);
+    _tcp_tl_close_sockinfo(excontext, sockinfo);
     return OSIP_UNDEFINED_ERROR;
 
   } else if (r < 0) {
@@ -565,9 +569,9 @@ static int _tcp_tl_recv(struct eXosip_t *excontext, struct _tcp_stream *sockinfo
 
     /* Do we need next line ? */
     /* else if (is_connreset_error(valopt)) */
-    _eXosip_mark_registration_expired(excontext, sockinfo->reg_call_id);
     OSIP_TRACE(osip_trace(__FILE__, __LINE__, OSIP_INFO1, NULL, "[eXosip] [TCP] socket [%s][%d] error %s\n", sockinfo->remote_ip, sockinfo->remote_port, _ex_strerror(valopt, eb, ERRBSIZ)));
-    _tcp_tl_close_sockinfo(sockinfo);
+    _eXosip_mark_registration_expired(excontext, sockinfo->reg_call_id);
+    _tcp_tl_close_sockinfo(excontext, sockinfo);
     return OSIP_UNDEFINED_ERROR;
 
   } else {
@@ -625,7 +629,8 @@ static int _tcp_read_tcp_main_socket(struct eXosip_t *excontext) {
     pos = 0;
 
     if (reserved->socket_tab[pos].socket > 0) {
-      _tcp_tl_close_sockinfo(&reserved->socket_tab[pos]);
+      _eXosip_mark_registration_expired(excontext, reserved->socket_tab[pos].reg_call_id);
+      _tcp_tl_close_sockinfo(excontext, &reserved->socket_tab[pos]);
     }
 
     memset(&reserved->socket_tab[pos], 0, sizeof(reserved->socket_tab[pos]));
@@ -650,8 +655,10 @@ static int _tcp_read_tcp_main_socket(struct eXosip_t *excontext) {
         _eXosip_closesocket(reserved->tcp_socket);
 
         for (i = 0; i < EXOSIP_MAX_SOCKETS; i++) {
-          if (reserved->socket_tab[i].socket > 0 && reserved->socket_tab[i].is_server > 0)
-            _tcp_tl_close_sockinfo(&reserved->socket_tab[i]);
+          if (reserved->socket_tab[i].socket > 0 && reserved->socket_tab[i].is_server > 0) {
+            _eXosip_mark_registration_expired(excontext, reserved->socket_tab[i].reg_call_id);
+            _tcp_tl_close_sockinfo(excontext, &reserved->socket_tab[i]);
+          }
         }
       }
 
@@ -690,7 +697,7 @@ static int _tcp_read_tcp_main_socket(struct eXosip_t *excontext) {
       res = epoll_ctl(excontext->epfd, EPOLL_CTL_ADD, sock, &ev);
 
       if (res < 0) {
-        _eXosip_closesocket(sock);
+        _tcp_tl_close_sockinfo(excontext, &reserved->socket_tab[pos]);
         return -1;
       }
     }
@@ -723,6 +730,7 @@ static int tcp_tl_epoll_read_message(struct eXosip_t *excontext, int nfds, struc
       if (reserved->socket_tab[pos].socket > 0) {
         if (ep_array[n].data.fd == reserved->socket_tab[pos].socket) {
           if ((ep_array[n].events & EPOLLOUT) && reserved->socket_tab[pos].tcp_inprogress_max_timeout > 0) {
+            _eXosip_mark_all_transaction_force_send(excontext, reserved->socket_tab[pos].socket);
           } else if ((ep_array[n].events & EPOLLOUT) && reserved->socket_tab[pos].sendbuflen > 0) {
             OSIP_TRACE(osip_trace(__FILE__, __LINE__, OSIP_INFO1, NULL, "[eXosip] [TCP] [tid=-1] message sent [len=%d] to [%s][%d]\n%s\n", reserved->socket_tab[pos].sendbuflen, reserved->socket_tab[pos].remote_ip,
                                   reserved->socket_tab[pos].remote_port, reserved->socket_tab[pos].sendbuf));
@@ -748,7 +756,7 @@ static int tcp_tl_epoll_read_message(struct eXosip_t *excontext, int nfds, struc
 
 #endif
 
-static int tcp_tl_read_message(struct eXosip_t *excontext, fd_set *osip_fdset, fd_set *osip_wrset) {
+static int tcp_tl_read_message(struct eXosip_t *excontext, fd_set *osip_fdset, fd_set *osip_wrset, fd_set *osip_exceptset) {
   struct eXtltcp *reserved = (struct eXtltcp *) excontext->eXtltcp_reserved;
   int pos = 0;
 
@@ -763,7 +771,17 @@ static int tcp_tl_read_message(struct eXosip_t *excontext, fd_set *osip_fdset, f
 
   for (pos = 0; pos < EXOSIP_MAX_SOCKETS; pos++) {
     if (reserved->socket_tab[pos].socket > 0) {
-      if (FD_ISSET(reserved->socket_tab[pos].socket, osip_wrset) && reserved->socket_tab[pos].tcp_inprogress_max_timeout > 0) {
+      if (FD_ISSET(reserved->socket_tab[pos].socket, osip_exceptset)) {
+        int res = _tcptls_tl_is_connected(excontext->poll_method, reserved->socket_tab[pos].socket);
+        if (res < 0) {
+          _eXosip_mark_registration_expired(excontext, reserved->socket_tab[pos].reg_call_id);
+          _tcp_tl_close_sockinfo(excontext, &reserved->socket_tab[pos]);
+          continue;
+        } else {
+          OSIP_TRACE(osip_trace(__FILE__, __LINE__, OSIP_WARNING, NULL, "[eXosip] [TCP] [tid=-1] socket [%s][%d] except descriptor without error\n", reserved->socket_tab[pos].remote_ip, reserved->socket_tab[pos].remote_port));
+        }
+      } else if (FD_ISSET(reserved->socket_tab[pos].socket, osip_wrset) && reserved->socket_tab[pos].tcp_inprogress_max_timeout > 0) {
+        _eXosip_mark_all_transaction_force_send(excontext, reserved->socket_tab[pos].socket);
       } else if (FD_ISSET(reserved->socket_tab[pos].socket, osip_wrset) && reserved->socket_tab[pos].sendbuflen > 0) {
         OSIP_TRACE(osip_trace(__FILE__, __LINE__, OSIP_INFO1, NULL, "[eXosip] [TCP] [tid=-1] message sent [len=%d] to [%s][%d]\n%s\n", reserved->socket_tab[pos].sendbuflen, reserved->socket_tab[pos].remote_ip, reserved->socket_tab[pos].remote_port,
                               reserved->socket_tab[pos].sendbuf));
@@ -973,7 +991,7 @@ static int _tcp_tl_new_socket(struct eXosip_t *excontext, char *host, int port) 
     pos = 0;
 
     if (reserved->socket_tab[pos].socket > 0) {
-      _tcp_tl_close_sockinfo(&reserved->socket_tab[pos]);
+      _tcp_tl_close_sockinfo(excontext, &reserved->socket_tab[pos]);
     }
 
     memset(&reserved->socket_tab[pos], 0, sizeof(reserved->socket_tab[pos]));
@@ -1389,7 +1407,7 @@ static int _tcp_tl_new_socket(struct eXosip_t *excontext, char *host, int port) 
       res = epoll_ctl(excontext->epfd, EPOLL_CTL_ADD, sock, &ev);
 
       if (res < 0) {
-        _eXosip_closesocket(sock);
+        _tcp_tl_close_sockinfo(excontext, &reserved->socket_tab[pos]);
         return -1;
       }
     }
@@ -1743,7 +1761,8 @@ static int tcp_tl_send_message(struct eXosip_t *excontext, osip_transaction_t *t
     if (reserved->socket_tab[pos].invalid > 0) {
       OSIP_TRACE(osip_trace(__FILE__, __LINE__, OSIP_ERROR, NULL, "[eXosip] [TCP] [send] socket info:[%s][%d] [sock=%d] [pos=%d] manual reset\n", reserved->socket_tab[pos].remote_ip, reserved->socket_tab[pos].remote_port,
                             reserved->socket_tab[pos].socket, pos));
-      _tcp_tl_close_sockinfo(&reserved->socket_tab[pos]);
+      _eXosip_mark_registration_expired(excontext, reserved->socket_tab[pos].reg_call_id);
+      _tcp_tl_close_sockinfo(excontext, &reserved->socket_tab[pos]);
       continue;
     }
   }
@@ -1819,13 +1838,6 @@ static int tcp_tl_send_message(struct eXosip_t *excontext, osip_transaction_t *t
       _eXosip_mark_registration_expired(excontext, sip->call_id->number);
     }
 
-    if (naptr_record != NULL && (MSG_IS_REGISTER(sip) || MSG_IS_OPTIONS(sip))) {
-      if (eXosip_dnsutils_rotate_srv(&naptr_record->siptcp_record) > 0) {
-        OSIP_TRACE(osip_trace(__FILE__, __LINE__, OSIP_INFO1, NULL, "[eXosip] [TCP] [tid=%i] doing TCP failover [%s][%d] -> [%s][%d]\n", tid, host, port, naptr_record->siptcp_record.srventry[naptr_record->siptcp_record.index].srv,
-                              naptr_record->siptcp_record.srventry[naptr_record->siptcp_record.index].port));
-      }
-    }
-
     if (tr != NULL)
       osip_transaction_set_out_socket(tr, 0);
     return -1;
@@ -1843,17 +1855,13 @@ static int tcp_tl_send_message(struct eXosip_t *excontext, osip_transaction_t *t
 
     if (tr != NULL) {
       now = osip_getsystemtime(NULL);
-      OSIP_TRACE(osip_trace(__FILE__, __LINE__, OSIP_INFO2, NULL, "[eXosip] [TCP] [tid=%i] socket [%s] [sock=%d] [pos=%d] in progress\n", tid, host, out_socket, pos));
 
       if (tr != NULL && now - tr->birth_time > 10) {
+        OSIP_TRACE(osip_trace(__FILE__, __LINE__, OSIP_INFO2, NULL, "[eXosip] [TCP] [tid=%i] socket [%s] [sock=%d] [pos=%d] timeout\n", tid, host, out_socket, pos));
         _eXosip_mark_registration_expired(excontext, reserved->socket_tab[pos].reg_call_id);
         if (naptr_record != NULL && (MSG_IS_REGISTER(sip) || MSG_IS_OPTIONS(sip))) {
-          if (eXosip_dnsutils_rotate_srv(&naptr_record->siptcp_record) > 0) {
-            if (pos >= 0)
-              _tcp_tl_close_sockinfo(&reserved->socket_tab[pos]);
-
-            OSIP_TRACE(osip_trace(__FILE__, __LINE__, OSIP_INFO1, NULL, "[eXosip] [TCP] [tid=%i] doing TCP failover [%s][%d] -> [%s][%d]\n", tid, host, port, naptr_record->siptcp_record.srventry[naptr_record->siptcp_record.index].srv,
-                                  naptr_record->siptcp_record.srventry[naptr_record->siptcp_record.index].port));
+          if (pos >= 0) {
+            _tcp_tl_close_sockinfo(excontext, &reserved->socket_tab[pos]);
           }
         }
 
@@ -1861,6 +1869,7 @@ static int tcp_tl_send_message(struct eXosip_t *excontext, osip_transaction_t *t
           osip_transaction_set_out_socket(tr, 0);
         return -1;
       }
+      OSIP_TRACE(osip_trace(__FILE__, __LINE__, OSIP_INFO2, NULL, "[eXosip] [TCP] [tid=%i] socket [%s] [sock=%d] [pos=%d] in progress\n", tid, host, out_socket, pos));
     }
 
     if (tr == NULL) {
@@ -1902,14 +1911,9 @@ static int tcp_tl_send_message(struct eXosip_t *excontext, osip_transaction_t *t
     reserved->socket_tab[pos].tcp_inprogress_max_timeout = 0;
 
   } else {
-    if (naptr_record != NULL && (MSG_IS_REGISTER(sip) || MSG_IS_OPTIONS(sip))) {
-      if (eXosip_dnsutils_rotate_srv(&naptr_record->siptcp_record) > 0) {
-      }
-    }
-    _eXosip_mark_registration_expired(excontext, reserved->socket_tab[pos].reg_call_id);
-
     OSIP_TRACE(osip_trace(__FILE__, __LINE__, OSIP_ERROR, NULL, "[eXosip] [TCP] [tid=%i] socket [%s] [sock=%d] [pos=%d] error\n", tid, host, out_socket, pos));
-    _tcp_tl_close_sockinfo(&reserved->socket_tab[pos]);
+    _eXosip_mark_registration_expired(excontext, reserved->socket_tab[pos].reg_call_id);
+    _tcp_tl_close_sockinfo(excontext, &reserved->socket_tab[pos]);
     if (tr != NULL)
       osip_transaction_set_out_socket(tr, 0);
     return -1;
@@ -1965,7 +1969,7 @@ static int tcp_tl_send_message(struct eXosip_t *excontext, osip_transaction_t *t
   if (i < 0) {
     if (pos >= 0) {
       _eXosip_mark_registration_expired(excontext, reserved->socket_tab[pos].reg_call_id);
-      _tcp_tl_close_sockinfo(&reserved->socket_tab[pos]);
+      _tcp_tl_close_sockinfo(excontext, &reserved->socket_tab[pos]);
     }
     if (tr != NULL)
       osip_transaction_set_out_socket(tr, 0);
@@ -2056,7 +2060,7 @@ static int tcp_tl_keepalive(struct eXosip_t *excontext) {
         OSIP_TRACE(osip_trace(__FILE__, __LINE__, OSIP_ERROR, NULL, "[eXosip] [TCP] [keepalive] socket info:[%s][%d] [sock=%d] [pos=%d] error\n", reserved->socket_tab[pos].remote_ip, reserved->socket_tab[pos].remote_port,
                               reserved->socket_tab[pos].socket, pos));
         _eXosip_mark_registration_expired(excontext, reserved->socket_tab[pos].reg_call_id);
-        _tcp_tl_close_sockinfo(&reserved->socket_tab[pos]);
+        _tcp_tl_close_sockinfo(excontext, &reserved->socket_tab[pos]);
         continue;
       }
 
@@ -2089,8 +2093,6 @@ static int tcp_tl_keepalive(struct eXosip_t *excontext) {
 
           snprintf(from, sizeof(from), "<sip:%s:%d>", locip, locport);
 
-          eXosip_lock(excontext);
-
           /* Generate an options message */
           if (eXosip_options_build_request(excontext, &options, to, from, NULL) == OSIP_SUCCESS) {
             message = NULL;
@@ -2116,7 +2118,6 @@ static int tcp_tl_keepalive(struct eXosip_t *excontext) {
                 osip_trace(__FILE__, __LINE__, OSIP_WARNING, NULL, "[eXosip] [TCP] [keepalive] socket [%s] [sock=%d] [pos=%d] failed to create sip options message\n", reserved->socket_tab[pos].remote_ip, reserved->socket_tab[pos].socket, pos));
           }
 
-          eXosip_unlock(excontext);
           continue;
         }
 
@@ -2207,7 +2208,7 @@ static int tcp_tl_check_all_connection(struct eXosip_t *excontext) {
           OSIP_TRACE(osip_trace(__FILE__, __LINE__, OSIP_INFO2, NULL, "[eXosip] [TCP] [checkall] socket is in progress since 32 seconds / close socket\n"));
           reserved->socket_tab[pos].tcp_inprogress_max_timeout = 0;
           _eXosip_mark_registration_expired(excontext, reserved->socket_tab[pos].reg_call_id);
-          _tcp_tl_close_sockinfo(&reserved->socket_tab[pos]);
+          _tcp_tl_close_sockinfo(excontext, &reserved->socket_tab[pos]);
           continue;
         }
 
@@ -2221,7 +2222,7 @@ static int tcp_tl_check_all_connection(struct eXosip_t *excontext) {
           OSIP_TRACE(osip_trace(__FILE__, __LINE__, OSIP_INFO2, NULL, "[eXosip] [TCP] [checkall] no pong[CRLF] for ping[CRLFCRLF]\n"));
           reserved->socket_tab[pos].tcp_max_timeout = 0;
           _eXosip_mark_registration_expired(excontext, reserved->socket_tab[pos].reg_call_id);
-          _tcp_tl_close_sockinfo(&reserved->socket_tab[pos]);
+          _tcp_tl_close_sockinfo(excontext, &reserved->socket_tab[pos]);
           continue;
         }
 
@@ -2229,10 +2230,10 @@ static int tcp_tl_check_all_connection(struct eXosip_t *excontext) {
         time_t now = osip_getsystemtime(NULL);
 
         if (now > reserved->socket_tab[pos].tcp_max_timeout) {
-          OSIP_TRACE(osip_trace(__FILE__, __LINE__, OSIP_INFO2, NULL, "[eXosip] [TCP] [checkall] we excepted a reply on established sockets / close socket\n"));
+          OSIP_TRACE(osip_trace(__FILE__, __LINE__, OSIP_INFO2, NULL, "[eXosip] [TCP] [checkall] we expected a reply on established sockets / close socket\n"));
           reserved->socket_tab[pos].tcp_max_timeout = 0;
           _eXosip_mark_registration_expired(excontext, reserved->socket_tab[pos].reg_call_id);
-          _tcp_tl_close_sockinfo(&reserved->socket_tab[pos]);
+          _tcp_tl_close_sockinfo(excontext, &reserved->socket_tab[pos]);
           continue;
         }
       }
@@ -2273,7 +2274,7 @@ static int tcp_tl_check_connection(struct eXosip_t *excontext, int socket) {
         OSIP_TRACE(osip_trace(__FILE__, __LINE__, OSIP_INFO2, NULL, "[eXosip] [TCP] [check] socket is in progress since 32 seconds / close socket\n"));
         reserved->socket_tab[pos].tcp_inprogress_max_timeout = 0;
         _eXosip_mark_registration_expired(excontext, reserved->socket_tab[pos].reg_call_id);
-        _tcp_tl_close_sockinfo(&reserved->socket_tab[pos]);
+        _tcp_tl_close_sockinfo(excontext, &reserved->socket_tab[pos]);
         return OSIP_SUCCESS;
       }
     }
@@ -2306,7 +2307,7 @@ static int tcp_tl_check_connection(struct eXosip_t *excontext, int socket) {
         OSIP_TRACE(osip_trace(__FILE__, __LINE__, OSIP_INFO2, NULL, "[eXosip] [TCP] [check] we excepted a reply on established sockets / close socket\n"));
         reserved->socket_tab[pos].tcp_max_timeout = 0;
         _eXosip_mark_registration_expired(excontext, reserved->socket_tab[pos].reg_call_id);
-        _tcp_tl_close_sockinfo(&reserved->socket_tab[pos]);
+        _tcp_tl_close_sockinfo(excontext, &reserved->socket_tab[pos]);
         return OSIP_SUCCESS;
       }
     }
@@ -2316,7 +2317,7 @@ static int tcp_tl_check_connection(struct eXosip_t *excontext, int socket) {
     OSIP_TRACE(
         osip_trace(__FILE__, __LINE__, OSIP_ERROR, NULL, "[eXosip] [TCP] [check] socket info:[%s][%d] [sock=%d] [pos=%d] error\n", reserved->socket_tab[pos].remote_ip, reserved->socket_tab[pos].remote_port, reserved->socket_tab[pos].socket, pos));
     _eXosip_mark_registration_expired(excontext, reserved->socket_tab[pos].reg_call_id);
-    _tcp_tl_close_sockinfo(&reserved->socket_tab[pos]);
+    _tcp_tl_close_sockinfo(excontext, &reserved->socket_tab[pos]);
     return OSIP_SUCCESS;
   }
 
