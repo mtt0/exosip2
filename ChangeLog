@@ -1,3 +1,15 @@
+eXosip2 (5.3.0) - 2021-11-22
+	* rewrite socket error management in order to apply them to all pending ICT and NICT transactions
+	  - with previous code, some transactions won't see the transport-error and will fail with unnecessary delay.
+	* add time information in cb_xixt_kill_transaction callback for debugging
+	* eXosip_lock will now include read on sockets
+	* [TLS] allow to accept wildcard with a new bit in tls_verify_client_certificate
+	* [TLS] disable loading OS certifiate with a new bit in tls_verify_client_certificate
+	* [TLS] I beleive there is no reason to cut packet in 500 bytes chunks on ios
+	* [EXOSIP_OPT_SET_CONTACT_DIALOG_EXTRA_PARAMS] new option to set Contact parameters in request/answers dialogs
+	* [AMSIP_OPTION_SET_SIP_INSTANCE] allow any value inside +sip.instance instead of only urn:uuid
+	* [epoll] fix eXosip_event_wait when using epoll implementation where events are distributed in the next eXosip_event_wait call
+
 eXosip2 (5.2.1) - 2020-05-21
 	* [ENABLE_MAIN_SOCKET] fix epoll mechanism for server socket with TCP and TLS
 	* [crash] check scheme upon processing 3xx
