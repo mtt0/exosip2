@@ -1,9 +1,12 @@
 
 if COMPILE_TOOLS
-bin_PROGRAMS = sip_reg sip_monitor
+bin_PROGRAMS = sip_reg sip_monitor sip_storm
 endif
 
 AM_CFLAGS = $(EXOSIP_FLAGS)
+
+sip_storm_SOURCES = sip_storm.c
+sip_storm_LDADD = $(top_builddir)/src/libeXosip2.la $(OSIP_LIBS)
 
 sip_reg_SOURCES = sip_reg.c
 sip_reg_LDADD = $(top_builddir)/src/libeXosip2.la $(OSIP_LIBS)
