@@ -12,6 +12,8 @@ ipch
 *.lo
 *.la
 *.a
+*.gcda
+*.gcno
 Release
 Debug
 ReleaseAudio
