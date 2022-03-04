@@ -1016,14 +1016,96 @@ int eXosip_call_send_answer(struct eXosip_t *excontext, int tid, int status, osi
 }
 
 int eXosip_call_terminate(struct eXosip_t *excontext, int cid, int did) {
-  return eXosip_call_terminate_with_header(excontext, cid, did, NULL, NULL);
+  return eXosip_call_terminate_with_headers(excontext, cid, did, NULL);
 }
 
 int eXosip_call_terminate_with_reason(struct eXosip_t *excontext, int cid, int did, const char *reason) {
-  return eXosip_call_terminate_with_header(excontext, cid, did, "Reason", reason);
+  osip_header_t headers[2];
+  headers[0].hname = "Reason";
+  headers[0].hvalue = (char *) reason;
+  headers[1].hname = NULL;
+  headers[1].hvalue = NULL;
+  return eXosip_call_terminate_with_headers(excontext, cid, did, headers);
 }
 
 int eXosip_call_terminate_with_header(struct eXosip_t *excontext, int cid, int did, const char *header_name, const char *header_value) {
+  osip_header_t headers[2];
+  headers[0].hname = (char *) header_name;
+  headers[0].hvalue = (char *) header_name;
+  headers[1].hname = NULL;
+  headers[1].hvalue = NULL;
+  return eXosip_call_terminate_with_headers(excontext, cid, did, headers);
+}
+
+static void _eXosip_apply_call_header(osip_message_t *message, const osip_header_t *call_headers) {
+  const osip_header_t *call_header;
+  int idx_header;
+
+  for (idx_header = 0, call_header = call_headers; call_header != NULL && call_header->hname != NULL; idx_header++, call_header++) {
+    osip_list_iterator_t it;
+    osip_header_t *header;
+
+    if (osip_strcasecmp(call_header->hname, "call-info") == 0) {
+      osip_list_special_free(&message->call_infos, (void (*)(void *)) & osip_call_info_free);
+      continue;
+    } else if (osip_strcasecmp(call_header->hname, "accept") == 0) {
+      osip_list_special_free(&message->accepts, (void (*)(void *)) & osip_call_info_free);
+      continue;
+    } else if (osip_strcasecmp(call_header->hname, "accept-encoding") == 0) {
+      osip_list_special_free(&message->accept_encodings, (void (*)(void *)) & osip_call_info_free);
+      continue;
+    } else if (osip_strcasecmp(call_header->hname, "accept-language") == 0) {
+      osip_list_special_free(&message->accept_languages, (void (*)(void *)) & osip_call_info_free);
+      continue;
+    } else if (osip_strcasecmp(call_header->hname, "alert-info") == 0) {
+      osip_list_special_free(&message->alert_infos, (void (*)(void *)) & osip_call_info_free);
+      continue;
+    } else if (osip_strcasecmp(call_header->hname, "allow") == 0) {
+      osip_list_special_free(&message->allows, (void (*)(void *)) & osip_call_info_free);
+      continue;
+    }
+
+    header = (osip_header_t *) osip_list_get_first(&message->headers, &it);
+    while (header != NULL) {
+      if (header->hname != NULL && osip_strcasecmp(header->hname, call_header->hname) == 0) {
+        osip_header_t *tmp_header = header;
+        osip_list_iterator_remove(&it);
+        osip_header_free(tmp_header);
+      }
+      header = (osip_header_t *) osip_list_get_next(&it);
+    }
+  }
+
+  for (idx_header = 0, call_header = call_headers; call_header != NULL && call_header->hname != NULL; idx_header++, call_header++) {
+    if (call_header->hname == NULL) {
+      continue;
+    }
+
+    if (osip_strcasecmp(call_header->hname, "call-info") == 0) {
+      osip_message_set_call_info(message, call_header->hvalue);
+      continue;
+    } else if (osip_strcasecmp(call_header->hname, "accept") == 0) {
+      osip_message_set_accept(message, call_header->hvalue);
+      continue;
+    } else if (osip_strcasecmp(call_header->hname, "accept-encoding") == 0) {
+      osip_message_set_accept_encoding(message, call_header->hvalue);
+      continue;
+    } else if (osip_strcasecmp(call_header->hname, "accept-language") == 0) {
+      osip_message_set_accept_language(message, call_header->hvalue);
+      continue;
+    } else if (osip_strcasecmp(call_header->hname, "alert-info") == 0) {
+      osip_message_set_alert_info(message, call_header->hvalue);
+      continue;
+    } else if (osip_strcasecmp(call_header->hname, "allow") == 0) {
+      osip_message_set_allow(message, call_header->hvalue);
+      continue;
+    }
+
+    osip_message_set_header(message, call_header->hname, call_header->hvalue);
+  }
+}
+
+int eXosip_call_terminate_with_headers(struct eXosip_t *excontext, int cid, int did, osip_header_t *headers) {
   int i;
   osip_transaction_t *tr;
   osip_message_t *request = NULL;
@@ -1061,9 +1143,8 @@ int eXosip_call_terminate_with_header(struct eXosip_t *excontext, int cid, int d
       return i;
     }
 
-    if (header_name != NULL && header_value != NULL) {
-      osip_message_set_header(request, header_name, header_value);
-    }
+    /* I believe CANCEL don't need extra header? */
+    /* _eXosip_apply_call_header(request, headers); */
 
     i = eXosip_create_cancel_transaction(excontext, jc, jd, request);
 
@@ -1098,9 +1179,8 @@ int eXosip_call_terminate_with_header(struct eXosip_t *excontext, int cid, int d
 
       i = eXosip_call_build_answer(excontext, tr->transactionid, 603, &request);
 
-      if (header_name != NULL && header_value != NULL) {
-        osip_message_set_header(request, header_name, header_value);
-      }
+      /* if you wish to add headers to the final answer, use the specific API */
+      /* _eXosip_apply_call_header(request, headers); */
 
       i = eXosip_call_send_answer(excontext, tr->transactionid, 603, request);
 
@@ -1121,9 +1201,7 @@ int eXosip_call_terminate_with_header(struct eXosip_t *excontext, int cid, int d
     return i;
   }
 
-  if (header_name != NULL && header_value != NULL) {
-    osip_message_set_header(request, header_name, header_value);
-  }
+  _eXosip_apply_call_header(request, headers);
 
   _eXosip_add_authentication_information(excontext, request, NULL);
 

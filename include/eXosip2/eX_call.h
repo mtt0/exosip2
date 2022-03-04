@@ -237,7 +237,7 @@ int eXosip_call_terminate(struct eXosip_t *excontext, int cid, int did);
 int eXosip_call_terminate_with_reason(struct eXosip_t *excontext, int cid, int did, const char *reason);
 
 /**
- * Terminate a call and add a Reason header.
+ * Terminate a call and add a header.
  * send CANCEL, BYE or 603 Decline.
  *
  * @param excontext    eXosip_t instance.
@@ -247,6 +247,17 @@ int eXosip_call_terminate_with_reason(struct eXosip_t *excontext, int cid, int d
  * @param header_value header value.
  */
 int eXosip_call_terminate_with_header(struct eXosip_t *excontext, int cid, int did, const char *header_name, const char *header_value);
+
+/**
+ * Terminate a call and add a list of headers.
+ * send CANCEL, BYE or 603 Decline.
+ *
+ * @param excontext    eXosip_t instance.
+ * @param cid          call id of call.
+ * @param did          dialog id of call.
+ * @param headers      headers list terminated by a NULL/NULL entry.
+ */
+int eXosip_call_terminate_with_headers(struct eXosip_t *excontext, int cid, int did, osip_header_t *headers);
 
 /**
  * Build a PRACK for invite.
