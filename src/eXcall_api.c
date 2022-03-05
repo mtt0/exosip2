@@ -1105,7 +1105,7 @@ static void _eXosip_apply_call_header(osip_message_t *message, const osip_header
   }
 }
 
-int eXosip_call_terminate_with_headers(struct eXosip_t *excontext, int cid, int did, osip_header_t *headers) {
+int eXosip_call_terminate_with_headers(struct eXosip_t *excontext, int cid, int did, const osip_header_t *headers) {
   int i;
   osip_transaction_t *tr;
   osip_message_t *request = NULL;

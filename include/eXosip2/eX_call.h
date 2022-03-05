@@ -257,7 +257,7 @@ int eXosip_call_terminate_with_header(struct eXosip_t *excontext, int cid, int d
  * @param did          dialog id of call.
  * @param headers      headers list terminated by a NULL/NULL entry.
  */
-int eXosip_call_terminate_with_headers(struct eXosip_t *excontext, int cid, int did, osip_header_t *headers);
+int eXosip_call_terminate_with_headers(struct eXosip_t *excontext, int cid, int did, const osip_header_t *headers);
 
 /**
  * Build a PRACK for invite.
