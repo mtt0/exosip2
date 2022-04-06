@@ -2748,6 +2748,15 @@ static int _tls_tl_new_socket(struct eXosip_t *excontext, char *host, int port, 
     }
 #endif
 
+#if SO_MARK
+    {
+      uint32_t val = excontext->mark;
+      if (setsockopt(sock, SOL_SOCKET, SO_MARK, &val, sizeof(val)) != 0) {
+        OSIP_TRACE(osip_trace(__FILE__, __LINE__, OSIP_WARNING, NULL, "[eXosip] [TLS] [new] cannot set socket flag (SO_MARK)\n"));
+      }
+    }
+#endif
+
     _eXosip_transport_set_dscp(excontext, curinfo->ai_family, sock);
 
     OSIP_TRACE(osip_trace(__FILE__, __LINE__, OSIP_INFO2, NULL, "[eXosip] [TLS] [new] socket [%s] [sock=%d] family:%d\n", host, sock, curinfo->ai_family));

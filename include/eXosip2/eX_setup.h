@@ -139,6 +139,7 @@ int eXosip_execute(struct eXosip_t *excontext);
   (EXOSIP_OPT_BASE_OPTION + 32) /**< int *: 0 (default): activate "session timers" if supported on both side, 1: if remote side (UAS) do not indicate support for "session timers", activate feature on UAC (local) side */
 #define EXOSIP_OPT_FORCE_CONNECTIONREUSE (EXOSIP_OPT_BASE_OPTION + 33)           /**< int *: 0 to disable, 1 to force reusing established connection for ACK and dialog message */
 #define EXOSIP_OPT_SET_CONTACT_DIALOG_EXTRA_PARAMS (EXOSIP_OPT_BASE_OPTION + 34) /**< char *: define extra parameters in Contact headers  (example: "audio;video;xxx=yyy" parameter must not contains initial ";") */
+#define EXOSIP_OPT_SET_SO_MARK (EXOSIP_OPT_BASE_OPTION + 35)                     /**< int *: set a mark value for SIP socket */
 
 #define EXOSIP_OPT_SET_TLS_VERIFY_CERTIFICATE (EXOSIP_OPT_BASE_OPTION + 500)      /**< int *: enable verification of certificate for TLS connection */
 #define EXOSIP_OPT_SET_TLS_CERTIFICATES_INFO (EXOSIP_OPT_BASE_OPTION + 501)       /**< eXosip_tls_ctx_t *: client and/or server certificate/ca-root/key info */

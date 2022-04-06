@@ -1245,6 +1245,12 @@ int eXosip_set_option(struct eXosip_t *excontext, int opt, const void *value) {
     excontext->dscp = val;
     break;
 
+  case EXOSIP_OPT_SET_SO_MARK:
+    val = *((uint32_t *) value);
+    /* 0x1A by default */
+    excontext->mark = val;
+    break;
+    
   case EXOSIP_OPT_REGISTER_WITH_DATE:
     val = *((int *) value);
     excontext->register_with_date = val;

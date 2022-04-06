@@ -383,6 +383,15 @@ static int _udp_tl_open(struct eXosip_t *excontext, int force_family) {
     }
 #endif
 
+#if SO_MARK
+    {
+      uint32_t val = excontext->mark;
+      if (setsockopt(sock, SOL_SOCKET, SO_MARK, &val, sizeof(val)) != 0) {
+        OSIP_TRACE(osip_trace(__FILE__, __LINE__, OSIP_WARNING, NULL, "[eXosip] [UDP] [new] cannot set socket flag (SO_MARK)\n"));
+      }
+    }
+#endif
+
     res = bind(sock, curinfo->ai_addr, (socklen_t) curinfo->ai_addrlen);
 
     if (res < 0) {
@@ -512,6 +521,15 @@ static int _udp_tl_open_oc(struct eXosip_t *excontext, int force_family) {
 
       val = 1;
       setsockopt(sock, SOL_SOCKET, SO_NOSIGPIPE, (void *) &val, sizeof(int));
+    }
+#endif
+
+#if SO_MARK
+    {
+      uint32_t val = excontext->mark;
+      if (setsockopt(sock, SOL_SOCKET, SO_MARK, &val, sizeof(val)) != 0) {
+        OSIP_TRACE(osip_trace(__FILE__, __LINE__, OSIP_WARNING, NULL, "[eXosip] [UDP] [new] cannot set socket flag (SO_MARK)\n"));
+      }
     }
 #endif
 

@@ -590,6 +590,7 @@ struct eXosip_t {
   int dns_capabilities;
   int enable_dns_cache;
   int dscp;
+  uint32_t mark;
   int implicit_subscription_expires;
   int register_with_date;
   int autoanswer_bye;
