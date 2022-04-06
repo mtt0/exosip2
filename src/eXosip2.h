@@ -431,7 +431,7 @@ typedef struct eXosip_pub_t eXosip_pub_t;
 struct eXosip_pub_t {
   int p_id;
 
-  int p_period;        /* delay between registration */
+  uint32_t p_period;        /* delay between registration */
   char p_aor[256];     /* sip identity */
   char p_sip_etag[64]; /* sip_etag from 200ok */
 

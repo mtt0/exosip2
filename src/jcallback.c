@@ -980,13 +980,11 @@ static void cb_rcv2xx(int type, osip_transaction_t *tr, osip_message_t *sip) {
       osip_message_header_get_byname(sip, "expires", 0, &exp);
 
       if (exp != NULL && exp->hvalue != NULL) {
-        int val = atoi(exp->hvalue);
+        uint32_t val = strtoul(exp->hvalue, NULL, 10);
 
-        if (val > 0) {
-          /* update only if expires value has REALLY be
-             decreased (more than one minutes):
-             In many cases value is decreased because a few seconds has
-             elapsed when server send the 200ok. */
+        if (val > 15) {
+          /* update only if expires value has REALLY be decreased (more than one 15 sec):
+             In many cases value is decreased because a few seconds has elapsed when server send the 200ok. */
           if (val < pub->p_period - 15) {
             pub->p_period = val;
           }

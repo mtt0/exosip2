@@ -110,7 +110,7 @@ int _eXosip_pub_init(struct eXosip_t *excontext, eXosip_pub_t **pub, const char 
   memset(jpub, 0, sizeof(eXosip_pub_t));
   snprintf(jpub->p_aor, 256, "%s", aor);
 
-  jpub->p_period = atoi(exp);
+  jpub->p_period = strtoul(exp, NULL, 10);
   jpub->p_id = ++p_id;
 
   *pub = jpub;

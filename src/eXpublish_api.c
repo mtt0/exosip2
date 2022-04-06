@@ -148,7 +148,7 @@ int eXosip_publish(struct eXosip_t *excontext, osip_message_t *message, const ch
         return OSIP_SYNTAXERROR;
       }
 
-      pub->p_period = atoi(expires->hvalue);
+      pub->p_period = strtoul(expires->hvalue, NULL, 10);
     }
 
     if (pub->p_last_tr != NULL && pub->p_last_tr->cseq != NULL && pub->p_last_tr->cseq->number != NULL) {
