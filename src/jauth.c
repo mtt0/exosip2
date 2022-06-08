@@ -40,7 +40,11 @@
 #include "milenage.h"
 
 #ifdef HAVE_OPENSSL_SSL_H
-#include <openssl/sha.h>
+#define HAVE_OPENSSL_EVP_H 1
+#endif
+
+#ifdef HAVE_OPENSSL_EVP_H
+#include <openssl/evp.h>
 #endif
 
 /* TAKEN from rcf2617.txt */
@@ -124,47 +128,50 @@ void CvtHex(char *input_binary, size_t input_len, char *output_hexa) {
   output_hexa[i * 2] = '\0';
 }
 
-#ifdef HAVE_OPENSSL_SSL_H
+#ifdef HAVE_OPENSSL_EVP_H
 
 static void SHA256DigestCalcHA1(const char *pszAlg, const char *pszUserName, const char *pszRealm, const char *pszPassword, const char *pszNonce, const char *pszCNonce, char SessionKey[SHA256HEXLEN + 1]) {
-  SHA256_CTX SHA256Ctx;
+  EVP_MD_CTX *ctx;
   char HA1[SHA256HASHLEN];
   char HA1Hex[SHA256HEXLEN + 1];
 
-  SHA256_Init(&SHA256Ctx);
-  SHA256_Update(&SHA256Ctx, (unsigned char *) pszUserName, (unsigned int) strlen(pszUserName));
-  SHA256_Update(&SHA256Ctx, (unsigned char *) ":", 1);
-  SHA256_Update(&SHA256Ctx, (unsigned char *) pszRealm, (unsigned int) strlen(pszRealm));
-  SHA256_Update(&SHA256Ctx, (unsigned char *) ":", 1);
-  SHA256_Update(&SHA256Ctx, (unsigned char *) pszPassword, (unsigned int) strlen(pszPassword));
-  SHA256_Final((unsigned char *) HA1, &SHA256Ctx);
+  ctx = EVP_MD_CTX_create();
+  EVP_DigestInit_ex(ctx, EVP_sha256(), NULL);
+  EVP_DigestUpdate(ctx, (unsigned char *) pszUserName, (unsigned int) strlen(pszUserName));
+  EVP_DigestUpdate(ctx, (unsigned char *) ":", 1);
+  EVP_DigestUpdate(ctx, (unsigned char *) pszRealm, (unsigned int) strlen(pszRealm));
+  EVP_DigestUpdate(ctx, (unsigned char *) ":", 1);
+  EVP_DigestUpdate(ctx, (unsigned char *) pszPassword, (unsigned int) strlen(pszPassword));
+  EVP_DigestFinal(ctx, (unsigned char *) HA1, NULL);
 
   if ((pszAlg != NULL) && osip_strcasecmp(pszAlg, "sha256-sess") == 0) {
     CvtHex(HA1, SHA256HASHLEN, HA1Hex);
-    SHA256_Init(&SHA256Ctx);
-    SHA256_Update(&SHA256Ctx, (unsigned char *) HA1Hex, SHA256HEXLEN);
-    SHA256_Update(&SHA256Ctx, (unsigned char *) ":", 1);
-    SHA256_Update(&SHA256Ctx, (unsigned char *) pszNonce, (unsigned int) strlen(pszNonce));
-    SHA256_Update(&SHA256Ctx, (unsigned char *) ":", 1);
-    SHA256_Update(&SHA256Ctx, (unsigned char *) pszCNonce, (unsigned int) strlen(pszCNonce));
-    SHA256_Final((unsigned char *) HA1, &SHA256Ctx);
+    EVP_DigestInit_ex(ctx, NULL, NULL);
+    EVP_DigestUpdate(ctx, (unsigned char *) HA1Hex, SHA256HEXLEN);
+    EVP_DigestUpdate(ctx, (unsigned char *) ":", 1);
+    EVP_DigestUpdate(ctx, (unsigned char *) pszNonce, (unsigned int) strlen(pszNonce));
+    EVP_DigestUpdate(ctx, (unsigned char *) ":", 1);
+    EVP_DigestUpdate(ctx, (unsigned char *) pszCNonce, (unsigned int) strlen(pszCNonce));
+    EVP_DigestFinal(ctx, (unsigned char *) HA1, NULL);
   }
 
+  EVP_MD_CTX_destroy(ctx);
   CvtHex(HA1, SHA256HASHLEN, SessionKey);
 }
 
 static void SHA256DigestCalcResponse(char HA1[SHA256HEXLEN + 1], const char *pszNonce, const char *pszNonceCount, const char *pszCNonce, const char *pszQop, int Aka, const char *pszMethod, const char *pszDigestUri, char HEntity[SHA256HEXLEN + 1],
                                      char Response[SHA256HEXLEN + 1]) {
-  SHA256_CTX SHA256Ctx;
+  EVP_MD_CTX *ctx;
   char HA2[SHA256HASHLEN];
   char RespHash[SHA256HASHLEN];
   char HA2Hex[SHA256HEXLEN + 1];
 
   /* calculate H(A2) */
-  SHA256_Init(&SHA256Ctx);
-  SHA256_Update(&SHA256Ctx, (unsigned char *) pszMethod, (unsigned int) strlen(pszMethod));
-  SHA256_Update(&SHA256Ctx, (unsigned char *) ":", 1);
-  SHA256_Update(&SHA256Ctx, (unsigned char *) pszDigestUri, (unsigned int) strlen(pszDigestUri));
+  ctx = EVP_MD_CTX_create();
+  EVP_DigestInit_ex(ctx, EVP_sha256(), NULL);
+  EVP_DigestUpdate(ctx, (unsigned char *) pszMethod, (unsigned int) strlen(pszMethod));
+  EVP_DigestUpdate(ctx, (unsigned char *) ":", 1);
+  EVP_DigestUpdate(ctx, (unsigned char *) pszDigestUri, (unsigned int) strlen(pszDigestUri));
 
   if (pszQop == NULL) {
     goto auth_withoutqop;
@@ -177,46 +184,47 @@ static void SHA256DigestCalcResponse(char HA1[SHA256HEXLEN + 1], const char *psz
   }
 
 auth_withoutqop:
-  SHA256_Final((unsigned char *) HA2, &SHA256Ctx);
+  EVP_DigestFinal(ctx, (unsigned char *) HA2, NULL);
   CvtHex(HA2, SHA256HASHLEN, HA2Hex);
 
   /* calculate response */
-  SHA256_Init(&SHA256Ctx);
-  SHA256_Update(&SHA256Ctx, (unsigned char *) HA1, SHA256HEXLEN);
-  SHA256_Update(&SHA256Ctx, (unsigned char *) ":", 1);
-  SHA256_Update(&SHA256Ctx, (unsigned char *) pszNonce, (unsigned int) strlen(pszNonce));
-  SHA256_Update(&SHA256Ctx, (unsigned char *) ":", 1);
+  EVP_DigestInit_ex(ctx, NULL, NULL);
+  EVP_DigestUpdate(ctx, (unsigned char *) HA1, SHA256HEXLEN);
+  EVP_DigestUpdate(ctx, (unsigned char *) ":", 1);
+  EVP_DigestUpdate(ctx, (unsigned char *) pszNonce, (unsigned int) strlen(pszNonce));
+  EVP_DigestUpdate(ctx, (unsigned char *) ":", 1);
 
   goto end;
 
 auth_withauth_int:
 
-  SHA256_Update(&SHA256Ctx, (unsigned char *) ":", 1);
-  SHA256_Update(&SHA256Ctx, (unsigned char *) HEntity, SHA256HEXLEN);
+  EVP_DigestUpdate(ctx, (unsigned char *) ":", 1);
+  EVP_DigestUpdate(ctx, (unsigned char *) HEntity, SHA256HEXLEN);
 
 auth_withauth:
-  SHA256_Final((unsigned char *) HA2, &SHA256Ctx);
+  EVP_DigestFinal(ctx, (unsigned char *) HA2, NULL);
   CvtHex(HA2, SHA256HASHLEN, HA2Hex);
 
   /* calculate response */
-  SHA256_Init(&SHA256Ctx);
-  SHA256_Update(&SHA256Ctx, (unsigned char *) HA1, SHA256HEXLEN);
-  SHA256_Update(&SHA256Ctx, (unsigned char *) ":", 1);
-  SHA256_Update(&SHA256Ctx, (unsigned char *) pszNonce, (unsigned int) strlen(pszNonce));
-  SHA256_Update(&SHA256Ctx, (unsigned char *) ":", 1);
+  EVP_DigestInit_ex(ctx, NULL, NULL);
+  EVP_DigestUpdate(ctx, (unsigned char *) HA1, SHA256HEXLEN);
+  EVP_DigestUpdate(ctx, (unsigned char *) ":", 1);
+  EVP_DigestUpdate(ctx, (unsigned char *) pszNonce, (unsigned int) strlen(pszNonce));
+  EVP_DigestUpdate(ctx, (unsigned char *) ":", 1);
 
   if (Aka == 0) {
-    SHA256_Update(&SHA256Ctx, (unsigned char *) pszNonceCount, (unsigned int) strlen(pszNonceCount));
-    SHA256_Update(&SHA256Ctx, (unsigned char *) ":", 1);
-    SHA256_Update(&SHA256Ctx, (unsigned char *) pszCNonce, (unsigned int) strlen(pszCNonce));
-    SHA256_Update(&SHA256Ctx, (unsigned char *) ":", 1);
-    SHA256_Update(&SHA256Ctx, (unsigned char *) pszQop, (unsigned int) strlen(pszQop));
-    SHA256_Update(&SHA256Ctx, (unsigned char *) ":", 1);
+    EVP_DigestUpdate(ctx, (unsigned char *) pszNonceCount, (unsigned int) strlen(pszNonceCount));
+    EVP_DigestUpdate(ctx, (unsigned char *) ":", 1);
+    EVP_DigestUpdate(ctx, (unsigned char *) pszCNonce, (unsigned int) strlen(pszCNonce));
+    EVP_DigestUpdate(ctx, (unsigned char *) ":", 1);
+    EVP_DigestUpdate(ctx, (unsigned char *) pszQop, (unsigned int) strlen(pszQop));
+    EVP_DigestUpdate(ctx, (unsigned char *) ":", 1);
   }
 
 end:
-  SHA256_Update(&SHA256Ctx, (unsigned char *) HA2Hex, SHA256HEXLEN);
-  SHA256_Final((unsigned char *) RespHash, &SHA256Ctx);
+  EVP_DigestUpdate(ctx, (unsigned char *) HA2Hex, SHA256HEXLEN);
+  EVP_DigestFinal(ctx, (unsigned char *) RespHash, NULL);
+  EVP_MD_CTX_destroy(ctx);
   CvtHex(RespHash, SHA256HASHLEN, Response);
 }
 #endif
@@ -795,7 +803,7 @@ int _eXosip_create_proxy_authorization_header(osip_proxy_authenticate_t *wa, con
   /* "MD5" is invalid, but some servers use it. */
   if (wa->algorithm != NULL) {
     if (0 == osip_strcasecmp("MD5", wa->algorithm) || 0 == osip_strcasecmp("\"MD5\"", wa->algorithm)) {
-#ifdef HAVE_OPENSSL_SSL_H
+#ifdef HAVE_OPENSSL_EVP_H
 
     } else if (0 == osip_strcasecmp("SHA-256", wa->algorithm) || 0 == osip_strcasecmp("\"SHA-256\"", wa->algorithm)) {
       Alg = "SHA-256";
@@ -808,7 +816,7 @@ int _eXosip_create_proxy_authorization_header(osip_proxy_authenticate_t *wa, con
       Alg = "AKAv2-MD5";
 
     } else {
-#ifdef HAVE_OPENSSL_SSL_H
+#ifdef HAVE_OPENSSL_EVP_H
       OSIP_TRACE(osip_trace(__FILE__, __LINE__, OSIP_ERROR, NULL, "[eXosip] skip authentication [algorithm not supported] [SHA-256, MD5, AKAv1-MD5, AKAv2-MD5]\n"));
 #else
       OSIP_TRACE(osip_trace(__FILE__, __LINE__, OSIP_ERROR, NULL, "[eXosip] skip authentication [algorithm not supported] [MD5, AKAv1-MD5, AKAv2-MD5]\n"));
@@ -971,7 +979,7 @@ int _eXosip_create_proxy_authorization_header(osip_proxy_authenticate_t *wa, con
       version = 0;
       DigestCalcResponse((char *) pha1, pszNonce, szNonceCount, pszCNonce, pszQop, version, pszMethod, pszURI, HA2, Response);
       respponse_len = MD5HEXLEN + 1;
-#ifdef HAVE_OPENSSL_SSL_H
+#ifdef HAVE_OPENSSL_EVP_H
 
     } else if (0 == osip_strcasecmp(Alg, "SHA-256")) {
       SHA256DigestCalcHA1("SHA-256", pszUser, pszRealm, pszPass, pszNonce, pszCNonce, HA1);
