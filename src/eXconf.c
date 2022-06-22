@@ -1057,8 +1057,15 @@ int eXosip_set_option(struct eXosip_t *excontext, int opt, const void *value) {
       return OSIP_BADPARAMETER;
     }
 
+    if (entry->ip[0] != '\0') {
+      if (strchr(entry->ip, ':'))
+        entry->ai_family = PF_INET6;
+      else
+        entry->ai_family = PF_INET;
+    }
+
     for (i = 0; i < MAX_EXOSIP_DNS_ENTRY; i++) {
-      if (excontext->dns_entries[i].host[0] != '\0' && 0 == osip_strcasecmp(excontext->dns_entries[i].host, entry->host)) {
+      if (excontext->dns_entries[i].host[0] != '\0' && 0 == osip_strcasecmp(excontext->dns_entries[i].host, entry->host) && (excontext->dns_entries[i].ai_family == entry->ai_family || entry->ip[0] == '\0')) {
         /* update entry */
         if (entry->ip[0] != '\0') {
           snprintf(excontext->dns_entries[i].ip, sizeof(excontext->dns_entries[i].ip), "%s", entry->ip);
@@ -1067,6 +1074,7 @@ int eXosip_set_option(struct eXosip_t *excontext, int opt, const void *value) {
         } else {
           /* return previously added cache */
           snprintf(entry->ip, sizeof(entry->ip), "%s", excontext->dns_entries[i].ip);
+          entry->ai_family = excontext->dns_entries[i].ai_family;
           OSIP_TRACE(osip_trace(__FILE__, __LINE__, OSIP_INFO2, NULL, "[eXosip] option set: dns cache returned [%s] -> [%s]\n", entry->host, entry->ip));
         }
 
@@ -1092,10 +1100,12 @@ int eXosip_set_option(struct eXosip_t *excontext, int opt, const void *value) {
       switch (((struct sockaddr *) &addr)->sa_family) {
       case AF_INET:
         inet_ntop(((struct sockaddr *) &addr)->sa_family, &(((struct sockaddr_in *) &addr)->sin_addr), ipbuf, sizeof(ipbuf));
+        entry->ai_family = PF_INET;
         break;
 
       case AF_INET6:
         inet_ntop(((struct sockaddr *) &addr)->sa_family, &(((struct sockaddr_in6 *) &addr)->sin6_addr), ipbuf, sizeof(ipbuf));
+        entry->ai_family = PF_INET6;
         break;
 
       default:
@@ -1114,6 +1124,7 @@ int eXosip_set_option(struct eXosip_t *excontext, int opt, const void *value) {
         /* add entry */
         snprintf(excontext->dns_entries[i].host, sizeof(entry->host), "%s", entry->host);
         snprintf(excontext->dns_entries[i].ip, sizeof(entry->ip), "%s", entry->ip);
+        excontext->dns_entries[i].ai_family = entry->ai_family;
         OSIP_TRACE(osip_trace(__FILE__, __LINE__, OSIP_INFO2, NULL, "[eXosip] option set: dns cache added [%s] -> [%s]\n", entry->host, entry->ip));
         return OSIP_SUCCESS;
       }
@@ -1135,12 +1146,12 @@ int eXosip_set_option(struct eXosip_t *excontext, int opt, const void *value) {
     for (i = 0; i < MAX_EXOSIP_DNS_ENTRY; i++) {
       if (excontext->dns_entries[i].host[0] != '\0' && 0 == osip_strcasecmp(excontext->dns_entries[i].host, entry->host)) {
         excontext->dns_entries[i].host[0] = '\0';
+        excontext->dns_entries[i].ai_family = 0;
         OSIP_TRACE(osip_trace(__FILE__, __LINE__, OSIP_INFO2, NULL, "[eXosip] option set: dns cache deleted [%s]\n", entry->host));
-        return OSIP_SUCCESS;
       }
     }
 
-    return OSIP_UNDEFINED_ERROR;
+    return OSIP_SUCCESS;
   } break;
 
   case EXOSIP_OPT_UDP_KEEP_ALIVE:

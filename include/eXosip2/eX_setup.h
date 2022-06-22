@@ -159,6 +159,7 @@ int eXosip_execute(struct eXosip_t *excontext);
 struct eXosip_dns_cache {
   char host[1024];
   char ip[256];
+  int ai_family;
 };
 
 struct eXosip_account_info {

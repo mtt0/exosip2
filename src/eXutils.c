@@ -1359,21 +1359,6 @@ int _eXosip_get_addrinfo(struct eXosip_t *excontext, struct addrinfo **addrinfo,
   if (hostname != NULL)
     size_log += snprintf(tmplog + size_log, sizeof(tmplog) - size_log, " dns [%s][%d]", hostname, service);
 
-  if (excontext != NULL && hostname != NULL) {
-    for (i = 0; i < MAX_EXOSIP_DNS_ENTRY; i++) {
-      if (excontext->dns_entries[i].host[0] != '\0' && 0 == osip_strcasecmp(excontext->dns_entries[i].host, hostname)) {
-        /* update entry */
-        if (excontext->dns_entries[i].ip[0] != '\0') {
-          hostname = excontext->dns_entries[i].ip;
-          size_log += snprintf(tmplog + size_log, sizeof(tmplog) - size_log, " cached[%s]", excontext->dns_entries[i].ip);
-          break;
-        }
-      }
-    }
-  }
-
-  snprintf(portbuf, sizeof(portbuf), "%i", service);
-
   memset(&hints, 0, sizeof(hints));
 
   hints.ai_flags = 0;
@@ -1397,6 +1382,27 @@ int _eXosip_get_addrinfo(struct eXosip_t *excontext, struct addrinfo **addrinfo,
 
   else if (_exosip_isipv4addr(hostname))
     hints.ai_family = PF_INET; /* it's an IPv4 address... */
+
+  size_log += snprintf(tmplog + size_log, sizeof(tmplog) - size_log, " family[%d]", hints.ai_family);
+
+  if (excontext != NULL && hostname != NULL) {
+    for (i = 0; i < MAX_EXOSIP_DNS_ENTRY; i++) {
+      if (excontext->dns_entries[i].host[0] != '\0' && 0 == osip_strcasecmp(excontext->dns_entries[i].host, hostname)) {
+        /* update entry */
+        if (excontext->dns_entries[i].ip[0] != '\0') {
+          if (strchr(excontext->dns_entries[i].ip, ':') && hints.ai_family == AF_INET)
+            continue;
+          if (!strchr(excontext->dns_entries[i].ip, ':') && hints.ai_family == AF_INET6)
+            continue;
+          hostname = excontext->dns_entries[i].ip;
+          size_log += snprintf(tmplog + size_log, sizeof(tmplog) - size_log, " cached[%s]", excontext->dns_entries[i].ip);
+          break;
+        }
+      }
+    }
+  }
+
+  snprintf(portbuf, sizeof(portbuf), "%i", service);
 
   if (protocol == IPPROTO_UDP)
     hints.ai_socktype = SOCK_DGRAM;
@@ -1430,7 +1436,7 @@ int _eXosip_get_addrinfo(struct eXosip_t *excontext, struct addrinfo **addrinfo,
 
     char porttmp[10];
 
-    size_log += snprintf(tmplog + size_log, sizeof(tmplog) - size_log, " = ");
+    size_log += snprintf(tmplog + size_log, sizeof(tmplog) - size_log, " =");
 
     for (elem = *addrinfo; elem != NULL; elem = elem->ai_next) {
       _eXosip_getnameinfo(elem->ai_addr, (socklen_t) elem->ai_addrlen, tmp, sizeof(tmp), porttmp, sizeof(porttmp), NI_NUMERICHOST | NI_NUMERICSERV);
