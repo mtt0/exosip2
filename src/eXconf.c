@@ -1118,6 +1118,14 @@ int eXosip_set_option(struct eXosip_t *excontext, int opt, const void *value) {
       snprintf(entry->ip, sizeof(entry->ip), "%s", ipbuf);
     }
 
+    for (i = 0; i < MAX_EXOSIP_DNS_ENTRY; i++) {
+      if (excontext->dns_entries[i].host[0] != '\0' && 0 == osip_strcasecmp(excontext->dns_entries[i].host, entry->host) && excontext->dns_entries[i].ai_family == entry->ai_family) {
+        /* update entry */
+        snprintf(excontext->dns_entries[i].ip, sizeof(excontext->dns_entries[i].ip), "%s", entry->ip);
+        OSIP_TRACE(osip_trace(__FILE__, __LINE__, OSIP_INFO1, NULL, "[eXosip] option set: dns cache updated [%s] -> [%s]\n", entry->host, entry->ip));
+        return OSIP_SUCCESS;
+      }
+    }
     /* not found case: */
     for (i = 0; i < MAX_EXOSIP_DNS_ENTRY; i++) {
       if (excontext->dns_entries[i].host[0] == '\0') {

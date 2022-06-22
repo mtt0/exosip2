@@ -1394,6 +1394,8 @@ int _eXosip_get_addrinfo(struct eXosip_t *excontext, struct addrinfo **addrinfo,
             continue;
           if (!strchr(excontext->dns_entries[i].ip, ':') && hints.ai_family == AF_INET6)
             continue;
+          if (hints.ai_family == AF_UNSPEC)
+            continue;
           hostname = excontext->dns_entries[i].ip;
           size_log += snprintf(tmplog + size_log, sizeof(tmplog) - size_log, " cached[%s]", excontext->dns_entries[i].ip);
           break;
