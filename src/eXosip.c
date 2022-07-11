@@ -1603,7 +1603,8 @@ void _eXosip_mark_registration_expired(struct eXosip_t *excontext, const char *c
           }
         }
 
-        jr->r_last_tr->birth_time = now - 120; /* after a failure, always make it exactly now-120 */
+        // jr->r_last_tr->birth_time = now - 120; /* after a failure, always make it exactly now-120 */
+        jr->r_last_tr->birth_time = now - jr->r_reg_period + (jr->r_reg_period / 10);
 
       } else if (jr->r_reg_period > 900) {
         jr->r_last_tr->birth_time = now - 900; /* after a success, a new REGISTER is always sent after 900 sec */
@@ -1612,8 +1613,10 @@ void _eXosip_mark_registration_expired(struct eXosip_t *excontext, const char *c
         jr->r_last_tr->birth_time = now - jr->r_reg_period + (jr->r_reg_period / 10);
       }
 
-      if (jr->r_retryfailover < 60)
-        jr->r_retryfailover++;
+      if (jr->r_retryfailover < 1)
+        jr->r_retryfailover += 5;
+      else if (jr->r_retryfailover < 64)
+        jr->r_retryfailover *= 2;
 
       jr->r_last_tr->birth_time += jr->r_retryfailover; /* wait "RETRY" (counter) seconds before retrying: avoid flooding */
       wakeup = 1;
