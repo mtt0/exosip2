@@ -338,6 +338,16 @@ static int _tls_add_certificates(struct eXosip_t *excontext, SSL_CTX *ctx) {
       continue;
     }
 
+    if (X509_cmp_current_time(X509_get0_notBefore(cert)) >= 0) {
+      X509_free(cert);
+      continue;
+    }
+
+    if (X509_cmp_current_time(X509_get0_notAfter(cert)) <= 0) {
+      X509_free(cert);
+      continue;
+    }
+
     if (!X509_STORE_add_cert(x509_store, cert)) {
       X509_free(cert);
       continue;
@@ -361,6 +371,16 @@ static int _tls_add_certificates(struct eXosip_t *excontext, SSL_CTX *ctx) {
     x509_store = SSL_CTX_get_cert_store(ctx);
 
     if (x509_store == NULL) {
+      X509_free(cert);
+      continue;
+    }
+
+    if (X509_cmp_current_time(X509_get0_notBefore(cert)) >= 0) {
+      X509_free(cert);
+      continue;
+    }
+
+    if (X509_cmp_current_time(X509_get0_notAfter(cert)) <= 0) {
       X509_free(cert);
       continue;
     }
@@ -392,6 +412,16 @@ static int _tls_add_certificates(struct eXosip_t *excontext, SSL_CTX *ctx) {
       continue;
     }
 
+    if (X509_cmp_current_time(X509_get0_notBefore(cert)) >= 0) {
+      X509_free(cert);
+      continue;
+    }
+
+    if (X509_cmp_current_time(X509_get0_notAfter(cert)) <= 0) {
+      X509_free(cert);
+      continue;
+    }
+
     if (!X509_STORE_add_cert(x509_store, cert)) {
       X509_free(cert);
       continue;
@@ -415,6 +445,16 @@ static int _tls_add_certificates(struct eXosip_t *excontext, SSL_CTX *ctx) {
     x509_store = SSL_CTX_get_cert_store(ctx);
 
     if (x509_store == NULL) {
+      X509_free(cert);
+      continue;
+    }
+
+    if (X509_cmp_current_time(X509_get0_notBefore(cert)) >= 0) {
+      X509_free(cert);
+      continue;
+    }
+
+    if (X509_cmp_current_time(X509_get0_notAfter(cert)) <= 0) {
       X509_free(cert);
       continue;
     }
@@ -490,6 +530,16 @@ static int _tls_add_certificates(struct eXosip_t *excontext, SSL_CTX *ctx) {
           continue;
         }
 
+        if (X509_cmp_current_time(X509_get0_notBefore(cert)) >= 0) {
+          X509_free(cert);
+          continue;
+        }
+
+        if (X509_cmp_current_time(X509_get0_notAfter(cert)) <= 0) {
+          X509_free(cert);
+          continue;
+        }
+
         if (!X509_STORE_add_cert(x509_store, cert)) {
           X509_free(cert);
           continue;
@@ -535,10 +585,9 @@ int verify_cb(int preverify_ok, X509_STORE_CTX *store) {
   }
 
   if (!preverify_ok) {
-    OSIP_TRACE(osip_trace(__FILE__, __LINE__, OSIP_ERROR, NULL, "[eXosip] [TLS] invalid  depth[%d] [%s] [%d:%s]\n", depth, buf, err, X509_verify_cert_error_string(err)));
-
+    OSIP_TRACE(osip_trace(__FILE__, __LINE__, OSIP_ERROR, NULL, "[eXosip] [TLS] depth[%d] invalid  [%s] [%d:%s]\n", depth, buf, err, X509_verify_cert_error_string(err)));
   } else {
-    OSIP_TRACE(osip_trace(__FILE__, __LINE__, OSIP_INFO1, NULL, "[eXosip] [TLS] verified depth[%d] [%s]\n", depth, buf));
+    OSIP_TRACE(osip_trace(__FILE__, __LINE__, OSIP_INFO1, NULL, "[eXosip] [TLS] depth[%d] verified [%s]\n", depth, buf));
   }
 
   /*
@@ -3284,7 +3333,7 @@ static int tls_tl_send_message(struct eXosip_t *excontext, osip_transaction_t *t
   }
 
   osip_free(message);
-  return OSIP_SUCCESS;
+  return i; //OSIP_SUCCESS;
 }
 
 static int tls_tl_keepalive(struct eXosip_t *excontext) {
