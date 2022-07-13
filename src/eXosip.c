@@ -856,7 +856,7 @@ void eXosip_automatic_action(struct eXosip_t *excontext) {
         /* automatic refresh */
         eXosip_register_send_register(excontext, jr->r_id, NULL);
 
-      } else if (now - jr->r_last_tr->birth_time < 120 && jr->r_last_tr->orig_request != NULL &&
+      } else if (now - jr->r_last_tr->birth_time < TRANSACTION_TIMEOUT_RETRY && jr->r_last_tr->orig_request != NULL &&
                  (jr->r_last_tr->last_response != NULL &&
                   (jr->r_last_tr->last_response->status_code == 401 || jr->r_last_tr->last_response->status_code == 407 || jr->r_last_tr->last_response->status_code == 423 || jr->r_last_tr->last_response->status_code == 606))) {
         if (jr->r_retry < 3) {
@@ -998,11 +998,11 @@ void eXosip_automatic_action(struct eXosip_t *excontext) {
         /* automatic refresh */
         _eXosip_publish_refresh(excontext, NULL, &jpub->p_last_tr, NULL);
 
-      } else if (jpub->p_period != 0 && now - jpub->p_last_tr->birth_time > 120 && (jpub->p_last_tr->last_response == NULL || (!MSG_IS_STATUS_2XX(jpub->p_last_tr->last_response)))) {
+      } else if (jpub->p_period != 0 && now - jpub->p_last_tr->birth_time > TRANSACTION_TIMEOUT_RETRY && (jpub->p_last_tr->last_response == NULL || (!MSG_IS_STATUS_2XX(jpub->p_last_tr->last_response)))) {
         /* automatic refresh */
         _eXosip_publish_refresh(excontext, NULL, &jpub->p_last_tr, NULL);
 
-      } else if (now - jpub->p_last_tr->birth_time < 120 && jpub->p_last_tr->orig_request != NULL &&
+      } else if (now - jpub->p_last_tr->birth_time < TRANSACTION_TIMEOUT_RETRY && jpub->p_last_tr->orig_request != NULL &&
                  (jpub->p_last_tr->last_response != NULL && (jpub->p_last_tr->last_response->status_code == 401 || jpub->p_last_tr->last_response->status_code == 407))) {
         if (jpub->p_retry < 3) {
           /* TODO: improve support for several retries when
@@ -1011,7 +1011,7 @@ void eXosip_automatic_action(struct eXosip_t *excontext) {
           jpub->p_retry++;
         }
 
-      } else if (now - jpub->p_last_tr->birth_time < 120 && jpub->p_last_tr->orig_request != NULL &&
+      } else if (now - jpub->p_last_tr->birth_time < TRANSACTION_TIMEOUT_RETRY && jpub->p_last_tr->orig_request != NULL &&
                  (jpub->p_last_tr->last_response != NULL && (jpub->p_last_tr->last_response->status_code == 412 || jpub->p_last_tr->last_response->status_code == 423))) {
         _eXosip_publish_refresh(excontext, NULL, &jpub->p_last_tr, NULL);
       }
@@ -1603,8 +1603,9 @@ void _eXosip_mark_registration_expired(struct eXosip_t *excontext, const char *c
           }
         }
 
-        // jr->r_last_tr->birth_time = now - 120; /* after a failure, always make it exactly now-120 */
         jr->r_last_tr->birth_time = now - jr->r_reg_period + (jr->r_reg_period / 10);
+        if (now - jr->r_last_tr->birth_time > TRANSACTION_TIMEOUT_RETRY)
+          jr->r_last_tr->birth_time = now - TRANSACTION_TIMEOUT_RETRY;
 
       } else if (jr->r_reg_period > 900) {
         jr->r_last_tr->birth_time = now - 900; /* after a success, a new REGISTER is always sent after 900 sec */
