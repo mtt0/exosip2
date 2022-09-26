@@ -127,7 +127,7 @@
 #if TARGET_OS_IPHONE
 #include <CFNetwork/CFSocketStream.h>
 #include <CoreFoundation/CFStream.h>
-#define MULTITASKING_ENABLED
+// #define MULTITASKING_ENABLED
 #endif
 
 #if OPENSSL_VERSION_NUMBER < 0x10100000L
