@@ -2362,7 +2362,7 @@ void _eXosip_release_terminated_calls(struct eXosip_t *excontext) {
       } else if (jc->c_out_tr != NULL && jc->c_out_tr->state == ICT_TERMINATED && jc->c_out_tr->completed_time + 5 > now) {
         /* With unreliable protocol, the transaction enter the terminated
            state right after the ACK is sent: In this case, we really want
-           to wait for additionnal user/automatic action to be processed
+           to wait for additional user/automatic action to be processed
            before we decide to delete the call.
          */
 
